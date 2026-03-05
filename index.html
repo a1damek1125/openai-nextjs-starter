@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TriStiX | Verifiable General AI Research Lab</title>
+  <meta name="description" content="TriStiX S.L. is a fundamental AI research lab based in Alicante, Spain, developing Logic-Guided Graph Transformers (LGGT+) for verifiable, high-stakes AI systems.">
+  <meta name="keywords" content="Neuro-Symbolic AI, Differentiable Logic, European Innovation Council, DeepTech, Verifiable AI, LGGT+, TriStiX">
+  <meta name="author" content="TriStiX S.L.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://www.TriStiX.com">
+  <meta property="og:title" content="TriStiX | Verifiable General AI Research Lab">
+  <meta property="og:description" content="TriStiX S.L. is a fundamental AI research lab based in Alicante, Spain, developing Logic-Guided Graph Transformers (LGGT+) for verifiable, high-stakes AI systems.">
+  <meta property="og:url" content="https://www.TriStiX.com">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TriStiX">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="TriStiX | Verifiable General AI Research Lab">
+  <meta name="twitter:description" content="TriStiX S.L. is a fundamental AI research lab based in Alicante, Spain, developing Logic-Guided Graph Transformers (LGGT+) for verifiable, high-stakes AI systems.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ResearchOrganization",
+    "name": "TriStiX S.L.",
+    "url": "https://www.TriStiX.com",
+    "description": "TriStiX S.L. is a fundamental AI research lab developing Logic-Guided Graph Transformers (LGGT+) for verifiable, high-stakes AI systems.",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Alicante",
+      "addressCountry": "Spain"
+    },
+    "keywords": "Neuro-Symbolic AI, Differentiable Logic, European Innovation Council, DeepTech",
+    "knowsAbout": [
+      "Neuro-Symbolic AI",
+      "Differentiable Logic",
+      "Graph Transformers",
+      "Formal Verification",
+      "EU AI Act Compliance"
+    ],
+    "foundingLocation": {
+      "@type": "Place",
+      "name": "Alicante, Spain"
+    }
+  }
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+          },
+          colors: {
+            black: '#000000',
+            node: {
+              blue: '#4A90D9',
+              orange: '#D4944A',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { background: #000000; color: #ffffff; font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; }
+    ::selection { background: rgba(74, 144, 217, 0.3); color: #fff; }
+    .section-border { border-top: 1px solid rgba(255, 255, 255, 0.08); }
+    .cta-btn { border: 1px solid rgba(255, 255, 255, 0.25); transition: all 0.3s ease; }
+    .cta-btn:hover { border-color: rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.04); }
+    .lang-btn { transition: all 0.2s ease; }
+    .lang-btn.active { color: #ffffff; border-bottom: 1px solid #ffffff; }
+    .lang-btn:not(.active) { color: rgba(255, 255, 255, 0.4); }
+    .lang-btn:hover { color: rgba(255, 255, 255, 0.8); }
+    #heroCanvas { position: absolute; top: 0; right: 0; width: 55%; height: 100%; pointer-events: none; }
+    @media (max-width: 768px) {
+      #heroCanvas { width: 100%; opacity: 0.3; }
+    }
+    .fade-in { opacity: 0; transform: translateY(20px); animation: fadeUp 0.8s ease forwards; }
+    .fade-in-delay-1 { animation-delay: 0.15s; }
+    .fade-in-delay-2 { animation-delay: 0.3s; }
+    .fade-in-delay-3 { animation-delay: 0.45s; }
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="fixed top-0 left-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-white/[0.06]">
+    <div class="max-w-7xl mx-auto px-6 lg:px-10 flex items-center justify-between h-16">
+      <!-- Logo -->
+      <a href="#" class="flex items-center gap-3">
+        <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M50 8C50 8 20 25 15 50C10 75 35 92 50 92C65 92 90 75 85 50C80 25 50 8 50 8Z" stroke="white" stroke-width="2.5" fill="none"/>
+          <path d="M50 8C50 8 80 25 85 50C90 75 65 92 50 92" stroke="white" stroke-width="2.5" fill="none"/>
+          <ellipse cx="50" cy="50" rx="30" ry="42" stroke="white" stroke-width="2.5" fill="none" transform="rotate(60 50 50)"/>
+          <ellipse cx="50" cy="50" rx="30" ry="42" stroke="white" stroke-width="2.5" fill="none" transform="rotate(-60 50 50)"/>
+        </svg>
+        <span class="text-white font-bold text-xl tracking-tight">TriStiX</span>
+      </a>
+      <!-- Language Switcher -->
+      <div class="flex items-center gap-1 mono text-xs">
+        <button onclick="setLang('en')" class="lang-btn active px-2 py-1" data-lang="en">EN</button>
+        <span class="text-white/20">|</span>
+        <button onclick="setLang('pl')" class="lang-btn px-2 py-1" data-lang="pl">PL</button>
+        <span class="text-white/20">|</span>
+        <button onclick="setLang('es')" class="lang-btn px-2 py-1" data-lang="es">ES</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="relative min-h-screen flex items-center pt-16">
+    <canvas id="heroCanvas"></canvas>
+    <div class="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 w-full">
+      <div class="max-w-2xl">
+        <h1 id="heroH1" class="text-5xl md:text-7xl font-extrabold leading-[1.05] tracking-tight fade-in">
+          Verifiable General AI.
+        </h1>
+        <p id="heroSub" class="mt-6 text-lg md:text-xl text-white/60 leading-relaxed max-w-xl fade-in fade-in-delay-1">
+          Bridging stochastic deep learning and deterministic formal logic for high-stakes domains.
+        </p>
+        <div class="mt-10 flex flex-wrap gap-4 fade-in fade-in-delay-2">
+          <a href="#thesis" id="ctaPreprint" class="cta-btn px-6 py-3 text-sm font-medium tracking-wide">
+            Read the Architecture Pre-print
+          </a>
+          <a href="#careers" id="ctaCareers" class="cta-btn px-6 py-3 text-sm font-medium tracking-wide">
+            Research Roles
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Core Thesis Section -->
+  <section id="thesis" class="section-border py-24 md:py-32">
+    <div class="max-w-7xl mx-auto px-6 lg:px-10">
+      <div class="grid md:grid-cols-2 gap-16 md:gap-24">
+        <div>
+          <p class="mono text-xs text-white/30 tracking-widest uppercase mb-4">01 &mdash; <span id="thesisLabel">Core Thesis</span></p>
+          <h2 id="thesisH2" class="text-3xl md:text-4xl font-bold leading-tight">
+            Overcoming Logical Cascade Failure.
+          </h2>
+        </div>
+        <div>
+          <p id="thesisBody" class="text-white/55 leading-relaxed text-base md:text-lg">
+            Logic-Guided Graph Transformers (LGGT+) integrate differentiable logic constraints (Łukasiewicz t-norms) directly into the self-attention mechanism, guaranteeing mathematical verifiability aligned with the EU AI Act.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Infrastructure Section -->
+  <section id="infra" class="section-border py-24 md:py-32">
+    <div class="max-w-7xl mx-auto px-6 lg:px-10">
+      <div class="grid md:grid-cols-2 gap-16 md:gap-24">
+        <div>
+          <p class="mono text-xs text-white/30 tracking-widest uppercase mb-4">02 &mdash; <span id="infraLabel">Infrastructure</span></p>
+          <h2 id="infraH2" class="text-3xl md:text-4xl font-bold leading-tight">
+            Asymmetric Compute Topologies.
+          </h2>
+        </div>
+        <div>
+          <p id="infraBody" class="text-white/55 leading-relaxed text-base md:text-lg">
+            Heterogeneous infrastructure pairing unified memory architectures for unpartitioned Knowledge Graph evaluation with dense Tensor Core clusters for backpropagation.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Careers Section -->
+  <section id="careers" class="section-border py-24 md:py-32">
+    <div class="max-w-7xl mx-auto px-6 lg:px-10">
+      <div class="grid md:grid-cols-2 gap-16 md:gap-24">
+        <div>
+          <p class="mono text-xs text-white/30 tracking-widest uppercase mb-4">03 &mdash; <span id="careersLabel">Careers</span></p>
+          <h2 id="careersH2" class="text-3xl md:text-4xl font-bold leading-tight">
+            Fundamental Research Group.
+          </h2>
+        </div>
+        <div>
+          <p id="careersBody" class="text-white/55 leading-relaxed text-base md:text-lg">
+            Based in Alicante, Spain. We invite PIs and researchers publishing at NeurIPS/ICLR in Neuro-Symbolic AI to join our stealth lab.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="section-border py-12">
+    <div class="max-w-7xl mx-auto px-6 lg:px-10">
+      <p id="footerText" class="text-white/30 text-sm">
+        TriStiX S.L. | Alicante, Spain. Strict adherence to mathematical verifiability. Copyright 2026.
+      </p>
+    </div>
+  </footer>
+
+  <!-- JavaScript: Language Switcher + Canvas Animation -->
+  <script>
+    // ============================================================
+    // Multi-language content
+    // ============================================================
+    const i18n = {
+      en: {
+        heroH1: 'Verifiable General AI.',
+        heroSub: 'Bridging stochastic deep learning and deterministic formal logic for high-stakes domains.',
+        ctaPreprint: 'Read the Architecture Pre-print',
+        ctaCareers: 'Research Roles',
+        thesisLabel: 'Core Thesis',
+        thesisH2: 'Overcoming Logical Cascade Failure.',
+        thesisBody: 'Logic-Guided Graph Transformers (LGGT+) integrate differentiable logic constraints (\u0141ukasiewicz t-norms) directly into the self-attention mechanism, guaranteeing mathematical verifiability aligned with the EU AI Act.',
+        infraLabel: 'Infrastructure',
+        infraH2: 'Asymmetric Compute Topologies.',
+        infraBody: 'Heterogeneous infrastructure pairing unified memory architectures for unpartitioned Knowledge Graph evaluation with dense Tensor Core clusters for backpropagation.',
+        careersLabel: 'Careers',
+        careersH2: 'Fundamental Research Group.',
+        careersBody: 'Based in Alicante, Spain. We invite PIs and researchers publishing at NeurIPS/ICLR in Neuro-Symbolic AI to join our stealth lab.',
+        footerText: 'TriStiX S.L. | Alicante, Spain. Strict adherence to mathematical verifiability. Copyright 2026.'
+      },
+      pl: {
+        heroH1: 'Weryfikowalna Og\u00f3lna Sztuczna Inteligencja.',
+        heroSub: '\u0141\u0105czymy stochastyczne g\u0142\u0119bokie uczenie z deterministyczn\u0105 logik\u0105 formaln\u0105 dla system\u00f3w wysokiego ryzyka.',
+        ctaPreprint: 'Przeczytaj Pre-print Architektury',
+        ctaCareers: 'Oferty Badawcze',
+        thesisLabel: 'Teza G\u0142\u00f3wna',
+        thesisH2: 'Pokonujemy problem Kaskadowych B\u0142\u0119d\u00f3w Logicznych.',
+        thesisBody: 'Nasza architektura Logic-Guided Graph Transformers (LGGT+) integruje r\u00f3\u017cniczkowalne wi\u0119zy logiczne (t-normy \u0141ukasiewicza) bezpo\u015brednio z mechanizmem uwagi, gwarantuj\u0105c matematyczn\u0105 weryfikowalno\u015b\u0107 zgodn\u0105 z EU AI Act.',
+        infraLabel: 'Infrastruktura',
+        infraH2: 'Asymetryczne Topologie Obliczeniowe.',
+        infraBody: 'Heterogeniczna infrastruktura \u0142\u0105cz\u0105ca architektur\u0119 zunifikowanej pami\u0119ci do ewaluacji niepartycjonowanych Graf\u00f3w Wiedzy z g\u0119stymi klastrami rdzeni tensorowych do propagacji wstecznej.',
+        careersLabel: 'Kariera',
+        careersH2: 'Grupa Bada\u0144 Fundamentalnych.',
+        careersBody: 'Z siedzib\u0105 w Alicante, Hiszpania. Zapraszamy G\u0142\u00f3wnych Badaczy (PI) i naukowc\u00f3w publikuj\u0105cych na NeurIPS/ICLR w obszarze Neuro-Symbolic AI do do\u0142\u0105czenia do naszego laboratorium.',
+        footerText: 'TriStiX S.L. | Alicante, Hiszpania. Rygorystyczne przestrzeganie matematycznej weryfikowalno\u015bci. Copyright 2026.'
+      },
+      es: {
+        heroH1: 'Inteligencia Artificial General Verificable.',
+        heroSub: 'Uniendo el aprendizaje profundo estoc\u00e1stico y la l\u00f3gica formal determinista para dominios de alto riesgo.',
+        ctaPreprint: 'Leer Pre-print de la Arquitectura',
+        ctaCareers: 'Puestos de Investigaci\u00f3n',
+        thesisLabel: 'Tesis Central',
+        thesisH2: 'Superando los Fallos L\u00f3gicos en Cascada.',
+        thesisBody: 'Nuestra arquitectura Logic-Guided Graph Transformers (LGGT+) integra restricciones l\u00f3gicas diferenciables (t-normas de \u0141ukasiewicz) directamente en el mecanismo de atenci\u00f3n, garantizando la verificabilidad matem\u00e1tica en estricto cumplimiento de la Ley de IA de la UE (EU AI Act).',
+        infraLabel: 'Infraestructura',
+        infraH2: 'Topolog\u00edas Computacionales Asim\u00e9tricas.',
+        infraBody: 'Infraestructura heterog\u00e9nea que empareja arquitecturas de memoria unificada para la evaluaci\u00f3n de Grafos de Conocimiento sin particionar, con cl\u00fasteres densos de n\u00facleos tensores para la retropropagaci\u00f3n.',
+        careersLabel: 'Empleo',
+        careersH2: 'Grupo de Investigaci\u00f3n Fundamental.',
+        careersBody: 'Con sede en Alicante, Espa\u00f1a. Invitamos a Investigadores Principales (PI) y cient\u00edficos con publicaciones en NeurIPS/ICLR sobre IA Neuro-Simb\u00f3lica a unirse a nuestro laboratorio.',
+        footerText: 'TriStiX S.L. | Alicante, Espa\u00f1a. Adherencia estricta a la verificabilidad matem\u00e1tica. Copyright 2026.'
+      }
+    };
+
+    let currentLang = 'en';
+
+    function setLang(lang) {
+      currentLang = lang;
+      const t = i18n[lang];
+      document.documentElement.lang = lang;
+
+      document.getElementById('heroH1').textContent = t.heroH1;
+      document.getElementById('heroSub').textContent = t.heroSub;
+      document.getElementById('ctaPreprint').textContent = t.ctaPreprint;
+      document.getElementById('ctaCareers').textContent = t.ctaCareers;
+      document.getElementById('thesisLabel').textContent = t.thesisLabel;
+      document.getElementById('thesisH2').textContent = t.thesisH2;
+      document.getElementById('thesisBody').textContent = t.thesisBody;
+      document.getElementById('infraLabel').textContent = t.infraLabel;
+      document.getElementById('infraH2').textContent = t.infraH2;
+      document.getElementById('infraBody').textContent = t.infraBody;
+      document.getElementById('careersLabel').textContent = t.careersLabel;
+      document.getElementById('careersH2').textContent = t.careersH2;
+      document.getElementById('careersBody').textContent = t.careersBody;
+      document.getElementById('footerText').textContent = t.footerText;
+
+      // Update active lang button
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+      });
+    }
+
+    // ============================================================
+    // Neural Network Canvas Animation
+    // ============================================================
+    (function () {
+      const canvas = document.getElementById('heroCanvas');
+      const ctx = canvas.getContext('2d');
+      let width, height;
+      let particles = [];
+      const PARTICLE_COUNT = 80;
+      const CONNECTION_DIST = 150;
+      const COLORS = {
+        blue: { r: 74, g: 144, b: 217 },
+        orange: { r: 212, g: 148, b: 74 }
+      };
+
+      function resize() {
+        const section = canvas.parentElement;
+        width = canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+        height = canvas.height = section.offsetHeight * window.devicePixelRatio;
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      }
+
+      function createParticle() {
+        const isBlue = Math.random() > 0.4;
+        const color = isBlue ? COLORS.blue : COLORS.orange;
+        return {
+          x: Math.random() * (canvas.offsetWidth),
+          y: Math.random() * (canvas.parentElement.offsetHeight),
+          vx: (Math.random() - 0.5) * 0.4,
+          vy: (Math.random() - 0.5) * 0.4,
+          radius: Math.random() * 2 + 1.5,
+          color: color,
+          alpha: Math.random() * 0.5 + 0.5
+        };
+      }
+
+      function init() {
+        resize();
+        particles = [];
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+          particles.push(createParticle());
+        }
+      }
+
+      function drawParticle(p) {
+        // Glow
+        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 6);
+        gradient.addColorStop(0, `rgba(${p.color.r}, ${p.color.g}, ${p.color.b}, ${p.alpha * 0.3})`);
+        gradient.addColorStop(1, `rgba(${p.color.r}, ${p.color.g}, ${p.color.b}, 0)`);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius * 6, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        // Core dot
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${p.color.r}, ${p.color.g}, ${p.color.b}, ${p.alpha})`;
+        ctx.fill();
+      }
+
+      function drawConnection(a, b, dist) {
+        const opacity = (1 - dist / CONNECTION_DIST) * 0.15;
+        const midR = (a.color.r + b.color.r) / 2;
+        const midG = (a.color.g + b.color.g) / 2;
+        const midB = (a.color.b + b.color.b) / 2;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.strokeStyle = `rgba(${midR}, ${midG}, ${midB}, ${opacity})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+
+      function update() {
+        const w = canvas.offsetWidth;
+        const h = canvas.parentElement.offsetHeight;
+
+        for (const p of particles) {
+          p.x += p.vx;
+          p.y += p.vy;
+
+          if (p.x < 0) p.x = w;
+          if (p.x > w) p.x = 0;
+          if (p.y < 0) p.y = h;
+          if (p.y > h) p.y = 0;
+        }
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.offsetWidth, canvas.parentElement.offsetHeight);
+
+        // Draw connections
+        for (let i = 0; i < particles.length; i++) {
+          for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < CONNECTION_DIST) {
+              drawConnection(particles[i], particles[j], dist);
+            }
+          }
+        }
+
+        // Draw particles
+        for (const p of particles) {
+          drawParticle(p);
+        }
+      }
+
+      function animate() {
+        update();
+        draw();
+        requestAnimationFrame(animate);
+      }
+
+      window.addEventListener('resize', () => {
+        resize();
+      });
+
+      init();
+      animate();
+    })();
+  </script>
+
+</body>
+</html>
