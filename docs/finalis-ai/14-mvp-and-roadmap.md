@@ -8,7 +8,9 @@
 **Finalis AI for Installers & Home Services** (HVAC / plumbing / electrical / renovation).
 
 ### In scope (MVP)
-1. AI answers the phone (voice worker, cascaded pipeline) + after-hours.
+1. AI answers the phone (voice worker, cascaded pipeline) + after-hours (requires the
+   inbound-answer action type at autonomy L3 — the recommended day-one default for inbound;
+   outbound action types may start L1–L2, see 13 §1).
 2. Intake: collects client + case data (address, problem, urgency, scope, timing, budget band,
    "do you have another quote?").
 3. Requests photos/documents via **WhatsApp** (+ SMS/email).

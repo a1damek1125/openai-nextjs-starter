@@ -15,12 +15,13 @@
 tooling layer in `02-multi-agent-architecture.md §3`: all external capabilities — calendar,
 email, WhatsApp, SMS, telephony, Drive, later CRM/e-sign — are exposed to workers through the
 **Model Context Protocol (MCP)**, an open protocol that standardizes how LLM apps integrate
-external tools and data. Current spec: **2025-06-18**
-(https://modelcontextprotocol.io/specification/2025-06-18). Relevant properties we lean on:
+external tools and data. Current spec: **stable spec 2025-11-25** (async tasks, OIDC
+discovery, elicitation enums; 2026-07-28 RC in flight) —
+https://modelcontextprotocol.io/specification/2025-11-25. Relevant properties we lean on:
 
 - **Tools / resources / prompts** as the three primitives — a booking action is a *tool*, an
   inbox thread is a *resource*, a follow-up template is a *prompt*.
-- **Servers are OAuth 2.0 resource servers** (2025-06-18) — the auth model below maps cleanly
+- **Servers are OAuth 2.0 resource servers** — the auth model below maps cleanly
   onto MCP's own authorization story.
 - **Structured tool output** — typed results the workers can validate (feeds the Quality Worker).
 - **Elicitation** — a server can request mid-session user input, which we use for
@@ -360,7 +361,7 @@ data region is `BusinessProfile.data_region`.
   registration, §2.4) require **prior express consent** to text and honoring of opt-out
   keywords (**STOP/UNSUBSCRIBE/CANCEL/END/QUIT** → suppress; **HELP** → info; **START** →
   resume). Opt-outs set a **permanent suppression** on `Party.contact_opt_outs` that **survives
-  GDPR erasure as a suppression hash** (`04-data-model.md §55`). Respect `quiet_hours` /
+  GDPR erasure as a suppression hash** (`04-data-model.md` `Party` retention notes). Respect `quiet_hours` /
   time-of-day rules.
 
 - **Call-recording consent** — recording is jurisdiction-dependent (two-party-consent US
@@ -377,7 +378,7 @@ data region is `BusinessProfile.data_region`.
   pickers avoid it. Microsoft Graph application permissions may need **tenant-admin consent**.
 
 - **General** — every PII access is logged (`AuditEvent`); erasure (DSAR) and export are
-  first-class (`04-data-model.md §296-307`); a disconnected/expired `IntegrationAccount` fails
+  first-class (`04-data-model.md` Retention & privacy summary); a disconnected/expired `IntegrationAccount` fails
   closed (workers get no tool, not a stale token).
 
 ---

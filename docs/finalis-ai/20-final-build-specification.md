@@ -97,7 +97,7 @@ survive restarts.
 
 ## 8. Autonomy, guardrails, audit (`13`)
 
-Autonomy Levels 1–5, `effective_level = min(tenant default per action-type, case setting)`;
+Autonomy Levels 1–5 (L5 disabled until post-MVP — 14 §1), `effective_level = min(tenant default per action-type, case setting)`;
 `HUMAN_REVIEW_REQUIRED` caps at Level 2. Parallel guardrails (OWASP LLM01/LLM06, Agentic
 ASI-series). Anti-hallucination: `θ_conf` abstention + mandatory evidence links + Quality
 critic. Immutable hash-chained audit; PII access logged.

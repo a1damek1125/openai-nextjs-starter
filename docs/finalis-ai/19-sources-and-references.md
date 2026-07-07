@@ -14,7 +14,7 @@
 | OpenAI Agents SDK (Python) | Agents/Handoffs/Guardrails/Sessions/Tracing; within-turn loop; "guardrails run in parallel, fail fast"; human review | https://openai.github.io/openai-agents-python/ | [snippet] primitives confirmed; exact HITL mechanism [UNVERIFIED] |
 | OpenAI Agents guide | Agents plan, use tools, collaborate, keep state | https://developers.openai.com/api/docs/guides/agents | [snippet] |
 | LangGraph | Durable execution, checkpoint/resume, streaming, persistence, human-in-the-loop `interrupt` | https://docs.langchain.com/oss/python/langgraph/overview · https://docs.langchain.com/oss/python/langgraph/durable-execution | [snippet], repo https://github.com/langchain-ai/langgraph |
-| Model Context Protocol | Standard for tools/resources/prompts; spec 2025-06-18 (OAuth resource servers, structured output, elicitation) | https://modelcontextprotocol.io/specification/2025-06-18 | [snippet] |
+| Model Context Protocol | Standard for tools/resources/prompts; stable spec 2025-11-25 (async tasks, OIDC discovery, elicitation enums — see §G); prior baseline 2025-06-18 (OAuth resource servers, structured output, elicitation) | https://modelcontextprotocol.io/specification/2025-11-25 | 2025-11-25 **[VERIFIED primary]** per §G; 2025-06-18 [snippet] |
 | Claude Code skills/subagents/hooks | Playbook-authoring & dev-productivity pattern (skills = on-demand markdown; subagents = isolated context; hooks = lifecycle control) | https://code.claude.com/docs/en/skills · https://github.com/anthropics/skills | skills page fetched directly; others [snippet] |
 | NVIDIA NeMo Agent Toolkit | Later profiling/eval infra reference (framework-agnostic, MCP/A2A) | https://github.com/NVIDIA/NeMo-Agent-Toolkit | repo description verified |
 
@@ -45,7 +45,7 @@
 |---|---|---|---|
 | Docling | PDF/DOCX/PPTX/XLSX/HTML/image; layout, reading order, tables, formulas, OCR; MD/HTML/JSON; **MIT**; IBM Research Zurich; LF AI & Data | https://github.com/docling-project/docling | repo fetched (primary) |
 | olmOCR | PDF/img → linearized MD; handwriting/tables/equations; 7B VLM (Qwen2-VL→Qwen2.5-VL); **olmOCR-Bench 82.4**; **~$190/M pages** vs >$6,240/M GPT-4o; **Apache-2.0** | https://github.com/allenai/olmocr · https://arxiv.org/abs/2502.18443 | repo fetched (primary); cost/training-set figures [snippet] |
-| PaddleOCR-VL | **0.9B** (NaViT encoder + ERNIE-4.5-0.3B); **109 languages**; text/tables/formulas/charts; SOTA OmniDocBench v1.5 | https://arxiv.org/abs/2510.14528 · https://huggingface.co/PaddlePaddle/PaddleOCR-VL | [snippet]; **weights license UNVERIFIED** |
+| PaddleOCR-VL | **0.9B** (NaViT encoder + ERNIE-4.5-0.3B); **109 languages**; text/tables/formulas/charts; SOTA OmniDocBench v1.5 (superseded by §G: v1.6, ~1B, 111 langs) | https://arxiv.org/abs/2510.14528 · https://huggingface.co/PaddlePaddle/PaddleOCR-VL | [snippet]; **weights license UNVERIFIED** |
 | Qwen2.5-VL / Qwen3-VL | Omni-document parsing (QwenVL-HTML); handwriting/tables/charts; Qwen3-VL OCR 32 langs, robust to low light/blur/tilt | https://arxiv.org/abs/2502.13923 · https://github.com/qwenlm/qwen3-vl | [snippet] + repo |
 | Surya | Layout/reading-order/table/OCR, **90+ langs**; code Apache-2.0, weights AI-Pubs Open RAIL-M (free <$5M) | https://github.com/datalab-to/surya | repo fetched (primary) |
 | Azure Document Intelligence | Per-word/per-field confidence + human-review threshold model | https://learn.microsoft.com/azure/ai-services/document-intelligence/concept/accuracy-confidence | [snippet] |

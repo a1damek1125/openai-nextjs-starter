@@ -73,7 +73,7 @@ rather than open-ended autonomy.
 Responsibilities: case-type recognition, worker selection, state management, next-step
 control, escalation, and — above all — **guaranteeing every active case has a next action**.
 
-**Implementation choice (see `18-tech-stack.md` for full trade-off):**
+**Implementation choice (see `18-technology-stack.md` for full trade-off):**
 - **LangGraph** is the recommended orchestration substrate because it is explicitly built for
   **durable execution** (checkpoints so a workflow "can pause and later resume exactly where
   it left off"), **streaming**, **persistence** (checkpointer + thread id), and
@@ -127,6 +127,10 @@ transitions under autonomy rules and writes audits.
 | **Follow-up Worker** | Cadence, channel, timing | `FollowUpSequence`, scores | scheduled/sent `Action`s | `09` |
 | **Decision Worker** | Owner-facing brief | full case | `DecisionBrief` + recommendation | `01`,`11` |
 | **Quality/Eval Worker** | Completeness/consistency check | any worker output | pass/fail + gaps, hallucination flags | `15` |
+
+The brief's "Contact Worker" (01 module 1) maps to the channel gateway + Voice Worker in this
+architecture — inbound message channels are handled by the gateway feeding the Orchestrator;
+live voice by the Voice Worker.
 
 **Cross-cutting skills** (invoked by the loop, not standalone agents): **Promise Tracker**,
 **Missing-Information Hunter**, **Objection Handler**, **Quote Builder** — each is a
