@@ -52,9 +52,10 @@
   "guardrails run in parallel… fail fast"; built-in "human review") are excellent for the
   *within-turn* agent loop and can be used inside individual workers. Docs:
   https://openai.github.io/openai-agents-python/
-- **MCP (spec 2025-06-18)** standardizes tools/resources/prompts, so every integration is a
+- **MCP (stable spec 2025-11-25)** (async tasks, OIDC discovery, elicitation enums; 2026-07-28
+  RC in flight) standardizes tools/resources/prompts, so every integration is a
   swappable, testable server and the system isn't locked to one orchestration framework.
-  https://modelcontextprotocol.io/specification/2025-06-18
+  https://modelcontextprotocol.io/specification/2025-11-25
 - **Temporal** (or a Postgres-backed durable queue) handles *time-based* durability — a
   follow-up scheduled 72h out must survive restarts even between orchestrator steps.
 - **NVIDIA NeMo Agent Toolkit** is noted as a later *profiling/evaluation* infra reference
@@ -71,7 +72,7 @@ chosen per language in `VoiceProfile`.
 
 ## 5. Documents rationale (see `07`)
 
-Routed multi-engine: **Docling** (MIT; structure/layout) → **PaddleOCR-VL** (0.9B, 109 langs) /
+Routed multi-engine: **Docling** (MIT; structure/layout) → **PaddleOCR-VL-1.6** (~1B, 111 langs; vendor-reported OmniDocBench v1.6 SOTA — validate locally, weights license unverified) /
 **Surya** (90+ langs) for clean scans → **olmOCR** (Apache-2.0; ~$190/M pages) / **Qwen-VL** for
 hard/handwritten. **License watch**: Surya weights are AI-Pubs Open RAIL-M (free under $5M
 funding/revenue — confirm as you grow); PaddleOCR-VL **weights license UNVERIFIED** — confirm
