@@ -2,7 +2,7 @@
 
 > This is the honest, founder/developer-usable risk register for Finalis AI (an AI Case & Deal
 > Worker: voice + documents + web research + autonomous follow-up). It is the doc referenced by
-> `04-data-model.md` ("see `16-risks-mitigations.md` for the full privacy/compliance posture").
+> `04-data-model.md` ("see `16-risks-and-mitigations.md` for the full privacy/compliance posture").
 >
 > **Scoring**: each risk carries **Likelihood (L)** and **Impact (I)** in **H/M/L**. Impact is
 > "if it happens, how bad for the tenant business, their client, or us." A **Priority** is a
@@ -64,6 +64,10 @@
     below `θ_conf` the `ExtractedField` is marked *unverified* and does not auto-populate a quote.
   - **Blocks-quote fields require human verification** (`ExtractedField.verified_by_human`)
     before a quote can be sent; price/scope fields are treated as blocks-quote by default.
+    Scope: OCR-extracted pricing inputs (dimensions, quantities, prices read from documents)
+    with Confidence < θ_conf require `verified_by_human` before feeding an outbound quote;
+    fields confirmed conversationally by the client or covered by price rules do not —
+    otherwise autonomous L4 quoting (13 §1) would be impossible.
   - **Cost-aware OCR escalation**: cheap engine first, escalate to heavier VLMs (olmOCR / Qwen
     VL) on low confidence, and request a re-scan (`Document.status = needs_rescan`) rather than
     trust a bad read (`07`).
@@ -87,7 +91,7 @@
 
 ### 1.4 Voice latency / quality failures
 - **Description**: high time-to-first-audio, robotic prosody, failed barge-in, STT errors,
-  mid-call dropouts — the AISDR sounds broken, mishears the client, or talks over them.
+  mid-call dropouts — Finalis sounds broken, mishears the client, or talks over them.
 - **L / I**: **M / M-H**. Real-time voice is the least forgiving surface; a bad call is an
   instant trust hit and can lose a lead.
 - **Mitigation**:

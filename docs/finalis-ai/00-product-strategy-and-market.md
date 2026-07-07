@@ -36,8 +36,9 @@ does everything." The moat is **operational case logic**, not the raw model.
 
 ## 3. Sales promise
 
-- **Owner-facing**: *"You won't lose a single client, document, promise, or deadline. Finalis
-  drives every case to the end."*
+- **Owner-facing**: *"Every case always has a next step, an owner, and a deadline — and anything
+  the AI can't handle lands on your desk, never in a void."* (Marketing copy must stay within
+  this defensible claim — see 16 §1.8 on over-promise risk.)
 - **One-liner**: *"An AI receptionist answers the phone. Finalis AI closes the case."*
 - **Value in the buyer's language**: more closed cases · fewer lost leads · fewer forgotten
   follow-ups · better document handling · faster client response · higher conversion · clearer

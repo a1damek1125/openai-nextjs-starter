@@ -177,19 +177,24 @@ Recomputed on **every inbound event** (state-machine invariant, `03` §2). Cross
 `θ_escalate` (default **1.5**) fires the **global interrupt edge**: any active state →
 `HUMAN_REVIEW_REQUIRED`.
 
-### 2.1 Hard-override rules (escalate regardless of the sum)
+### 2.1 Hard-override rules and high-weight terms
 
-These bypass the threshold entirely — a single one forces `HUMAN_REVIEW_REQUIRED` even if the
-accumulated score is low:
+Only **two** conditions are true hard overrides (matching `05` §8): they bypass the threshold
+entirely — a single one forces `HUMAN_REVIEW_REQUIRED` even if the accumulated score is low.
+The remaining four rows are **high-weight terms feeding the `EscalationScore` sum — they
+escalate via the threshold, not as unconditional overrides**:
 
-| Override | Trigger | Mapped term |
-|---|---|---|
-| **Legal / notarial signing** | any signing decision, contract redline, notarial content, `DocRisk ≥ θ_docrisk` "requires human before signing" | `LegalSensitivity = 1` |
-| **Safety emergency** | gas leak, fire, flooding, electrical hazard, injury risk | `Risk = 1` (give safety script + emergency route, `03` §3.1) |
-| **High value** | `value ≥ high_value_threshold` | `ValueCriticality = 1` |
-| **Low confidence** | deciding fact `Confidence < θ_conf` | `LowConfidence = 1 − Confidence` |
-| **Client emotion** | anger/distress detected in voice or text | `ClientEmotion` high |
-| **Unusual request** | out-of-distribution vs. the `IndustryPlaybook` | `UnusualRequest` high |
+| Condition | Trigger | Mapped term | Override? |
+|---|---|---|---|
+| **Legal / notarial signing** | any signing decision, contract redline, notarial content, `DocRisk ≥ θ_docrisk` "requires human before signing" | `LegalSensitivity = 1` | **Yes — hard override** |
+| **Safety emergency** | gas leak, fire, flooding, electrical hazard, injury risk | `Risk = 1` (give safety script + emergency route, `03` §3.1) | **Yes — hard override** |
+| **High value** | `value ≥ high_value_threshold` | `ValueCriticality = 1` | No — high-weight term; escalates via `θ_escalate` |
+| **Low confidence** | deciding fact `Confidence < θ_conf` | `LowConfidence = 1 − Confidence` | No — high-weight term; escalates via `θ_escalate` |
+| **Client emotion** | anger/distress detected in voice or text | `ClientEmotion` high | No — high-weight term; escalates via `θ_escalate` |
+| **Unusual request** | out-of-distribution vs. the `IndustryPlaybook` | `UnusualRequest` high | No — high-weight term; escalates via `θ_escalate` |
+
+MVP note: until the full EscalationScore model ships (Phase 3, task S-ESC), escalation runs on
+the two hard-override rules plus manually configured playbook rules only.
 
 ### 2.2 The `HUMAN_REVIEW_REQUIRED` cap
 

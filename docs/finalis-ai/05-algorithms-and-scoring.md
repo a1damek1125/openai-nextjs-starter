@@ -62,6 +62,9 @@ MIS_normalized = MIS / Σ_i w_i           (over all required fields for the case
 For each candidate action `a` in the action space (call, WhatsApp, SMS, email, request-doc,
 prepare-quote, escalate, wait, schedule, compare-offers, do-web-research):
 
+(Actions are playbook-gated: e.g. `do-web-research` is disabled until WebScout ships in
+Phase 3 — the selector never proposes an action with no executor.)
+
 ```
 Utility(a) = P(close | a) · Value  −  Cost(a)  −  Risk(a)  −  DelayPenalty(a)
 ```
