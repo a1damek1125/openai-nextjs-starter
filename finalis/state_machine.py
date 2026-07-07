@@ -32,12 +32,11 @@ class CaseState(str, Enum):
 TERMINAL_STATES = {CaseState.COMPLETED, CaseState.ABANDONED}
 CLOSED_REOPENABLE_STATES = {CaseState.WON, CaseState.LOST}
 PARKED_STATES = {CaseState.RECOVERY_LATER}
-ACTIVE_STATES = (
-    set(CaseState)
-    - TERMINAL_STATES
-    - CLOSED_REOPENABLE_STATES
-    - PARKED_STATES
-)
+# FINAL states (case-graph spec): closure outcomes. Leaving any of them
+# requires explicit human override — except the scheduled RECOVERY_LATER wake,
+# which the Completion Loop performs with trigger=scheduled_wake.
+FINAL_STATES = (TERMINAL_STATES | CLOSED_REOPENABLE_STATES | PARKED_STATES)
+ACTIVE_STATES = set(CaseState) - FINAL_STATES
 
 # docs/finalis-ai/03 §4 — explicit per-state transitions.
 TRANSITIONS: dict[CaseState, set[CaseState]] = {
@@ -65,12 +64,14 @@ TRANSITIONS: dict[CaseState, set[CaseState]] = {
         CaseState.INTAKE_IN_PROGRESS,
         CaseState.QUALIFIED,
         CaseState.WAITING_FOR_DOCUMENTS,
+        CaseState.FOLLOW_UP_ACTIVE,
         CaseState.RECOVERY_LATER,
         CaseState.ABANDONED,
         CaseState.HUMAN_REVIEW_REQUIRED,
     },
     CaseState.WAITING_FOR_DOCUMENTS: {
         CaseState.DOCUMENT_ANALYSIS,
+        CaseState.FOLLOW_UP_ACTIVE,
         CaseState.RECOVERY_LATER,
         CaseState.ABANDONED,
         CaseState.HUMAN_REVIEW_REQUIRED,
@@ -92,10 +93,13 @@ TRANSITIONS: dict[CaseState, set[CaseState]] = {
         CaseState.WON,
         CaseState.LOST,
         CaseState.SCHEDULED,
+        CaseState.RECOVERY_LATER,
     },
     CaseState.FOLLOW_UP_ACTIVE: {
         CaseState.NEGOTIATION,
         CaseState.OFFER_SENT,
+        CaseState.WAITING_FOR_CLIENT_INFO,
+        CaseState.WAITING_FOR_DOCUMENTS,
         CaseState.WON,
         CaseState.LOST,
         CaseState.SCHEDULED,
@@ -107,12 +111,14 @@ TRANSITIONS: dict[CaseState, set[CaseState]] = {
         CaseState.LOST,
         CaseState.OFFER_SENT,
         CaseState.FOLLOW_UP_ACTIVE,
+        CaseState.RECOVERY_LATER,
         CaseState.HUMAN_REVIEW_REQUIRED,
     },
-    # HUMAN_REVIEW_REQUIRED → any active state (per human decision) + closures.
+    # HUMAN_REVIEW_REQUIRED → any non-final state (per human decision) + all
+    # final closure outcomes.
     CaseState.HUMAN_REVIEW_REQUIRED: (
         (ACTIVE_STATES - {CaseState.HUMAN_REVIEW_REQUIRED})
-        | {CaseState.WON, CaseState.LOST, CaseState.ABANDONED}
+        | FINAL_STATES
     ),
     CaseState.SCHEDULED: {
         CaseState.COMPLETED,
@@ -147,8 +153,16 @@ def is_legal(
     escalation_interrupt: bool = False,
     hard_opt_out: bool = False,
     followup_exhausted: bool = False,
+    human_override: bool = False,
+    scheduled_wake: bool = False,
 ) -> bool:
-    """True if the transition is allowed by 03 §4 incl. the two global edges."""
+    """True if the transition is allowed (03 §4 + case-graph final-state rule).
+
+    Final-state rule: no FINAL state (WON/LOST/COMPLETED/ABANDONED/
+    RECOVERY_LATER) may transition without explicit `human_override` — with
+    one documented exception: the Completion Loop's scheduled wake
+    RECOVERY_LATER → FOLLOW_UP_ACTIVE (`scheduled_wake=True`).
+    """
     # Global interrupt edge: any active state → HUMAN_REVIEW_REQUIRED.
     if (
         escalation_interrupt
@@ -164,13 +178,22 @@ def is_legal(
         and to_state in {CaseState.ABANDONED, CaseState.LOST}
     ):
         return True
-    return to_state in TRANSITIONS[from_state]
+    if to_state not in TRANSITIONS[from_state]:
+        return False
+    if from_state in FINAL_STATES:
+        wake_ok = (scheduled_wake
+                   and from_state is CaseState.RECOVERY_LATER
+                   and to_state is CaseState.FOLLOW_UP_ACTIVE)
+        return human_override or wake_ok
+    return True
 
 
 def transition(case, to_state: CaseState, *, actor: str, reason: str,
                audit_log, escalation_interrupt: bool = False,
                hard_opt_out: bool = False,
-               followup_exhausted: bool = False) -> None:
+               followup_exhausted: bool = False,
+               human_override: bool = False,
+               scheduled_wake: bool = False) -> None:
     """Apply a transition, enforcing 03 §2 invariants and writing an AuditEvent."""
     from_state = case.state
     if not is_legal(
@@ -179,6 +202,8 @@ def transition(case, to_state: CaseState, *, actor: str, reason: str,
         escalation_interrupt=escalation_interrupt,
         hard_opt_out=hard_opt_out,
         followup_exhausted=followup_exhausted,
+        human_override=human_override,
+        scheduled_wake=scheduled_wake,
     ):
         raise IllegalTransition(f"{from_state.value} -> {to_state.value}")
 

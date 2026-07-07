@@ -112,12 +112,18 @@ class TestTransitions:
         assert case.opted_out is True
 
     def test_random_walk_never_violates_invariants(self):
-        """Property test: 500 random legal walks keep audit chain + legality."""
+        """Property test: random legal walks keep audit chain + legality.
+
+        Walks stop at FINAL states (leaving them requires human override).
+        """
+        from finalis.state_machine import FINAL_STATES
         rng = random.Random(42)
         for _ in range(50):
             case = make_case()
             audit = AuditLog()
             for _step in range(20):
+                if case.state in FINAL_STATES:
+                    break
                 options = sorted(TRANSITIONS[case.state], key=lambda s: s.value)
                 if not options:
                     break
@@ -125,6 +131,28 @@ class TestTransitions:
                 transition(case, to, actor="walk", reason="rand",
                            audit_log=audit)
             assert audit.verify_chain()
+
+    def test_final_states_require_human_override_to_exit(self):
+        """Case-graph rule: WON/LOST/COMPLETED/ABANDONED/RECOVERY_LATER are
+        final; no exit without explicit human override (wake excepted)."""
+        from finalis.state_machine import FINAL_STATES
+        # WON → RECOVERY_LATER (in table) blocked without override, ok with it.
+        assert not is_legal(CaseState.WON, CaseState.RECOVERY_LATER)
+        assert is_legal(CaseState.WON, CaseState.RECOVERY_LATER,
+                        human_override=True)
+        assert not is_legal(CaseState.LOST, CaseState.RECOVERY_LATER)
+        assert is_legal(CaseState.LOST, CaseState.RECOVERY_LATER,
+                        human_override=True)
+        # RECOVERY_LATER wake: scheduled_wake OR override, never bare.
+        assert not is_legal(CaseState.RECOVERY_LATER, CaseState.FOLLOW_UP_ACTIVE)
+        assert is_legal(CaseState.RECOVERY_LATER, CaseState.FOLLOW_UP_ACTIVE,
+                        scheduled_wake=True)
+        assert is_legal(CaseState.RECOVERY_LATER, CaseState.FOLLOW_UP_ACTIVE,
+                        human_override=True)
+        # scheduled_wake never unlocks other final exits.
+        assert not is_legal(CaseState.WON, CaseState.COMPLETED,
+                            scheduled_wake=True)
+        assert is_legal(CaseState.WON, CaseState.COMPLETED, human_override=True)
 
 
 class TestJsonConsistency:

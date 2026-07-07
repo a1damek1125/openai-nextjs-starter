@@ -221,7 +221,13 @@ def test_e2e_escalation_and_recovery_paths():
         t += timedelta(hours=25)
     loop.park_exhausted(silent, t)
     assert silent.state is CaseState.RECOVERY_LATER
-    # Wake later → back to FOLLOW_UP_ACTIVE (legal transition).
+    # RECOVERY_LATER is a FINAL state: leaving it requires the scheduled wake
+    # (Completion Loop) or an explicit human override.
+    import pytest
+    from finalis.state_machine import IllegalTransition
+    with pytest.raises(IllegalTransition):
+        transition(silent, CaseState.FOLLOW_UP_ACTIVE, actor="system",
+                   reason="wake without flag", audit_log=audit)
     transition(silent, CaseState.FOLLOW_UP_ACTIVE, actor="system",
-               reason="wake", audit_log=audit)
+               reason="wake", audit_log=audit, scheduled_wake=True)
     assert audit.verify_chain()

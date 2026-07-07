@@ -18,6 +18,21 @@ def _uuid() -> str:
 
 
 @dataclass
+class Party:
+    """Any actor in a case — client, company, technician, supplier, notary,
+    lawyer, insurer (doc 04)."""
+    tenant_id: str
+    type: str
+    display_name: str
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    address: Optional[str] = None
+    preferred_channel: str = "phone"
+    notes: str = ""
+    id: str = field(default_factory=_uuid)
+
+
+@dataclass
 class EvidenceReference:
     source_type: str  # message | call_segment | document_region | web_source
     source_id: str
@@ -115,6 +130,8 @@ class Case:
     lead_score: float = 0.0
     risk_score: float = 0.0
     mis_score: float = 0.0
+    stuck_score: float = 0.0
+    escalation_score: float = 0.0
     autonomy_level: int = 3          # tenant/case setting, L1-L5
     autonomy_frozen_at: Optional[int] = None  # set to 2 in HUMAN_REVIEW_REQUIRED
     opted_out: bool = False
