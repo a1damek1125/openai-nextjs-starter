@@ -314,27 +314,31 @@ The **minimum level required to *act*** on each integration, and whether a human
 | Integration | Read/ingest | Typical autonomous *action* | Min level to act | Human approval? |
 |---|---|---|---|---|
 | Google/Outlook Calendar | L1 | Book / reschedule appointment | **L4** | No for routine slots; **yes** if it moves a confirmed high-value job |
-| Gmail / Outlook email — routine follow-up | L1 | Send reminder / info-request | **L4** | No (templated, reversible) |
-| Gmail / Outlook — quote / contract email | L1 | Send priced offer | **L3** | **Yes** — approve before send |
-| WhatsApp — in-window free-form reply | L1 | Reply within 24h window | **L4** | No |
-| WhatsApp — template / proactive (out-of-window) | L1 | Send approved template | **L4** | No, but **opt-in + approved template** required (§2.3/§5) |
-| SMS — reminder / confirmation | L1 | Send SMS | **L4** | No (consent + 10DLC required) |
-| Telephony / Voice — inbound | L1 | Converse, qualify, book | **L4** | No; **hard handoff** on `θ_escalate` or hot flags (`06`) |
-| Telephony / Voice — outbound call | L1 | Place outbound call | **L4** | **Yes** for cold/high-value; No for expected callbacks |
-| Web form | L1 | Create `Case`, auto-acknowledge | **L4** | No |
-| Web chat | L1 | Converse, collect info | **L4** | No; escalate on gate |
+| Gmail / Outlook email — routine follow-up | L1 | Send reminder / info-request (informational) | **L3** | No (informational, reversible) |
+| Gmail / Outlook — quote / contract email | L1 | Send rule-covered standard priced offer | **L4** | No for quotes fully inside `price_rules` and below `high_value_threshold`; **yes — `HumanApproval` regardless of level** for anything priced outside rules, discounts, or legal content |
+| WhatsApp — in-window free-form reply | L1 | Reply within 24h window (informational) | **L3** | No |
+| WhatsApp — template / proactive (out-of-window) | L1 | Send approved template (informational) | **L3** | No, but **opt-in + approved template** required (§2.3/§5) |
+| SMS — reminder / confirmation | L1 | Send SMS reminder | **L3** | No (consent + 10DLC required) |
+| Telephony / Voice — inbound | L1 | Answer, converse, qualify (**booking within the call needs L4**) | **L3** | No; **hard handoff** on `θ_escalate` or hot flags (`06`) |
+| Telephony / Voice — outbound call | L1 | Place informational AI call (intake / follow-up) | **L3** | **Yes** for cold/high-value; No for expected callbacks |
+| Web form | L1 | Create `Case`, auto-acknowledge (informational) | **L3** | No |
+| Web chat | L1 | Converse, collect info | **L3** | No; escalate on gate |
 | Drive / OneDrive ingest | **L1** | (ingest only in MVP) | n/a (read) | No |
 | PDF upload | **L1** | (ingest only) | n/a (read) | No |
 | CRM sync (roadmap) | L1 | Write deal/activity | **L4** | No (internal), reconcile conflicts |
-| E-signature (roadmap) | L1 | Send for signature | **L3** | **Yes** |
-| Invoicing / payment (roadmap) | L1 | Raise invoice / charge | **L3** | **Yes** — financial action always gated |
+| E-signature (roadmap) | L1 | Send for signature | — | **Yes — legal content, `HumanApproval` regardless of level** |
+| Invoicing / payment (roadmap) | L1 | Raise invoice / charge | — | **Yes — financial action, `HumanApproval` regardless of level** |
 | FSM dispatch (roadmap) | L1 | Create/dispatch job | **L4** | Tenant-config; often **yes** |
 
-Rules of thumb consistent with the rest of the blueprint: **money, legal signatures, and
-sending a priced offer are never below Level 3 (approval-gated).** Any transition into
-`HUMAN_REVIEW_REQUIRED` **caps autonomy at Level 2** (`03 §46-47`) — outbound actions freeze.
-If `a* = argmax Utility(a)` needs a level above the case's setting, the Orchestrator emits a
-`HumanApproval` instead of executing (`05 §77-78`).
+Rules of thumb consistent with the rest of the blueprint: **routine informational sends (email
+follow-up reminders, in-window WhatsApp session replies, SMS reminders, answering inbound
+voice) run autonomously from L3 with no approval; bookings and rule-covered standard quotes
+require L4; anything priced outside rules, discounts, and legal content require a
+`HumanApproval` regardless of level.** Sending a priced offer requires L4 with full price-rule
+coverage; outside rule coverage it requires `HumanApproval` regardless of level (`13` §1). Any
+transition into `HUMAN_REVIEW_REQUIRED` **caps autonomy at Level 2** (`03` §2 invariants) —
+outbound actions freeze. If `a* = argmax Utility(a)` needs a level above the case's setting,
+the Orchestrator emits a `HumanApproval` instead of executing (`05` §3 Next Best Action).
 
 ---
 
