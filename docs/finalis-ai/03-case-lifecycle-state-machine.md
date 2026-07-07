@@ -7,7 +7,7 @@
 
 This document is the authoritative specification of case states. It is designed to be
 implemented directly as a LangGraph graph or an OpenAI Agents SDK workflow backed by a
-durable store (see `18-tech-stack.md`). States map 1:1 to the `Case.status` enum.
+durable store (see `18-technology-stack.md`). States map 1:1 to the `Case.status` enum.
 
 ---
 
@@ -36,13 +36,13 @@ RECOVERY_LATER (parked; wakes back to FOLLOW_UP_ACTIVE)
 **Terminal states**: `COMPLETED`, `ABANDONED`. **Closed but reopenable**: `WON`, `LOST`.
 **Parked**: `RECOVERY_LATER`. All other states are *active* and must always carry a
 non-null `next_action` and `due_at`; a scheduler invariant check (the "stuck sweep",
-see `09-completion-loop-and-followup.md`) fails loudly if an active case has no future action.
+see `09-completion-loop-followup-promises.md`) fails loudly if an active case has no future action.
 
 ---
 
 ## 2. Global invariants (enforced on every transition)
 
-1. An **active** case MUST have `next_best_action != null` and `due_at != null`.
+1. An **active** case MUST have `next_best_action != null` and `next_action_due_at != null` (referred to as `due_at` in shorthand throughout).
 2. Any transition into `HUMAN_REVIEW_REQUIRED` freezes all outbound autonomous actions
    (autonomy is capped at Level 2 "Prepare" — see `13-autonomy-and-safety.md`).
 3. A transition may only be executed by an actor allowed at the case's current autonomy
@@ -50,6 +50,8 @@ see `09-completion-loop-and-followup.md`) fails loudly if an active case has no 
 4. Every transition writes `AuditEvent{from_state, to_state, actor, reason, evidence_refs}`.
 5. `EscalationScore` is recomputed on every inbound event; crossing `θ_escalate` forces a
    transition to `HUMAN_REVIEW_REQUIRED` from any active state (a global "interrupt edge").
+   (MVP note: until the full EscalationScore model ships (Phase 3, task S-ESC), this
+   interrupt runs on the hard-override rules only — see 13 §2.)
 6. A hard client opt-out (STOP/"don't contact me") forces `ABANDONED` (or `LOST` if a
    reason is captured) and suppresses all future outbound actions permanently.
 
@@ -66,7 +68,7 @@ actions** · **Prohibited AI actions** · **Next states** · **Escalation trigge
   OR a manually created case.
 - **Required data**: at minimum a channel identity (phone/email/handle) and a raw first
   message or call recording.
-- **Allowed AI actions (L1–L4)**: greet, identify returning client via `Deal Memory`,
+- **Allowed AI actions**: greet, identify returning client via `Deal Memory`,
   create `Case`, classify intent, detect language, start `Conversation`.
 - **Prohibited**: quoting a price, promising an appointment slot, making commitments.
 - **Next states**: `INTAKE_IN_PROGRESS` (default), `HUMAN_REVIEW_REQUIRED` (angry/legal),
@@ -76,6 +78,8 @@ actions** · **Prohibited AI actions** · **Next states** · **Escalation trigge
 - **Follow-up timing**: n/a (synchronous). If contact drops before intake, immediate
   callback attempt policy is defined in `WAITING_FOR_CLIENT_INFO`.
 - **Metrics**: answer rate, time-to-answer, intent-classification accuracy, dedup accuracy.
+
+Note: *answering an inbound contact* (greeting, capturing the request) is a distinct action class: at autonomy L1–L2 the AI only captures a message/voicemail and notifies a human; conversational answering requires L3+ (see 13 §1). The MVP default for the inbound-answer action type is therefore L3.
 
 ### 3.2 `INTAKE_IN_PROGRESS`
 - **Entry**: from `NEW_CONTACT` once intent is a serviceable request.
@@ -317,16 +321,18 @@ actions** · **Prohibited AI actions** · **Next states** · **Escalation trigge
 Plus the **global interrupt edge**: any active state → `HUMAN_REVIEW_REQUIRED` when
 `EscalationScore ≥ θ_escalate` or a hard rule fires.
 
+Global closure edge: any non-terminal state → ABANDONED (or LOST if a reason is captured) on hard client opt-out (STOP) or on follow-up exhaustion where recovery is inappropriate. This edge is always legal and overrides the per-state transition table.
+
 ---
 
 ## 5. Implementation notes
 
 - Model this as an explicit state machine persisted per case; drive it with a durable
   orchestrator (LangGraph checkpointing or OpenAI Agents SDK sessions + a Temporal/durable
-  queue). See `18-tech-stack.md` for the trade-off and `02-architecture.md` for how workers
+  queue). See `18-technology-stack.md` for the trade-off and `02-multi-agent-architecture.md` for how workers
   attach to states.
-- The **daily stuck sweep** iterates all active cases, recomputes `StuckScore`,
-  `FollowUpPriority`, and `PromiseBreachScore`, and enqueues the next action. This is the
+- The **daily stuck sweep** iterates all active cases, recomputes `LeadScore`, `MIS`,
+  `StuckScore`, `EscalationScore`, `PromiseBreachScore`, and `FollowUpPriority`, and enqueues the next action. This is the
   heartbeat that makes "the system never stops after one conversation" literally true.
 - Thresholds (`θ_qualify`, `θ_escalate`, `θ_docrisk`, high-value, quiet hours, max attempts)
   live in `BusinessProfile`/`IndustryPlaybook` so each tenant tunes behavior without code

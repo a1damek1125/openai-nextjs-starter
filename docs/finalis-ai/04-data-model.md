@@ -119,6 +119,18 @@ table is tenant-scoped and every query is tenant-filtered (row-level security).
 - **Indexes**: `(tenant_id, claim_id)`, `(tenant_id, source_type, source_id)`.
 - **Retention/privacy**: snippet may contain PII; follows source retention.
 
+### `Source`
+- **Purpose**: a WebScout-recorded external source — the storage home for every web research
+  fact (see `08-webscout-web-research.md` §5 output contract).
+- **Fields**: `url`, `source_type (manufacturer|registry|gov|retailer|marketplace|forum|blog|pdf|other)`,
+  `date_checked`, `title`, `snippet (text)`, `trust_score (0–100, see 05 §11)`,
+  `relevance (0–1)`, `confidence (0–1)`, `extracted_facts (jsonb)`, `case_id (FK, nullable)`.
+- **Relations**: → `Case`; referenced by `EvidenceReference.source_id` when
+  `source_type=web_source`; feeds `Source_q` in Evidence Confidence (`05` §6).
+- **Indexes**: `(tenant_id, case_id)`, `(tenant_id, url)`.
+- **Retention/privacy**: public-web content, low sensitivity; snippet retained with case;
+  respect deletion of case-linked rows on erasure.
+
 ### `Photo`
 - **Purpose**: a client/site photo (job site, appliance nameplate, damage) — a specialization
   of media used by intake & quoting.
@@ -223,6 +235,22 @@ table is tenant-scoped and every query is tenant-filtered (row-level security).
 - **Indexes**: `(tenant_id, case_id, created_at)`, `(tenant_id, event_type)`.
 - **Retention/privacy**: **immutable**, long retention; the compliance backbone. Never
   edited; PII minimized (store references, not raw PII, where possible).
+
+### Metering
+
+### `CostEvent`
+- **Purpose**: per-call metering record for every LLM/STT/TTS/OCR/telephony/message unit
+  consumed.
+- **Fields**: `case_id (nullable)`, `worker`, `provider`,
+  `unit_type (tokens|minutes|pages|messages|requests)`, `quantity`,
+  `unit_cost_ref (FK CostRateCard)`, `computed_cost`, `currency`.
+- **Indexes**: `(tenant_id, created_at)`, `(tenant_id, case_id)`.
+- **Retention/privacy**: financial/audit — long.
+
+### `CostRateCard`
+- **Purpose**: versioned vendor rate table used to price `CostEvent`s.
+- **Fields**: `provider`, `unit_type`, `rate`, `currency`, `valid_from`, `valid_to`.
+- **Indexes**: `(provider, unit_type, valid_from)`.
 
 ### `IntegrationAccount`
 - **Purpose**: a connected external system (Google Calendar, Gmail/Outlook, WhatsApp Business,

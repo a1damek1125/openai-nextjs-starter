@@ -25,8 +25,7 @@ Because LangGraph "saves progress at checkpoints … to pause and later resume e
 left off" (https://docs.langchain.com/oss/python/langgraph/durable-execution), multi-day cases
 resume correctly.
 
-**Closure paths** (the only ways a case leaves the loop): `WON`, `LOST`, `COMPLETED`,
-`ABANDONED`, `HUMAN_REVIEW_REQUIRED` (temporary), or parked `RECOVERY_LATER`.
+**Closure paths** (the only ways a case leaves the loop): `WON`, `LOST`, `COMPLETED`, `ABANDONED`, or parked `RECOVERY_LATER`. `HUMAN_REVIEW_REQUIRED` is a pause (autonomy frozen at L2, human SLA tracked), not a closure.
 
 ## 2. Follow-up Worker (anti-spam by design)
 

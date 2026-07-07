@@ -366,5 +366,3 @@ All rows above additionally chain via `hash_prev` and log any PII access.
   (`15`) accumulates per-tenant outcome data.
 - **OSWorld post-publication SOTA numbers** remain UNVERIFIED (`02` §0) and must not be cited
   as fact.
-</content>
-</invoke>

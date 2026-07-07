@@ -52,7 +52,8 @@ tomorrow", "case requires human approval"). Semantic retrieval via embeddings. F
 **Job**: never stop after one conversation.
 **Features**: every case has status, next action, due time, owner, `risk_score`, `lead_score`,
 `mis_score`, closure path; nightly stuck sweep + event-driven recompute; closure only via
-won/lost/completed/escalated/abandoned/recovery-later. Full spec `09`, `03`.
+won / lost / completed / abandoned / recovery-later (human-review escalation is a pause, not a
+closure). Full spec `09`, `03`.
 
 ## 5. Follow-up Worker
 **Job**: contact the client until the case progresses — without spamming.

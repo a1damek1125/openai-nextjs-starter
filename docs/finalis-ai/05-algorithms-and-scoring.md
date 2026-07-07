@@ -224,6 +224,21 @@ PromiseBreachScore = Importance · Delay · DependencyImpact
 
 ---
 
+## 10b. Case Risk Score
+
+```
+CaseRiskScore = 100 · max(0.6 · max_open(RiskFlag.severity),
+                          0.4 · DocRisk_max / 100,
+                          min(1, EscalationScore / θ_escalate))
+```
+
+A deterministic roll-up of the case's open `RiskFlag` severities, the highest `DocRisk`
+among the case's documents (§5), and proximity to the escalation threshold (§8). Persisted
+to `Case.risk_score`; recomputed with the other scores (§12). Like every score here it is
+auditable: inputs + weight version persist to `AuditEvent`.
+
+---
+
 ## 11. WebScout Source Trust Score
 
 ```
@@ -248,7 +263,8 @@ date checked, snippet, trust score, and relevance (see `08-webscout-web-research
 
 Nightly + on every inbound event, for each active case:
 
-1. Recompute `LeadScore`, `MIS`, `StuckScore`, `PromiseBreachScore`, `EscalationScore`.
+1. Recompute `LeadScore`, `MIS`, `StuckScore`, `PromiseBreachScore`, `EscalationScore`,
+   and `CaseRiskScore` (persisted as `Case.risk_score`, §10b).
 2. If `EscalationScore ≥ θ_escalate` → escalate (stop here).
 3. Else enumerate candidate actions, compute `Utility(a)` (§3) with `FollowUpPriority`
    feeding the follow-up actions' `P(close|a)` and timing (§4).
