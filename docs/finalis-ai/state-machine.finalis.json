@@ -1,0 +1,530 @@
+{
+  "version": "1.0",
+  "$source": "docs/finalis-ai/03-case-lifecycle-state-machine.md (authoritative); cross-refs: 09-completion-loop-followup-promises.md, 13-autonomy-and-safety.md",
+  "$comment": "Machine-readable canonical spec of the 17-state case lifecycle. States map 1:1 to the Case.status enum. Transitions transcribe 03 SS4 exactly; the HUMAN_REVIEW_REQUIRED wildcard row ('* any active state') is kept as to='ANY_ACTIVE' and expands to the 11 other active states at load time.",
+  "state_kinds": {
+    "active": ["NEW_CONTACT", "INTAKE_IN_PROGRESS", "QUALIFIED", "WAITING_FOR_CLIENT_INFO", "WAITING_FOR_DOCUMENTS", "DOCUMENT_ANALYSIS", "QUOTE_PREPARATION", "OFFER_SENT", "FOLLOW_UP_ACTIVE", "NEGOTIATION", "HUMAN_REVIEW_REQUIRED", "SCHEDULED"],
+    "closed_reopenable": ["WON", "LOST"],
+    "terminal": ["COMPLETED", "ABANDONED"],
+    "parked": ["RECOVERY_LATER"]
+  },
+  "states": {
+    "NEW_CONTACT": {
+      "kind": "active",
+      "requires_next_action": true,
+      "autonomy_cap": null,
+      "timeout_behavior": "n/a (synchronous). If contact drops before intake, immediate callback attempt per the WAITING_FOR_CLIENT_INFO policy.",
+      "entry_requires": [
+        "inbound call/WhatsApp/SMS/email/web-form/web-chat with no matching open case, OR manually created case",
+        "channel identity (phone/email/handle)",
+        "raw first message or call recording"
+      ],
+      "allowed_ai_actions": [
+        "greet",
+        "identify returning client via Deal Memory",
+        "create Case",
+        "classify intent",
+        "detect language",
+        "start Conversation"
+      ],
+      "prohibited_ai_actions": [
+        "quoting a price",
+        "promising an appointment slot",
+        "making commitments"
+      ],
+      "escalation_triggers": [
+        "legal threat",
+        "safety emergency (gas leak: give safety script + emergency route)",
+        "abusive caller"
+      ],
+      "followup_timing": "n/a (synchronous)",
+      "metrics": ["answer rate", "time-to-answer", "intent-classification accuracy", "dedup accuracy"],
+      "notes": "Answering an inbound contact is a distinct action class: L1-L2 capture-and-notify only; conversational answering requires L3+ (MVP default L3 for inbound-answer)."
+    },
+    "INTAKE_IN_PROGRESS": {
+      "kind": "active",
+      "requires_next_action": true,
+      "autonomy_cap": null,
+      "timeout_behavior": "Client silent mid-intake: retry per FollowUpPriority (typically +2h same channel, then +24h alternate channel).",
+      "entry_requires": [
+        "from NEW_CONTACT once intent is a serviceable request",
+        "industry playbook selected (IndustryPlaybook)",
+        "intake checklist instantiated as MissingItem rows"
+      ],
+      "allowed_ai_actions": [
+        "ask industry intake questions (name, address, problem type, urgency, scope, timing, budget band, existing competing quote)",
+        "request photos/documents",
+        "confirm contact preferences",
+        "compute initial LeadScore and MIS"
+      ],
+      "prohibited_ai_actions": [
+        "final pricing",
+        "assuming unstated facts",
+        "over-asking (respect AnnoyanceRisk)"
+      ],
+      "escalation_triggers": ["out-of-scope job", "high EscalationScore", "LegalSensitivity"],
+      "followup_timing": "+2h same channel, then +24h alternate channel on silence",
+      "metrics": ["intake completion rate", "fields captured per contact", "drop-off point"]
+    },
+    "QUALIFIED": {
+      "kind": "active",
+      "requires_next_action": true,
+      "autonomy_cap": null,
+      "timeout_behavior": "None specified: 'immediate progression; no dwell' (see verification doc issue F: must be transient or get a timeout).",
+      "entry_requires": [
+        "LeadScore >= theta_qualify",
+        "core required fields present",
+        "fit-to-services C > 0",
+        "address/service area, job type, urgency, rough scope, decision-maker signal"
+      ],
+      "allowed_ai_actions": [
+        "route to correct downstream state",
+        "book a survey/visit if playbook allows (L4)",
+        "prepare DecisionBrief stub for the owner"
+      ],
+      "prohibited_ai_actions": ["skipping required blocking MissingItems"],
+      "escalation_triggers": ["value above owner-configured high_value_threshold"],
+      "followup_timing": "immediate progression; no dwell",
+      "metrics": ["qualification precision/recall vs human labels", "false-qualify rate"]
+    },
+    "WAITING_FOR_CLIENT_INFO": {
+      "kind": "active",
+      "requires_next_action": true,
+      "autonomy_cap": null,
+      "timeout_behavior": "Cadence +24h -> +48h -> +72h (configurable); max N attempts, then park to RECOVERY_LATER.",
+      "entry_requires": [
+        "a non-document MissingItem blocks progress (dimensions, preferred time, budget, decision confirmation)",
+        "the specific blocking MissingItem(s) with weights w_i"
+      ],
+      "allowed_ai_actions": [
+        "send one targeted request via best channel",
+        "set a Promise ('client will send X')",
+        "schedule a follow-up"
+      ],
+      "prohibited_ai_actions": [
+        "repeated pinging inside the AnnoyanceRisk cool-down",
+        "guessing the missing value"
+      ],
+      "escalation_triggers": ["StuckScore high on a high-value case"],
+      "followup_timing": "+24h -> +48h -> +72h, max N attempts before RECOVERY_LATER",
+      "metrics": ["missing-info recovery rate", "avg attempts to recover", "days-to-unblock"]
+    },
+    "WAITING_FOR_DOCUMENTS": {
+      "kind": "active",
+      "requires_next_action": true,
+      "autonomy_cap": null,
+      "timeout_behavior": "Same cadence as WAITING_FOR_CLIENT_INFO (+24h -> +48h -> +72h, max N attempts -> RECOVERY_LATER). No explicit cap on needs_rescan re-request loops (see verification doc issue B).",
+      "entry_requires": [
+        "a document/photo MissingItem blocks a quote or analysis (nameplate photo, VIN, floor plan, previous offer, invoice, contract, ID)",
+        "list of required document types + acceptance criteria (min resolution, which pages)"
+      ],
+      "allowed_ai_actions": [
+        "request upload with an example",
+        "accept via WhatsApp/email/upload link",
+        "run a quality pre-check on arrival"
+      ],
+      "prohibited_ai_actions": [
+        "proceeding to analysis if the document quality check fails silently - must ask for a clearer scan (Evidence Confidence, 07-document-intelligence.md)"
+      ],
+      "escalation_triggers": [
+        "repeated unreadable uploads",
+        "sensitive document types (notarial, legal) -> prepare for human review"
+      ],
+      "followup_timing": "same cadence as WAITING_FOR_CLIENT_INFO",
+      "metrics": ["document acquisition rate", "re-scan request rate", "upload-to-usable ratio"]
+    },
+    "DOCUMENT_ANALYSIS": {
+      "kind": "active",
+      "requires_next_action": true,
+      "autonomy_cap": null,
+      "timeout_behavior": "Internal (no client wait) unless clearer docs needed. No explicit timeout or max-retry for repeated rescan cycles (see verification doc issue B).",
+      "entry_requires": [
+        "at least one usable document/photo present that the case needs analyzed",
+        "documents with OCR text, extracted fields, Confidence"
+      ],
+      "allowed_ai_actions": [
+        "run Document Intelligence Worker: extract fields with evidence refs",
+        "compute DocRisk",
+        "compare to prior agreements/other offers",
+        "produce human-language summary + questions"
+      ],
+      "prohibited_ai_actions": [
+        "asserting facts below the confidence floor",
+        "giving final legal advice",
+        "hiding low confidence"
+      ],
+      "escalation_triggers": [
+        "high DocRisk (DocRisk >= theta_docrisk)",
+        "contradictions vs prior agreement",
+        "legal/notarial content"
+      ],
+      "followup_timing": "internal (no client wait) unless clearer docs needed",
+      "metrics": ["field-extraction F1", "contradiction detection precision", "human-override rate"]
+    },
+    "QUOTE_PREPARATION": {
+      "kind": "active",
+      "requires_next_action": true,
+      "autonomy_cap": null,
+      "timeout_behavior": "Internal; owner approval SLA tracked as a Task.",
+      "entry_requires": [
+        "enough info + docs to draft a quote per the playbook's pricing rules",
+        "scope, quantities/dimensions",
+        "price rules or a human price input",
+        "MIS below the quote-blocking threshold"
+      ],
+      "allowed_ai_actions": [
+        "build a draft quote (base + premium variants)",
+        "list assumptions",
+        "list remaining blockers",
+        "prepare sales arguments",
+        "request approval if pricing uncertainty is high (L2/L3)"
+      ],
+      "prohibited_ai_actions": [
+        "finalizing/sending a binding price without business rules coverage or human approval when uncertainty is high"
+      ],
+      "escalation_triggers": ["price outside rule bounds", "margin below floor", "unusual scope"],
+      "followup_timing": "internal; owner approval SLA tracked as a Task",
+      "metrics": ["draft-to-approved edit distance", "quote turnaround time", "price-rule coverage"]
+    },
+    "OFFER_SENT": {
+      "kind": "active",
+      "requires_next_action": true,
+      "autonomy_cap": null,
+      "timeout_behavior": "No reply: +24h gentle check -> +72h value reminder -> +7d last-chance -> RECOVERY_LATER. Timing/channel by FollowUpPriority.",
+      "entry_requires": [
+        "a quote/offer has been delivered to the client",
+        "Offer record with sent timestamp, channel, and content snapshot"
+      ],
+      "allowed_ai_actions": [
+        "confirm receipt",
+        "answer clarifying questions",
+        "start the follow-up sequence",
+        "watch for a competitor offer to compare"
+      ],
+      "prohibited_ai_actions": [
+        "discounting without authority",
+        "pressuring",
+        "contacting outside allowed hours"
+      ],
+      "escalation_triggers": ["client raises a legal/contractual objection", "large discount ask"],
+      "followup_timing": "+24h -> +72h -> +7d -> RECOVERY_LATER",
+      "metrics": ["offer response rate", "time-to-first-response", "win rate by follow-up step"]
+    },
+    "FOLLOW_UP_ACTIVE": {
+      "kind": "active",
+      "requires_next_action": true,
+      "autonomy_cap": null,
+      "timeout_behavior": "Driven by FollowUpPriority; hard cap on frequency and count; on exhaustion, park to RECOVERY_LATER (or close per global closure edge).",
+      "entry_requires": [
+        "any active case awaiting a client response (post-offer or post-info-request) where the completion loop drives cadence",
+        "FollowUpSequence with steps, channels, quiet hours, opt-out state"
+      ],
+      "allowed_ai_actions": [
+        "send the next best follow-up (channel + timing from FollowUpPriority)",
+        "detect and route objections",
+        "re-open dialogue"
+      ],
+      "prohibited_ai_actions": [
+        "exceeding max attempts",
+        "ignoring quiet hours or channel preference",
+        "spamming (AnnoyanceRisk gate)"
+      ],
+      "escalation_triggers": ["repeated objections", "emotional signals", "high-value stall"],
+      "followup_timing": "driven by FollowUpPriority; hard cap on frequency & count",
+      "metrics": ["follow-up success rate", "reply-per-attempt", "opt-out rate", "recovered leads"]
+    },
+    "NEGOTIATION": {
+      "kind": "active",
+      "requires_next_action": true,
+      "autonomy_cap": null,
+      "timeout_behavior": "Tight cadence (hours to 1 day) while momentum is high; stalls route back to FOLLOW_UP_ACTIVE.",
+      "entry_requires": [
+        "client is engaging on price/scope/terms or has produced a competitor offer",
+        "objection type(s)",
+        "competitor Offer (if any) with OfferScore",
+        "our authority bounds"
+      ],
+      "allowed_ai_actions": [
+        "run Objection Handler",
+        "prepare recommended responses within authorized discount/scope bounds",
+        "produce a DecisionBrief for the owner"
+      ],
+      "prohibited_ai_actions": [
+        "agreeing to terms beyond authority",
+        "conceding warranty/legal terms without human sign-off"
+      ],
+      "escalation_triggers": ["discount beyond bound", "contract redlines", "partner/legal approval needed"],
+      "followup_timing": "tight cadence (hours to 1 day) while momentum is high",
+      "metrics": ["negotiation win rate", "discount given vs authorized", "escalation precision"]
+    },
+    "HUMAN_REVIEW_REQUIRED": {
+      "kind": "active",
+      "requires_next_action": true,
+      "autonomy_cap": 2,
+      "timeout_behavior": "Internal SLA reminders to the human (e.g. +2h, +1d); sla_breached flag on HumanApproval deadline miss. NO terminal timeout defined - infinite dwell possible (see verification doc issue A).",
+      "entry_requires": [
+        "EscalationScore >= theta_escalate, or any hard rule (legal, high value, low confidence, emotion, unusual request)",
+        "a HumanApproval request with context, options, recommendation, evidence refs, and a deadline"
+      ],
+      "allowed_ai_actions": [
+        "Level <= 2 only: prepare, summarize, draft",
+        "notify the assigned human",
+        "keep the case warm internally"
+      ],
+      "prohibited_ai_actions": [
+        "any autonomous client-facing action",
+        "any state transition to a client-visible state without human decision"
+      ],
+      "escalation_triggers": ["n/a (already escalated); may re-route to a different human/role"],
+      "followup_timing": "internal SLA on the human (e.g. remind owner at +2h, +1d)",
+      "metrics": ["time-in-human-review", "approval rate", "decision reversal rate", "SLA breach rate"]
+    },
+    "SCHEDULED": {
+      "kind": "active",
+      "requires_next_action": true,
+      "autonomy_cap": null,
+      "timeout_behavior": "Reminder at -24h and -2h before the appointment; post-visit follow-up at +1d.",
+      "entry_requires": [
+        "an appointment/visit/service date is booked (survey, install, service call)",
+        "calendar event, address, assigned technician/resource, confirmation"
+      ],
+      "allowed_ai_actions": [
+        "send confirmations + reminders",
+        "handle reschedule requests",
+        "pre-collect anything needed before the visit"
+      ],
+      "prohibited_ai_actions": ["double-booking", "moving appointments without confirmation"],
+      "escalation_triggers": ["repeated cancellations", "no-show risk on high-value job"],
+      "followup_timing": "reminder -24h and -2h; post-visit follow-up +1d",
+      "metrics": ["show rate", "reschedule rate", "on-time confirmation rate"]
+    },
+    "WON": {
+      "kind": "closed_reopenable",
+      "requires_next_action": false,
+      "autonomy_cap": null,
+      "timeout_behavior": "Operational reminders only; no lifecycle timeout.",
+      "entry_requires": [
+        "offer accepted / job booked-and-committed / contract signed (per playbook definition of 'won')",
+        "accepted Offer, value, agreed terms, next operational step"
+      ],
+      "allowed_ai_actions": [
+        "send confirmation & onboarding info",
+        "create the delivery/service Tasks",
+        "optionally schedule an upsell/recovery reminder"
+      ],
+      "prohibited_ai_actions": ["further sales pressure"],
+      "escalation_triggers": ["none by default"],
+      "followup_timing": "operational reminders only",
+      "metrics": ["win rate", "realized value vs estimate", "AI close-assist rate"]
+    },
+    "LOST": {
+      "kind": "closed_reopenable",
+      "requires_next_action": false,
+      "autonomy_cap": null,
+      "timeout_behavior": "None immediately; recovery handled by RECOVERY_LATER.",
+      "entry_requires": [
+        "client declined / chose a competitor / job cancelled",
+        "loss reason (required - captured for learning)",
+        "competitor if known"
+      ],
+      "allowed_ai_actions": [
+        "polite close",
+        "ask (once) for the reason",
+        "schedule RECOVERY_LATER if appropriate (seasonal, 'maybe next year')"
+      ],
+      "prohibited_ai_actions": ["repeated re-pitching after a clear no"],
+      "escalation_triggers": ["high-value loss (owner notification, not a block)"],
+      "followup_timing": "none immediately; recovery via RECOVERY_LATER",
+      "metrics": ["loss reasons distribution", "competitor-loss share", "recovery conversion"]
+    },
+    "COMPLETED": {
+      "kind": "terminal",
+      "requires_next_action": false,
+      "autonomy_cap": null,
+      "timeout_behavior": "n/a (terminal).",
+      "entry_requires": [
+        "service delivered / job finished / final decision executed",
+        "completion confirmation; optional review/NPS request"
+      ],
+      "allowed_ai_actions": [
+        "request feedback/review",
+        "schedule maintenance/renewal reminder as a NEW RECOVERY_LATER-linked case (spawn, never reopen)"
+      ],
+      "prohibited_ai_actions": ["reopening the same case for new work (spawn a linked new case instead)"],
+      "escalation_triggers": [],
+      "followup_timing": "n/a (terminal); may spawn a linked case",
+      "metrics": ["completion rate", "review capture rate", "repeat-business rate"]
+    },
+    "ABANDONED": {
+      "kind": "terminal",
+      "requires_next_action": false,
+      "autonomy_cap": null,
+      "timeout_behavior": "n/a (terminal).",
+      "entry_requires": [
+        "spam, wrong number, hard opt-out, or exhausted all contact attempts with no engagement",
+        "abandonment reason"
+      ],
+      "allowed_ai_actions": ["archive (nothing outbound)"],
+      "prohibited_ai_actions": ["any further contact (especially after opt-out)"],
+      "escalation_triggers": [],
+      "followup_timing": "n/a (terminal)",
+      "metrics": ["abandonment rate", "false-abandon audit (were they recoverable?)"]
+    },
+    "RECOVERY_LATER": {
+      "kind": "parked",
+      "requires_next_action": false,
+      "autonomy_cap": null,
+      "timeout_behavior": "Single scheduled wake at wake_at (nightly sweep wakes due cases); re-evaluated by FollowUpPriority at wake; re-enters FOLLOW_UP_ACTIVE.",
+      "entry_requires": [
+        "parked lead with future potential (silent lead, seasonal, lost-but-warm, won-with-upsell)",
+        "a wake_at timestamp and a recovery reason/trigger"
+      ],
+      "allowed_ai_actions": [
+        "none until wake_at; then re-enter FOLLOW_UP_ACTIVE with a fresh, context-aware opener"
+      ],
+      "prohibited_ai_actions": ["contacting before wake_at", "ignoring opt-out"],
+      "escalation_triggers": [],
+      "followup_timing": "single scheduled wake; re-evaluated by FollowUpPriority at wake",
+      "metrics": ["recovery wake-to-reply rate", "recovered pipeline value"]
+    }
+  },
+  "transitions": [
+    { "from": "NEW_CONTACT", "to": "INTAKE_IN_PROGRESS", "trigger": "intent classified as a serviceable request (default path)", "guard": "none" },
+    { "from": "NEW_CONTACT", "to": "SCHEDULED", "trigger": "returning client asks to rebook a known job", "guard": "known party matched via Deal Memory" },
+    { "from": "NEW_CONTACT", "to": "HUMAN_REVIEW_REQUIRED", "trigger": "angry/legal contact", "guard": "legal threat OR safety emergency OR abusive caller" },
+    { "from": "NEW_CONTACT", "to": "ABANDONED", "trigger": "spam or wrong number", "guard": "abandonment reason captured" },
+
+    { "from": "INTAKE_IN_PROGRESS", "to": "QUALIFIED", "trigger": "intake complete", "guard": "LeadScore >= theta_qualify AND core required fields present AND fit-to-services C > 0" },
+    { "from": "INTAKE_IN_PROGRESS", "to": "WAITING_FOR_CLIENT_INFO", "trigger": "non-document MissingItem blocks progress", "guard": "blocking MissingItem(s) identified with weights w_i" },
+    { "from": "INTAKE_IN_PROGRESS", "to": "WAITING_FOR_DOCUMENTS", "trigger": "document/photo MissingItem blocks progress", "guard": "required document types + acceptance criteria listed" },
+    { "from": "INTAKE_IN_PROGRESS", "to": "HUMAN_REVIEW_REQUIRED", "trigger": "out-of-scope job / high EscalationScore / LegalSensitivity", "guard": "EscalationScore >= theta_escalate OR hard rule" },
+    { "from": "INTAKE_IN_PROGRESS", "to": "ABANDONED", "trigger": "spam / opt-out / non-engagement during intake", "guard": "abandonment reason captured" },
+
+    { "from": "QUALIFIED", "to": "WAITING_FOR_DOCUMENTS", "trigger": "document MissingItem blocks the quote/analysis", "guard": "none" },
+    { "from": "QUALIFIED", "to": "WAITING_FOR_CLIENT_INFO", "trigger": "non-document MissingItem blocks progress", "guard": "none" },
+    { "from": "QUALIFIED", "to": "QUOTE_PREPARATION", "trigger": "enough info + docs to draft a quote", "guard": "MIS below quote-blocking threshold; no blocking MissingItems skipped" },
+    { "from": "QUALIFIED", "to": "SCHEDULED", "trigger": "survey/visit booked", "guard": "playbook allows booking AND effective autonomy >= L4 (else HumanApproval)" },
+    { "from": "QUALIFIED", "to": "HUMAN_REVIEW_REQUIRED", "trigger": "value above high_value_threshold", "guard": "EscalationScore >= theta_escalate OR hard rule" },
+
+    { "from": "WAITING_FOR_CLIENT_INFO", "to": "INTAKE_IN_PROGRESS", "trigger": "requested info arrives (intake still incomplete)", "guard": "MissingItem satisfied" },
+    { "from": "WAITING_FOR_CLIENT_INFO", "to": "QUALIFIED", "trigger": "requested info arrives (qualification criteria now met)", "guard": "LeadScore >= theta_qualify AND core fields present" },
+    { "from": "WAITING_FOR_CLIENT_INFO", "to": "WAITING_FOR_DOCUMENTS", "trigger": "remaining blocker is a document/photo", "guard": "none" },
+    { "from": "WAITING_FOR_CLIENT_INFO", "to": "RECOVERY_LATER", "trigger": "client silent after cadence exhausted", "guard": "max N follow-up attempts reached; wake_at set" },
+    { "from": "WAITING_FOR_CLIENT_INFO", "to": "ABANDONED", "trigger": "hard opt-out or exhausted attempts with no recovery potential", "guard": "abandonment reason captured" },
+    { "from": "WAITING_FOR_CLIENT_INFO", "to": "HUMAN_REVIEW_REQUIRED", "trigger": "StuckScore high on a high-value case", "guard": "EscalationScore >= theta_escalate OR hard rule" },
+
+    { "from": "WAITING_FOR_DOCUMENTS", "to": "DOCUMENT_ANALYSIS", "trigger": "documents received", "guard": "quality pre-check passes (Evidence Confidence gate)" },
+    { "from": "WAITING_FOR_DOCUMENTS", "to": "RECOVERY_LATER", "trigger": "client silent after cadence exhausted", "guard": "max N follow-up attempts reached; wake_at set" },
+    { "from": "WAITING_FOR_DOCUMENTS", "to": "ABANDONED", "trigger": "hard opt-out or exhausted attempts with no recovery potential", "guard": "abandonment reason captured" },
+    { "from": "WAITING_FOR_DOCUMENTS", "to": "HUMAN_REVIEW_REQUIRED", "trigger": "repeated unreadable uploads or sensitive document types (notarial, legal)", "guard": "EscalationScore >= theta_escalate OR hard rule" },
+
+    { "from": "DOCUMENT_ANALYSIS", "to": "QUOTE_PREPARATION", "trigger": "analysis complete; case needs a quote", "guard": "extracted facts meet confidence floor" },
+    { "from": "DOCUMENT_ANALYSIS", "to": "NEGOTIATION", "trigger": "analyzed a competitor offer for a live deal", "guard": "live deal exists" },
+    { "from": "DOCUMENT_ANALYSIS", "to": "WAITING_FOR_DOCUMENTS", "trigger": "need clearer/more docs (needs_rescan)", "guard": "quality/confidence below floor" },
+    { "from": "DOCUMENT_ANALYSIS", "to": "HUMAN_REVIEW_REQUIRED", "trigger": "high DocRisk or legal document", "guard": "DocRisk >= theta_docrisk OR legal/notarial content (hard override)" },
+
+    { "from": "QUOTE_PREPARATION", "to": "OFFER_SENT", "trigger": "quote approved (human) or auto-sent per autonomy", "guard": "human approval OR (effective autonomy >= L4 AND inside price_rules AND < high_value_threshold AND Confidence >= theta_conf)" },
+    { "from": "QUOTE_PREPARATION", "to": "WAITING_FOR_CLIENT_INFO", "trigger": "missing a pricing input", "guard": "blocking MissingItem identified" },
+    { "from": "QUOTE_PREPARATION", "to": "HUMAN_REVIEW_REQUIRED", "trigger": "price outside rule bounds / margin below floor / unusual scope", "guard": "EscalationScore >= theta_escalate OR hard rule" },
+
+    { "from": "OFFER_SENT", "to": "FOLLOW_UP_ACTIVE", "trigger": "no immediate reply (default)", "guard": "FollowUpSequence instantiated" },
+    { "from": "OFFER_SENT", "to": "NEGOTIATION", "trigger": "client engages on price/scope/terms or produces a competitor offer", "guard": "none" },
+    { "from": "OFFER_SENT", "to": "WON", "trigger": "offer accepted", "guard": "per playbook definition of 'won'" },
+    { "from": "OFFER_SENT", "to": "LOST", "trigger": "client declines", "guard": "loss reason captured" },
+    { "from": "OFFER_SENT", "to": "SCHEDULED", "trigger": "appointment/visit booked off the offer", "guard": "booking authority (>= L4 or HumanApproval)" },
+
+    { "from": "FOLLOW_UP_ACTIVE", "to": "NEGOTIATION", "trigger": "client re-engages with objection/counter", "guard": "none" },
+    { "from": "FOLLOW_UP_ACTIVE", "to": "OFFER_SENT", "trigger": "revised offer sent", "guard": "quote-send authority rules apply" },
+    { "from": "FOLLOW_UP_ACTIVE", "to": "WON", "trigger": "client accepts", "guard": "per playbook definition of 'won'" },
+    { "from": "FOLLOW_UP_ACTIVE", "to": "LOST", "trigger": "client declines", "guard": "loss reason captured" },
+    { "from": "FOLLOW_UP_ACTIVE", "to": "SCHEDULED", "trigger": "appointment booked", "guard": "booking authority (>= L4 or HumanApproval)" },
+    { "from": "FOLLOW_UP_ACTIVE", "to": "RECOVERY_LATER", "trigger": "follow-up sequence exhausted, lead still warm", "guard": "max attempts reached; wake_at set" },
+    { "from": "FOLLOW_UP_ACTIVE", "to": "HUMAN_REVIEW_REQUIRED", "trigger": "repeated objections / emotional signals / high-value stall", "guard": "EscalationScore >= theta_escalate OR hard rule" },
+
+    { "from": "NEGOTIATION", "to": "WON", "trigger": "terms agreed within authority", "guard": "per playbook definition of 'won'" },
+    { "from": "NEGOTIATION", "to": "LOST", "trigger": "client walks / chooses competitor", "guard": "loss reason captured" },
+    { "from": "NEGOTIATION", "to": "OFFER_SENT", "trigger": "revised offer sent", "guard": "within authorized discount/scope bounds (else HumanApproval)" },
+    { "from": "NEGOTIATION", "to": "FOLLOW_UP_ACTIVE", "trigger": "negotiation stalls; awaiting client response", "guard": "none" },
+    { "from": "NEGOTIATION", "to": "HUMAN_REVIEW_REQUIRED", "trigger": "discount beyond bound / contract redlines / partner-legal approval needed", "guard": "EscalationScore >= theta_escalate OR hard rule" },
+
+    { "from": "HUMAN_REVIEW_REQUIRED", "to": "ANY_ACTIVE", "trigger": "human decision routes the case (per 03 SS4: '* any active state')", "guard": "HumanApproval decided (decided_by, decision, decided_at written)" },
+    { "from": "HUMAN_REVIEW_REQUIRED", "to": "WON", "trigger": "human decision: close as won", "guard": "HumanApproval decided" },
+    { "from": "HUMAN_REVIEW_REQUIRED", "to": "LOST", "trigger": "human decision: close as lost", "guard": "HumanApproval decided; loss reason captured" },
+    { "from": "HUMAN_REVIEW_REQUIRED", "to": "ABANDONED", "trigger": "human decision: abandon", "guard": "HumanApproval decided; abandonment reason captured" },
+
+    { "from": "SCHEDULED", "to": "COMPLETED", "trigger": "service delivered / job finished", "guard": "completion confirmation" },
+    { "from": "SCHEDULED", "to": "WON", "trigger": "scheduling IS the win (per playbook)", "guard": "per playbook definition of 'won'" },
+    { "from": "SCHEDULED", "to": "DOCUMENT_ANALYSIS", "trigger": "post-visit report to analyze", "guard": "usable document present" },
+    { "from": "SCHEDULED", "to": "FOLLOW_UP_ACTIVE", "trigger": "post-visit follow-up needed", "guard": "none" },
+    { "from": "SCHEDULED", "to": "LOST", "trigger": "appointment cancelled", "guard": "loss reason captured" },
+
+    { "from": "WON", "to": "SCHEDULED", "trigger": "delivery/service appointment booked", "guard": "none" },
+    { "from": "WON", "to": "COMPLETED", "trigger": "service delivered / final decision executed", "guard": "completion confirmation" },
+    { "from": "WON", "to": "RECOVERY_LATER", "trigger": "future upsell/renewal scheduled", "guard": "wake_at set with recovery reason (see verification doc issue D: reopening semantics ambiguous)" },
+
+    { "from": "LOST", "to": "RECOVERY_LATER", "trigger": "lost-but-warm (seasonal, 'maybe next year')", "guard": "wake_at set; not a hard no / opt-out" },
+    { "from": "LOST", "to": "ABANDONED", "trigger": "hard no / opt-out", "guard": "abandonment reason captured; suppress all outbound" },
+
+    { "from": "RECOVERY_LATER", "to": "FOLLOW_UP_ACTIVE", "trigger": "wake_at reached (nightly sweep wakes due cases)", "guard": "no opt-out; re-evaluated by FollowUpPriority; fresh context-aware opener" }
+  ],
+  "global_edges": [
+    {
+      "name": "escalation_interrupt",
+      "from": "ANY_ACTIVE",
+      "to": "HUMAN_REVIEW_REQUIRED",
+      "guard": "EscalationScore >= theta_escalate OR hard_override",
+      "notes": "03 SS2 invariant 5 / SS4. EscalationScore recomputed on every inbound event. Hard overrides (13 SS2.1): legal/notarial signing, safety emergency. MVP: hard-override rules only until S-ESC ships (Phase 3)."
+    },
+    {
+      "name": "closure_edge",
+      "from": "ANY_NON_TERMINAL",
+      "to": "ABANDONED|LOST",
+      "guard": "hard_opt_out OR followup_exhausted",
+      "notes": "03 SS2 invariant 6 / SS4. Hard client opt-out (STOP / 'don't contact me') forces ABANDONED (or LOST if a reason is captured) and suppresses all future outbound actions permanently; also fires on follow-up exhaustion where recovery is inappropriate. Always legal; overrides the per-state transition table."
+    }
+  ],
+  "invariants": [
+    {
+      "id": "INV-1",
+      "name": "active_case_has_future_action",
+      "rule": "An active case MUST have next_best_action != null AND next_action_due_at != null. The nightly stuck sweep fails loudly if an active case has no future action.",
+      "applies_to": "all states with kind=active",
+      "source": "03 SS2.1; 09 SS1"
+    },
+    {
+      "id": "INV-2",
+      "name": "human_review_freezes_autonomy",
+      "rule": "Any transition into HUMAN_REVIEW_REQUIRED freezes all outbound autonomous actions; effective autonomy is capped at Level 2 'Prepare' (state_cap = 2 in the effective_level formula).",
+      "applies_to": "HUMAN_REVIEW_REQUIRED",
+      "source": "03 SS2.2; 13 SS2.2"
+    },
+    {
+      "id": "INV-3",
+      "name": "actor_authorized_or_queued",
+      "rule": "A transition may only be executed by an actor allowed at the case's current autonomy level; otherwise the transition is queued as a HumanApproval.",
+      "applies_to": "all transitions",
+      "source": "03 SS2.3; 13 SS1, SS2.3"
+    },
+    {
+      "id": "INV-4",
+      "name": "every_transition_audited",
+      "rule": "Every transition writes AuditEvent{from_state, to_state, actor, reason, evidence_refs} (immutable, hash-chained via hash_prev).",
+      "applies_to": "all transitions",
+      "source": "03 SS2.4; 13 SS5"
+    },
+    {
+      "id": "INV-5",
+      "name": "escalation_interrupt",
+      "rule": "EscalationScore is recomputed on every inbound event; crossing theta_escalate forces a transition to HUMAN_REVIEW_REQUIRED from any active state (global interrupt edge). MVP: hard-override rules only until the full EscalationScore model ships (Phase 3, task S-ESC).",
+      "applies_to": "all active states",
+      "source": "03 SS2.5; 13 SS2"
+    },
+    {
+      "id": "INV-6",
+      "name": "hard_opt_out_closes_case",
+      "rule": "A hard client opt-out (STOP / 'don't contact me') forces ABANDONED (or LOST if a reason is captured) and suppresses all future outbound actions permanently.",
+      "applies_to": "all non-terminal states",
+      "source": "03 SS2.6; 09 SS2"
+    }
+  ]
+}
