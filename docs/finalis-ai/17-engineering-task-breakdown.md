@@ -381,3 +381,107 @@ states afterward; decision briefs and Command Center polish sit on top of everyt
 - **Eval Lab (N)** should start early (golden fixtures + calibration harness) so it gates the
   workers as they land rather than being retrofitted.
 ```
+
+---
+
+## 90-Day Sprint Plan (Phase 0 → end of Phase 1 → into Phase 2)
+
+> Six 2-week sprints (S1–S6, days 1–84, with days 85–90 as hardening buffer inside S6). This is
+> the milestone view above cut into shippable increments, following the **suggested build
+> sequence** exactly: data model + state machine + orchestrator first, then WhatsApp channel,
+> follow-up loop, promises/missing-info/NBA, documents, voice, briefs + dashboard. Voice runs as
+> a **parallel specialist track** from S4 (per the parallelization guidance) so it lands by day
+> 90 without blocking the critical path.
+>
+> **Day-90 target** (consistent with Phase 1 goals in `14` §2 and the P1 column of the
+> capability matrix): end-to-end demo on 5–10 real cases — AI answers phone + WhatsApp, creates
+> cases, hunts missing info, follows up on cadence, analyzes an uploaded document, produces
+> Decision Briefs, and the Command Center shows the pipeline + approvals.
+
+### S1 (days 1–14) — Phase 0: design, de-risk, foundations
+
+| | |
+|---|---|
+| **Sprint goal** | All Phase-0 open decisions closed as ADRs; infra + skeletons exist; nothing downstream is blocked. |
+| **Tasks** | Framework picks (LangGraph vs. Agents SDK per `02`; LiveKit vs. Pipecat per `06`; telephony + OCR provider); schema review of B1–B6 on paper; threshold defaults per playbook (`BusinessProfile.thresholds`); **A1–A5, A8** (Postgres+pgvector, object store, secrets manager, durable scheduler, core skeleton, local compose); CI skeleton (X.4 lint/typecheck/migration gate); begin **B1–B2** migrations; **N7** golden case fixtures started (Eval Lab starts early). |
+| **Demo / checkpoint** | `docker compose up` runs web + core + db + scheduler; a job scheduled 72h out survives a restart (A4); B1–B2 migrations green in CI; ADRs merged. |
+| **Exit criteria** | All Phase-0 decisions have a merged ADR; A1–A5 acceptance criteria met; `Case.status` enum in B2 matches `03` 1:1; CI red/green gate live. |
+
+### S2 (days 15–28) — State machine, orchestrator core, data layer complete
+
+| | |
+|---|---|
+| **Sprint goal** | The durable spine exists: every case lives in the state machine, under invariants, with audit. |
+| **Tasks** | **C1** state-machine engine (17 states + transition table); **C2** global invariants (non-null `next_best_action` + `due_at`; transitions write `AuditEvent`); **C3** global interrupt edge; **C4** durable LangGraph case runtime; finish **B3–B6** (evidence, commercial/workflow tables, `AuditEvent` hash chain, `graph_edges`); **B10** tenant-scoped repository layer; **A6** Next.js `web` baseline + **A7** environments; X.5 state-machine property tests. |
+| **Demo / checkpoint** | Scripted walkthrough in a test harness: seeded case driven `NEW_CONTACT → INTAKE_IN_PROGRESS → … → WON`, illegal transition rejected, kill-and-restart resumes mid-case (C4); audit chain verifies. |
+| **Exit criteria** | C1–C4 acceptance criteria met; property tests pass (only legal transitions, invariants always hold); B1–B6 + B10 done; authenticated user reaches an empty Command Center calling `core` (A6). |
+
+### S3 (days 29–42) — Intake + Case Graph + first live channel (WhatsApp)
+
+| | |
+|---|---|
+| **Sprint goal** | First **real case from a real channel**: an inbound WhatsApp message becomes a scored, stateful case. |
+| **Tasks** | **E1–E6** Intake Worker (classifier, playbook-driven `MissingItem` instantiation, slot filling, over-asking guard, returning-client Deal Memory match, score emission); **B7–B8** (recursive-CTE traversals, pgvector); **S-LEAD, S-MIS**; **L1** MCP tool host, **L2** WhatsApp Business server, **L9** webhook ingest; **C5–C7** (event router, worker-proposal contract, event-driven loop trigger); X.1 RLS policies + isolation test; **K1** auth/tenant context in `web`. |
+| **Demo / checkpoint** | Live demo: send a WhatsApp message → `Conversation`+`Message` created → intake conversation fills slots → case lands in `QUALIFIED` with `LeadScore`/`MIS` persisted; spam message → `ABANDONED`. |
+| **Exit criteria** | Inbound WhatsApp routed to the correct worker per state (C5); workers cannot mutate state directly (C6); S-LEAD bands + cold-start `R=0.5` golden tests pass; tenant A can never read tenant B. |
+
+### S4 (days 43–56) — Follow-up loop: the core differentiator
+
+| | |
+|---|---|
+| **Sprint goal** | No case is ever silently dropped: the nightly sweep + cadence engine + hard guarantees are live. |
+| **Tasks** | **C8** nightly stuck sweep (recompute scores, invariant check, park/wake `RECOVERY_LATER`); **I1–I5** (`FollowUpSequence` engine, hard guarantees, channel selection, `+24h/+48h/+72h` presets); **S-FUP, S-STUCK**; **M1–M2** autonomy levels + HITL interrupt; **C12** STOP/opt-out hard rule; **K2** work queue by score bands + stuck tile; guardrail tests (quiet hours, STOP, max attempts). ▸ *Voice track starts in parallel:* **D1** media framework + SIP/PSTN, **D2** cascaded STT→LLM→TTS spike. |
+| **Demo / checkpoint** | Time-travel demo on seeded cases: sweep run produces expected transitions + queued follow-ups; an attempt during quiet hours is blocked; STOP permanently suppresses outbound; owner sees Hot/Warm/Cool/Cold queue in the Command Center. |
+| **Exit criteria** | C8 sweep acceptance met; hard guarantees never violated regardless of score (S-FUP); action above autonomy level yields `HumanApproval` instead of execution (M1); exhausted cadence parks to `RECOVERY_LATER` and wakes on `wake_at`. |
+
+### S5 (days 57–70) — Promises, Missing-Info Hunter, NBA + document pipeline opens
+
+| | |
+|---|---|
+| **Sprint goal** | The completion loop is whole (hunt gaps, track promises, pick the next best action) and documents start flowing. |
+| **Tasks** | **I6–I12** (Promise Tracker, breach routing, Missing-Information Hunter, Objection Handler, `RECOVERY_LATER` wake — Quote Builder I11 in draft-only mode per MVP scope); **C9** NBA selection + **S-NBA, S-BREACH**; **F1–F3** (ingestion/quality gate, OCR + layout, schema-constrained extraction with `EvidenceReference`); **S-CONF** abstention rule + **M5**; **K3** case detail with timeline + evidence links; **K5** approvals inbox; **N5** extraction eval (golden-set F1 in CI). ▸ *Voice track:* **D3–D7** (barge-in, turn detection, context prefetch, latency instrumentation, fallback-when-slow) + **L5** telephony MCP. |
+| **Demo / checkpoint** | End-to-end on a live case: client promises a document on a call transcript fixture → `Promise` row → overdue → nudge; `blocks_quote` gap → one consolidated example-bearing request; blurry scan → polite re-scan request; owner approves a proposed action from the approvals inbox. |
+| **Exit criteria** | `a*` persisted to `Case.next_best_action` with runner-ups in `Action.chosen_over` (C9); missing-info recall ≥ 0.9 on the golden set; OCR field F1 at target on the pilot doc mix (N5 gate in CI); company-side breach raises owner alert, client-side breach nudges (I8). |
+
+### S6 (days 71–90) — Voice live, document analysis complete, briefs + dashboard: the Day-90 demo
+
+| | |
+|---|---|
+| **Sprint goal** | The full Phase-1 story on real cases; days 85–90 reserved for hardening + demo rehearsal (no new scope). |
+| **Tasks** | *Voice track lands:* **D8–D12** (repair/slot confirmation, language switching, warm handoff, post-call processing with evidence refs, consent gating) + **N4** voice eval suite; *documents complete:* **F4–F8** + **S-DOCRISK** (contradiction check vs. prior agreements, RiskFlags, found-vs-unverified summary, state wiring); **J1–J4** Decision Briefs + Quality Worker verifier + **N6** hallucination gate; **K6–K7, K9, K13** (tasks board, brief cards, cadence view, realtime updates); **L6** calendar booking; **M6** full audit coverage check; **N7** replay regression on the demo cases. |
+| **Demo / checkpoint** | **Day-90 end-to-end demo on 5–10 real cases** (`14` Phase 1 goal): AI answers a PSTN call and WhatsApp, creates the case, hunts missing info, follows up on cadence, analyzes an uploaded PDF (fields + confidence + summary + consistency check), produces a Decision Brief the owner acts on with one tap, and the Command Center shows pipeline, hot/stuck leads, promises due, and approvals — with every claim evidence-linked. |
+| **Exit criteria** | Voice TTFA P50 ≤ 800 ms / P95 ≤ 1500 ms on simple turns (D6/N4); post-call artifacts persist with evidence refs (D11); `DocRisk ≥ θ_docrisk` routes to `HUMAN_REVIEW_REQUIRED` (F8); brief with an unlinked claim fails the verifier (J3); demo cases replay deterministically (N7). |
+
+**Deliberately after day 90** (Phase 2/3 per the milestone view): WebScout (G, S-TRUST), Offer
+Comparator (H, S-OFFER), S-ESC full computation (the C3 interrupt edge ships on hard rules
+first), remaining integrations (L3/L4/L7/L8), M3/M7 guardrail depth + GDPR erasure, K4/K8/K10–K12/K14,
+N1–N3 calibration/drift, billing.
+
+---
+
+## Acceptance Criteria (MVP definition of done, per module)
+
+> "Done" means the criterion is **mechanically verified** — by a test in CI, an eval metric on
+> the golden set, or a production invariant with alerting. Thresholds (`θ_*`) come from
+> `BusinessProfile.thresholds` / `IndustryPlaybook`, never hard-coded. Metric names match `05`,
+> `06`, `14` §1 and Epic N.
+
+| Module | Acceptance criteria (MVP definition of done) | How verified (test / eval metric) |
+|---|---|---|
+| **State machine** (C1–C4, C12) | All 17 states + transition table 1:1 with `03` §4; illegal transitions rejected; every active case has non-null `next_best_action` **and** `due_at`; every transition writes `AuditEvent{from,to,actor,reason,evidence_refs}`; kill/restart resumes at last checkpoint; STOP forces `ABANDONED`/`LOST` and permanently suppresses outbound. | State-machine **property tests** (X.5) in CI; invariant check enforced at write time + **nightly sweep alert** on any violating case; chaos test kills `core` mid-case and asserts resume; STOP guardrail test. |
+| **Scoring functions** (S-LEAD … S-TRUST) | Each score is a pure, deterministic function of a persisted input vector + weight-set version; recomputing from the stored `AuditEvent` reproduces the value bit-for-bit; bands/thresholds behave per `05` (Hot ≥ 70, `θ_mis`, `θ_docrisk` = 60, `θ_conf` = 0.6, `θ_escalate` = 1.5); cold-start `R=0.5` + `low_confidence` flag. | **Golden input→output vectors** per score in CI (X.5); reproducibility test replays audit rows; threshold-boundary unit tests at `θ ± ε`. |
+| **Intake** (E1–E6) | Serviceable request advances `NEW_CONTACT → INTAKE_IN_PROGRESS`; spam/wrong-number → `ABANDONED`; `MissingItem` rows instantiated from `IndustryPlaybook.required_fields` with `weight` + `blocks_quote`; one consolidated ask (never field-by-field); no unstated fact ever assumed; initial `LeadScore`/`MIS` persisted; returning client matched via Deal Memory. | Intake **golden conversation set**: intent-classification accuracy + slot-fill F1 reported in CI; over-asking guard test (asserts ≤ 1 consolidated request per gap batch); Deal Memory match precision on seeded returning parties. |
+| **WhatsApp channel** (L1, L2, L9, C5–C7) | Inbound message creates `Conversation` + `Message` and is routed to the owning worker for the current state; outbound sends with delivery status; media (photos/PDFs) ingested to object store; any inbound event re-runs scoring + NBA immediately; workers return proposals only. | **Loop integration test** replaying a recorded WhatsApp event stream (N7); webhook-ingest contract test per L9; interface-level test that a worker cannot mutate case state (C6); routing table test per (state × event type). |
+| **Follow-up loop** (C8, I1–I5) | Cadence presets `+24h→+48h→+72h` (missing-info) and `+24h→+72h→+7d→RECOVERY_LATER` (post-offer) fire on schedule; quiet hours, opt-outs, min interval, max attempts **never** violated regardless of score; exhausted → `RECOVERY_LATER`, wakes at `wake_at` with contextual opener; nightly sweep recomputes all five scores on every active case and enqueues NBA. | Time-travel **sweep test** on seeded fixtures asserting expected transitions + queued actions; guardrail tests injecting quiet-hours/cap violations (must block); production metric: **follow-up reply lift vs. no-AI baseline** measurable per `14` §1; sweep-duration metric (X.3). |
+| **Promise tracker** (I6–I8, S-BREACH) | Promises extracted from calls + messages for **any** party with who/what/`due_at`/importance/`dependency_impact` + evidence ref; overdue high-importance promise outscores trivial one; client breach → gentle nudge, company/technician breach → owner alert. | Promise-extraction **recall/precision on golden transcripts**; S-BREACH golden vectors (signed-contract vs. photo ordering); breach-routing integration test asserting nudge-vs-alert per party role. |
+| **Missing-info hunter** (I9, S-MIS) | `MissingItem`s re-evaluated on every event; `MIS_normalized ≥ θ_mis` or any missing `blocks_quote` item triggers exactly one consolidated, example-bearing request; items marked `received` on satisfaction; missing `blocks_quote` blocks `QUOTE_PREPARATION`. | **Missing-info recall ≥ 0.9 on the golden set** (`14` §1); consolidation test (n gaps → 1 message); state-gate test that `QUOTE_PREPARATION` is unreachable with an open `blocks_quote` item. |
+| **Document intelligence** (F1–F8, S-DOCRISK, S-CONF) | Quality gate computes `ocr_quality`, failing docs get `needs_rescan` + polite re-scan request (never silent); every `ExtractedField` carries `page`/`bbox` + `EvidenceReference`; contradictions vs. prior agreements flagged with both evidence refs; summary separates *found* vs. *couldn't verify*, never legal advice; `DocRisk ≥ θ_docrisk` → `HUMAN_REVIEW_REQUIRED`. | **OCR field F1 ≥ target per field type** on the tenant doc mix, gated in CI (N5); contradiction-detection precision on golden pairs; rescan-path integration test; verifier check that no summary claim lacks an evidence link. |
+| **Voice worker** (D1–D12) | **TTFA P50 ≤ 800 ms, P95 ≤ 1500 ms** on simple turns; barge-in stops TTS ≤ 200 ms after speech onset; mid-thought pause does not trigger premature response; critical slots (address/date/price) confirmed via repair questions; gas-leak/safety keyword → safety script + warm handoff with live summary; post-call artifacts (summary, `Promise`, `MissingItem`, next-action proposals, `ExtractedField`, sentiment timeline) all persist with transcript-timestamp evidence refs; recording suppressed where consent config forbids. | **Voice eval suite N4**: `Call.latency_metrics` dashboards (ttfa_p50/p95), barge-in latency, handoff precision; scripted-call E2E fixtures (X.5) asserting latency + all six post-call artifacts; consent-gating unit test per `VoiceProfile.consent_prompt` config. |
+| **Decision briefs** (J1–J4) | Every brief matches the canonical shape (`09` §7: summary, value_range, situation, recommended_step, rationale, risk_note, confidence, evidence refs); every claim evidence-linked; confidence honest (no assertion below `θ_conf`); new brief supersedes prior (both retained); actionable one-tap from UI. | **Quality Worker verifier** blocks any brief with an unlinked claim (J3); **hallucination / unsupported-claim rate near-zero** on evidence-required outputs, tracked + gated (N6); schema validation test against the canonical Kowalski example. |
+| **Command center** (K1–K3, K5–K7, K9, K13) | User sees only their tenant's data; work queue sorted by score bands with stuck-but-hot on top; case detail shows state, `next_best_action`, `due_at`, audit timeline — **every AI claim on the page links to its evidence**; approvals inbox shows context/options/recommendation/deadline and decisions write `Action` + audit; inbound events update the open case view live. | Multi-tenancy **isolation tests** (tenant A never reads tenant B, RLS-level); UI e2e asserting band ordering + evidence-link presence on every claim element; approval round-trip test (approve → `Action` + `AuditEvent`); websocket-update e2e on a live inbound event. |
+| **Autonomy / approvals / audit** (M1–M2, M5–M6, C2–C3) | Action above the case/tenant autonomy level yields `HumanApproval` instead of executing; `HUMAN_REVIEW_REQUIRED` caps autonomy at Level 2 and freezes all client-facing outbound; `Confidence < θ_conf` facts surface as *unverified* and block autonomous client-facing action; every transition/score/action/approval writes an `AuditEvent`; `hash_prev` chain verifiable end-to-end; every human override stored as a labeled `(context, action, decision)` example. | Autonomy matrix test over (action type × level); frozen-outbound test in review state; abstention-path test at `Confidence = θ_conf − ε`; **audit-chain integrity job** (M6/X.3) alerting on any break; audit-coverage assertion in loop integration tests (no state change without an audit row). |
+| **Evaluation lab** (N4–N7 at MVP; N1–N3 Phase 2+) | Golden fixtures + replayable event streams exist for intake, docs, voice, and the full loop; a recorded case replays deterministically; extraction F1 and hallucination-rate gates block merges on regression; voice metrics aggregated per call. | **CI eval gates** (X.4): golden-set extraction F1 (N5) + unlinked-claim rate (N6) red/green on every merge; deterministic-replay test (N7) in CI; N4 voice metric aggregation verified on fixture calls; calibration harness (N1) scheduled for Phase 2, not an MVP gate. |
+
+> Roll-up MVP bar (from `14` §1): all module criteria above green **plus** demonstrable
+> follow-up reply lift vs. baseline and recovered-pipeline € across pilot tenants — the two
+> outcome metrics no unit test can fake.
