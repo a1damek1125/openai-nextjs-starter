@@ -25,11 +25,18 @@ repos except where flagged.
 
 | Layer | Engine | Role | License | Source |
 |---|---|---|---|---|
-| Structure/parse | **Docling** | PDF/DOCX/PPTX/XLSX/HTML/image → layout, reading order, table structure, formulas; outputs Markdown/HTML/lossless JSON | **MIT** | IBM Research Zurich origin; hosted in LF AI & Data. https://github.com/docling-project/docling |
-| Linearized OCR | **olmOCR** | PDF/PNG/JPEG → clean linearized Markdown; equations, tables, handwriting, multi-column, reading order | **Apache-2.0** | Built on a 7B VLM (v1 fine-tuned Qwen2-VL-7B; v0.4.0 fine-tunes Qwen2.5-VL); **olmOCR-Bench 82.4** (v0.4.0). https://github.com/allenai/olmocr , https://arxiv.org/abs/2502.18443 |
-| Multilingual doc parse | **PaddleOCR-VL** | Compact **0.9B** VLM (NaViT-style encoder + ERNIE-4.5-0.3B); **109 languages**; text/tables/formulas/charts → Markdown/JSON | verify weights license (repo Apache-2.0; **VL weight license UNVERIFIED**) | SOTA on OmniDocBench v1.5 per paper. https://arxiv.org/abs/2510.14528 , https://huggingface.co/PaddlePaddle/PaddleOCR-VL |
-| Hard multimodal | **Qwen2.5-VL / Qwen3-VL** | Omni-document parsing (QwenVL-HTML layout+content), handwriting, tables, charts; Qwen3-VL expands OCR to 32 languages, robust to low light/blur/tilt | Apache-2.0 (check per-size) | https://arxiv.org/abs/2502.13923 (2.5-VL), https://github.com/qwenlm/qwen3-vl |
+| Structure/parse | **Docling** (v2.110, 2026-07) | PDF/DOCX/PPTX/XLSX/HTML/image/audio → layout, reading order, table structure, formulas; pluggable OCR/VLM backends (incl. nemotron-ocr, Granite-Docling); outputs Markdown/HTML/lossless JSON | **MIT** | IBM Research Zurich origin; hosted in LF AI & Data. https://github.com/docling-project/docling |
+| Linearized OCR | **olmOCR 2** (`olmOCR-2-7B-1025`) | PDF/PNG/JPEG → clean linearized Markdown; equations, tables, handwriting, multi-column; v2 adds **RL training with unit-test rewards** | **Apache-2.0** (model+data+code) | Fine-tuned from Qwen2.5-VL-7B; **olmOCR-Bench 82.4 ±1.1** (beats Marker 76.1, MinerU 75.8; bench is English-only). https://github.com/allenai/olmocr , https://arxiv.org/abs/2510.19817 |
+| Multilingual doc parse | **PaddleOCR-VL-1.6** (~1B) | ERNIE-4.5-0.3B-based; **111 languages** (1.5); text/tables/formulas/charts → Markdown/JSON; GGUF build available | **weights license UNVERIFIED** (repo Apache-2.0) | Reported **96.33 on OmniDocBench v1.6** (vendor number, [snippet]). https://arxiv.org/abs/2606.03264 (1.6), https://arxiv.org/abs/2601.21957 (1.5), https://huggingface.co/PaddlePaddle/PaddleOCR-VL |
+| Compact multilingual alt | **dots.ocr** (1.7B) | Unified layout + recognition + reading order in one VLM; **100+ languages** | **MIT** | Strong OmniDocBench text/tables/reading-order results ([snippet]). https://github.com/rednote-hilab/dots.ocr |
+| Hard multimodal | **Qwen2.5-VL / Qwen3-VL** | Omni-document parsing (QwenVL-HTML layout+content), handwriting, tables, charts; Qwen3-VL expands OCR to **32 languages**, robust to low light/blur/tilt | Apache-2.0 (check per-size) | https://arxiv.org/abs/2502.13923 (2.5-VL), https://github.com/qwenlm/qwen3-vl |
+| Edge/tiny | **Granite-Docling-258M** | 258M doc-conversion VLM, native Docling integration | **Apache-2.0** | https://www.ibm.com/new/announcements/granite-docling-end-to-end-document-conversion |
 | Lightweight layout+OCR | **Surya** | Layout, reading order, table recognition, OCR in **90+ languages**; Surya-2 single VLM | code **Apache-2.0**; weights **AI-Pubs Open RAIL-M** (free under $5M funding/revenue) | https://github.com/datalab-to/surya |
+
+*(Experimental watch: **DeepSeek-OCR** — "optical context compression", ~200k pages/day/A100,
+MIT — a genuinely new token-efficiency direction; **MinerU2.5-Pro** — vendor-reported ~95.7 on
+OmniDocBench v1.6. All 2026 OmniDocBench scores are vendor-reported and span different bench
+versions — validate on the tenant's real document mix before adopting. See `21`.)*
 
 **Cost anchor**: olmOCR reports converting **~1M PDF pages for ~$190** vs. >$6,240/M for
 GPT-4o (paper abstract, search-surfaced) — self-hosting the OCR layer is materially cheaper at

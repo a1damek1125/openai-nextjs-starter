@@ -16,6 +16,39 @@ First vertical (MVP): **HVAC / plumbing / electrical / renovation home services.
 
 ---
 
+## Executive summary
+
+**Problem.** Service businesses lose revenue in the gaps between conversations: missed calls,
+leads that go silent after a price question, photos never sent, offers never followed up,
+promises forgotten, documents unread. Existing AI answers the phone; nobody drives the case.
+
+**Product.** Finalis AI is a supervised team of narrow AI workers built around three
+proprietary cores: a **Case Graph** (the living, evidence-linked map of every case), a
+**Completion Loop Engine** (every active case always has a next action, owner, and due time —
+enforced nightly), and **deterministic scoring** (Lead, Missing-Info, Next-Best-Action,
+Follow-up, DocRisk, Confidence, Offer, Escalation, Stuck, Promise-Breach) that turns open
+cases into a prioritized, self-updating work queue. Around these sit a low-latency voice
+worker, document intelligence with honest confidence, ethical web research, offer comparison,
+and an owner dashboard with human-approval gates.
+
+**Why controlled autonomy.** Current benchmarks show agents complete only ~20–40% of
+realistic, cross-application, long-horizon office work unsupervised (TheAgentCompany ~24–30%;
+WindowsWorld <21%; OSWorld 2.0 ~20.6%) while being genuinely competent at routine sub-steps.
+Finalis is architected for exactly that reality: explicit state machine, autonomy levels 1–5,
+human review at the joints, evidence and confidence on every claim, full audit trail.
+
+**Go-to-market.** One vertical first (home services — high call volume, WhatsApp photos,
+competing offers, high job values, simple ROI), expansion via config playbooks (auto,
+property, real estate, insurance, B2B sales, legal intake). Value-based pricing (~€99–2500+/mo
+tiers); the dashboard speaks the buyer's language: **recovered leads and € pipeline**.
+
+**Status of this package.** 24 documents; every section a developer or founder needs — from
+the 17-state case lifecycle and 25-entity schema to API/event design, sprint plan, cost model,
+evaluation metrics, risk register, and a state-of-the-art technology review with verified
+citations. Buildable now; ambitious by design.
+
+---
+
 ## How this blueprint is organized
 
 | # | Document | What's inside |
@@ -42,9 +75,29 @@ First vertical (MVP): **HVAC / plumbing / electrical / renovation home services.
 | [19](19-sources-and-references.md) | Sources & References | every citation + verification status |
 | [20](20-final-build-specification.md) | Final Build Specification | consolidated developer handoff |
 | [21](21-state-of-the-art-technology-review.md) | State-of-the-Art Technology Review | per-component "best now vs. best future" comparison + SOTA mandate |
+| [22](22-api-and-event-model.md) | API & Event Model | REST/webhook/SSE API design + domain-event catalog |
+| [23](23-cost-estimation-and-pricing.md) | Cost Estimation & Pricing | unit cost model, worked examples, margins, cost controls |
 
 **Suggested reading order for developers:** `20` (build spec) → `02` → `03` → `04` → `05`,
 then the module docs as needed. **For founders/PMs:** `00` → `01` → `14` → `16`.
+
+### Deliverables traceability (project-package requirements → docs)
+
+| Deliverable | Doc | Deliverable | Doc |
+|---|---|---|---|
+| 1 Executive summary | README | 14 OCR/document stack | 07, 21 |
+| 2 Product definition | 00 | 15 WebScout stack | 08, 21 |
+| 3 Target customer & vertical | 00 | 16 Integration plan | 12 |
+| 4 Competitive differentiation | 00 | 17 MVP scope | 14 |
+| 5 Full module list | 01 | 18 90-day roadmap | 14, 17 (sprints) |
+| 6 System architecture (text diagram) | 02, 20 | 19 12-month roadmap | 14 |
+| 7 Multi-agent architecture | 02 | 20 QA/Evaluation Lab plan | 15 |
+| 8 Case lifecycle state machine | 03 | 21 Risks & mitigations | 16 |
+| 9 Database schema | 04 | 22 Cost estimation logic | 23 |
+| 10 API design | 22 | 23 Pricing model | 00, 23 |
+| 11 Event model | 22 | 24 Task breakdown by sprint | 17 |
+| 12 Algorithms & formulas | 05 | 25 Acceptance criteria | 17, 20 |
+| 13 Voice stack recommendation | 06, 21 | 26 Source list with links | 19 |
 
 ---
 

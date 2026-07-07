@@ -71,9 +71,19 @@ privilege sandbox** with these controls:
   entering an LLM prompt; a **secondary "critic" pass** validates that extracted facts match
   the cited snippet (catches injected/hallucinated content); WebScout has **no write actions**
   (read-only) and cannot trigger case-state changes directly — it only returns proposed facts
-  to the Orchestrator. Align with **OWASP Top-10 for Agentic Applications** (published Dec 9
-  2025; ASI01–ASI10 covering goal hijacking, tool misuse, etc. — *ASI ordering SEMI-VERIFIED,
-  confirm against final PDF*). https://genai.owasp.org/
+  to the Orchestrator. Align with **OWASP Top-10 for Agentic Applications 2026** (ASI01–ASI10:
+  goal hijack, tool misuse, identity/privilege abuse, supply chain, unexpected code execution,
+  memory poisoning, insecure inter-agent comms, cascading failures, trust exploitation, rogue
+  agents — *exact titles TBC against final PDF*). https://genai.owasp.org/
+- **2026 hardening patterns** (adopt as they mature): **HTTP-layer policy interposition** —
+  evaluate every side-effecting network request against policy rather than brittle UI-level
+  rules (ceLLMate, arXiv:2512.12594, blocks WASP-benchmark injections at ~7–15% latency
+  overhead, [snippet]); **agent-adapted Same-Origin-Policy** so the agent can't act as an
+  unrestricted cross-origin data channel (SOPGuard, arXiv:2606.14027, [snippet]);
+  **continuous injection fuzzing** of our own agent in CI (arXiv:2510.13543 — the
+  Perplexity-Comet hidden-Reddit-comment exfiltration case shows the stakes, [snippet]); and
+  **scoped non-human agent identity** with just-in-time, task-scoped credentials per the NIST
+  AI Agent Standards Initiative (2026), never inheriting a user's ambient session.
 
 ## 4. Source trust scoring
 

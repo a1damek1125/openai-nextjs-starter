@@ -70,6 +70,33 @@
 - TheAgentCompany (B) and OSWorld (B) — the core "don't over-promise autonomy" evidence.
 - WebArena-style web-agent benchmarks and Full-Duplex-Bench family (C) — capability envelope.
 
+## G. 2026 state-of-the-art refresh (second research pass — see `21`)
+
+| Ref | Claim used | URL | Verification |
+|---|---|---|---|
+| MCP spec 2025-11-25 | Newer stable spec: async tasks (experimental), OIDC discovery, Client-ID-Metadata auth, elicitation enums, sampling tool-calls; 2026-07-28 RC in flight | https://github.com/modelcontextprotocol/modelcontextprotocol/releases | **[VERIFIED primary]** (GitHub releases + raw changelog) |
+| LangGraph 1.2.8 (2026-07-06) | 1.2 line: durable error-handler resume across host crashes, delta-channel snapshotting | https://pypi.org/project/langgraph/ · GitHub release 1.2.0 | **[VERIFIED primary]** (PyPI + release notes); HITL specifics for 1.2.x [UNVERIFIED] |
+| OpenAI Agents SDK 0.18.0 (2026-07-07) | RealtimeAgent default → gpt-realtime-2.1; SQLAlchemy sessions; Temporal extra; beta sandbox runtime [snippet] | https://pypi.org/project/openai-agents/ · GitHub releases | **[VERIFIED primary]** versions; sandbox/websocket [snippet] |
+| Pipecat v1.5.0 (2026-07-04) | Flows in core; TTFA metrics; Smart Turn v3 ~8M params ~12 ms CPU, 23 langs (v3.1) | https://github.com/pipecat-ai/pipecat/releases | **[VERIFIED primary]** release; Smart Turn figures [snippet] |
+| LiveKit Agents 1.6.4 (2026-06-26) | Unified audio+text Turn Detector v1.0; async tools; filler phrases; simulation framework | https://github.com/livekit/agents/releases | **[VERIFIED primary]** version; feature details [snippet] |
+| gpt-realtime-2.1 / -mini (~2026-07-06) | Configurable reasoning effort; ≥25% lower P95 (relative); pricing approximate | OpenAI announcement (403 to fetch) | [snippet] |
+| Kyutai MoshiRAG (2026-04-30) / Pocket TTS | Full-duplex + async retrieval; 100M TTS, ~200 ms first chunk, CPU real-time, MIT | https://github.com/kyutai-labs/moshi-rag · https://github.com/kyutai-labs/pocket-tts | repos **[VERIFIED primary]**; latency [snippet] |
+| olmOCR 2 (`olmOCR-2-7B-1025`) | RL (GRPO) with unit-test rewards; olmOCR-Bench 82.4±1.1; Apache-2.0 | https://github.com/allenai/olmocr · https://arxiv.org/abs/2510.19817 | **[VERIFIED primary]** (GitHub + Ai2 blog) |
+| PaddleOCR-VL-1.5 / -1.6 | 0.9–1B, 111 langs; 1.6 reports **96.33 OmniDocBench v1.6** (vendor) | https://arxiv.org/abs/2601.21957 · https://arxiv.org/abs/2606.03264 | [snippet]; weights license [UNVERIFIED] |
+| dots.ocr (1.7B, MIT) | Unified layout+recognition+reading order, 100+ langs | https://github.com/rednote-hilab/dots.ocr | repo **[VERIFIED primary]**; scores [snippet] |
+| DeepSeek-OCR / Granite-Docling-258M | Optical context compression (~200k pages/day/A100); 258M edge doc VLM | https://github.com/deepseek-ai/DeepSeek-OCR · IBM announcement | repos/announcement **[VERIFIED primary]**; figures [snippet] |
+| Docling v2.110 (2026-07-04) | nemotron-ocr + vLLM backends, ASR, ODF; MIT | https://github.com/docling-project/docling/releases | **[VERIFIED primary]** |
+| WindowsWorld (ACL 2026) | Cross-app Windows workflows: all agents **<21%** | https://arxiv.org/abs/2604.27776 · https://github.com/HITsz-TMG/WindowsWorld | GitHub **[VERIFIED primary]**; scores [snippet] |
+| OSWorld 2.0 | Long-horizon (~318 tool calls median): best **~20.6%** end-to-end / 54.8% partial | https://arxiv.org/abs/2606.29537 · https://osworld-v2.xlang.ai/ | [snippet] |
+| OSWorld-Verified 2026 SOTA | Single-app SOTA ~72% (Agent S2; Claude Sonnet 4.6 ~72.5%) — nominal human parity on short tasks only | https://os-world.github.io/ | [snippet]; distrust >76% aggregator claims (SEO spam) |
+| macOSWorld / OSUniverse | Proprietary agents >30% vs open <2%; SOTA <50% where humans ~100% | https://arxiv.org/abs/2506.04135 · https://arxiv.org/abs/2505.03570 | [snippet] |
+| OWASP Agentic Top 10 2026 (ASI01–10) | Goal hijack, tool misuse, identity/privilege abuse, supply chain, code exec, memory poisoning, inter-agent comms, cascading failures, trust exploitation, rogue agents | https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/ | [snippet] multi-source; exact titles TBC vs PDF |
+| OWASP Agentic Skills Top 10 (AST01–10) | Skill-layer risks (malicious skills, over-privilege, metadata mismatch, update drift…) | https://owasp.org/www-project-agentic-skills-top-10/ | [snippet]; provisional naming |
+| SOPGuard/SOPBench (arXiv 2606.14027) | Same-Origin-Policy enforcement for agentic browsers | https://arxiv.org/abs/2606.14027 | [snippet] |
+| ceLLMate (arXiv 2512.12594) | HTTP-layer policy interposition sandbox for browser agents; blocks WASP injection at ~7–15% latency overhead | https://arxiv.org/abs/2512.12594 · https://cellmate-sandbox.github.io/ | [snippet] |
+| In-browser injection fuzzing (arXiv 2510.13543) | Real-time LLM-guided fuzzing finds injection vulns in agentic browsers; Comet/Reddit exfiltration case | https://arxiv.org/abs/2510.13543 | [snippet] |
+| NIST AI Agent Standards Initiative (2026-02-17) | Identity & authz, security & risk mgmt, monitoring & logging; SP 800-53 mapping | https://www.nist.gov/artificial-intelligence/ai-agent-standards-initiative | [snippet] |
+
 ---
 
 ### How to treat these citations

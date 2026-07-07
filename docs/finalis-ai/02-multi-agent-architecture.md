@@ -9,19 +9,30 @@
 ## 0. Why narrow + supervised (evidence)
 
 - **TheAgentCompany (CMU et al., arXiv:2412.14161)**: in a simulated software company, the
-  best agent completed **~24% of 175 consequential tasks fully autonomously** (Claude 3.5
-  Sonnet; ~34.4% with partial-completion credit). An updated leaderboard reports the best at
-  ~30.3% (Gemini 2.5 Pro). Takeaway: **do not sell "AI does the whole job unattended."**
-  Source: https://arxiv.org/abs/2412.14161 *(headline number via search snippet of the
-  paper; treat as high-confidence paraphrase).*
+  best agent at publication completed **~24% of 175 consequential tasks fully autonomously**
+  (Claude 3.5 Sonnet; ~34.4% with partial credit); 2025–26 re-runs put the best closed models
+  at **~30% full / ~40% partial**. Takeaway: **do not sell "AI does the whole job
+  unattended."** Source: https://arxiv.org/abs/2412.14161 *(numbers via search snippets of the
+  paper/leaderboard; treat as high-confidence paraphrase).*
 - **OSWorld (arXiv:2404.07972)**: on 369 real computer tasks, **humans ≈72.4%** vs. **best
-  model at publication ≈12.2%**, struggling with GUI grounding/operational knowledge (SOTA
-  has since risen sharply, some work approaching/exceeding the human baseline — treat those
-  specific numbers as UNVERIFIED). Takeaway: **GUI/browser autonomy needs guardrails and
-  human fallback.** Source: https://arxiv.org/abs/2404.07972.
+  model at publication ≈12.2%**. By 2026, single-app OSWorld-Verified SOTA reached **~72%**
+  (nominal human parity) — but that does **not** transfer to real office work:
+  - **WindowsWorld (ACL 2026, arXiv:2604.27776)**: professional **cross-application** Windows
+    workflows (181 tasks, 17 apps) — all computer-use agents **<21%**.
+  - **OSWorld 2.0 (arXiv:2606.29537)**: **long-horizon** workflows (~1.6h human time, ~318
+    tool calls median) — best system **~20.6% end-to-end** (54.8% partial) at a 500-step
+    budget.
+  - **OSUniverse (arXiv:2505.03570)**: calibrated so SOTA agents score **<50%** on tasks an
+    average white-collar worker completes with ~perfect accuracy.
+  *(2026 figures via search snippets; re-verify at the leaderboards before quoting.)*
 
-These two results justify the architecture: **explicit state machine + typed workers +
-autonomy levels + human review**, rather than open-ended autonomy.
+The pattern is consistent: agents are near-human on short single-app tasks but complete only
+**~20–40% of cross-application, long-horizon business work unsupervised** — and partial-credit
+scores (34–55%) show real per-step competence. That is exactly Finalis's regime (multi-day,
+multi-channel, multi-tool cases), and it dictates the design: **explicit state machine + typed
+narrow workers + autonomy levels + human review at task boundaries**, letting the AI execute
+the routine sub-steps it is demonstrably good at while humans approve/repair at the joints —
+rather than open-ended autonomy.
 
 ---
 
@@ -87,9 +98,13 @@ control, escalation, and — above all — **guaranteeing every active case has 
 
 All external capabilities (calendar, email, WhatsApp, telephony, browser, OCR services,
 CRM) are exposed to workers as **MCP tools/resources/prompts**. MCP is an open protocol that
-standardizes how LLM apps integrate external tools and data; current spec **2025-06-18**
-(notable: servers are OAuth 2.0 resource servers, structured tool output, elicitation for
-mid-session user input). Spec: https://modelcontextprotocol.io/specification/2025-06-18.
+standardizes how LLM apps integrate external tools and data. Current **stable spec:
+2025-11-25** (adds experimental **async tasks** for durable long-running requests, OIDC
+discovery + Client-ID-Metadata-Document auth, richer elicitation enums, tool-calling in
+sampling — all backward compatible with 2025-06-18; a 2026-07-28 RC is in flight).
+Spec: https://modelcontextprotocol.io/specification/2025-11-25 (changelog verified from the
+MCP GitHub repo). Async tasks are directly relevant to Finalis's long-running document/web
+jobs.
 
 Using MCP means each integration is a swappable server with a typed contract, testable in
 isolation, and reusable across workers — and it future-proofs against orchestration-framework

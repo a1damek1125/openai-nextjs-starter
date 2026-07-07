@@ -23,23 +23,32 @@ end-to-end speech-to-speech model. Rationale from the research:
   **reasoning quality outranks the last 200 ms of latency**. A cascaded pipeline also lets us
   reuse the same text LLM + tools as the rest of the system.
 - **Keep a realtime-model adapter behind the same interface.** OpenAI's Realtime API went GA
-  (Aug 28 2025) with `gpt-realtime` speech-to-speech, positioned for lower latency and adding
-  SIP calling + remote MCP (https://openai.com/index/introducing-gpt-realtime/). We can route
-  *specific* low-complexity flows (e.g. simple confirmations) to a realtime model later, but
-  the default remains cascaded for reasoning-heavy turns. *(Exact realtime latency in ms:
-  UNVERIFIED — OpenAI's positioning is qualitative.)*
+  (Aug 28 2025) with `gpt-realtime` speech-to-speech, adding SIP calling + remote MCP; by
+  mid-2026 the line is at **`gpt-realtime-2.1` / `-2.1-mini`** (configurable reasoning effort,
+  better interruption/noise handling, claimed ≥25% lower P95 latency vs. prior gen —
+  *relative claim, absolute ms UNVERIFIED; [snippet]*). Third-party leaderboards put
+  best-in-class native S2S voice-to-voice response around **~0.4–0.9 s** *( [snippet],
+  unconfirmed on primary sources)*. We can route *specific* low-complexity flows (e.g. simple
+  confirmations) to a realtime model, but the default remains cascaded for reasoning-heavy
+  turns. The gap is closing — re-evaluate this decision each quarter in the Evaluation Lab.
 
 **Framework**: use **Pipecat** or **LiveKit Agents** as the real-time media + pipeline layer —
-do not build transport/VAD from scratch.
-- **Pipecat**: open-source (BSD-2) Python framework for real-time voice/multimodal agents;
-  orchestrates `STT→LLM→TTS` in one frame pipeline; transports include WebRTC (Daily/LiveKit/
-  Vonage), WebSocket, and telephony (Twilio/Telnyx/Vonage); Silero VAD drives interruption/
-  barge-in. https://github.com/pipecat-ai/pipecat , https://docs.pipecat.ai/
-- **LiveKit Agents**: Apache-2.0 framework where the agent joins a WebRTC Room as a
-  participant; supports cascaded STT/LLM/TTS **or** a realtime speech-to-speech model;
-  **semantic turn detection** via a transformer end-of-utterance model; built-in interruption
-  handling; **built-in SIP/PSTN telephony** (livekit/sip bridge). OpenAI reportedly built
-  ChatGPT Advanced Voice on LiveKit (vendor claim).
+do not build transport/VAD from scratch. Both are mature 1.x frameworks as of mid-2026:
+- **Pipecat** (v1.5.0, 2026-07): open-source (BSD-2) Python framework for real-time voice/
+  multimodal agents; orchestrates `STT→LLM→TTS` in one frame pipeline; transports include
+  WebRTC (Daily/LiveKit/Vonage), WebSocket, and telephony (Twilio/Telnyx/Vonage); Silero VAD
+  drives interruption/barge-in. v1.5 adds **Pipecat Flows in core** (graph conversation flows)
+  and **built-in TTFA metrics** (exactly the latency instrumentation `15` needs). **Smart Turn
+  v3** end-of-turn model: ~8M params, **~12 ms CPU inference**, 23 languages (v3.1)
+  *( [snippet] for the latency/lang figures)*.
+  https://github.com/pipecat-ai/pipecat , https://docs.pipecat.ai/
+- **LiveKit Agents** (v1.6.4, 2026-06): Apache-2.0 framework where the agent joins a WebRTC
+  Room as a participant; supports cascaded STT/LLM/TTS **or** a realtime speech-to-speech
+  model; **unified Turn Detector v1.0** (audio + text semantics, CPU, <500 MB RAM) built into
+  `livekit-agents`; async tools + **filler phrases during long tool calls** (matches our
+  fallback-when-slow rule); agent handoff; a simulation/testing framework; **built-in SIP/PSTN
+  telephony** (livekit/sip bridge). OpenAI reportedly built ChatGPT Advanced Voice on LiveKit
+  (vendor claim).
   https://docs.livekit.io/agents/ , https://github.com/livekit/agents , https://github.com/livekit/sip
 
 **MVP pick**: **LiveKit Agents** if telephony/SIP + turn detection out-of-the-box is the
