@@ -4,7 +4,7 @@
 > `Message`, `Call` segment, `ExtractedField`, or web `Source`. (2) **Event-sourced core** —
 > the case's truth is an append-only `AuditEvent` log; derived tables are projections that can
 > be rebuilt. (3) **Relational + graph + vector**, not one or the other (see rationale in
-> `18-tech-stack.md`). (4) **Privacy by default** — PII columns are tagged, encrypted at rest,
+> `18-technology-stack.md`). (4) **Privacy by default** — PII columns are tagged, encrypted at rest,
 > and carry retention policies.
 
 Storage strategy (justified in the tech-stack doc):
@@ -52,7 +52,7 @@ table is tenant-scoped and every query is tenant-filtered (row-level security).
 - **Indexes**: `(tenant_id, phone)`, `(tenant_id, email)`, vector index on
   `deal_memory_embedding`.
 - **Retention/privacy**: **PII-heavy** — encrypted at rest, subject to GDPR erasure; opt-out
-  flags are permanent (surviving erasure as a suppression hash). See `16-risks-mitigations.md`.
+  flags are permanent (surviving erasure as a suppression hash). See `16-risks-and-mitigations.md`.
 
 ### `Conversation`
 - **Purpose**: a channel-bound thread (one WhatsApp thread, one email thread, one chat
@@ -317,7 +317,7 @@ MVP:
 - **Indexes**: `(tenant_id, from_node)`, `(tenant_id, to_node)`, `(tenant_id, edge_type)`.
 - **Traversal**: recursive CTEs for MVP ("what blocks this quote?", "which promises are
   overdue and block a close?"). Migration trigger to Neo4j: if typical queries exceed 3–4 hop
-  traversals across >10⁵ edges per case set with latency issues (see `18-tech-stack.md`).
+  traversals across >10⁵ edges per case set with latency issues (see `18-technology-stack.md`).
 
 ---
 
@@ -332,4 +332,4 @@ MVP:
 
 All PII access is logged (`AuditEvent`); data region is tenant-configurable
 (`BusinessProfile.data_region`); erasure and export (DSAR) are first-class operations. See
-`16-risks-mitigations.md` for the full privacy/compliance posture.
+`16-risks-and-mitigations.md` for the full privacy/compliance posture.
