@@ -21,7 +21,7 @@
 | Auth | Dashboard: NextAuth session (OAuth2/OIDC) → `UserRole` permissions. Server-to-server: API keys (`Authorization: Bearer fnls_sk_...`), scoped per tenant + capability. Webhooks: provider signature verification (HMAC/JWT per provider). |
 | Idempotency | All mutating endpoints accept `Idempotency-Key` header (uuid, retained ≥24h). Replays return the original response with `Idempotent-Replay: true`. |
 | Pagination | Cursor-based: `?cursor=...&limit=` (default 25, max 100). Responses: `{ data: [...], next_cursor, has_more }`. Sorted by `created_at desc` unless stated. |
-| Autonomy | Endpoints that trigger outbound client contact or commitments are gated by the case's effective autonomy level (`13`); below-threshold requests are **not rejected** — they enqueue a `HumanApproval` and return `202` with the approval id. |
+| Autonomy | Endpoints that trigger outbound client contact or commitments are gated by the case's effective autonomy level (`13`). Two distinct outcomes: **below-autonomy-level** requests are not rejected — they enqueue a `HumanApproval` and return `202 Accepted` with the newly created approval id. **Hard blocks** (client opt-out, quiet hours, `HUMAN_REVIEW_REQUIRED` freeze) return `403 autonomy_blocked` and mint **no** new approval id; for the freeze case the error references the approval already created by the escalation. |
 | Audit | Every mutation writes an `AuditEvent` (append-only, hash-chained). The API never edits or deletes audit rows. |
 | Evidence | Any response carrying AI claims (briefs, comparisons, risk flags, extracted fields) embeds `evidence_ref_ids` and `confidence` — the UI contract of `11`. |
 
@@ -79,7 +79,16 @@ Common conventions: `GET /{resource}` = list (cursor-paginated, filterable), `GE
 | `GET /documents/{id}` | Metadata + status | `status: received\|processing\|analyzed\|needs_rescan`, `ocr_quality, overall_confidence, doc_risk_score`. |
 | `GET /documents/{id}/analysis` | Full analysis | `{ extracted_fields: [ExtractedField incl. confidence, page, bbox, verified_by_human], risk_flags: [RiskFlag], evidence_refs, summary }`. `404` until `analyzed`. |
 | `POST /documents/{id}/rescan` | Request re-scan | Marks `needs_rescan`, emits `document.needs_rescan` → Follow-up Worker asks client for a clearer copy (that outbound message is itself autonomy-gated). |
+| `GET /photos/{id}` | Photo metadata | `storage_url` (short-lived signed link), `vision_tags, ocr_text, quality, linked_missing_item_id`. |
 | `PATCH /extracted-fields/{id}` | Human verify/correct a field | Sets `verified_by_human`; audited; feeds Evaluation Lab calibration. `agent`+. |
+
+### RiskFlags, Evidence & Sources
+
+| Method & path | Purpose | Notes |
+|---|---|---|
+| `PATCH /risk-flags/{id}` | Acknowledge / resolve a flag | `{ status: acknowledged \| resolved, note? }`. `agent`+; audited; resolving recomputes `Case.risk_score`. |
+| `GET /evidence-refs/{id}` | Resolve an `EvidenceReference` | Returns `{ source_type, source_id, locator, snippet, confidence }` — resolves any AI claim to its source location; powers the UI evidence chips (`11`). |
+| `GET /sources/{id}` | WebScout `Source` record | `{ url, source_type, date_checked, title, snippet, trust_score, relevance, confidence, extracted_facts }` (`04`, `08`). |
 
 ### Offers & Comparisons
 
@@ -142,6 +151,16 @@ Common conventions: `GET /{resource}` = list (cursor-paginated, filterable), `GE
 | `PATCH /business-profile` | Update config | `owner`/`manager` only; threshold and autonomy changes are audited with before/after. |
 | `GET /playbooks`, `GET /playbooks/{id}` | Playbooks | `intake_schema, required_fields, scoring_weights, offer_weights, followup_defaults, escalation_rules, templates, version`. |
 | `PATCH /playbooks/{id}` | Update playbook | Creates a new `version` (immutable history — scores persist `weights_version` for reproducibility). `manager`+. |
+| `GET /voice-profile` | Voice/telephony config | `phone_numbers, tts_voice, stt_vendor, languages, greeting_script, barge_in_enabled, handoff_rules, recording_enabled, consent_prompt`. Powers the AI Control Center voice settings. |
+| `PATCH /voice-profile` | Update voice settings | `owner`/`manager` only; recording/consent changes are audited with before/after. |
+
+### Users (UserRole management)
+
+| Method & path | Purpose | Notes |
+|---|---|---|
+| `GET /users` | List tenant users | `role, permissions, assignable, notify_channels`. |
+| `POST /users` | Invite/create a user | `{ email, role, permissions?, notify_channels? }` → `UserRole`. `owner`/`manager` only; audited. |
+| `PATCH /users/{id}` | Change role / permissions / notify channels | `owner`/`manager` only; role escalation to `owner` requires `owner`; audited. |
 
 ### IntegrationAccounts
 
@@ -194,10 +213,16 @@ Web form and web chat submit to `POST /v1/webhooks/webform` / first-party chat A
   "detail": "Case is in HUMAN_REVIEW_REQUIRED; outbound actions are frozen (autonomy capped at Level 2).",
   "instance": "/v1/conversations/9f.../messages",
   "case_id": "c1...",
-  "human_approval_id": "ha7...",
+  "existing_human_approval_id": "ha7...",
   "trace_id": "..."
 }
 ```
+
+Note the 202-vs-403 distinction (see §1.1 Autonomy): a request merely **below the autonomy
+level** returns `202 Accepted` with a newly created `human_approval_id`. A **hard block**
+like this one (opt-out, quiet hours, `HUMAN_REVIEW_REQUIRED` freeze) returns
+`403 autonomy_blocked` and creates no new approval — `existing_human_approval_id` above
+points at the approval the escalation already created; the API never mints a second one.
 
 | Status | `type` slug (examples) | When |
 |---|---|---|
@@ -288,7 +313,7 @@ Evaluation Lab metrics pipeline consume **everything** and are omitted per-row.
 | `escalation.triggered` | `{ trigger: threshold\|hard_rule, rule?, escalation_score, θ_escalate, evidence_ref_ids }` | ORCH (invariant 5, `03` §2) | ORCH (forced `case.state_changed → HUMAN_REVIEW_REQUIRED`, autonomy cap L2); `approval.requested` follows |
 | `followup.scheduled` | `{ sequence_id, step_index, channel, scheduled_at, followup_priority }` | Follow-up Worker via ORCH | Durable scheduler (Temporal/queue) |
 | `followup.sent` | `{ sequence_id, step_index, message_id \| call_id }` | ORCH executor | Sequence advance (`active_step_index`++); AnnoyanceRisk accounting |
-| `followup.exhausted` | `{ sequence_id, attempts, last_channel }` | Follow-up Worker | ORCH (transition → `RECOVERY_LATER` with `wake_at`, or `ABANDONED`) |
+| `followup.exhausted` | `{ sequence_id, attempts, last_channel }` | Follow-up Worker | ORCH (transition → `RECOVERY_LATER` with `wake_at`, or `ABANDONED` — via the global closure edge, `03` §4) |
 | `case.parked` | `{ to_state: RECOVERY_LATER, wake_at, recovery_reason }` | ORCH | Durable wake timer |
 | `case.woken` | `{ from: RECOVERY_LATER, wake_reason, to_state: FOLLOW_UP_ACTIVE }` | ORCH (timer fire) | Follow-up Worker (fresh context-aware opener); scores recompute |
 | `webscout.research_completed` | `{ query, facts: [{claim, source_url, trust_score, evidence_ref_id}], confidence }` | WebScout Worker | Decision Worker; Offer Comparator; ORCH (facts attach to Case Graph) |
@@ -304,7 +329,7 @@ Evaluation Lab metrics pipeline consume **everything** and are omitted per-row.
 | Retries | Exponential backoff with jitter (1s → 5m cap), max 8 attempts for transient failures. `action.failed` is emitted per attempt with `will_retry`. |
 | Dead-letter | After max attempts → DLQ table with full envelope + error; emits a `system` AuditEvent and surfaces as a Command Center SLA item (`02` §7). DLQ replays are manual (`manager`+) and re-enter the case lane in order. |
 | Causality | `causation_id`/`correlation_id` let the Timeline and Evaluation Lab reconstruct chains (e.g. everything descending from one inbound message). |
-| Nightly stuck sweep | The sweep (`03` §5, `09`) is itself an event producer: it iterates active cases, recomputes `StuckScore`, `FollowUpPriority`, `PromiseBreachScore` → emits `scores.recomputed` per case, `promise.breached` for lapsed promises, `case.woken` for due `wake_at`, and `action.proposed` for the chosen NBA. If it finds an active case **without** a future action (invariant 1 violation) it emits a `system` `escalation.triggered{trigger: hard_rule, rule: "no_next_action"}` — failing loudly, as required. Sweep events flow through the same per-case lanes, so they interleave safely with live traffic. |
+| Nightly stuck sweep | The sweep (`03` §5, `09`) is itself an event producer: it iterates active cases, recomputes `LeadScore`, `MIS`, `StuckScore`, `EscalationScore`, `PromiseBreachScore`, `FollowUpPriority` → emits `scores.recomputed` per case, `promise.breached` for lapsed promises, `case.woken` for due `wake_at`, and `action.proposed` for the chosen NBA. If it finds an active case **without** a future action (invariant 1 violation) it emits a `system` `escalation.triggered{trigger: hard_rule, rule: "no_next_action"}` — failing loudly, as required. Sweep events flow through the same per-case lanes, so they interleave safely with live traffic. |
 | Timers | Follow-up offsets, promise deadlines, `wake_at`, approval SLAs are durable timers (Temporal or Postgres-queue `scheduled_at` polling) that fire as events — surviving restarts (`18`). |
 
 ## 2.4 Sequence example — inbound WhatsApp photo to autonomous (or approved) reply

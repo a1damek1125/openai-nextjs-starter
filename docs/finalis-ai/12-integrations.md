@@ -301,11 +301,11 @@ already fixes **Level 2 = "Prepare"**). Working shorthand of the ladder:
 
 | Level | Name | Meaning |
 |---|---|---|
-| **1** | Observe | Read/ingest only; no external action. |
+| **1** | Observe | Read/ingest only; zero outbound client-facing actions. |
 | **2** | Prepare | Draft/stage an action (e.g. compose reply, build quote) — human sends. |
-| **3** | Suggest / one-click | Recommend a specific action; human approves with one click (`HumanApproval`). |
-| **4** | Act-with-notice | Executes autonomously, notifies human, reversible/low-stakes. |
-| **5** | Act-autonomously | Executes without per-action approval, within policy + guardrails. |
+| **3** | Communicate | Autonomous low-risk informational sends (reminders, confirmations, missing-info requests, receiving/placing AI voice calls) — no approval; no prices, bookings, or discounts. |
+| **4** | Execute Low Risk | Autonomously books appointments and sends rule-covered standard quotes/follow-ups — no approval; outside-rule steps escalate. |
+| **5** | Conditional Autopilot | Full workflow within strict rules, without per-action approval; escalates on thresholds/hard overrides. |
 
 The **minimum level required to *act*** on each integration, and whether a human approval gate
 (`HumanApproval`) is normally required. Actual behavior is per-tenant via

@@ -160,7 +160,7 @@ block. A messaging-only case (no call) costs **~€0.10–0.60**. All figures in
 | WhatsApp/SMS messages / month | 300 | 1,500 | 5,000 |
 | Doc pages + photos / month | 30 | 200 | 800 |
 | Decision briefs / month | 15 | 100 | 400 |
-| WebScout tasks / month | 0 | 10 | 80 |
+| WebScout tasks / month | 0 | 0 (WebScout is Business-tier — `00` §8) | 80 |
 | Infra baseline | €8 | €10 | €15 |
 
 ### 3.2 COGS and gross margin (using §1 rate bands)
@@ -171,13 +171,16 @@ block. A messaging-only case (no call) costs **~€0.10–0.60**. All figures in
 | Messaging (fees + LLM) | €2–8 | €8–35 | €25–110 |
 | Documents | €0.1–1 | €1–6 | €3–24 |
 | Briefs (× $0.03–0.12) | €0.5–2 | €3–12 | €12–48 |
-| WebScout | — | €0.2–1.5 | €2–12 |
+| WebScout | — | — (Business-tier only, `00` §8) | €2–12 |
 | Orchestration | €0.2–1.5 | €1–6 | €2–20 |
 | Infra | €8 | €10 | €15 |
-| **COGS / tenant / month** | **€14–41** | **€38–171** | **€119–629** |
+| **COGS / tenant / month** | **€14–41** | **€38–170** | **€119–629** |
 | Tier price (`00` §8) | €99–149 | €299–499 | €799–1,499 |
 | **Gross margin** | **59–91%** | **43–92%** | **21–92%** |
 | Margin at mid COGS / mid price | **~78%** | **~74%** | **~67%** |
+
+*(Adjustment note: Pro WebScout was previously budgeted at 10 tasks/€0.2–1.5; zeroed to match
+`00` §8 tier gating — Pro COGS high end drops €171 → €170, margins unchanged at this rounding.)*
 
 Read: at mid-band rates every tier clears the **~70% gross margin** a SaaS needs; only the
 worst case (top-of-band voice rates *and* bottom-of-tier price *and* heavy usage) dips below,

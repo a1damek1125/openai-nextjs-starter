@@ -295,11 +295,14 @@ per action type) plus per-`Case` override (`Case.autonomy_level`). A clear ladde
 
 | Level | Name | What the AI may do without asking |
 |---|---|---|
-| **1** | Observe | Read/score/summarize only; suggests nothing outbound. |
-| **2** | Prepare | Drafts messages, quotes, briefs — human sends everything. (This is the cap enforced in `HUMAN_REVIEW_REQUIRED`.) |
-| **3** | Act with approval | Executes routine actions after a `HumanApproval`; high-value/legal always gated. |
-| **4** | Act, notify | Autonomously handles standard flows (intake, follow-ups, doc requests, booking a survey); notifies the owner. |
-| **5** | Full autonomy | End-to-end within playbook + thresholds; escalates only on hard rules. |
+| **1** | Observe | Read/listen/summarize only; zero outbound client-facing actions. |
+| **2** | Prepare | Drafts messages, quotes, briefs for human review — human sends everything. (This is the cap enforced in `HUMAN_REVIEW_REQUIRED`.) |
+| **3** | Communicate | Autonomous low-risk informational sends — reminders, confirmations, missing-info requests, receiving/placing AI voice calls — no approval; no prices, bookings, or discounts. |
+| **4** | Execute Low Risk | Autonomous bookings plus rule-covered standard sends (quotes inside `price_rules`, below `high_value_threshold`); anything outside the rule box escalates. |
+| **5** | Conditional Autopilot | Full workflow end-to-end while it stays in-rules; escalates on thresholds/hard overrides (drops to Level 2). |
+
+Level names and semantics are canonical in `13-autonomy-and-safety.md` §1. **L5 is disabled
+until post-MVP (`14` §1); the control renders but is locked.**
 
 Per action type (call, WhatsApp/SMS/email, request-doc, prepare-quote, send-offer, schedule,
 escalate) the owner sets the level. UI makes the trade-off explicit: higher autonomy = more
@@ -339,8 +342,8 @@ create a new `version` and are back-testable (shadow scoring per §13) before ro
   checklist.
 - **Error:** a config save failure is non-destructive (optimistic UI rolls back with an inline
   error); a threshold edit that would violate a hard override is rejected with an explanation.
-- **Guardrail:** attempting to raise autonomy above what a threshold permits (e.g. full autonomy on
-  legal docs) is blocked with a clear reason, not silently allowed.
+- **Guardrail:** attempting to raise autonomy above what a threshold permits (e.g. Conditional
+  Autopilot on legal docs) is blocked with a clear reason, not silently allowed.
 
 ---
 

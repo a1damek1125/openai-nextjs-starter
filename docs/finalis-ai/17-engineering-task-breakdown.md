@@ -380,7 +380,6 @@ states afterward; decision briefs and Command Center polish sit on top of everyt
   capacity allows.
 - **Eval Lab (N)** should start early (golden fixtures + calibration harness) so it gates the
   workers as they land rather than being retrofitted.
-```
 
 ---
 
@@ -412,7 +411,7 @@ states afterward; decision briefs and Command Center polish sit on top of everyt
 | | |
 |---|---|
 | **Sprint goal** | The durable spine exists: every case lives in the state machine, under invariants, with audit. |
-| **Tasks** | **C1** state-machine engine (17 states + transition table); **C2** global invariants (non-null `next_best_action` + `due_at`; transitions write `AuditEvent`); **C3** global interrupt edge; **C4** durable LangGraph case runtime; finish **B3–B6** (evidence, commercial/workflow tables, `AuditEvent` hash chain, `graph_edges`); **B10** tenant-scoped repository layer; **A6** Next.js `web` baseline + **A7** environments; X.5 state-machine property tests. |
+| **Tasks** | **C1** state-machine engine (17 states + transition table); **C2** global invariants (non-null `next_best_action` + `due_at`; transitions write `AuditEvent`); **C3** global interrupt edge (Sprint 2 ships hard-override rules only; full S-ESC scoring lands Phase 3 — see 03 §2 invariant 5 MVP note); **C4** durable LangGraph case runtime; finish **B3–B6** (evidence, commercial/workflow tables, `AuditEvent` hash chain, `graph_edges`); **B10** tenant-scoped repository layer; **A6** Next.js `web` baseline + **A7** environments; X.5 state-machine property tests. |
 | **Demo / checkpoint** | Scripted walkthrough in a test harness: seeded case driven `NEW_CONTACT → INTAKE_IN_PROGRESS → … → WON`, illegal transition rejected, kill-and-restart resumes mid-case (C4); audit chain verifies. |
 | **Exit criteria** | C1–C4 acceptance criteria met; property tests pass (only legal transitions, invariants always hold); B1–B6 + B10 done; authenticated user reaches an empty Command Center calling `core` (A6). |
 

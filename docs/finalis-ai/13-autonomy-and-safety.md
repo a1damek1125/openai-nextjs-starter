@@ -77,6 +77,12 @@ Levels are **cumulative** — Level *n* includes everything permitted at *n−1*
   send a photo of the boiler label, like this?" with an example image; the owner reviews the
   wording and taps send.
 
+> **Note on L1/L2 and inbound contacts.** *Answering an inbound contact* is a distinct action
+> class: at L1–L2 the AI only captures a message/voicemail and notifies a human; conversational
+> inbound answering requires the inbound-answer action type set to L3+. Since "AI answers the
+> phone" is the MVP headline capability (`14`), the recommended onboarding default is L1–L2 for
+> outbound action types but L3 for inbound answering from day one.
+
 ### Level 3 — Communicate
 
 - **Allowed actions**: L2 **plus autonomous *non-committal* outbound communication** —
@@ -153,11 +159,13 @@ Levels are **cumulative** — Level *n* includes everything permitted at *n−1*
 ### 1.1 Setting autonomy per tenant
 
 - `BusinessProfile.autonomy_defaults` (jsonb, per action type) is the tenant's dial, editable
-  in the Command Center by an `owner`/`manager` `UserRole`.
-- Recommended onboarding path: start every action type at **L1–L2**, raise **doc-requests and
-  informational follow-ups** to L3 first (lowest blast radius), then **rule-covered quotes and
-  bookings** to L4 once the tenant has reviewed a batch of them, and reserve **L5** for a
-  hand-picked, high-confidence case type.
+  in the AI Control Center (`11` §5) by an `owner`/`manager` `UserRole`.
+- Recommended onboarding path: start every **outbound** action type at **L1–L2** but set
+  **inbound answering to L3 from day one** (see the L1/L2 note in §1 — "AI answers the phone"
+  is the MVP headline capability, `14`); raise **doc-requests and informational follow-ups**
+  to L3 next (lowest blast radius), then **rule-covered quotes and bookings** to L4 once the
+  tenant has reviewed a batch of them, and reserve **L5** for a hand-picked, high-confidence
+  case type.
 - Any change to `autonomy_defaults` or a case's `autonomy_level` is itself an `AuditEvent`
   (`event_type=autonomy_changed`) with actor, old/new values, and reason (see §5).
 
