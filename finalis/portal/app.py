@@ -3418,6 +3418,347 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                              event_type="TASK_CANCELLED")
         return payload
 
+    # ---- Causally Verifiable Run Ledger + Event-Sourced Replay (CORE-A3) --------------
+    from ..ai_employee import run_ledger as _rl
+    from ..ai_employee.run_store import AIRunStore
+    run_store = AIRunStore(db)
+    app.state.run_store = run_store
+
+    def _run_specs(task: dict) -> list:
+        """Deterministic run-event sequence derived from the accepted task
+        contract. Records snapshots + a lifecycle path; executes nothing."""
+        specs = [
+            {"event_type": "RUN_CREATED"},
+            {"event_type": "TASK_ENVELOPE_SNAPSHOT_RECORDED",
+             "trust": "UNTRUSTED_INPUT_RECORDED",
+             "payload": {"task_envelope_hash":
+                         task["canonical_task_envelope_hash"],
+                         "task_description": task["task_description"]}},
+            {"event_type": "TASK_CONTRACT_SNAPSHOT_RECORDED",
+             "payload": {"task_contract_hash":
+                         task["canonical_task_contract_hash"],
+                         "task_contract_version":
+                         task["canonical_task_contract_version"]}},
+            {"event_type": "AUTHORITY_SNAPSHOT_RECORDED",
+             "authority_decision": task["authority_decision"],
+             "payload": {"authority_decision": task["authority_decision"],
+                         "authority_hard_fail": task["authority_hard_fail"],
+                         "authority_snapshot_version":
+                         task["authority_snapshot_version"]}},
+            {"event_type": "CAPABILITY_SNAPSHOT_RECORDED",
+             "payload": {"capability_snapshot_hash":
+                         task["assigned_ai_employee_capability_snapshot_hash"]}},
+            {"event_type": "DATA_SCOPE_SNAPSHOT_RECORDED",
+             "payload": {"allowed_data_scopes": task["allowed_data_scopes"],
+                         "forbidden_data_scopes":
+                         task["forbidden_data_scopes"]}},
+            {"event_type": "POLICY_PRECHECK_RECORDED",
+             "payload": {"authority_reason": task["authority_reason"]}},
+            {"event_type": "RUN_STARTED"},
+        ]
+        for flag in task.get("input_security_flags", []):
+            if flag != "NONE":
+                specs.append({"event_type":
+                              "PROMPT_INJECTION_ATTEMPT_RECORDED"
+                              if flag == "PROMPT_INJECTION_ATTEMPT"
+                              else "UNTRUSTED_INPUT_FLAG_RECORDED",
+                              "trust": "UNTRUSTED_INPUT_RECORDED",
+                              "payload": {"flag": flag}})
+        specs.append({"event_type": "PLAN_DRAFTED"})
+        if task["task_status"] == "NEEDS_CLARIFICATION":
+            specs.append({"event_type": "CONTEXT_REQUESTED",
+                          "reason": "task requires clarification"})
+        elif task.get("requires_human_approval"):
+            specs.append({"event_type": "APPROVAL_REQUIRED_RECORDED",
+                          "reason": "sensitive action requires human "
+                          "approval"})
+            specs.append({"event_type":
+                          "APPROVAL_GATE_NOT_IMPLEMENTED_RECORDED",
+                          "actor_type": "APPROVAL_GATE_NOT_IMPLEMENTED",
+                          "reason": "Human Approval Gate is not implemented"})
+        else:
+            specs.append({"event_type": "DRAFT_OUTPUT_PLACEHOLDER_CREATED",
+                          "reason": "draft-only placeholder; no side effects"})
+        return specs
+
+    def _run_response(row: dict) -> dict:
+        return json.loads(row["payload_json"])
+
+    @app.get("/ai-runs/event-types")
+    async def ai_run_event_types(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {"event_types": {t: {"event_schema_version":
+                                    s["schema_version"],
+                                    "status_effect": s["effect"],
+                                    "terminal": s["terminal"],
+                                    "future_placeholder": s["future_placeholder"]}
+                                for t, s in _rl.EVENT_SCHEMA.items()},
+                "run_statuses": _rl.RUN_STATUSES,
+                "honesty_labels": _rl.HONESTY_LABELS}
+
+    @app.post("/ai-runs")
+    async def create_ai_run(body: dict, user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        task_id = str(body.get("task_id", ""))
+        trow = task_store.get(task_id, tenant_id=user["tid"])
+        if trow is None:
+            raise HTTPException(404, "task not found")
+        task = json.loads(trow["payload_json"])
+        # Hard-fail dominance: a run can never override a blocked/terminal task.
+        if task["authority_decision"] == "BLOCKED" or task["task_status"] in (
+                "BLOCKED", "NOT_IMPLEMENTED", "EXPIRED", "CANCELLED"):
+            raise HTTPException(409, f"cannot create an actionable run for a "
+                                f"{task['task_status']} task")
+
+        run_id = str(uuid.uuid4())
+        trace_id = str(uuid.uuid4())
+        base = uuid.uuid4().hex
+        specs = _run_specs(task)
+        events = _rl.assemble_events(
+            run_id=run_id, tenant_id=user["tid"], task_id=task_id,
+            trace_id=trace_id, actor_id=user["uid"], specs=specs,
+            id_factory=lambda i: f"{base}-{i:02d}")
+        state = _rl.reduce_run(events)
+        ehashes = [e["event_hash"] for e in events]
+        now = utcnow()
+        merkle = _rl.run_event_merkle_root(ehashes)
+
+        run_payload = {
+            "run_id": run_id, "tenant_id": user["tid"], "task_id": task_id,
+            "task_envelope_hash": task["canonical_task_envelope_hash"],
+            "task_contract_hash": task["canonical_task_contract_hash"],
+            "task_contract_version": task["canonical_task_contract_version"],
+            "requester_user_id": user["uid"],
+            "assigned_ai_employee_id": task["assigned_ai_employee_id"],
+            "ai_employee_capability_snapshot_hash":
+                task["assigned_ai_employee_capability_snapshot_hash"],
+            "authority_snapshot_version": task["authority_snapshot_version"],
+            "authority_decision": task["authority_decision"],
+            "authority_reason": task["authority_reason"],
+            "authority_hard_fail": task["authority_hard_fail"],
+            "purpose_category": task["purpose_category"],
+            "allowed_data_scopes_snapshot": task["allowed_data_scopes"],
+            "forbidden_data_scopes_snapshot": task["forbidden_data_scopes"],
+            "segment": task["segment"], "run_type": "task_run",
+            "run_status": state["replayed_run_status"],
+            "replayed_run_status": state["replayed_run_status"],
+            "run_status_consistency": "MATCHED", "run_version": 1,
+            "trace_id": trace_id, "parent_run_id": None,
+            "source_channel": task["source_channel"],
+            "source_thread_ref": None, "source_message_ref": None,
+            "created_at": now, "started_at": now, "last_event_at": now,
+            "risk_level": task["risk_level"],
+            "requires_human_approval": task["requires_human_approval"],
+            "requires_tool_broker": task["requires_tool_broker"],
+            "requires_consent_check": task["requires_consent_check"],
+            "requires_evidence_check": task["requires_evidence_check"],
+            "requires_run_ledger": True,
+            "event_count": state["event_count"],
+            "latest_event_hash": state["latest_event_hash"],
+            "run_chain_hash": state["run_chain_hash"],
+            "run_state_hash": state["run_state_hash"],
+            "run_event_merkle_root": merkle,
+            "chain_verification_status": "NOT_RUN",
+            "replay_verification_status": "NOT_RUN",
+            "safe_view_available": True, "redaction_profile": "FULL_RUN_VIEW",
+            "data_retention_hint": task.get("data_retention_hint"),
+            "sensitive_data_flags": task.get("sensitive_data_flags", []),
+            "raw_payload_retention_status": "ADVISORY_ONLY",
+            "final_summary": None, "failure_reason": state["failure_reason"],
+            "blocked_reason": state["blocked_reason"],
+            "honesty_labels": _rl.HONESTY_LABELS,
+            "current_task_state_comparison": "NOT_IMPLEMENTED",
+        }
+        run_store.save_run({
+            "id": run_id, "tenant_id": user["tid"], "task_id": task_id,
+            "task_envelope_hash": task["canonical_task_envelope_hash"],
+            "task_contract_hash": task["canonical_task_contract_hash"],
+            "requester_user_id": user["uid"],
+            "assigned_ai_employee_id": task["assigned_ai_employee_id"],
+            "segment": task["segment"], "run_type": "task_run",
+            "run_status": state["replayed_run_status"], "run_version": 1,
+            "trace_id": trace_id, "risk_level": task["risk_level"],
+            "authority_decision": task["authority_decision"],
+            "event_count": state["event_count"],
+            "latest_event_hash": state["latest_event_hash"],
+            "run_chain_hash": state["run_chain_hash"],
+            "run_state_hash": state["run_state_hash"],
+            "run_event_merkle_root": merkle,
+            "payload_json": json.dumps(run_payload), "created_by": user["uid"],
+            "created_at": now, "updated_at": now, "cancelled_at": None})
+        for e in events:
+            run_store.add_event(run_id=run_id, tenant_id=user["tid"],
+                                task_id=task_id, envelope=e, created_at=now)
+        audit.append(event_type="AI_RUN_CREATED", actor=user["uid"],
+                     payload={"run_id": run_id, "task_id": task_id,
+                              "run_status": state["replayed_run_status"],
+                              "event_count": state["event_count"]})
+        return {**run_payload, "events": events}
+
+    def _load_run_or_404(run_id: str, user: dict) -> dict:
+        row = run_store.get_run(run_id, tenant_id=user["tid"])
+        if row is None:                          # incl. cross-tenant
+            raise HTTPException(404, "run not found")
+        return row
+
+    @app.get("/ai-runs")
+    async def list_ai_runs(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return [json.loads(r["payload_json"])
+                for r in run_store.list_runs(tenant_id=user["tid"])]
+
+    @app.get("/ai-runs/{run_id}")
+    async def get_ai_run(run_id: str, user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        p = _run_response(_load_run_or_404(run_id, user))
+        return {**p, "events": run_store.events(run_id, tenant_id=user["tid"])}
+
+    @app.get("/ai-runs/{run_id}/events")
+    async def get_ai_run_events(run_id: str,
+                                user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_run_or_404(run_id, user)
+        return run_store.events(run_id, tenant_id=user["tid"])
+
+    @app.get("/ai-runs/{run_id}/trace")
+    async def get_ai_run_trace(run_id: str,
+                               user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        p = _run_response(_load_run_or_404(run_id, user))
+        evs = run_store.events(run_id, tenant_id=user["tid"])
+        return {"run_id": run_id, "trace_id": p["trace_id"],
+                "task_id": p["task_id"],
+                "spans": [{"span_id": e["span_id"],
+                           "parent_span_id": e["parent_span_id"],
+                           "event_type": e["event_type"],
+                           "event_index": e["event_index"]} for e in evs],
+                "honesty_labels": _rl.HONESTY_LABELS}
+
+    @app.get("/ai-runs/{run_id}/safe")
+    async def get_ai_run_safe(run_id: str,
+                              user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        p = _run_response(_load_run_or_404(run_id, user))
+        evs = run_store.events(run_id, tenant_id=user["tid"])
+        return _rl.safe_view_run(p, evs)
+
+    @app.post("/ai-runs/{run_id}/cancel")
+    async def cancel_ai_run(run_id: str, user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        row = _load_run_or_404(run_id, user)
+        p = _run_response(row)
+        if p["run_status"] in _rl.TERMINAL_STATUSES:
+            raise HTTPException(409, f"run is {p['run_status']}")
+        evs = run_store.events(run_id, tenant_id=user["tid"])
+        nxt = _rl.assemble_events(
+            run_id=run_id, tenant_id=user["tid"], task_id=p["task_id"],
+            trace_id=p["trace_id"], actor_id=user["uid"],
+            specs=[{"event_type": "RUN_CANCELLED", "actor_type": "HUMAN_USER",
+                    "reason": "cancelled by user"}],
+            id_factory=lambda i: f"{uuid.uuid4().hex}-cancel")
+        # relink the appended event to the existing chain
+        last = evs[-1]
+        cancel_ev = nxt[0]
+        cancel_ev["event_index"] = len(evs) + 1
+        cancel_ev["previous_event_hash"] = last["event_hash"]
+        cancel_ev["causal_parent_event_ids"] = [last["event_id"]]
+        cancel_ev["event_hash"] = _rl.event_hash(
+            {k: v for k, v in cancel_ev.items() if k != "event_hash"})
+        run_store.add_event(run_id=run_id, tenant_id=user["tid"],
+                            task_id=p["task_id"], envelope=cancel_ev,
+                            created_at=utcnow())
+        all_events = evs + [cancel_ev]
+        state = _rl.reduce_run(all_events)
+        p.update({"run_status": state["replayed_run_status"],
+                  "replayed_run_status": state["replayed_run_status"],
+                  "event_count": state["event_count"],
+                  "latest_event_hash": state["latest_event_hash"],
+                  "run_chain_hash": state["run_chain_hash"],
+                  "run_state_hash": state["run_state_hash"],
+                  "run_event_merkle_root": _rl.run_event_merkle_root(
+                      [e["event_hash"] for e in all_events]),
+                  "run_version": p["run_version"] + 1})
+        run_store.update_run(run_id, {
+            "run_status": "CANCELLED", "event_count": state["event_count"],
+            "latest_event_hash": state["latest_event_hash"],
+            "run_chain_hash": state["run_chain_hash"],
+            "run_state_hash": state["run_state_hash"],
+            "run_event_merkle_root": p["run_event_merkle_root"],
+            "payload_json": json.dumps(p), "run_version": p["run_version"],
+            "updated_at": utcnow(), "cancelled_at": utcnow()},
+            tenant_id=user["tid"])
+        return p
+
+    @app.post("/ai-runs/{run_id}/replay")
+    async def replay_ai_run(run_id: str, user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        row = _load_run_or_404(run_id, user)
+        p = _run_response(row)
+        evs = run_store.events(run_id, tenant_id=user["tid"])
+        state = _rl.reduce_run(evs)
+        mismatch = (state["run_state_hash"] != p["run_state_hash"]
+                    or state["replayed_run_status"] != p["run_status"]
+                    or bool(state["replay_errors"]))
+        return {"run_id": run_id,
+                "replayed_run_status": state["replayed_run_status"],
+                "replayed_event_count": state["event_count"],
+                "replayed_latest_event_hash": state["latest_event_hash"],
+                "replayed_run_chain_hash": state["run_chain_hash"],
+                "replayed_run_state_hash": state["run_state_hash"],
+                "replay_status": "MISMATCHED" if mismatch else "MATCHED",
+                "replay_mismatches": state["replay_errors"],
+                "replay_warnings": state["warnings"],
+                "current_task_state_comparison": "NOT_IMPLEMENTED",
+                "verified_at": utcnow(), "honesty_labels": _rl.HONESTY_LABELS}
+
+    @app.post("/ai-runs/{run_id}/verify")
+    async def verify_ai_run(run_id: str, user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        row = _load_run_or_404(run_id, user)
+        p = _run_response(row)
+        evs = run_store.events(run_id, tenant_id=user["tid"])
+        chk = _rl.verify_events(evs)
+        state = _rl.reduce_run(evs)
+        chain_status = ("MATCHED" if chk["recomputed_run_chain_hash"]
+                        == p["run_chain_hash"] else "MISMATCHED")
+        latest_status = ("MATCHED" if chk["recomputed_latest_event_hash"]
+                         == p["latest_event_hash"] else "MISMATCHED")
+        merkle_status = ("MATCHED" if chk["recomputed_merkle_root"]
+                         == p["run_event_merkle_root"] else "MISMATCHED")
+        state_status = ("MATCHED" if state["run_state_hash"]
+                        == p["run_state_hash"] else "MISMATCHED")
+        replay_status = ("MATCHED" if (state_status == "MATCHED"
+                         and not state["replay_errors"]) else "MISMATCHED")
+        tamper = bool(chk["tamper_reasons"]) or latest_status == "MISMATCHED" \
+            or chain_status == "MISMATCHED" or state_status == "MISMATCHED"
+        vstatus = "MATCHED"
+        if tamper:
+            vstatus = "MISMATCHED"
+        elif p["event_count"] != len(evs):
+            vstatus, tamper = "MISMATCHED", True
+        return {"run_id": run_id,
+                "verification_status": vstatus,
+                "verification_kind": "ledger_integrity_verification",
+                "event_count": len(evs),
+                "stored_latest_event_hash": p["latest_event_hash"],
+                "recomputed_latest_event_hash":
+                    chk["recomputed_latest_event_hash"],
+                "run_chain_hash_status": chain_status,
+                "run_state_hash_status": state_status,
+                "run_event_merkle_root_status": merkle_status,
+                "event_index_status": chk["event_index_status"],
+                "causal_link_status": chk["causal_link_status"],
+                "replay_status": replay_status,
+                "tamper_detected": tamper,
+                "tamper_reasons": chk["tamper_reasons"],
+                "current_task_state_comparison": "NOT_IMPLEMENTED",
+                "verified_at": utcnow(),
+                "reason": ("ledger integrity verified; replay matches stored "
+                           "run state" if vstatus == "MATCHED"
+                           else "ledger verification failed — see "
+                           "tamper_reasons"),
+                "honesty_labels": _rl.HONESTY_LABELS}
+
     # ---- UI pages -------------------------------------------------------------------------------------
     ui.mount(app)
     return app

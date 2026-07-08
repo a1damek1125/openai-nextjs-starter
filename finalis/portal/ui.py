@@ -147,6 +147,7 @@ window.loadSections = async () => {
     jobs.push(loadWorkbenchSection(me, cases));
   if (window.loadAIEmployeeSection) jobs.push(loadAIEmployeeSection(me));
   if (window.loadTasksSection) jobs.push(loadTasksSection(me));
+  if (window.loadRunsSection) jobs.push(loadRunsSection(me));
   await Promise.allSettled(jobs);
 };
 
@@ -2304,6 +2305,99 @@ window.openTask = async (id) => {
 };
 """
 
+# ===========================================================================
+# CORE-A3 — Run Ledger / Trace Replay Journal (portal view).
+# ===========================================================================
+RUNS_SECTIONS = """
+<section id="runs-section"><h2>Run Ledger</h2>
+<p><small><b>Run Ledger records what happened; it does not grant permission
+to act.</b> <b>Replay verifies ledger consistency; it does not re-run the
+task.</b> <b>Run event Merkle root is an internal checkpoint; it is not
+external notarization.</b> <b>No LLM execution is implemented in this
+mission.</b> <b>No Tool Broker execution is implemented in this mission.</b>
+<b>Human Approval Gate is not implemented in this mission.</b> <b>Trace-ready
+fields are internal; external telemetry export is not implemented.</b>
+<b>Safe run view is not a separate ledger.</b> <b>Retention fields are
+advisory in this build; production retention enforcement is not
+implemented.</b> Server-side policy remains authoritative.</small></p>
+<div id="runs-list"><i>Loading runs…</i></div>
+<div id="run-detail"></div>
+</section>
+"""
+
+RUNS_JS = """
+window.loadRunsSection = async (me) => { await loadRuns(); };
+
+window.loadRuns = async () => {
+  let rows; try { rows = await get('/ai-runs'); }
+  catch (e) { $('runs-list').innerHTML =
+    '<i>Runs are not available for your role.</i>'; return; }
+  $('runs-list').innerHTML = rows.length ?
+    '<table><tr><th>Run</th><th>Task</th><th>Status</th><th>Events</th>' +
+    '<th>Consistency</th><th></th></tr>' + rows.map(r =>
+      `<tr><td><small>${esc(r.run_id.slice(0, 8))}</small></td>
+       <td><small>${esc((r.task_id || '').slice(0, 8))}</small></td>
+       <td><b>${esc(r.run_status)}</b></td><td>${esc(String(
+         r.event_count))}</td>
+       <td>${esc(r.run_status_consistency)}</td>
+       <td><button onclick="openRun('${esc(r.run_id)}')">Open</button>
+       </td></tr>`).join('') + '</table>' : '<i>No runs yet.</i>';
+};
+
+window.openRun = async (id) => {
+  const r = await get('/ai-runs/' + id);
+  const evs = r.events || [];
+  $('run-detail').innerHTML = `
+    <h3>Run ${esc(r.run_id.slice(0, 8))}
+      <span class="badge">${esc(r.run_status)}</span></h3>
+    <p>task ${esc((r.task_id || '').slice(0, 8))} · employee
+      ${esc((r.assigned_ai_employee_id || '').slice(0, 8))} · segment
+      ${esc(r.segment)} · risk ${esc(r.risk_level)} · trace
+      <code>${esc((r.trace_id || '').slice(0, 8))}</code></p>
+    <p><b>Authority:</b> ${esc(r.authority_decision)} ·
+      replayed status ${esc(r.replayed_run_status)} · consistency
+      <b>${esc(r.run_status_consistency)}</b></p>
+    <p><b>event_count</b> ${esc(String(r.event_count))} ·
+      <b>latest_event_hash</b> <code>${esc((r.latest_event_hash
+        || '').slice(0, 14))}…</code></p>
+    <p><b>run_chain_hash</b> <code>${esc((r.run_chain_hash
+      || '').slice(0, 14))}…</code> · <b>run_state_hash</b>
+      <code>${esc((r.run_state_hash || '').slice(0, 14))}…</code></p>
+    <p><b>run_event_merkle_root</b>
+      <code>${esc((r.run_event_merkle_root || '').slice(0, 14))}…</code></p>
+    <p><button onclick="verifyRun('${esc(id)}')">Verify ledger</button>
+      <button onclick="replayRun('${esc(id)}')">Replay</button>
+      <span id="run-verify-msg"></span></p>
+    <h4>Events (${evs.length})</h4>
+    <table><tr><th>#</th><th>Type</th><th>Status</th><th>Hash</th></tr>
+      ${evs.map(e => `<tr><td>${esc(String(e.event_index))}</td>
+        <td>${esc(e.event_type)}</td><td>${esc(e.event_status)}</td>
+        <td><code>${esc((e.event_hash || '').slice(0, 12))}…</code></td>
+        </tr>`).join('')}</table>
+    <ul>${(r.honesty_labels || []).map(l =>
+      `<li><small>${esc(l)}</small></li>`).join('')}</ul>`;
+};
+
+window.verifyRun = async (id) => {
+  const {ok, data} = await send('POST', '/ai-runs/' + id + '/verify', {});
+  $('run-verify-msg').innerHTML = ok
+    ? `<b class="${data.verification_status === 'MATCHED' ? 'ok' : 'err'}">
+       ${esc(data.verification_status)}</b> (tamper:
+       ${data.tamper_detected}) <small>${esc(data.reason)}</small>`
+    : `<span class="err">${esc(data.detail || '')}</span>`;
+};
+
+window.replayRun = async (id) => {
+  const {ok, data} = await send('POST', '/ai-runs/' + id + '/replay', {});
+  $('run-verify-msg').innerHTML = ok
+    ? `replay <b class="${data.replay_status === 'MATCHED' ? 'ok' : 'err'}">
+       ${esc(data.replay_status)}</b> → ${esc(data.replayed_run_status)}
+       <small>(current_task_state_comparison:
+       ${esc(data.current_task_state_comparison)})</small>`
+    : `<span class="err">${esc(data.detail || '')}</span>`;
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -2326,6 +2420,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 {WORKBENCH_SECTIONS}
 {AIEMP_SECTIONS}
 {TASKS_SECTIONS}
+{RUNS_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -2452,7 +2547,8 @@ boot();
 <script>{CRM_JS}</script>
 <script>{WORKBENCH_JS}</script>
 <script>{AIEMP_JS}</script>
-<script>{TASKS_JS}</script></body></html>"""
+<script>{TASKS_JS}</script>
+<script>{RUNS_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:

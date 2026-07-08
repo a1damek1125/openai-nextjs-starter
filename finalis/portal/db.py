@@ -619,6 +619,39 @@ CREATE TABLE IF NOT EXISTS ai_task_intake_events (
 CREATE INDEX IF NOT EXISTS ix_ai_task_events
   ON ai_task_intake_events(tenant_id, task_id, created_at);
 """),
+    (11, """
+-- v11: Causally Verifiable Run Ledger + Event-Sourced Replay (CORE-A3).
+-- The forensic audit spine: hash-linked append-only run events, replayable to
+-- recompute run state. Records what happened; grants no permission to act.
+CREATE TABLE IF NOT EXISTS ai_runs (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, task_id TEXT NOT NULL,
+  task_envelope_hash TEXT NOT NULL DEFAULT '',
+  task_contract_hash TEXT NOT NULL DEFAULT '',
+  requester_user_id TEXT NOT NULL, assigned_ai_employee_id TEXT NOT NULL,
+  segment TEXT NOT NULL DEFAULT '', run_type TEXT NOT NULL DEFAULT 'task_run',
+  run_status TEXT NOT NULL DEFAULT 'CREATED',
+  run_version INTEGER NOT NULL DEFAULT 1, trace_id TEXT NOT NULL DEFAULT '',
+  risk_level TEXT NOT NULL DEFAULT 'MEDIUM',
+  authority_decision TEXT NOT NULL DEFAULT '',
+  event_count INTEGER NOT NULL DEFAULT 0,
+  latest_event_hash TEXT, run_chain_hash TEXT, run_state_hash TEXT,
+  run_event_merkle_root TEXT,
+  payload_json TEXT NOT NULL, created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL, updated_at TEXT NOT NULL, cancelled_at TEXT);
+CREATE INDEX IF NOT EXISTS ix_ai_runs ON ai_runs(tenant_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_ai_runs_task ON ai_runs(tenant_id, task_id);
+
+CREATE TABLE IF NOT EXISTS ai_run_events (
+  id TEXT PRIMARY KEY, run_id TEXT NOT NULL, tenant_id TEXT NOT NULL,
+  task_id TEXT NOT NULL, event_index INTEGER NOT NULL,
+  event_type TEXT NOT NULL, event_status TEXT NOT NULL DEFAULT 'RECORDED',
+  previous_event_hash TEXT, event_hash TEXT NOT NULL,
+  envelope_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_run_events_idx
+  ON ai_run_events(tenant_id, run_id, event_index);
+CREATE INDEX IF NOT EXISTS ix_ai_run_events
+  ON ai_run_events(tenant_id, run_id, event_index);
+"""),
 ]
 
 
