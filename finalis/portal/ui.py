@@ -139,6 +139,7 @@ window.loadSections = async () => {
   if (canManage) jobs.push(loadUsers());
   if (canLogs) jobs.push(loadLogs());
   if (canAudit) jobs.push(loadGov());
+  if (window.loadQuoteSection) jobs.push(loadQuoteSection(me, cases));
   await Promise.allSettled(jobs);
 };
 
@@ -256,6 +257,325 @@ window.loadGov = async () => {
 };
 """
 
+QUOTES_SECTIONS = """
+<section id="quotes-section"><h2>Quotes</h2>
+<p><small>Tax engine, PDF generator and invoice handoff are <b>mocks</b>
+(MOCKED_AND_TESTED — no real Stripe / invoicing / payment provider is
+connected). E-signature is SCAFFOLDED_ONLY. Quote options are
+SCAFFOLDED_ONLY (not persisted). Change-order approval API is MISSING
+(engine-only, future mission). Quote-to-invoice conversion is a
+placeholder domain event only. <b>An accepted quote does not mean the
+case is completed</b> — it only opens payment and fulfillment
+requirements.</small></p>
+<div id="quote-create" hidden>
+  Case: <select id="quote-case"></select>
+  <button id="quote-create-btn" onclick="createQuote()">Create quote draft</button>
+</div>
+<div id="quote-msg"></div>
+<div id="quote-list"><i>Loading quotes…</i></div>
+<div id="quote-detail"></div>
+</section>
+
+<section id="pricing-admin" hidden><h2>Pricing Admin (minimal)</h2>
+<p><small>Local price book + pricing rules — deliberately minimal, not an
+ERP settings module.</small></p>
+<div id="pricing-books"></div>
+<input id="pb-sku" placeholder="SKU" style="max-width:8rem"/>
+<input id="pb-name" placeholder="name" style="max-width:10rem"/>
+<input id="pb-price" placeholder="list price" style="max-width:8rem"/>
+<button id="pb-add" onclick="addPriceBookItem()">Add price book item</button>
+<div id="pricing-rules"></div>
+<span id="pricing-msg"></span>
+</section>
+"""
+
+QUOTES_JS = """
+const QSTATE_HELP = {
+  DRAFT: 'DRAFT — editable.',
+  NEEDS_MORE_INFO: 'Needs more info before pricing.',
+  PRICE_CALCULATED: 'Price calculated — editing returns it to DRAFT.',
+  APPROVAL_REQUIRED: 'Waiting for human approval.',
+  APPROVED: 'Approved — ready to send.',
+  REJECTED_BY_APPROVER: 'Rejected by approver — back to draft to fix.',
+  SENT: 'This quote is already sent and cannot be edited. Create a revision.',
+  VIEWED: 'Client viewed the quote. Content is frozen.',
+  ACCEPTED: 'This quote is accepted and immutable. Use a change order. ' +
+    'The case is NOT completed — payment and fulfillment are still open.',
+  DECLINED: 'Client declined. Revise to try again.',
+  EXPIRED: 'Validity expired — revise to re-offer.',
+  CANCELLED: 'Cancelled.',
+  REVISED: 'Superseded by a newer version once it is sent.',
+  SUPERSEDED: 'Replaced by a newer sent version.',
+  CONVERTED_TO_INVOICE: 'Handed to invoicing (mock handoff only).'
+};
+const canQuote = () => ME && ME.permissions.includes('offer.create');
+const canApprove = () => ME && ME.permissions.includes('offer.approve');
+const qmsg = (t, ok) => { $('quote-msg').innerHTML =
+  `<span class="${ok ? 'ok' : 'err'}">${t}</span>`; };
+
+window.loadQuoteSection = async (me, cases) => {
+  $('quote-create').hidden = !canQuote();
+  $('quote-case').innerHTML = cases.map(c =>
+    `<option value="${c.id}">${c.title}</option>`).join('');
+  $('pricing-admin').hidden = !canQuote();
+  await loadQuotes();
+  if (canQuote()) await loadPricingAdmin();
+};
+
+window.loadQuotes = async (caseId) => {
+  const qs = await get('/quotes' + (caseId ? '?case_id=' + caseId : ''));
+  $('quote-list').innerHTML = qs.length ?
+    '<table><tr><th>Quote</th><th>Case</th><th>Status</th><th>v</th>' +
+    '<th>Total</th><th></th></tr>' + qs.map(q =>
+      `<tr data-quote="${q.id}"><td>${q.id.slice(0, 8)}</td>
+       <td>${q.case_id.slice(0, 8)}</td><td>${q.state}</td>
+       <td>${q.version}</td><td>${q.total} ${q.currency}</td>
+       <td><button onclick="openQuote('${q.id}')">Open</button></td>
+       </tr>`).join('') + '</table>' :
+    '<i>No quotes yet.</i>';
+};
+
+window.createQuote = async () => {
+  const {ok, data} = await send('POST', '/quotes',
+                                {case_id: $('quote-case').value});
+  qmsg(ok ? 'Draft created.' : 'Refused: ' + data.detail, ok);
+  if (ok) { await loadQuotes(); openQuote(data.id); }
+};
+
+window.quotesFor = (caseId) => {
+  loadQuotes(caseId);
+  if ($('quote-case')) $('quote-case').value = caseId;
+  $('quotes-section').scrollIntoView();
+};
+
+window.openQuote = async (id) => {
+  const q = await get('/quotes/' + id);
+  const ps = ME.permissions.includes('payment.view')
+    ? await get('/quotes/' + id + '/payment-schedule') : null;
+  const cos = q.state === 'ACCEPTED'
+    ? await get('/quotes/' + id + '/change-orders') : [];
+  const lines = q.line_items.map(li =>
+    `<tr><td>${li.description}</td><td>${li.quantity}</td>
+     <td>${li.line_cost}</td><td>${li.price_after_discount}</td>
+     <td>${li.applied_discount}</td>
+     <td>${li.margin_percent ?? '?'}</td><td>${li.line_total}</td>
+     <td>${li.requires_human_review ? 'needs human review' : ''}</td>
+     </tr>`).join('');
+  const schedule = (ps && ps.milestones.length) ? ps.milestones.map(m =>
+    `<li>${m.label}: ${(parseFloat(m.fraction) * 100).toFixed(0)}%
+     (${m.trigger})${m.blocks_fulfillment_until_paid
+       ? ' — <b>fulfillment blocked until paid</b>' : ''}</li>`)
+    .join('') : '<li><i>No schedule — full amount on acceptance.</i></li>';
+  const reqs = (ps && ps.payment_requirements.length)
+    ? '<p><b>Payment requirements (from acceptance):</b> ' +
+      ps.payment_requirements.map(r => `${r.label}: ${r.amount}`)
+        .join(' · ') + '</p>' : '';
+  const editable = q.editable || q.state === 'PRICE_CALCULATED';
+  const buttons = [];
+  if (canQuote() && editable)
+    buttons.push(`<button onclick="calcQuote('${id}')">Calculate</button>`);
+  if (canApprove() && ['PRICE_CALCULATED', 'APPROVAL_REQUIRED']
+      .includes(q.state)) {
+    buttons.push(`<button onclick="qAct('${id}','approve')">Approve</button>`);
+    buttons.push(`<button onclick="qReject('${id}')">Reject</button>`);
+  }
+  if (canQuote() && ['PRICE_CALCULATED', 'APPROVED'].includes(q.state))
+    buttons.push(`<button onclick="qAct('${id}','send')">Send</button>`);
+  if (canQuote() && ['SENT', 'VIEWED'].includes(q.state)) {
+    buttons.push(`<button onclick="qAct('${id}','accept')">Client accepts (simulated)</button>`);
+    buttons.push(`<button onclick="qDecline('${id}')">Client declines…</button>`);
+    buttons.push(`<button onclick="qAct('${id}','expire')">Expire</button>`);
+  }
+  if (canQuote() && ['SENT', 'VIEWED', 'DECLINED', 'EXPIRED']
+      .includes(q.state))
+    buttons.push(`<button onclick="qAct('${id}','revise')">Revise (new version)</button>`);
+  buttons.push(`<button onclick="qPdf('${id}')">Generate mock PDF</button>`);
+  $('quote-detail').innerHTML = `
+    <h3>Quote ${q.id.slice(0, 8)} — v${q.version}
+      <span class="badge" id="quote-state">${q.state}</span></h3>
+    <p><i id="quote-state-help">${QSTATE_HELP[q.state] || ''}</i></p>
+    <p>Subtotal ${q.subtotal} · Tax ${q.tax_total} (mock tax engine) ·
+       <b>Total ${q.total} ${q.currency}</b></p>
+    <p><b>Assumptions:</b> ${q.assumptions.join('; ') || '<i>none yet</i>'}
+       · <b>Exclusions:</b> ${q.exclusions.join('; ') || '<i>none yet</i>'}
+       · Terms template: ${q.terms_template_approved
+         ? 'approved' : '<b>not approved — send will require approval</b>'}</p>
+    <table><tr><th>Item</th><th>Qty</th><th>Cost</th><th>Unit price</th>
+      <th>Discount</th><th>Margin</th><th>Total</th><th></th></tr>
+      ${lines || '<tr><td colspan=8><i>no lines yet</i></td></tr>'}</table>
+    ${canQuote() && editable ? `
+      <p id="quote-line-form">
+        <input id="ql-desc" placeholder="description" style="max-width:12rem"/>
+        <input id="ql-cost" placeholder="cost" style="max-width:6rem"/>
+        <input id="ql-price" placeholder="book price" style="max-width:6rem"/>
+        <input id="ql-discount" placeholder="discount" style="max-width:6rem"/>
+        <input id="ql-reason" placeholder="discount reason" style="max-width:10rem"/>
+        <button id="ql-add" onclick="addQuoteLine('${id}')">Add line</button>
+        <button onclick="setTerms('${id}')">Set assumptions/exclusions/terms</button>
+        <button onclick="setDeposit('${id}')">Set 30% deposit schedule</button>
+      </p>` : `<p><i>${q.state === 'ACCEPTED'
+        ? 'Accepted quotes change only via change orders below.'
+        : 'This quote is not editable in its current state.'}</i></p>`}
+    <div id="quote-calc"></div>
+    <p><b>Payment schedule:</b></p><ul>${schedule}</ul>${reqs}
+    <p>${buttons.join(' ')}</p>
+    ${q.state === 'ACCEPTED' ? `
+      <h4>Change orders <small>(approval API is MISSING — engine-only,
+        future mission)</small></h4>
+      <ul>${cos.map(c => `<li>${c.description}: ${c.price_delta}
+        (margin ${c.margin_percent ?? '?'}) — ${c.status}</li>`).join('')
+        || '<li><i>none</i></li>'}</ul>
+      <p><input id="co-desc" placeholder="description" style="max-width:12rem"/>
+      <input id="co-price" placeholder="price delta" style="max-width:6rem"/>
+      <input id="co-cost" placeholder="cost delta" style="max-width:6rem"/>
+      <button id="co-add" onclick="addChangeOrder('${id}')">Create change order</button></p>`
+      : ''}
+    <div id="quote-pdf"></div>
+    <h4>Quote events</h4><ul id="quote-events"><li><i>…</i></li></ul>`;
+  if (ME.permissions.includes('audit.view')) {
+    const evs = await get('/quotes/' + id + '/events');
+    $('quote-events').innerHTML = evs.slice(-10).reverse().map(e =>
+      `<li>${e.event_type} <small>${e.created_at}</small></li>`).join('')
+      || '<li><i>none</i></li>';
+  } else { $('quote-events').innerHTML = '<li><i>needs audit.view</i></li>'; }
+};
+
+window.addQuoteLine = async (id) => {
+  const body = {description: $('ql-desc').value};
+  if ($('ql-cost').value) body.material_cost = $('ql-cost').value;
+  if ($('ql-price').value) body.price_book_price = $('ql-price').value;
+  if ($('ql-discount').value) body.requested_discount = $('ql-discount').value;
+  if ($('ql-reason').value) body.discount_reason = $('ql-reason').value;
+  const {ok, data} = await send('POST', `/quotes/${id}/lines`, body);
+  qmsg(ok ? 'Line added.' : 'Refused: ' + data.detail, ok);
+  if (ok) openQuote(id);
+};
+
+window.setTerms = async (id) => {
+  const {ok, data} = await send('PATCH', '/quotes/' + id, {
+    assumptions: ['single-day install', 'existing electrical is adequate'],
+    exclusions: ['electrical rework', 'wall repairs'],
+    terms_template_id: 'hvac-standard-v1', terms_template_approved: true});
+  qmsg(ok ? 'Assumptions, exclusions and approved terms template set.'
+          : 'Refused: ' + data.detail, ok);
+  if (ok) openQuote(id);
+};
+
+window.setDeposit = async (id) => {
+  const {ok, data} = await send('POST', `/quotes/${id}/payment-schedule`, {
+    milestones: [
+      {label: 'deposit', fraction: '0.3', is_deposit: true,
+       blocks_fulfillment_until_paid: true},
+      {label: 'final', fraction: '0.7', trigger: 'on_completion'}]});
+  qmsg(ok ? 'Deposit schedule set (30/70).' : 'Refused: ' + data.detail, ok);
+  if (ok) openQuote(id);
+};
+
+window.calcQuote = async (id) => {
+  const {ok, data} = await send('POST', `/quotes/${id}/calculate`, {});
+  if (!ok) { qmsg('Refused: ' + data.detail, false); return; }
+  const gates = Object.entries(data.gates).map(([name, g]) =>
+    `<li><b>${name}</b>: ${g.decision}${g.reasons.length
+      ? ' — ' + g.reasons.join('; ') : ''}</li>`).join('');
+  $('quote-calc').innerHTML = `
+    <p id="calc-totals">Calculated: subtotal ${data.subtotal} ·
+      tax ${data.tax_total} (mock) · <b>total ${data.total}</b></p>
+    <ul id="calc-gates">${gates}</ul>
+    <p id="calc-scores">Price confidence: ${data.scores.price_confidence}
+      · Evidence coverage: ${data.scores.evidence_coverage}
+      <small>(risk &amp; clarity scores need case-context wiring —
+      SCAFFOLDED_ONLY in the portal)</small></p>`;
+  openQuote(id);
+};
+
+window.qAct = async (id, action) => {
+  const {ok, data} = await send('POST', `/quotes/${id}/${action}`, {});
+  if (ok && action === 'accept') {
+    qmsg('Accepted. Payment requirements created: ' +
+      data.payment_requirements.map(r => `${r.label} ${r.amount}`)
+        .join(' · ') +
+      '. Case is now ' + data.lifecycle_view +
+      ' — NOT completed yet.', true);
+  } else {
+    qmsg(ok ? action + ' → ' + data.state : 'Refused: ' + data.detail, ok);
+  }
+  await loadQuotes();
+  openQuote(ok && data.id ? data.id : id);
+};
+
+window.qReject = async (id) => {
+  const reason = prompt('Rejection reason (required)');
+  if (reason === null) return;
+  const {ok, data} = await send('POST', `/quotes/${id}/reject`,
+                                {reason: reason});
+  qmsg(ok ? 'Rejected.' : 'Refused: ' + data.detail, ok);
+  openQuote(id);
+};
+
+window.qDecline = async (id) => {
+  const reason = prompt('Decline reason (required)');
+  if (reason === null) return;
+  const {ok, data} = await send('POST', `/quotes/${id}/decline`,
+                                {reason: reason});
+  qmsg(ok ? 'Declined.' : 'Refused: ' + data.detail, ok);
+  openQuote(id);
+};
+
+window.qPdf = async (id) => {
+  const {ok, data} = await send('POST', `/quotes/${id}/generate-pdf`, {});
+  if (!ok) { qmsg('Refused: ' + data.detail, false); return; }
+  const f = document.createElement('iframe');
+  f.style.width = '100%'; f.style.height = '16rem';
+  f.srcdoc = data.html;
+  $('quote-pdf').innerHTML =
+    `<p id="pdf-label"><b>MOCK_PDF_PROVIDER</b> — document
+     ${data.document_id.slice(0, 8)} (HTML placeholder, not a real PDF):</p>`;
+  $('quote-pdf').appendChild(f);
+};
+
+window.addChangeOrder = async (id) => {
+  const {ok, data} = await send('POST', `/quotes/${id}/change-orders`, {
+    description: $('co-desc').value, price_delta: $('co-price').value,
+    cost_delta: $('co-cost').value || '0'});
+  qmsg(ok ? `Change order created (${data.status}, margin
+    ${data.margin_percent ?? '?'}).` : 'Refused: ' + data.detail, ok);
+  if (ok) openQuote(id);
+};
+
+window.loadPricingAdmin = async () => {
+  const books = await get('/price-books');
+  let book = books[0];
+  if (!book) {
+    const r = await send('POST', '/price-books', {name: 'default'});
+    if (r.ok) book = r.data;
+  }
+  if (!book) { $('pricing-books').innerHTML = ''; return; }
+  window.PB_ID = book.id;
+  const items = await get(`/price-books/${book.id}/items`);
+  $('pricing-books').innerHTML = `<p><b>Price book:</b> ${book.name}</p>` +
+    (items.length ? '<table><tr><th>SKU</th><th>Name</th><th>List price</th>'
+      + '</tr>' + items.map(i => `<tr><td>${i.sku}</td><td>${i.name}</td>
+      <td>${i.list_price}</td></tr>`).join('') + '</table>'
+      : '<i>No items yet.</i>');
+  const rules = await get('/pricing-rules');
+  $('pricing-rules').innerHTML = rules.length ?
+    '<p><b>Pricing rules:</b></p><ul>' + rules.map(r =>
+      `<li>${r.name}: ${r.discount_percent}% off ${r.applies_to_sku}
+       (min qty ${r.min_quantity})</li>`).join('') + '</ul>' :
+    '<p><i>No pricing rules.</i></p>';
+};
+
+window.addPriceBookItem = async () => {
+  if (!window.PB_ID) return;
+  const {ok, data} = await send('POST', `/price-books/${PB_ID}/items`, {
+    sku: $('pb-sku').value, name: $('pb-name').value,
+    list_price: $('pb-price').value});
+  $('pricing-msg').innerText = ok ? 'Item saved.'
+    : 'Refused: ' + data.detail;
+  loadPricingAdmin();
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -272,6 +592,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <section><h2>Pipeline</h2><div id="pipeline"></div></section>
 <section><h2>Recent Activity</h2><ul id="activity"></ul></section>
 {WIRING_SECTIONS}
+{QUOTES_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -352,7 +673,8 @@ window.openCase = async (id) => {{
      </select>
      <button onclick="doTransition('${{id}}')">Transition</button>
      <button onclick="markWon('${{id}}')">Close WON</button>
-     <button onclick="scheduleFor('${{id}}')">Schedule appointment…</button></p>
+     <button onclick="scheduleFor('${{id}}')">Schedule appointment…</button>
+     <button onclick="quotesFor('${{id}}')">Quotes…</button></p>
      <div id="case-msg"></div>
      <h4>Timeline (${{tl.length}})</h4>
      <ul id="case-timeline">${{tl.slice(-12).map(e=>`<li>${{e.event_type}}
@@ -388,7 +710,8 @@ window.markWon = async (id) => {{
 }};
 boot();
 </script>
-<script>{WIRING_JS}</script></body></html>"""
+<script>{WIRING_JS}</script>
+<script>{QUOTES_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:
