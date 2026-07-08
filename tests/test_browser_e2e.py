@@ -325,6 +325,14 @@ def _new_quote_with_line(page, *, cost="1000", price="2000", **fills):
     page.wait_for_selector("#quote-state:has-text('DRAFT')", timeout=10000)
     page.click("text=Set assumptions/exclusions/terms")
     page.wait_for_selector("text=approved terms template set")
+    # setTerms() sets the message BEFORE it calls openQuote(), which then
+    # re-renders #quote-detail and recreates the line-form inputs. Wait for
+    # that re-render to settle (assumptions rendered) before filling, else a
+    # slow re-render under full-suite load clears the inputs mid-fill and the
+    # line is created with an empty description. (Same openQuote/openParty
+    # re-render-race pattern already handled in the CRM flows.)
+    page.wait_for_selector("#quote-detail:has-text('single-day install')",
+                           timeout=10000)
     page.fill("#ql-desc", fills.get("desc", "heat pump 12kW"))
     page.fill("#ql-cost", cost)
     page.fill("#ql-price", price)
