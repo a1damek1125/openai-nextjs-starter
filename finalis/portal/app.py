@@ -1543,6 +1543,17 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
     from ..evidence.views import (agent_view, causality_check, human_view,
                                   mark_symbol_human_verified)
     from .evidence_store import EvidenceStore
+    from ..evidence.derivatives import generate_manifest
+    from ..evidence.immutability import (RetentionPolicy,
+                                         hard_delete_allowed,
+                                         storage_worm_capability)
+    from ..evidence.policy import (EvidencePolicyDriftReport,
+                                   current_policy_version, policy_fingerprint)
+    from ..evidence.rehydration import EvidenceRehydrator
+    from ..evidence.scanners import (MockScannerProvider, ScaffoldCdrProvider,
+                                     decide_file_treatment,
+                                     scanner_risk_contribution)
+    from ..evidence import transparency as _mrk
 
     vault_dir = tempfile.mkdtemp(prefix="finalis-evidence-") \
         if db_path == ":memory:" \
@@ -1550,7 +1561,14 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
     evengine = EvidenceEngine(LocalEvidenceStorageProvider(vault_dir),
                               audit)
     estore = EvidenceStore(db)
+    # V-E: rebuild live engine state from persisted facts (event-sourced).
+    EvidenceRehydrator(estore).rehydrate(evengine)
+    ev_scanner = MockScannerProvider()
+    ev_cdr = ScaffoldCdrProvider()
     app.state.evidence, app.state.evidence_store = evengine, estore
+    # Record the current evidence policy fingerprint once at startup.
+    estore.save_policy_version(current_policy_version(),
+                               policy_fingerprint(), created_at=utcnow())
     upload_sessions: dict[str, dict] = {}     # SCAFFOLDED_ONLY (future TUS)
 
     EVIDENCE_HONESTY = {
@@ -1655,6 +1673,31 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                 "note": "local vault — WORM/retention/versioning enforced "
                         "by the domain layer, not natively "
                         "(BLOCKED_BY_EXTERNAL_PROVIDER for S3/MinIO)"}
+
+    # Static single-segment GET routes MUST be declared before the dynamic
+    # /evidence/{evidence_id} route below, or they get shadowed. Their
+    # bodies delegate to helpers defined later in create_app (closures
+    # resolve at request time, after create_app has fully executed).
+    @app.get("/evidence/contracts")
+    async def evidence_contracts_list(case_id: Optional[str] = None,
+                                      user: dict = Depends(current_user)):
+        require_permission(user, "audit.view")
+        return [_contract_json(r) for r in estore.contracts(
+            tenant_id=user["tid"], case_id=case_id)]
+
+    @app.get("/evidence/merkle-roots")
+    async def evidence_merkle_list(user: dict = Depends(current_user)):
+        require_permission(user, "audit.view")
+        return [{"batch_id": r["id"], "root": r["root"],
+                 "size": r["size"], "created_at": r["created_at"]}
+                for r in estore.merkle_roots(tenant_id=user["tid"])]
+
+    @app.get("/evidence/policy-version")
+    async def evidence_policy_version(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {"policy_version": current_policy_version(),
+                "fingerprint": policy_fingerprint(),
+                "requirement_profiles": sorted(REQUIREMENT_PROFILES)}
 
     # -- upload sessions (SCAFFOLDED_ONLY — future-TUS shape, no chunking) --
     @app.post("/evidence/upload-sessions")
@@ -1888,6 +1931,51 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                 "admissible": [e.id for e in evidence
                                if e.usable_for_decisions]}
 
+    def _contract_hash(*, tenant_id: str, case_id: str, decision_type: str,
+                       evidence_ids: list, facts: dict, hard_blockers: list,
+                       causal_result: str, policy_version: str,
+                       created_at: str) -> str:
+        import hashlib as _h
+        body = json.dumps({
+            "t": tenant_id, "c": case_id, "d": decision_type,
+            "e": sorted(evidence_ids), "f": facts,
+            "hb": sorted(hard_blockers), "cr": causal_result,
+            "pv": policy_version, "at": created_at}, sort_keys=True,
+            default=str)
+        return _h.sha256(body.encode()).hexdigest()
+
+    def _evaluate_contract(*, tenant_id: str, actor: str, decision_type: str,
+                           case_id: str, evidence_ids: list, facts: dict,
+                           human_verified: bool, user_intent_reference,
+                           untrusted_flag: bool,
+                           would_survive: bool) -> dict:
+        evidence = [evengine.objects[i] for i in evidence_ids
+                    if i in evengine.objects]
+        contract = evengine.build_contract(
+            decision_type=decision_type, tenant_id=tenant_id,
+            case_id=case_id, actor=actor, evidence=evidence,
+            facts=facts, human_verified=human_verified)
+        causal = causality_check(
+            action_type=decision_type,
+            user_intent_reference=user_intent_reference,
+            untrusted_instruction_detected=untrusted_flag
+            or any(e.injection_risk
+                   > evengine.thresholds.max_injection_for_raw_ai
+                   for e in evidence),
+            would_action_survive_without_untrusted_text=would_survive)
+        if contract.final_decision == "BLOCKED" \
+                or causal.decision == "BLOCK":
+            final = "BLOCKED"
+        elif causal.decision == "HUMAN_REVIEW" \
+                or contract.final_decision == "REVIEW":
+            final = "HUMAN_REVIEW"
+        else:
+            final = "ALLOWED"
+        contract.final_decision = ("ALLOWED" if final == "ALLOWED"
+                                   else ("REVIEW" if final == "HUMAN_REVIEW"
+                                         else "BLOCKED"))
+        return {"contract": contract, "causal": causal, "final": final}
+
     @app.post("/evidence/decision-contract/validate")
     async def evidence_decision_contract(body: dict,
                                          user: dict = Depends(
@@ -1897,43 +1985,248 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         require_permission(user, "case.read")
         decision_type = body.get("decision_type", "")
         case_id = body.get("case_id", "")
-        evidence = [evengine.objects[i]
-                    for i in body.get("evidence_ids", [])
-                    if i in evengine.objects]
-        contract = evengine.build_contract(
-            decision_type=decision_type, tenant_id=user["tid"],
-            case_id=case_id, actor=user["uid"], evidence=evidence,
-            facts=body.get("facts") or {},
-            human_verified=bool(body.get("human_verified")))
-        causal = causality_check(
-            action_type=decision_type,
-            user_intent_reference=body.get("user_intent_reference"),
-            untrusted_instruction_detected=bool(
-                body.get("untrusted_instruction_detected"))
-            or any(e.injection_risk
-                   > evengine.thresholds.max_injection_for_raw_ai
-                   for e in evidence),
-            would_action_survive_without_untrusted_text=bool(
-                body.get("would_action_survive_without_untrusted_text",
-                         True)))
-        if contract.final_decision == "BLOCKED" \
-                or causal.decision == "BLOCK":
-            final = "BLOCKED"
-        elif causal.decision == "HUMAN_REVIEW" \
-                or contract.final_decision == "REVIEW":
-            final = "HUMAN_REVIEW"
-        else:
-            final = "ALLOWED"
-        contract.final_decision = "ALLOWED" if final == "ALLOWED" \
-            else ("REVIEW" if final == "HUMAN_REVIEW" else "BLOCKED")
-        estore.save_contract(contract)
+        evidence_ids = body.get("evidence_ids", [])
+        facts = body.get("facts") or {}
+        intent = body.get("user_intent_reference")
+        untrusted_flag = bool(body.get("untrusted_instruction_detected"))
+        would_survive = bool(
+            body.get("would_action_survive_without_untrusted_text", True))
+        r = _evaluate_contract(
+            tenant_id=user["tid"], actor=user["uid"],
+            decision_type=decision_type, case_id=case_id,
+            evidence_ids=evidence_ids, facts=facts,
+            human_verified=bool(body.get("human_verified")),
+            user_intent_reference=intent, untrusted_flag=untrusted_flag,
+            would_survive=would_survive)
+        contract, causal, final = r["contract"], r["causal"], r["final"]
+        created_at = utcnow()
+        pv = current_policy_version()
+        chash = _contract_hash(
+            tenant_id=user["tid"], case_id=case_id,
+            decision_type=decision_type, evidence_ids=evidence_ids,
+            facts=facts, hard_blockers=contract.hard_blockers,
+            causal_result=causal.decision, policy_version=pv,
+            created_at=created_at)
+        estore.save_contract(
+            contract, contract_hash=chash, policy_version=pv,
+            requested_action=decision_type, causal_result=causal.decision,
+            user_intent_reference=intent, would_survive=would_survive)
         return {"final": final, "contract_id": contract.id,
+                "contract_hash": chash, "policy_version": pv,
                 "admissible": contract.admissible_ids,
                 "rejected": contract.rejected_ids,
                 "hard_blockers": contract.hard_blockers,
                 "causality": {"decision": causal.decision,
                               "reasons": causal.reasons},
                 "case_completed_by_this": False}
+
+    def _contract_json(row: dict) -> dict:
+        return {"id": row["id"], "case_id": row["case_id"],
+                "decision_type": row["decision_type"],
+                "requested_action": row["requested_action"],
+                "final_decision": row["final_decision"],
+                "evidence_ids": json.loads(row["evidence_ids_json"]),
+                "admissible": json.loads(row["admissible_json"]),
+                "rejected": json.loads(row["rejected_json"]),
+                "hard_blockers": json.loads(row["hard_blockers_json"]),
+                "causal_result": row["causal_result"],
+                "user_intent_reference": row["user_intent_reference"],
+                "contract_hash": row["contract_hash"],
+                "policy_version": row["policy_version"],
+                "created_at": row["created_at"]}
+
+    @app.get("/evidence/contracts/{contract_id}")
+    async def evidence_contract_detail(contract_id: str,
+                                       user: dict = Depends(current_user)):
+        require_permission(user, "audit.view")
+        row = estore.get_contract(contract_id, tenant_id=user["tid"])
+        if row is None:
+            raise HTTPException(404, "contract not found")
+        drift = EvidencePolicyDriftReport.compare(row["policy_version"])
+        return {**_contract_json(row),
+                "policy_drift": {"drift": drift.drift,
+                                 "detail": drift.detail,
+                                 "current_version": drift.current_version}}
+
+    @app.get("/evidence/{evidence_id}/contracts")
+    async def evidence_contracts_by_evidence(evidence_id: str,
+                                             user: dict = Depends(
+                                                 current_user)):
+        require_permission(user, "audit.view")
+        load_evidence_or_404(evidence_id, user)
+        return [_contract_json(r) for r in estore.contracts(
+            tenant_id=user["tid"], evidence_id=evidence_id)]
+
+    @app.get("/cases/{case_id}/evidence-contracts")
+    async def case_evidence_contracts(case_id: str,
+                                      user: dict = Depends(current_user)):
+        require_permission(user, "audit.view")
+        load_case_or_404(case_id, user)
+        return [_contract_json(r) for r in estore.contracts(
+            tenant_id=user["tid"], case_id=case_id)]
+
+    @app.post("/evidence/contracts/{contract_id}/replay")
+    async def evidence_contract_replay(contract_id: str,
+                                       user: dict = Depends(current_user)):
+        require_permission(user, "audit.view")
+        row = estore.get_contract(contract_id, tenant_id=user["tid"])
+        if row is None:
+            raise HTTPException(404, "contract not found")
+        r = _evaluate_contract(
+            tenant_id=user["tid"], actor=user["uid"],
+            decision_type=row["decision_type"], case_id=row["case_id"],
+            evidence_ids=json.loads(row["evidence_ids_json"]),
+            facts=json.loads(row["facts_json"]),
+            human_verified=bool(row["human_verified"]),
+            user_intent_reference=row["user_intent_reference"],
+            untrusted_flag=(row["causal_result"] or "").startswith("BLOCK")
+            or False,
+            would_survive=bool(row["would_survive"])
+            if row["would_survive"] is not None else True)
+        drift = EvidencePolicyDriftReport.compare(row["policy_version"])
+        return {"contract_id": contract_id,
+                "stored_decision": row["final_decision"],
+                "replayed_decision": r["final"],
+                "same_decision": row["final_decision"] == r["final"],
+                "policy_drift": drift.drift,
+                "policy_detail": drift.detail,
+                "stored_policy_version": row["policy_version"],
+                "current_policy_version": drift.current_version}
+
+    # -- V-E: derivatives -----------------------------------------------------------
+    @app.get("/evidence/{evidence_id}/derivatives")
+    async def evidence_derivatives_list(evidence_id: str,
+                                        user: dict = Depends(current_user)):
+        require_permission(user, "document.view")
+        load_evidence_or_404(evidence_id, user)
+        return estore.derivatives(evidence_id, tenant_id=user["tid"])
+
+    @app.post("/evidence/{evidence_id}/derivatives/generate")
+    async def evidence_derivative_generate(evidence_id: str,
+                                           user: dict = Depends(
+                                               current_user)):
+        require_permission(user, "document.analyze")
+        ev = load_evidence_or_404(evidence_id, user)
+        from ..evidence.gates import admissibility_gate as _adm
+        blockers = _adm(ev, tenant_id=user["tid"]).hard_blockers
+        manifest = generate_manifest(ev, now_iso=utcnow(),
+                                     has_hard_blocker=bool(blockers))
+        estore.save_derivative(user["tid"], manifest)
+        return {"id": manifest.id,
+                "derivative_kind": manifest.derivative_kind,
+                "policy_decision": manifest.policy_decision,
+                "confidence": manifest.confidence,
+                "is_placeholder": manifest.is_placeholder,
+                "safe_derivative_score": manifest.confidence,
+                "safe_text": manifest.safe_text,
+                "limitations": manifest.limitations,
+                "manifest_hash": manifest.manifest_hash,
+                "raw_content_included": False}
+
+    # -- V-E: WORM / retention immutability -----------------------------------------
+    @app.get("/evidence/{evidence_id}/immutability")
+    async def evidence_immutability(evidence_id: str,
+                                    user: dict = Depends(current_user)):
+        require_permission(user, "document.view")
+        load_evidence_or_404(evidence_id, user)
+        cap = storage_worm_capability(evengine.storage.name)
+        pol = estore.retention_policy(evidence_id, tenant_id=user["tid"])
+        return {"native_worm": cap.native_worm,
+                "simulated_modes": cap.simulated_modes,
+                "note": cap.note,
+                "retention_policy": pol}
+
+    @app.post("/evidence/{evidence_id}/retention-policy")
+    async def evidence_set_retention(evidence_id: str, body: dict,
+                                     user: dict = Depends(current_user)):
+        require_permission(user, "override.compliance_review")
+        ev = load_evidence_or_404(evidence_id, user)
+        try:
+            pol = RetentionPolicy(
+                tenant_id=user["tid"], evidence_id=evidence_id,
+                mode=body.get("mode", "SIMULATED_GOVERNANCE"),
+                retention_until=datetime.fromisoformat(body["retention_until"])
+                if body.get("retention_until") else None)
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+        estore.save_retention_policy(pol)
+        return {"mode": pol.mode, "native_worm": pol.native_worm,
+                "label": pol.label,
+                "retention_until": pol.retention_until.isoformat()
+                if pol.retention_until else None}
+
+    # -- V-E: Merkle transparency ledger --------------------------------------------
+    def _leaf_for(cr: dict) -> str:
+        import hashlib as _h
+        payload_hash = _h.sha256(cr["payload_json"].encode()).hexdigest()
+        return _mrk.leaf_hash(
+            tenant_id=cr["tenant_id"], evidence_id=cr["evidence_id"],
+            event_id=cr["id"], event_type=cr["event_type"],
+            event_timestamp=cr["created_at"],
+            previous_event_hash=cr["hash_prev"],
+            event_payload_hash=payload_hash)
+
+    @app.post("/evidence/merkle-roots/generate")
+    async def evidence_merkle_generate(user: dict = Depends(current_user)):
+        require_permission(user, "audit.view")
+        events = estore.all_chain_events(tenant_id=user["tid"])
+        leaves = [_leaf_for(cr) for cr in events]
+        root = _mrk.EvidenceMerkleRoot(
+            tenant_id=user["tid"], root=_mrk.merkle_root(leaves),
+            size=len(leaves))
+        prior = estore.merkle_roots(tenant_id=user["tid"])
+        consistent = True
+        if prior:
+            old_leaves = json.loads(prior[-1]["leaves_json"])
+            consistent = _mrk.consistency_proof_ok(old_leaves, leaves)
+        estore.save_merkle_root(root, leaves, created_at=utcnow())
+        return {"batch_id": root.batch_id, "root": root.root,
+                "size": root.size, "consistent_with_prior": consistent,
+                "external_anchoring": "NONE — local ledger only "
+                                      "(no blockchain/timestamping)"}
+
+    @app.get("/evidence/{evidence_id}/merkle-proof")
+    async def evidence_merkle_proof(evidence_id: str,
+                                    event_id: Optional[str] = None,
+                                    user: dict = Depends(current_user)):
+        require_permission(user, "audit.view")
+        load_evidence_or_404(evidence_id, user)
+        events = estore.all_chain_events(tenant_id=user["tid"])
+        leaves = [_leaf_for(cr) for cr in events]
+        # Prove the first chain event of this evidence (or a named one).
+        target_idx = next(
+            (i for i, cr in enumerate(events)
+             if cr["evidence_id"] == evidence_id
+             and (event_id is None or cr["id"] == event_id)), None)
+        if target_idx is None:
+            raise HTTPException(404, "chain event not found")
+        proof = _mrk.build_proof(leaves, target_idx)
+        return {"evidence_id": evidence_id,
+                "leaf_hash": proof.leaf_hash, "root": proof.root,
+                "path": [[h, r] for h, r in proof.path],
+                "index": proof.index, "size": proof.size,
+                "verifies": _mrk.verify_proof(proof)}
+
+    @app.post("/evidence/merkle-roots/{root_id}/verify")
+    async def evidence_merkle_verify(root_id: str,
+                                     user: dict = Depends(current_user)):
+        require_permission(user, "audit.view")
+        row = estore.get_merkle_root(root_id, tenant_id=user["tid"])
+        if row is None:
+            raise HTTPException(404, "root not found")
+        stored_leaves = json.loads(row["leaves_json"])
+        # Recompute leaves from the live chain and compare the root.
+        events = estore.all_chain_events(tenant_id=user["tid"])
+        current_leaves = [_leaf_for(cr) for cr in events]
+        recomputed = _mrk.merkle_root(stored_leaves)
+        tampered = recomputed != row["root"]
+        return {"batch_id": root_id, "stored_root": row["root"],
+                "recomputed_root": recomputed,
+                "root_intact": not tampered,
+                "chain_still_matches_root":
+                    _mrk.merkle_root(current_leaves[:len(stored_leaves)])
+                    == row["root"] if len(current_leaves) >= len(
+                        stored_leaves) else False}
 
     # ---- audit --------------------------------------------------------------------------------------
     @app.get("/audit/verify/{case_id}")

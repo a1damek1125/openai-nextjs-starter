@@ -386,6 +386,49 @@ CREATE TABLE IF NOT EXISTS evidence_legal_holds (
 CREATE INDEX IF NOT EXISTS ix_evholds
   ON evidence_legal_holds(tenant_id, evidence_id);
 """),
+    (6, """
+-- v6 (EVIDENCE-only on this branch): production hardening. NOTE: the CRM
+-- branch also allocates a v6 for its own tables; the CONSOLIDATION
+-- mission must renumber one of them (this is the Evidence v6).
+ALTER TABLE evidence_decision_contracts ADD COLUMN contract_hash TEXT;
+ALTER TABLE evidence_decision_contracts ADD COLUMN policy_version TEXT;
+ALTER TABLE evidence_decision_contracts ADD COLUMN requested_action TEXT;
+ALTER TABLE evidence_decision_contracts ADD COLUMN causal_result TEXT;
+ALTER TABLE evidence_decision_contracts ADD COLUMN user_intent_reference TEXT;
+ALTER TABLE evidence_decision_contracts ADD COLUMN would_survive INTEGER;
+
+CREATE TABLE IF NOT EXISTS evidence_derivatives (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  evidence_id TEXT NOT NULL REFERENCES evidence_objects(id),
+  derivative_kind TEXT NOT NULL, policy_decision TEXT NOT NULL,
+  confidence REAL NOT NULL DEFAULT 0, is_placeholder INTEGER NOT NULL DEFAULT 1,
+  active_content_removed INTEGER NOT NULL DEFAULT 0,
+  safe_text TEXT NOT NULL DEFAULT '', limitations_json TEXT NOT NULL DEFAULT '[]',
+  manifest_hash TEXT NOT NULL, generated_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_evderiv
+  ON evidence_derivatives(tenant_id, evidence_id);
+
+CREATE TABLE IF NOT EXISTS evidence_retention_policies (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  evidence_id TEXT NOT NULL REFERENCES evidence_objects(id),
+  mode TEXT NOT NULL DEFAULT 'NONE', retention_until TEXT,
+  native_worm INTEGER NOT NULL DEFAULT 0,
+  policy_version TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE INDEX IF NOT EXISTS ix_evret
+  ON evidence_retention_policies(tenant_id, evidence_id);
+
+CREATE TABLE IF NOT EXISTS evidence_merkle_roots (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  root TEXT NOT NULL, size INTEGER NOT NULL,
+  leaves_json TEXT NOT NULL DEFAULT '[]',
+  created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_evmroot ON evidence_merkle_roots(tenant_id);
+
+CREATE TABLE IF NOT EXISTS evidence_policy_versions (
+  id TEXT PRIMARY KEY, version TEXT NOT NULL,
+  fingerprint TEXT NOT NULL, created_at TEXT NOT NULL);
+"""),
 ]
 
 
