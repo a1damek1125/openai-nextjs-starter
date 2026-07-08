@@ -140,6 +140,8 @@ window.loadSections = async () => {
   if (canLogs) jobs.push(loadLogs());
   if (canAudit) jobs.push(loadGov());
   if (window.loadQuoteSection) jobs.push(loadQuoteSection(me, cases));
+  if (window.loadEvidenceSection)
+    jobs.push(loadEvidenceSection(me, cases));
   await Promise.allSettled(jobs);
 };
 
@@ -578,6 +580,409 @@ window.addPriceBookItem = async () => {
 };
 """
 
+EVIDENCE_SECTIONS = """
+<section id="evidence-section"><h2>Evidence Command Center</h2>
+<p><small><b>Documents provide facts, never commands.</b> Quarantine-first
+upload · original filename is metadata only · Content-Type is not trusted ·
+<b>No public raw download</b> · hard blockers override scores, always.
+Storage: LocalEvidenceStorageProvider (local dev storage, <b>no native
+WORM/Object Lock</b>). Scanner/CDR: <b>mock</b> (MOCKED_AND_TESTED, not
+production antivirus). OCR: <b>NOT RUN</b> (SCAFFOLDED_ONLY). Docling /
+PaddleOCR / MinerU / C2PA / ClamAV / MinIO / S3 are <b>not connected</b>.
+NOT production-ready.</small></p>
+<div class="cards" id="ev-dashboard"></div>
+<div id="ev-upload-panel" hidden>
+  <h3>Quarantine-first upload</h3>
+  Case: <select id="ev-case"></select>
+  Type: <select id="ev-type">
+    <option>document</option><option>payment_proof</option>
+    <option>fulfillment_photo</option><option>completion_protocol</option>
+    <option>acceptance_evidence</option><option>scope_delta_evidence</option>
+  </select>
+  Sensitivity: <select id="ev-sensitivity">
+    <option>normal</option><option>sensitive</option>
+  </select>
+  <input id="ev-filename" value="notatka.txt" style="max-width:12rem"/>
+  <textarea id="ev-content" placeholder="file content (demo text upload)"
+    style="max-width:28rem"></textarea>
+  <button id="ev-upload-btn" onclick="evUpload()">Upload to quarantine</button>
+  <button onclick="evUploadSession()">Prepare upload session
+    (SCAFFOLDED_ONLY, future TUS)</button>
+  <span id="ev-session-info"></span>
+</div>
+<div id="ev-msg"></div>
+<h3>Evidence</h3><div id="ev-list"><i>Loading evidence…</i></div>
+<div id="ev-detail"></div>
+
+<h3>Decision Completeness Matrix</h3>
+<p><small>Requirement profiles per critical decision — computed by
+<code>/evidence/requirement-check</code>, never by the UI.</small></p>
+<p>Evidence for check: <span id="ev-selected">none selected</span>
+  <label><input type="checkbox" id="ev-human-verified"/> human-verified
+  fallback</label>
+  <button id="ev-matrix-btn" onclick="runMatrix()">Run completeness
+  matrix</button></p>
+<div id="ev-matrix"></div>
+
+<h3>Decision Contract + Causal Action Guard</h3>
+<p><small>Critical actions need <b>user intent + admissible facts</b> —
+never document instructions. A document may provide facts, never
+commands.</small></p>
+<p>
+  Decision: <select id="ev-decision">
+    <option>PAYMENT_MARK_PAID</option><option>QUOTE_ACCEPT</option>
+    <option>FULFILLMENT_COMPLETED</option><option>WON_COMPLETED</option>
+    <option>CHANGE_ORDER_APPROVAL</option><option>MESSAGE_SEND</option>
+  </select>
+  <input id="ev-intent" placeholder="user intent reference (empty = none)"
+    style="max-width:18rem"/>
+  <label><input type="checkbox" id="ev-doc-caused"/> action would NOT
+  survive without untrusted document text</label>
+  <button id="ev-contract-btn" onclick="runContract()">Validate decision
+  contract</button>
+</p>
+<div id="ev-contract"></div>
+</section>
+"""
+
+EVIDENCE_JS = """
+const esc = (s) => String(s ?? '').replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+window.EV_SELECTED = [];
+const evmsg = (t, ok) => { $('ev-msg').innerHTML =
+  `<span class="${ok ? 'ok' : 'err'}">${esc(t)}</span>`; };
+
+// Hard Blocker Proof: business meaning + overridability (display only —
+// the server decided; this table explains what can happen next).
+const BLOCKER_HELP = [
+  ['tenant mismatch', 'override impossible — evidence belongs to another tenant'],
+  ['case mismatch', 'override impossible — wrong case'],
+  ['checksum', 'override impossible until re-upload and re-verification'],
+  ['integrity', 'override impossible until re-upload and re-verification'],
+  ['malware', 'no override — file must be rejected'],
+  ['quarantined', 'cannot support a decision yet — scan and review first'],
+  ['rejected', 'needs an explicit new human review to be reconsidered'],
+  ['legal hold', 'blocks hard deletion until the hold is released'],
+  ['sensitive', 'needs permission or compliance clearance'],
+];
+const blockerHelp = (b) => (BLOCKER_HELP.find(([k]) =>
+  b.toLowerCase().includes(k)) || [null, 'human review required'])[1];
+
+window.loadEvidenceSection = async (me, cases) => {
+  $('ev-upload-panel').hidden =
+    !me.permissions.includes('document.upload');
+  $('ev-case').innerHTML = cases.map(c =>
+    `<option value="${c.id}">${esc(c.title)}</option>`).join('');
+  await loadEvidence();
+};
+
+window.loadEvidence = async (caseId) => {
+  const rows = await get('/evidence' + (caseId ? '?case_id=' + caseId : ''));
+  const counts = {};
+  rows.forEach(r => counts[r.state] = (counts[r.state] || 0) + 1);
+  $('ev-dashboard').innerHTML = [
+    ['total', rows.length], ['quarantined', counts.QUARANTINED || 0],
+    ['admissible', (counts.ADMISSIBLE || 0)
+      + (counts.ADMISSIBLE_WITH_LIMITS || 0)],
+    ['rejected', counts.REJECTED || 0],
+    ['integrity failed', counts.INTEGRITY_FAILED || 0],
+    ['legal hold', counts.LEGAL_HOLD || 0],
+    ['needs review', counts.NEEDS_HUMAN_REVIEW || 0]]
+    .map(([k, v]) => `<div class="card"><b>${v}</b><span>${k}</span></div>`)
+    .join('');
+  $('ev-list').innerHTML = rows.length ?
+    '<table><tr><th></th><th>File</th><th>Type</th><th>State</th>' +
+    '<th></th></tr>' + rows.map(r =>
+      `<tr data-ev="${r.id}"><td><input type="checkbox"
+        onchange="evToggle('${r.id}', this.checked)"/></td>
+       <td>${esc(r.original_filename)}</td><td>${r.evidence_type}</td>
+       <td>${r.state}</td>
+       <td><button onclick="openEvidence('${r.id}')">Open</button></td>
+       </tr>`).join('') + '</table>' :
+    '<i>No evidence yet — everything starts in quarantine.</i>';
+};
+
+window.evToggle = (id, on) => {
+  EV_SELECTED = on ? [...EV_SELECTED, id]
+                   : EV_SELECTED.filter(x => x !== id);
+  $('ev-selected').innerText = EV_SELECTED.length
+    ? EV_SELECTED.length + ' selected' : 'none selected';
+};
+
+window.evUpload = async () => {
+  const content = $('ev-content').value || 'demo evidence content';
+  const {ok, data} = await send('POST', '/evidence/upload', {
+    case_id: $('ev-case').value, filename: $('ev-filename').value,
+    mime: 'text/plain',
+    content_b64: btoa(unescape(encodeURIComponent(content))),
+    evidence_type: $('ev-type').value,
+    sensitivity: $('ev-sensitivity').value,
+    text_preview: content});
+  evmsg(ok ? 'Uploaded to quarantine (sha256 ' +
+        data.integrity.sha256.slice(0, 12) + '…).'
+      : 'Refused: ' + data.detail, ok);
+  if (ok) { loadEvidence(); openEvidence(data.id); }
+};
+
+window.evUploadSession = async () => {
+  const {ok, data} = await send('POST', '/evidence/upload-sessions', {
+    case_id: $('ev-case').value, filename: $('ev-filename').value,
+    expected_size: 1024});
+  $('ev-session-info').innerText = ok ?
+    `session ${data.id.slice(0, 8)} · ${data.status} · expires ` +
+    data.expires_at.slice(0, 16) : 'Refused: ' + data.detail;
+};
+
+window.evidenceFor = (caseId) => {
+  if ($('ev-case')) $('ev-case').value = caseId;
+  loadEvidence(caseId);
+  $('evidence-section').scrollIntoView();
+};
+
+function readinessIndex(ev, hardBlockers) {
+  // UI-ONLY explanatory value — NON-AUTHORITATIVE; the server decides.
+  if (hardBlockers && hardBlockers.length) return {value: 0, parts: [
+    'hard blocker present → index forced to 0']};
+  const admissible = {ADMISSIBLE: 1, ADMISSIBLE_WITH_LIMITS: .8,
+                      LEGAL_HOLD: .8, RETENTION_LOCKED: .8,
+                      SCANNED_CLEAN: .5, NEEDS_HUMAN_REVIEW: .3};
+  const parts = {
+    requirement_coverage: ev.evidence_type === 'document' ? 0.5 : 1,
+    admissibility_confidence: admissible[ev.state] || 0,
+    trust: ev.human_verified ? 1 : 0.6,
+    chain: 1,
+    integrity: ev.integrity && ev.integrity.valid ? 1 : 0,
+    freshness: 1};
+  const value = 0.25 * parts.requirement_coverage
+    + 0.20 * parts.admissibility_confidence + 0.20 * parts.trust
+    + 0.15 * parts.chain + 0.10 * parts.integrity
+    + 0.10 * parts.freshness;
+  return {value: Math.round(value * 100) / 100,
+          parts: Object.entries(parts).map(([k, v]) => `${k}=${v}`)};
+}
+
+window.openEvidence = async (id) => {
+  const ev = await get('/evidence/' + id);
+  const chain = await get(`/evidence/${id}/chain`);
+  const perms = ME.permissions;
+  const idx = readinessIndex(ev, []);
+  const controls = [];
+  if (perms.includes('document.analyze')) {
+    controls.push(`<button onclick="evReview('${id}','SCANNED_CLEAN')">
+      Run mock scan</button>`);
+    for (const v of ['ADMISSIBLE', 'ADMISSIBLE_WITH_LIMITS', 'REJECTED',
+                     'NEEDS_HUMAN_REVIEW'])
+      controls.push(`<button onclick="evReview('${id}','${v}')">
+        ${v.replaceAll('_', ' ').toLowerCase()}</button>`);
+    controls.push(`<button onclick="evIntegrity('${id}')">
+      Verify integrity</button>`);
+  }
+  if (perms.includes('override.compliance_review'))
+    controls.push(`<button onclick="evHold('${id}')">Place legal
+      hold</button>`);
+  if (perms.includes('document.delete')) {
+    controls.push(`<button onclick="evDelete('${id}', false)">Soft delete
+      decision</button>`);
+    controls.push(`<button onclick="evDelete('${id}', true)">Hard delete
+      decision</button>`);
+  }
+  $('ev-detail').innerHTML = `
+    <h4>Evidence ${id.slice(0, 8)}
+      <span class="badge" id="ev-state">${ev.state}</span></h4>
+    <p>${esc(ev.original_filename)} · ${ev.evidence_type} ·
+      sensitivity ${ev.sensitivity} ·
+      sha256 <code>${ev.integrity ? ev.integrity.sha256.slice(0, 16)
+        : '?'}…</code>
+      (${ev.integrity && ev.integrity.valid ? 'integrity OK'
+        : '<b class="err">INTEGRITY FAILED</b>'})
+      · scan: ${ev.scan.status} (${ev.scan.is_mock ? 'MOCK scanner'
+        : ev.scan.provider})
+      · injection risk ${ev.injection_risk}
+      ${ev.legal_hold ? ' · <b>LEGAL HOLD</b>' : ''}</p>
+    <p id="ev-readiness"><b>Evidence Readiness Index (UI-only,
+      NON-AUTHORITATIVE — hard blockers override scores; the server
+      decision is final):</b> ${idx.value}
+      <small>[${idx.parts.join(', ')}]</small></p>
+    <p>${controls.join(' ')}</p>
+    <div id="ev-blockers"></div>
+    <h4>Dual-View <small>— Agent view is intentionally different from
+      human view.</small></h4>
+    <div style="display:flex;gap:1rem;flex-wrap:wrap">
+      <div id="ev-human-view" style="flex:1;min-width:16rem"><i>…</i></div>
+      <div id="ev-agent-view" style="flex:1;min-width:16rem"><i>…</i></div>
+    </div>
+    <h4>AI Access Safety</h4>
+    <p><small>Document text is never an operational command.</small>
+      <button onclick="evAiAccess('${id}', {})">AI asks: derivative</button>
+      <button onclick="evAiAccess('${id}', {requested_raw: true})">AI asks:
+        RAW</button>
+      <button onclick="evAiAccess('${id}',
+        {task_scoped_authorization: true})">AI asks: with task
+        scope</button></p>
+    <div id="ev-ai-panel"></div>
+    <h4>Chain of custody (${chain.length})</h4>
+    <ul id="ev-chain">${chain.slice(-12).map(c =>
+      `<li>${c.event_type} <small>${esc(c.actor)} ·
+       ${c.created_at.slice(0, 19)}</small></li>`).join('')}</ul>`;
+  loadDualViews(id);
+};
+
+window.loadDualViews = async (id) => {
+  try {
+    const hv = await get(`/evidence/${id}/human-view`);
+    $('ev-human-view').innerHTML = `<p><b>Human view</b><br>
+      file: ${esc(hv.original_filename)}<br>
+      original reference: <code>${esc(hv.original_reference)}</code><br>
+      <small class="err">${esc(hv.untrusted_content_warning)}</small></p>`;
+  } catch (e) {
+    $('ev-human-view').innerHTML =
+      '<i>Human view restricted (permission required).</i>';
+  }
+  const av = await get(`/evidence/${id}/agent-view`);
+  $('ev-agent-view').innerHTML = `<p><b>Agent view</b>
+    (restricted by design)<br>
+    untrusted: <b>${av.untrusted}</b> — sticky marker; storage never
+    launders trust<br>
+    symbols: ${av.symbols.map(s => `${s.kind}
+      [${s.trusted ? 'trusted: ' + esc(s.human_verified_for)
+        : 'UNTRUSTED (' + esc(s.origin) + ')'}]
+      ${!s.trusted ? `<button onclick="verifySymbol('${av.evidence_id}',
+        '${s.id}')">verify for narrow purpose…</button>` : ''}`)
+      .join('; ') || '<i>none</i>'}<br>
+    safe derivative: ${av.safe_derivative_text
+      ? esc(av.safe_derivative_text)
+      : '<i>SCAFFOLDED_ONLY — safe derivative generation comes later for '
+        + 'binary files</i>'}<br>
+    confidence: ${av.confidence}<br>
+    <small>${esc(av.note)}</small></p>`;
+};
+
+window.verifySymbol = async (evId, symbolId) => {
+  const purpose = prompt('Narrow factual purpose (e.g. invoice amount '
+    + 'only)');
+  if (!purpose) return;
+  const {ok, data} = await send('POST',
+    `/evidence/${evId}/human-verify-symbol`,
+    {symbol_id: symbolId, purpose});
+  evmsg(ok ? 'Symbol verified for: ' + data.human_verified_for
+           : 'Refused: ' + data.detail, ok);
+  if (ok) loadDualViews(evId);
+};
+
+window.evReview = async (id, verdict) => {
+  const {ok, data} = await send('POST', `/evidence/${id}/review`,
+                                {verdict});
+  if (ok) {
+    evmsg('Review: ' + data.state + (data.scan.is_mock
+      ? ' (mock scanner — not production antivirus)' : ''), true);
+  } else {
+    evmsg('Refused: ' + data.detail, false);
+    $('ev-blockers').innerHTML = `<p><b>Hard Blocker Proof:</b>
+      ${esc(data.detail)} — <i>${blockerHelp(data.detail)}</i>.
+      Scores cannot override this.</p>`;
+  }
+  loadEvidence(); openEvidence(id);
+};
+
+window.evIntegrity = async (id) => {
+  const {ok, data} = await send('POST',
+    `/evidence/${id}/verify-integrity`, {});
+  evmsg(ok ? 'Integrity ' + (data.valid ? 'VALID' : 'FAILED — evidence '
+    + 'is now blocked everywhere') : 'Refused: ' + data.detail,
+    ok && data.valid);
+  openEvidence(id);
+};
+
+window.evHold = async (id) => {
+  const reason = prompt('Legal hold reason (required)');
+  if (!reason) return;
+  const {ok, data} = await send('POST', `/evidence/${id}/legal-hold`,
+                                {action: 'place', reason});
+  evmsg(ok ? 'Legal hold placed — hard deletion is now blocked.'
+           : 'Refused: ' + data.detail, ok);
+  openEvidence(id);
+};
+
+window.evDelete = async (id, hard) => {
+  const {ok, data} = await send('POST',
+    `/evidence/${id}/delete-decision`, {hard});
+  evmsg(ok ? `Delete decision: ${data.decision} — ` +
+        data.reasons.join('; ') : 'Refused: ' + data.detail,
+        ok && data.decision.startsWith('ALLOW'));
+  loadEvidence(); openEvidence(id);
+};
+
+window.evAiAccess = async (id, opts) => {
+  const {ok, data} = await send('POST',
+    `/evidence/${id}/ai-access-decision`, opts);
+  if (!ok) { evmsg('Refused: ' + data.detail, false); return; }
+  $('ev-ai-panel').innerHTML = `<p>
+    decision: <b>${data.decision}</b> · allowed view:
+    ${data.allowed_view} · task scope: ${esc(data.task_scope)}<br>
+    reasons: ${data.reasons.map(esc).join('; ')}<br>
+    access event: <code>${data.access_event_id.slice(0, 8)}</code> ·
+    raw content included: <b>${data.raw_content_included}</b><br>
+    <small>Document text is never an operational command.</small></p>`;
+};
+
+window.runMatrix = async () => {
+  const decisions = ['QUOTE_ACCEPT', 'PAYMENT_MARK_PAID',
+    'FULFILLMENT_COMPLETED', 'WON_COMPLETED', 'CHANGE_ORDER_APPROVAL',
+    'COMPLAINT_RESOLVED', 'WARRANTY_DECISION'];
+  const rows = [];
+  for (const d of decisions) {
+    const {data} = await send('POST', '/evidence/requirement-check', {
+      decision_type: d, evidence_ids: EV_SELECTED,
+      human_verified: $('ev-human-verified').checked});
+    rows.push(`<tr><td>${d}</td>
+      <td>${data.missing.map(esc).join('; ') || '—'}</td>
+      <td>${data.admissible.length}</td>
+      <td>${data.reasons.map(esc).join('; ') || '—'}</td>
+      <td class="${data.allowed ? 'ok' : 'err'}">
+        ${data.allowed ? 'READY' : 'BLOCKED'}</td></tr>`);
+  }
+  $('ev-matrix').innerHTML = '<table><tr><th>Decision</th>' +
+    '<th>Missing evidence</th><th>Admissible</th><th>Notes</th>' +
+    '<th>Result</th></tr>' + rows.join('') + '</table>';
+};
+
+window.runContract = async () => {
+  const {ok, data} = await send('POST',
+    '/evidence/decision-contract/validate', {
+      decision_type: $('ev-decision').value,
+      case_id: $('ev-case').value,
+      evidence_ids: EV_SELECTED,
+      user_intent_reference: $('ev-intent').value || null,
+      would_action_survive_without_untrusted_text:
+        !$('ev-doc-caused').checked});
+  if (!ok) { evmsg('Refused: ' + data.detail, false); return; }
+  const steps = [
+    ['tenant/case scope', data.hard_blockers.some(b =>
+      b.includes('mismatch')) ? 'FAILED' : 'ok'],
+    ['integrity + lifecycle state', data.rejected.length
+      ? data.rejected.length + ' evidence object(s) rejected' : 'ok'],
+    ['admissibility', data.admissible.length + ' admissible'],
+    ['requirement profile', data.hard_blockers.filter(b =>
+      !b.includes('mismatch')).map(esc).join('; ') || 'ok'],
+    ['causal action guard', data.causality.decision + ' — ' +
+      data.causality.reasons.map(esc).join('; ')],
+    ['final', data.final]];
+  $('ev-contract').innerHTML = `<p>Final:
+    <b class="${data.final === 'ALLOWED' ? 'ok' : 'err'}">${data.final}
+    </b> · contract <code>${data.contract_id.slice(0, 8)}</code> ·
+    case completed by this: <b>false</b></p>
+    <p><b>Decision replay (UI display of server results — the API
+    decided):</b></p>
+    <ol>${steps.map(([k, v]) => `<li>${k}: ${v}</li>`).join('')}</ol>
+    ${data.final !== 'ALLOWED' ? `<p><b>Hard Blocker Proof:</b>
+      ${data.hard_blockers.map(b => `${esc(b)} —
+        <i>${blockerHelp(b)}</i>`).join('<br>') ||
+      '<i>blocked by causal guard, not by evidence</i>'}<br>
+      Scores cannot override this. hard blockers override scores.</p>`
+      : ''}`;
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -595,6 +1000,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <section><h2>Recent Activity</h2><ul id="activity"></ul></section>
 {WIRING_SECTIONS}
 {QUOTES_SECTIONS}
+{EVIDENCE_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -676,7 +1082,8 @@ window.openCase = async (id) => {{
      <button onclick="doTransition('${{id}}')">Transition</button>
      <button onclick="markWon('${{id}}')">Close WON</button>
      <button onclick="scheduleFor('${{id}}')">Schedule appointment…</button>
-     <button onclick="quotesFor('${{id}}')">Quotes…</button></p>
+     <button onclick="quotesFor('${{id}}')">Quotes…</button>
+     <button onclick="evidenceFor('${{id}}')">Evidence…</button></p>
      <div id="case-msg"></div>
      <h4>Timeline (${{tl.length}})</h4>
      <ul id="case-timeline">${{tl.slice(-12).map(e=>`<li>${{e.event_type}}
@@ -713,7 +1120,8 @@ window.markWon = async (id) => {{
 boot();
 </script>
 <script>{WIRING_JS}</script>
-<script>{QUOTES_JS}</script></body></html>"""
+<script>{QUOTES_JS}</script>
+<script>{EVIDENCE_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:
