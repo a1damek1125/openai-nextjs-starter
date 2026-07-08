@@ -766,8 +766,11 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
 
     # ---- scheduling wiring ---------------------------------------------------------------
     from ..scheduling.engine import APPOINTMENT_TYPES, SchedulingEngine
+    from .scheduling_store import SchedulingStore
     sched = SchedulingEngine(audit)
-    app.state.scheduling = sched
+    sstore = SchedulingStore(db)
+    sstore.hydrate(sched)      # migration v4: DB is the source of truth
+    app.state.scheduling, app.state.scheduling_store = sched, sstore
 
     def tenant_scoped(tid: str, ident: Optional[str]) -> Optional[str]:
         """The mock engine's calendars are process-global; namespacing the
@@ -817,6 +820,8 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         except ValueError as e:
             raise HTTPException(409, str(e))
         save_vector(case.id, vector)
+        sstore.save(appt, actor=user["uid"], event_type="BOOKED",
+                    payload={"type": appt.appointment_type})
         return {"appointment_id": appt.id, "status": appt.status,
                 "video_meeting_url": appt.video_meeting_url,
                 "confirmation_url": f"/confirm/{token}" if token else None,
@@ -867,6 +872,8 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                 raise HTTPException(404, "unknown operation")
         except ValueError as e:
             raise HTTPException(409, str(e))
+        sstore.save(appt, actor=user["uid"], event_type=op.upper(),
+                    payload={"status": appt.status})
         return {"status": appt.status,
                 "lifecycle_view": load_vector(appt.case_id)
                 .derived_outcome_view()}
@@ -892,7 +899,17 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
     async def sched_confirm(token: str):
         appt = sched.confirm(token, now=datetime.utcnow())
         if appt is None:
+            # The engine may have flipped the appointment to EXPIRED —
+            # persist that state change before answering with a safe 404.
+            import hashlib as _hashlib
+            appt_id = sstore.appointment_id_for_token_hash(
+                _hashlib.sha256(token.encode()).hexdigest())
+            if appt_id and appt_id in sched.appointments:
+                sstore.save(sched.appointments[appt_id], actor="client",
+                            event_type="CONFIRM_REJECTED",
+                            payload={"reason": "invalid_or_expired"})
             raise HTTPException(404, "invalid or expired")
+        sstore.save(appt, actor="client", event_type="CONFIRMED")
         return {"status": appt.status}
 
     # ---- quotes (Quote Builder Q-B: persistence + API over the Q-A engine) ----

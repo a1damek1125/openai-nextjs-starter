@@ -50,10 +50,10 @@ document.getElementById('login-form').onsubmit = async (e) => {{
 WIRING_SECTIONS = """
 <section id="sched-section"><h2>Scheduling</h2>
 <p><small>Calendar &amp; video providers are <b>mocks</b> — links are
-simulated. Appointments are in-memory and <b>do not survive a server
-restart</b> yet. Real Google / Microsoft / Cal.com / LiveKit providers are
-<b>not connected</b> (BLOCKED_BY_CREDENTIALS — adapters ready,
-credentials pending).</small></p>
+simulated. Appointments are <b>persisted locally</b> (SQLite, migration
+v4) and survive restarts. Real Google / Microsoft / Cal.com / LiveKit
+providers are <b>not connected</b> (BLOCKED_BY_CREDENTIALS — adapters
+ready, credentials pending).</small></p>
 <div id="sched-book" hidden>
   Case: <select id="sched-case"></select>
   Type: <select id="sched-type">
@@ -217,7 +217,7 @@ window.loadAppts = async () => {
         <button onclick="apptReschedule('${a.id}')">Reschedule</button>
         <button onclick="apptCancel('${a.id}')">Cancel</button>` : '') +
       '</td></tr>').join('') + '</table>' :
-    '<i>No appointments yet (in-memory only — cleared on restart).</i>';
+    '<i>No appointments yet.</i>';
 };
 window.apptOp = async (id, op, body) => {
   const {ok, data} = await send('POST',

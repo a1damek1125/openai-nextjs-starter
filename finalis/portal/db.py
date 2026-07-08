@@ -271,6 +271,45 @@ CREATE TABLE IF NOT EXISTS quote_pdf_documents (
   created_at TEXT NOT NULL DEFAULT (datetime('now')));
 CREATE INDEX IF NOT EXISTS ix_qpdfs ON quote_pdf_documents(tenant_id, quote_id);
 """),
+    (4, """
+-- v4: Scheduling persistence — appointments + hashed confirmation tokens
+-- survive restarts. Raw tokens are NEVER stored (hash + expiry only).
+CREATE TABLE IF NOT EXISTS scheduling_appointments (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL REFERENCES tenants(id),
+  case_id TEXT NOT NULL, appointment_type TEXT NOT NULL,
+  status TEXT NOT NULL,
+  assigned_user_id TEXT, resource_id TEXT,
+  start_at TEXT NOT NULL, end_at TEXT NOT NULL,
+  video_meeting_url TEXT,
+  provider_name TEXT NOT NULL DEFAULT 'mock-calendar',
+  provider_is_mock INTEGER NOT NULL DEFAULT 1,
+  requires_confirmation INTEGER NOT NULL DEFAULT 0,
+  confirmation_token_hash TEXT,
+  confirmation_expires_at TEXT,
+  confirmed_at TEXT, cancelled_at TEXT, cancellation_reason TEXT,
+  completed_at TEXT, no_show_at TEXT,
+  reschedule_count INTEGER NOT NULL DEFAULT 0,
+  created_by TEXT NOT NULL DEFAULT 'system',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE INDEX IF NOT EXISTS ix_sched_tenant_case
+  ON scheduling_appointments(tenant_id, case_id);
+CREATE INDEX IF NOT EXISTS ix_sched_tenant_status
+  ON scheduling_appointments(tenant_id, status);
+CREATE INDEX IF NOT EXISTS ix_sched_resource
+  ON scheduling_appointments(tenant_id, resource_id, start_at);
+CREATE INDEX IF NOT EXISTS ix_sched_token
+  ON scheduling_appointments(confirmation_token_hash);
+
+CREATE TABLE IF NOT EXISTS scheduling_appointment_events (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  appointment_id TEXT NOT NULL REFERENCES scheduling_appointments(id),
+  event_type TEXT NOT NULL, actor TEXT NOT NULL DEFAULT 'system',
+  payload_json TEXT NOT NULL DEFAULT '{}',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE INDEX IF NOT EXISTS ix_sched_events
+  ON scheduling_appointment_events(tenant_id, appointment_id);
+"""),
 ]
 
 

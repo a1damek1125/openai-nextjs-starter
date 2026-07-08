@@ -458,7 +458,7 @@ class TestGovernanceApi:
                 "/admin/users", "/admin/users/invite",
                 "/admin/memberships/", "/admin/access-logs",
                 "/governance/blocked", "/governance/traces",
-                "do not survive a server\nrestart", "mock",
+                "persisted locally", "mock",
                 "BLOCKED_BY_CREDENTIALS", "re-checked server-side",
                 "SCAFFOLDED_ONLY", "simulated email",
                 "scheduleFor"]:

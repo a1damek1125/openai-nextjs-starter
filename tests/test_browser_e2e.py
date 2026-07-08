@@ -195,7 +195,7 @@ def test_scheduling_ui_full_flow_in_browser(server, page):
     # Honest labels: mocks, restart caveat, providers not connected.
     sched_text = " ".join(page.text_content("#sched-section").split())
     assert "mock" in sched_text
-    assert "do not survive a server restart" in sched_text
+    assert "persisted locally" in sched_text     # v4: survives restart
     assert "BLOCKED_BY_CREDENTIALS" in sched_text
 
     # 1. Availability from the API → book a VIDEO_CALL.
