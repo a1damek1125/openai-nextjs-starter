@@ -152,6 +152,23 @@ CREATE TABLE IF NOT EXISTS audit_events (
   created_at TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS ix_audit_case ON audit_events(tenant_id, case_id);
 """),
+    (2, """
+-- v2: LifecycleVector persistence + call sessions.
+ALTER TABLE cases ADD COLUMN lifecycle_json TEXT;
+
+CREATE TABLE IF NOT EXISTS call_sessions (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  case_id TEXT, direction TEXT NOT NULL,
+  source_number TEXT NOT NULL, destination_number TEXT NOT NULL,
+  provider TEXT NOT NULL, status TEXT NOT NULL,
+  outcome TEXT, outcome_reason TEXT,
+  disposition_confidence REAL NOT NULL DEFAULT 0,
+  recording_allowed INTEGER NOT NULL DEFAULT 0,
+  human_handoff_required INTEGER NOT NULL DEFAULT 0,
+  started_at TEXT, ended_at TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE INDEX IF NOT EXISTS ix_calls_tenant ON call_sessions(tenant_id, case_id);
+"""),
 ]
 
 
@@ -175,7 +192,11 @@ class Database:
         current = row["v"] or 0
         for version, sql in MIGRATIONS:
             if version > current:
-                cur.executescript(sql)
+                try:
+                    cur.executescript(sql)
+                except Exception as e:      # idempotent ALTERs on re-run
+                    if "duplicate column" not in str(e):
+                        raise
                 cur.execute("INSERT INTO schema_version VALUES (?)",
                             (version,))
                 current = version

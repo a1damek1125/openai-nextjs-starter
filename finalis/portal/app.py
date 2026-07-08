@@ -456,6 +456,161 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                                                       "response": response})
         return {"client_response": response}
 
+    # ---- lifecycle: mock invoice / payment / fulfillment ---------------------------
+    from ..lifecycle.playbooks import HVAC_HOME_SERVICES
+    from ..lifecycle.completion import CaseFacts, can_complete
+    from ..lifecycle.vector import (DealState, FulfillmentState,
+                                    LifecycleVector, TransactionState)
+
+    def load_vector(case_id: str) -> LifecycleVector:
+        row = db.one("SELECT lifecycle_json FROM cases WHERE id=?", case_id)
+        if row and row["lifecycle_json"]:
+            data = json.loads(row["lifecycle_json"])
+            return LifecycleVector(
+                deal=DealState(data["deal"]),
+                transaction=TransactionState(data["transaction"]),
+                fulfillment=FulfillmentState(data["fulfillment"]))
+        return LifecycleVector()
+
+    def save_vector(case_id: str, v: LifecycleVector) -> None:
+        db.update("cases", case_id, {"lifecycle_json": json.dumps(
+            {"deal": v.deal.value, "transaction": v.transaction.value,
+             "fulfillment": v.fulfillment.value})})
+
+    @app.get("/cases/{case_id}/lifecycle")
+    async def get_lifecycle(case_id: str,
+                            user: dict = Depends(current_user)):
+        load_case_or_404(case_id, user)
+        v = load_vector(case_id)
+        facts = CaseFacts(vector=v, closure_evidence_id="portal",
+                          completion_confirmed=True, contract_signed=True)
+        check = can_complete(facts, HVAC_HOME_SERVICES)
+        return {"deal": v.deal.value, "transaction": v.transaction.value,
+                "fulfillment": v.fulfillment.value,
+                "view": v.derived_outcome_view(),
+                "message": v.business_language(),
+                "can_complete": check.ok,
+                "blocked_reasons": check.blocked_reasons,
+                "next_best_action": check.next_best_action}
+
+    @app.post("/cases/{case_id}/lifecycle/accept-offer")
+    @app.post("/cases/{case_id}/lifecycle/invoice")
+    @app.post("/cases/{case_id}/lifecycle/payment")
+    @app.post("/cases/{case_id}/lifecycle/fulfillment-schedule")
+    @app.post("/cases/{case_id}/lifecycle/fulfillment-complete")
+    async def lifecycle_step(case_id: str, request: Request,
+                             user: dict = Depends(current_user)):
+        """MOCK invoice/payment/fulfillment providers (clearly mock —
+        real billing/scheduling providers replace these endpoints' guts)."""
+        require_role(user, "owner", "manager")
+        load_case_or_404(case_id, user)
+        v = load_vector(case_id)
+        step = request.url.path.rsplit("/", 1)[1]
+        if step == "accept-offer":
+            v.deal = DealState.ACCEPTED_BY_CLIENT
+            v.transaction = TransactionState.INVOICE_REQUIRED
+            v.fulfillment = FulfillmentState.REQUIRED
+            audit.append(event_type="CASE_WON_NOT_FULFILLED", actor="mock",
+                         case_id=case_id, payload={"provider": "mock"})
+        elif step == "invoice":
+            v.transaction = TransactionState.INVOICE_ISSUED
+            audit.append(event_type="INVOICE_ISSUED", actor="mock-invoice",
+                         case_id=case_id, payload={"is_mock": True})
+        elif step == "payment":
+            v.transaction = TransactionState.PAID
+            audit.append(event_type="PAYMENT_RECEIVED", actor="mock-payment",
+                         case_id=case_id, payload={"is_mock": True})
+        elif step == "fulfillment-schedule":
+            v.fulfillment = FulfillmentState.SCHEDULED
+            audit.append(event_type="FULFILLMENT_SCHEDULED",
+                         actor="mock-fulfillment", case_id=case_id,
+                         payload={"is_mock": True})
+        elif step == "fulfillment-complete":
+            v.fulfillment = FulfillmentState.COMPLETED
+            audit.append(event_type="FULFILLMENT_COMPLETED",
+                         actor="mock-fulfillment", case_id=case_id,
+                         payload={"is_mock": True})
+        save_vector(case_id, v)
+        return {"view": v.derived_outcome_view(),
+                "message": v.business_language()}
+
+    # ---- telephony (mock provider) ----------------------------------------------------
+    from ..telephony.engine import CallControlEngine
+    from ..telephony.models import ContactCallState
+    tele = CallControlEngine(audit)
+    app.state.telephony = tele
+
+    @app.post("/telephony/inbound/simulate")
+    async def telephony_inbound(body: dict,
+                                user: dict = Depends(current_user)):
+        r = tele.simulate_inbound(
+            tenant_id=user["tid"],
+            caller_number=body.get("caller_number", "+48600000000"),
+            segments=body.get("segments", []),
+            recording_consent=body.get("recording_consent", "granted"),
+            emergency=bool(body.get("emergency")),
+            asks_for_human=bool(body.get("asks_for_human")))
+        s = r.session
+        # Persist the engine-created case into the portal DB.
+        if s.case_id and store.case_meta(s.case_id,
+                                         tenant_id=user["tid"]) is None:
+            engine_case = tele.graph.cases.get(s.case_id)
+            if engine_case is not None:
+                party_id = str(uuid.uuid4())
+                store.create_party(tenant_id=user["tid"],
+                                   party_id=party_id, type_="client",
+                                   name="Inbound caller",
+                                   phone=s.source_number)
+                store.save_case(engine_case, title="Inbound call intake",
+                                client_party_id=party_id)
+        db.insert("call_sessions", {
+            "id": s.id, "tenant_id": s.tenant_id, "case_id": s.case_id,
+            "direction": s.direction, "source_number": s.source_number,
+            "destination_number": s.destination_number,
+            "provider": s.provider, "status": s.status,
+            "outcome": s.outcome, "outcome_reason": s.outcome_reason,
+            "disposition_confidence": s.disposition_confidence,
+            "recording_allowed": int(s.recording_allowed),
+            "human_handoff_required": int(s.human_handoff_required),
+            "started_at": str(s.started_at), "ended_at": str(s.ended_at)})
+        return {"call_id": s.id, "case_id": s.case_id,
+                "disposition": r.disposition, "handoff": r.handoff,
+                "provider_is_mock": True}
+
+    @app.post("/telephony/outbound/request")
+    async def telephony_outbound(body: dict,
+                                 user: dict = Depends(current_user)):
+        require_role(user, "owner", "manager", "operator")
+        contact = ContactCallState(**body.get("contact_state", {}))
+        r = tele.request_outbound(
+            tenant_id=user["tid"], case_id=body.get("case_id"),
+            destination=body.get("destination", "+48600000000"),
+            contact=contact,
+            business_purpose=body.get("reason", ""),
+            scenario=body.get("scenario", "answered"),
+            urgent=bool(body.get("urgent")))
+        s = r.session
+        db.insert("call_sessions", {
+            "id": s.id, "tenant_id": s.tenant_id, "case_id": s.case_id,
+            "direction": s.direction, "source_number": s.source_number,
+            "destination_number": s.destination_number,
+            "provider": s.provider, "status": s.status,
+            "outcome": s.outcome, "outcome_reason": s.outcome_reason,
+            "disposition_confidence": s.disposition_confidence,
+            "recording_allowed": int(s.recording_allowed),
+            "human_handoff_required": int(s.human_handoff_required),
+            "started_at": str(s.started_at), "ended_at": str(s.ended_at)})
+        return {"call_id": s.id, "permission": r.permission,
+                "disposition": r.disposition,
+                "blocked_reason": r.blocked_reason, "retry": r.retry,
+                "provider_is_mock": True}
+
+    @app.get("/telephony/calls")
+    async def telephony_calls(user: dict = Depends(current_user)):
+        return [dict(r) for r in db.all(
+            "SELECT * FROM call_sessions WHERE tenant_id=? "
+            "ORDER BY created_at DESC", user["tid"])]
+
     # ---- audit --------------------------------------------------------------------------------------
     @app.get("/audit/verify/{case_id}")
     async def audit_verify(case_id: str,
