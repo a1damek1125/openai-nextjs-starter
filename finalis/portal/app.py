@@ -3658,10 +3658,15 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
             id_factory=lambda i: f"{uuid.uuid4().hex}-cancel")
         # relink the appended event to the existing chain
         last = evs[-1]
+        idx = len(evs) + 1
         cancel_ev = nxt[0]
-        cancel_ev["event_index"] = len(evs) + 1
+        cancel_ev["event_index"] = idx
         cancel_ev["previous_event_hash"] = last["event_hash"]
         cancel_ev["causal_parent_event_ids"] = [last["event_id"]]
+        # Relink the trace span to the true position so /trace shows a unique
+        # span_id and a correct parent link (not the default "-01"/None).
+        cancel_ev["span_id"] = f"{p['trace_id']}-{idx:02d}"
+        cancel_ev["parent_span_id"] = f"{p['trace_id']}-{len(evs):02d}"
         cancel_ev["event_hash"] = _rl.event_hash(
             {k: v for k, v in cancel_ev.items() if k != "event_hash"})
         run_store.add_event(run_id=run_id, tenant_id=user["tid"],
@@ -3696,9 +3701,15 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         p = _run_response(row)
         evs = run_store.events(run_id, tenant_id=user["tid"])
         state = _rl.reduce_run(evs)
+        # Replay reconstructs state AND recomputes event hashes, so a
+        # payload-tampered event (which the reducer's chain-linkage alone
+        # would miss) cannot report MATCHED. Integrity + state must both hold.
+        integrity = _rl.verify_events(evs)
+        mismatches = list(state["replay_errors"]) + list(
+            integrity["tamper_reasons"])
         mismatch = (state["run_state_hash"] != p["run_state_hash"]
                     or state["replayed_run_status"] != p["run_status"]
-                    or bool(state["replay_errors"]))
+                    or bool(mismatches))
         return {"run_id": run_id,
                 "replayed_run_status": state["replayed_run_status"],
                 "replayed_event_count": state["event_count"],
@@ -3706,7 +3717,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                 "replayed_run_chain_hash": state["run_chain_hash"],
                 "replayed_run_state_hash": state["run_state_hash"],
                 "replay_status": "MISMATCHED" if mismatch else "MATCHED",
-                "replay_mismatches": state["replay_errors"],
+                "replay_mismatches": mismatches,
                 "replay_warnings": state["warnings"],
                 "current_task_state_comparison": "NOT_IMPLEMENTED",
                 "verified_at": utcnow(), "honesty_labels": _rl.HONESTY_LABELS}

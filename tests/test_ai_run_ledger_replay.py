@@ -159,3 +159,32 @@ class TestApiTamperDetection:
         rp = c.post(f"/ai-runs/{rid}/replay", headers=h).json()
         assert rp["replay_status"] == "MATCHED"
         assert rp["current_task_state_comparison"] == "NOT_IMPLEMENTED"
+
+    def test_replay_mismatch_on_payload_tamper(self, app):
+        # Regression (swarm-review finding): a payload-tampered no-effect
+        # event must make /replay MISMATCHED, not MATCHED — replay recomputes
+        # event hashes, not only chain linkage.
+        c, h, rid = self._run(app)
+        row = app.state.db.one(
+            "SELECT id, envelope_json FROM ai_run_events WHERE run_id=? AND "
+            "event_index=4", rid)
+        env = json.loads(row["envelope_json"])
+        env["event_payload"] = {"k": "TAMPERED"}   # stale event_hash
+        app.state.db.conn.execute(
+            "UPDATE ai_run_events SET envelope_json=? WHERE id=?",
+            (json.dumps(env), row["id"]))
+        app.state.db.conn.commit()
+        rp = c.post(f"/ai-runs/{rid}/replay", headers=h).json()
+        assert rp["replay_status"] == "MISMATCHED"
+        assert rp["replay_mismatches"]
+
+    def test_cancel_event_span_is_relinked(self, app):
+        # Regression (swarm-review finding): the appended RUN_CANCELLED event
+        # gets a unique span_id and correct parent, not the default "-01".
+        c, h, rid = self._run(app)
+        c.post(f"/ai-runs/{rid}/cancel", headers=h)
+        tr = c.get(f"/ai-runs/{rid}/trace", headers=h).json()
+        spans = [s["span_id"] for s in tr["spans"]]
+        assert len(spans) == len(set(spans))       # all unique
+        cancel_span = tr["spans"][-1]
+        assert cancel_span["parent_span_id"] is not None
