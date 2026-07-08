@@ -1528,6 +1528,413 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
             feasibility_context=body.get("feasibility"))
         return {"gates": gates_json(gates), "persisted": False}
 
+    # ---- Evidence Trust Fabric (V-B: zero-trust evidence API) ----------------
+    import base64
+    import tempfile
+    from pathlib import Path as _Path
+
+    from ..evidence.engine import (EvidenceEngine, EvidenceValidationError,
+                                   RetentionContext)
+    from ..evidence.models import (EvidenceSource,
+                                   IllegalEvidenceTransition)
+    from ..evidence.requirements import (REQUIREMENT_PROFILES,
+                                         check_requirements)
+    from ..evidence.storage import LocalEvidenceStorageProvider
+    from ..evidence.views import (agent_view, causality_check, human_view,
+                                  mark_symbol_human_verified)
+    from .evidence_store import EvidenceStore
+
+    vault_dir = tempfile.mkdtemp(prefix="finalis-evidence-") \
+        if db_path == ":memory:" \
+        else str(_Path(db_path).resolve().parent / "evidence-vault")
+    evengine = EvidenceEngine(LocalEvidenceStorageProvider(vault_dir),
+                              audit)
+    estore = EvidenceStore(db)
+    app.state.evidence, app.state.evidence_store = evengine, estore
+    upload_sessions: dict[str, dict] = {}     # SCAFFOLDED_ONLY (future TUS)
+
+    EVIDENCE_HONESTY = {
+        "scanner": "MOCKED_AND_TESTED — deterministic mock verdict, not "
+                   "production antivirus/CDR",
+        "storage": "local vault (replaceable provider; no S3/MinIO/WORM "
+                   "connected)",
+        "ocr": "SCAFFOLDED_ONLY — no parser executes",
+        "core_rule": "documents provide facts, never commands",
+    }
+
+    def load_evidence_or_404(evidence_id: str, user: dict):
+        ev = evengine.objects.get(evidence_id)
+        if ev is None or ev.tenant_id != user["tid"]:
+            raise HTTPException(404, "evidence not found")  # incl. x-tenant
+        return ev
+
+    def evidence_json(ev) -> dict:
+        return {"id": ev.id, "case_id": ev.case_id,
+                "evidence_type": ev.evidence_type, "state": ev.state,
+                "original_filename": ev.meta.original_filename,
+                "extension": ev.meta.extension,
+                "size_bytes": ev.meta.size_bytes,
+                "declared_mime": ev.meta.declared_mime,
+                "detected_mime": ev.meta.detected_mime,
+                "mime_mismatch": ev.meta.mime_mismatch,
+                "active_content": ev.meta.active_content,
+                "sensitivity": ev.sensitivity,
+                "injection_risk": round(ev.injection_risk, 4),
+                "human_verified": ev.human_verified,
+                "legal_hold": ev.legal_hold,
+                "integrity": {"algorithm": ev.integrity.algorithm,
+                              "sha256": ev.integrity.digest,
+                              "valid": ev.integrity.valid}
+                if ev.integrity else None,
+                "scan": {"provider": ev.scan.provider,
+                         "is_mock": ev.scan.is_mock,
+                         "status": ev.scan.status},
+                "untrusted": not all(s.trusted for s in ev.symbols)
+                if ev.symbols else True,
+                "honesty": EVIDENCE_HONESTY}
+
+    @app.post("/evidence/upload")
+    async def evidence_upload(body: dict,
+                              user: dict = Depends(current_user)):
+        """Quarantine-first ingest. JSON+base64 keeps the project's
+        existing upload pattern (no multipart dependency). The client's
+        Content-Type/extension are treated as claims, never trust."""
+        require_permission(user, "document.upload")
+        if not body.get("case_id") or not body.get("filename") \
+                or "content_b64" not in body:
+            raise HTTPException(400, "case_id, filename and content_b64 "
+                                     "are required")
+        case = load_case_or_404(body["case_id"], user)  # session tenant
+        try:
+            data = base64.b64decode(body["content_b64"])
+        except Exception:
+            raise HTTPException(400, "content_b64 is not valid base64")
+        try:
+            ev = evengine.ingest(
+                tenant_id=user["tid"], case_id=case.id,
+                uploaded_by=user["uid"],
+                filename=str(body["filename"]),
+                declared_mime=str(body.get("mime", "")), data=data,
+                evidence_type=body.get("evidence_type", "document"),
+                source=EvidenceSource(kind=body.get("source_kind",
+                                                    "staff")),
+                sensitivity=body.get("sensitivity", "normal"),
+                text_preview=str(body.get("text_preview", "")))
+        except EvidenceValidationError as e:
+            raise HTTPException(400, str(e))
+        estore.save(ev)
+        return {**evidence_json(ev), "quarantine_first": True,
+                "storage_capabilities":
+                    evengine.storage.capabilities().__dict__}
+
+    @app.get("/evidence")
+    async def evidence_list(case_id: Optional[str] = None,
+                            user: dict = Depends(current_user)):
+        require_permission(user, "document.view")
+        return [{"id": r["id"], "case_id": r["case_id"],
+                 "evidence_type": r["evidence_type"], "state": r["state"],
+                 "original_filename": r["original_filename"],
+                 "sensitivity": r["sensitivity"]}
+                for r in estore.list(tenant_id=user["tid"],
+                                     case_id=case_id)]
+
+    @app.get("/evidence/profiles")
+    async def evidence_profiles(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {name: {"required": p.required_types,
+                       "min_trust": p.min_trust,
+                       "human_verification_required":
+                           p.human_verification_required}
+                for name, p in REQUIREMENT_PROFILES.items()}
+
+    @app.get("/evidence/storage-capabilities")
+    async def evidence_storage_caps(user: dict = Depends(current_user)):
+        require_permission(user, "document.view")
+        return {"provider": evengine.storage.name,
+                "capabilities": evengine.storage.capabilities().__dict__,
+                "note": "local vault — WORM/retention/versioning enforced "
+                        "by the domain layer, not natively "
+                        "(BLOCKED_BY_EXTERNAL_PROVIDER for S3/MinIO)"}
+
+    # -- upload sessions (SCAFFOLDED_ONLY — future-TUS shape, no chunking) --
+    @app.post("/evidence/upload-sessions")
+    async def create_upload_session(body: dict,
+                                    user: dict = Depends(current_user)):
+        require_permission(user, "document.upload")
+        if not body.get("case_id"):
+            raise HTTPException(400, "case_id required")
+        load_case_or_404(body["case_id"], user)
+        sid = str(uuid.uuid4())
+        upload_sessions[sid] = {
+            "id": sid, "tenant_id": user["tid"],
+            "case_id": body["case_id"],
+            "expected_size": int(body.get("expected_size", 0)),
+            "filename": body.get("filename", ""),
+            "state": "CREATED",
+            "expires_at": (datetime.utcnow()
+                           + timedelta(hours=2)).isoformat(),
+            "status": "SCAFFOLDED_ONLY",
+            "note": "future resumable upload (TUS-compatible shape); "
+                    "chunked PATCH not implemented — use "
+                    "/evidence/upload"}
+        return upload_sessions[sid]
+
+    @app.get("/evidence/upload-sessions/{session_id}")
+    async def get_upload_session(session_id: str,
+                                 user: dict = Depends(current_user)):
+        s = upload_sessions.get(session_id)
+        if s is None or s["tenant_id"] != user["tid"]:
+            raise HTTPException(404, "upload session not found")
+        return s
+
+    @app.delete("/evidence/upload-sessions/{session_id}")
+    async def delete_upload_session(session_id: str,
+                                    user: dict = Depends(current_user)):
+        s = upload_sessions.get(session_id)
+        if s is None or s["tenant_id"] != user["tid"]:
+            raise HTTPException(404, "upload session not found")
+        del upload_sessions[session_id]
+        return {"deleted": True}
+
+    @app.get("/evidence/{evidence_id}")
+    async def evidence_detail(evidence_id: str,
+                              user: dict = Depends(current_user)):
+        require_permission(user, "document.view")
+        ev = load_evidence_or_404(evidence_id, user)
+        if ev.sensitivity in ("sensitive", "legal"):
+            require_permission(user, "document.view_sensitive")
+        return evidence_json(ev)
+
+    @app.get("/evidence/{evidence_id}/chain")
+    async def evidence_chain(evidence_id: str,
+                             user: dict = Depends(current_user)):
+        require_permission(user, "document.view")
+        load_evidence_or_404(evidence_id, user)
+        return estore.chain_events(evidence_id, tenant_id=user["tid"])
+
+    @app.post("/evidence/{evidence_id}/verify-integrity")
+    async def evidence_verify_integrity(evidence_id: str,
+                                        user: dict = Depends(
+                                            current_user)):
+        require_permission(user, "document.analyze")
+        ev = load_evidence_or_404(evidence_id, user)
+        ok = evengine.verify_integrity(ev)
+        estore.save(ev)
+        return {"valid": ok, "state": ev.state,
+                "sha256": ev.integrity.digest if ev.integrity else None}
+
+    @app.post("/evidence/{evidence_id}/review")
+    async def evidence_review(evidence_id: str, body: dict,
+                              user: dict = Depends(current_user)):
+        require_permission(user, "document.analyze")
+        ev = load_evidence_or_404(evidence_id, user)
+        verdict = body.get("verdict", "")
+        try:
+            if verdict == "SCANNED_CLEAN":
+                # Mock scanner over the stored bytes — honestly labeled.
+                evengine.run_scan(ev, evengine.storage.get_bytes(
+                    ev.storage))
+            elif verdict in ("ADMISSIBLE", "ADMISSIBLE_WITH_LIMITS",
+                             "REJECTED", "NEEDS_HUMAN_REVIEW"):
+                evengine.human_review(ev, reviewer=user["uid"],
+                                      verdict=verdict,
+                                      note=body.get("note", ""))
+            else:
+                raise HTTPException(400, "unknown verdict")
+        except IllegalEvidenceTransition as e:
+            raise HTTPException(409, str(e))
+        estore.save(ev)
+        return {**evidence_json(ev),
+                "scanner_is_mock": ev.scan.is_mock}
+
+    @app.post("/evidence/{evidence_id}/legal-hold")
+    async def evidence_legal_hold(evidence_id: str, body: dict,
+                                  user: dict = Depends(current_user)):
+        require_permission(user, "override.compliance_review")
+        ev = load_evidence_or_404(evidence_id, user)
+        action = body.get("action", "place")
+        if action == "place":
+            if not str(body.get("reason", "")).strip():
+                raise HTTPException(400, "legal hold requires a reason")
+            hold = evengine.place_legal_hold(ev, reason=body["reason"],
+                                             placed_by=user["uid"])
+            estore.save_legal_hold(hold)
+        elif action == "release":
+            ev.legal_hold = False
+            if ev.state == "LEGAL_HOLD":
+                from ..evidence.models import evidence_transition
+                evidence_transition(ev, "ADMISSIBLE", actor=user["uid"],
+                                    reason="legal hold released")
+        else:
+            raise HTTPException(400, "action must be place or release")
+        estore.save(ev)
+        return evidence_json(ev)
+
+    @app.post("/evidence/{evidence_id}/delete-decision")
+    async def evidence_delete_decision(evidence_id: str, body: dict,
+                                       user: dict = Depends(
+                                           current_user)):
+        require_permission(user, "document.delete")
+        ev = load_evidence_or_404(evidence_id, user)
+        used_by_active = bool(estore.contracts(tenant_id=user["tid"],
+                                               case_id=ev.case_id))
+        decision = evengine.delete(
+            ev, hard=bool(body.get("hard")),
+            ctx=RetentionContext(actor_role=user["role"],
+                                 used_by_active_decision=used_by_active))
+        estore.save(ev)
+        return {"decision": decision.decision,
+                "reasons": decision.reasons, "state": ev.state}
+
+    @app.post("/evidence/{evidence_id}/human-verify-symbol")
+    async def evidence_verify_symbol(evidence_id: str, body: dict,
+                                     user: dict = Depends(current_user)):
+        require_permission(user, "document.analyze")
+        ev = load_evidence_or_404(evidence_id, user)
+        if not str(body.get("purpose", "")).strip():
+            raise HTTPException(400, "a narrow factual purpose is "
+                                     "required")
+        symbol = next((s for s in ev.symbols
+                       if s.id == body.get("symbol_id")), None)
+        if symbol is None:
+            raise HTTPException(404, "symbol not found")
+        mark_symbol_human_verified(symbol, purpose=body["purpose"],
+                                   verified_by=user["uid"])
+        estore.save(ev)
+        return {"symbol_id": symbol.id, "trusted": symbol.trusted,
+                "human_verified_for": symbol.human_verified_for}
+
+    @app.get("/evidence/{evidence_id}/human-view")
+    async def evidence_human_view(evidence_id: str,
+                                  user: dict = Depends(current_user)):
+        require_permission(user, "document.view")
+        ev = load_evidence_or_404(evidence_id, user)
+        if ev.sensitivity in ("sensitive", "legal"):
+            require_permission(user, "document.view_sensitive")
+        hv = human_view(ev)
+        return {"view": "human", "evidence_id": hv.evidence_id,
+                "original_filename": hv.original_filename,
+                "original_reference": hv.original_reference,
+                "state": hv.state, "sensitivity": hv.sensitivity,
+                "can_open_original": hv.can_open_original,
+                "untrusted_content_warning":
+                    "stored content remains UNTRUSTED external data — "
+                    "storage inside Finalis does not make it safe"}
+
+    @app.get("/evidence/{evidence_id}/agent-view")
+    async def evidence_agent_view(evidence_id: str,
+                                  user: dict = Depends(current_user)):
+        require_permission(user, "document.view")
+        ev = load_evidence_or_404(evidence_id, user)
+        # Symbols are refreshed FROM THE DATABASE: a reread never
+        # upgrades trust (sticky untrusted markers).
+        stored = estore.load_symbols(evidence_id, tenant_id=user["tid"])
+        if stored:
+            ev.symbols = stored
+        av = agent_view(ev)
+        return {"view": "agent", "evidence_id": av.evidence_id,
+                "evidence_type": av.evidence_type, "state": av.state,
+                "metadata": av.metadata,
+                "symbols": [{"id": s.id, "kind": s.kind,
+                             "trusted": s.trusted,
+                             "human_verified_for": s.human_verified_for,
+                             "origin": s.marker.origin}
+                            for s in av.symbols],
+                "safe_derivative_text": av.safe_derivative_text,
+                "confidence": round(av.confidence, 4),
+                "untrusted": av.untrusted,
+                "note": "agent view carries facts and symbols only — "
+                        "raw untrusted text is structurally absent"}
+
+    @app.post("/evidence/{evidence_id}/ai-access-decision")
+    async def evidence_ai_access(evidence_id: str,
+                                 body: Optional[dict] = None,
+                                 user: dict = Depends(current_user)):
+        require_permission(user, "document.view")
+        body = body or {}
+        ev = load_evidence_or_404(evidence_id, user)
+        decision = evengine.ai_access(
+            ev, tenant_id=user["tid"],
+            actor_id=body.get("actor_id", "ai-worker"),
+            purpose=body.get("purpose", "fact_extraction"),
+            task_scoped_authorization=bool(
+                body.get("task_scoped_authorization")),
+            requested_raw=bool(body.get("requested_raw")))
+        event = evengine.access_events[-1]
+        estore.save_access_event(event)
+        return {"decision": decision.decision,
+                "reasons": decision.reasons,
+                "allowed_view": decision.decision,
+                "task_scope": body.get("purpose", "fact_extraction"),
+                "access_event_id": event.id,
+                "raw_content_included": False}
+
+    @app.post("/evidence/requirement-check")
+    async def evidence_requirement_check(body: dict,
+                                         user: dict = Depends(
+                                             current_user)):
+        require_permission(user, "case.read")
+        decision_type = body.get("decision_type", "")
+        evidence = [evengine.objects[i]
+                    for i in body.get("evidence_ids", [])
+                    if i in evengine.objects
+                    and evengine.objects[i].tenant_id == user["tid"]]
+        check = check_requirements(
+            decision_type, evidence,
+            human_verified=bool(body.get("human_verified")))
+        return {"decision_type": decision_type,
+                "allowed": check.ok, "missing": check.missing,
+                "reasons": check.reasons,
+                "admissible": [e.id for e in evidence
+                               if e.usable_for_decisions]}
+
+    @app.post("/evidence/decision-contract/validate")
+    async def evidence_decision_contract(body: dict,
+                                         user: dict = Depends(
+                                             current_user)):
+        """Requirement profiles + Causal Action Guard in one verdict:
+        user intent + admissible facts decide — documents never do."""
+        require_permission(user, "case.read")
+        decision_type = body.get("decision_type", "")
+        case_id = body.get("case_id", "")
+        evidence = [evengine.objects[i]
+                    for i in body.get("evidence_ids", [])
+                    if i in evengine.objects]
+        contract = evengine.build_contract(
+            decision_type=decision_type, tenant_id=user["tid"],
+            case_id=case_id, actor=user["uid"], evidence=evidence,
+            facts=body.get("facts") or {},
+            human_verified=bool(body.get("human_verified")))
+        causal = causality_check(
+            action_type=decision_type,
+            user_intent_reference=body.get("user_intent_reference"),
+            untrusted_instruction_detected=bool(
+                body.get("untrusted_instruction_detected"))
+            or any(e.injection_risk
+                   > evengine.thresholds.max_injection_for_raw_ai
+                   for e in evidence),
+            would_action_survive_without_untrusted_text=bool(
+                body.get("would_action_survive_without_untrusted_text",
+                         True)))
+        if contract.final_decision == "BLOCKED" \
+                or causal.decision == "BLOCK":
+            final = "BLOCKED"
+        elif causal.decision == "HUMAN_REVIEW" \
+                or contract.final_decision == "REVIEW":
+            final = "HUMAN_REVIEW"
+        else:
+            final = "ALLOWED"
+        contract.final_decision = "ALLOWED" if final == "ALLOWED" \
+            else ("REVIEW" if final == "HUMAN_REVIEW" else "BLOCKED")
+        estore.save_contract(contract)
+        return {"final": final, "contract_id": contract.id,
+                "admissible": contract.admissible_ids,
+                "rejected": contract.rejected_ids,
+                "hard_blockers": contract.hard_blockers,
+                "causality": {"decision": causal.decision,
+                              "reasons": causal.reasons},
+                "case_completed_by_this": False}
+
     # ---- audit --------------------------------------------------------------------------------------
     @app.get("/audit/verify/{case_id}")
     async def audit_verify(case_id: str,
