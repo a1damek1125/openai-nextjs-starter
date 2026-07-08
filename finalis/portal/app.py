@@ -3772,9 +3772,16 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
 
     # ---- Human Approval Gate Foundation (CORE-A4.1, PART 1) --------------------------
     from ..ai_employee import approvals as _appr
-    from ..ai_employee.approval_store import AIApprovalStore
+    from ..ai_employee import approval_decisions as _adec
+    from ..ai_employee.approval_store import (AIApprovalStore,
+                                              AIApprovalDecisionStore,
+                                              AIApprovalGrantStore)
     approval_store = AIApprovalStore(db)
+    decision_store = AIApprovalDecisionStore(db)
+    grant_store = AIApprovalGrantStore(db)
     app.state.approval_store = approval_store
+    app.state.decision_store = decision_store
+    app.state.grant_store = grant_store
 
     @app.get("/ai-approvals/policy")
     async def ai_approval_policy(user: dict = Depends(current_user)):
@@ -3931,6 +3938,11 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                    "policy_decision_capsule": capsule,
                    "approval_challenge": challenge,
                    "preconditions": preconditions,
+                   # Immutable snapshot of the request identity at creation.
+                   # PART 2 lifecycle changes (status/decision/grant refs)
+                   # mutate the top-level payload but never this snapshot, so
+                   # the request hash stays verifiable after a decision.
+                   "approval_request_snapshot": dict(request_core),
                    "created_at": now, "updated_at": now,
                    "honesty_labels": _appr.HONESTY_LABELS}
         approval_store.save({
@@ -4010,20 +4022,48 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
             == p["approval_precondition_hash"]
         pol_ok = _appr.policy_decision_hash(p["policy_decision_capsule"]) \
             == p["policy_decision_hash"]
-        # request hash recomputed over the stored request core
-        core = {k: v for k, v in p.items()
-                if k not in ("approval_package", "policy_decision_capsule",
-                             "approval_challenge", "preconditions",
-                             "created_at", "updated_at", "honesty_labels",
-                             "approval_request_hash")}
-        req_ok = _appr.request_hash({**core,
-                                     "approval_request_hash": ""}) \
-            == p["approval_request_hash"]
+        # Request hash recomputed over the IMMUTABLE creation-time snapshot so
+        # it stays verifiable after PART 2 lifecycle changes. Falls back to the
+        # live core for pre-snapshot rows.
+        snap = p.get("approval_request_snapshot")
+        if snap is not None:
+            req_ok = _appr.request_hash({**snap, "approval_request_hash": ""}) \
+                == snap["approval_request_hash"] == p["approval_request_hash"]
+        else:
+            core = {k: v for k, v in p.items()
+                    if k not in ("approval_package", "policy_decision_capsule",
+                                 "approval_challenge", "preconditions",
+                                 "created_at", "updated_at", "honesty_labels",
+                                 "approval_request_hash",
+                                 # PART 2 lifecycle mutations are not part of
+                                 # the frozen request identity.
+                                 "approval_request_snapshot",
+                                 "approval_decision_id", "approval_decision_hash",
+                                 "approval_grant_id", "approval_grant_hash")}
+            req_ok = _appr.request_hash({**core,
+                                         "approval_request_hash": ""}) \
+                == p["approval_request_hash"]
         # challenge must be bound to THIS package (anti-reuse)
         challenge_bound = p["approval_challenge"]["viewed_package_hash"] \
             == _appr.package_hash({**p["approval_package"],
                                    "approval_challenge": None})
-        all_ok = all([pkg_ok, ch_ok, pre_ok, pol_ok, req_ok, challenge_bound])
+        # PART 2 extension: verify the latest decision and grant hashes too.
+        dec_status = "NOT_IMPLEMENTED"
+        grant_status = "NOT_IMPLEMENTED"
+        decisions = decision_store.list_for_request(approval_id,
+                                                    tenant_id=user["tid"])
+        if decisions:
+            d = decisions[-1]
+            dec_status = ("MATCHED" if _adec.decision_hash(d)
+                          == d["decision_hash"] else "MISMATCHED")
+        grant = grant_store.get_for_request(approval_id, tenant_id=user["tid"])
+        if grant:
+            grant_status = ("MATCHED" if _adec.grant_hash(grant)
+                            == grant["approval_grant_hash"] else "MISMATCHED")
+        foundation_ok = all([pkg_ok, ch_ok, pre_ok, pol_ok, req_ok,
+                             challenge_bound])
+        all_ok = foundation_ok and dec_status != "MISMATCHED" \
+            and grant_status != "MISMATCHED"
         return {"approval_request_id": approval_id,
                 "verification_status": "MATCHED" if all_ok else "MISMATCHED",
                 "approval_package_hash_status":
@@ -4036,12 +4076,439 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                     "MATCHED" if pre_ok else "MISMATCHED",
                 "policy_decision_hash_status":
                     "MATCHED" if pol_ok else "MISMATCHED",
+                "approval_decision_hash_status": dec_status,
+                "approval_grant_hash_status": grant_status,
                 "challenge_bound_to_package":
                     "VALID" if challenge_bound else "REUSE_DETECTED",
                 "reason": ("all approval foundation hashes match"
                            if all_ok else "approval hash verification failed"),
                 "verified_at": utcnow(),
-                "honesty_labels": _appr.HONESTY_LABELS}
+                "honesty_labels": _adec.DECISION_HONESTY_LABELS}
+
+    # ---- Human Approval Gate Decisions + Grants (CORE-A4.2, PART 2) ------------------
+    def _grant_expired(grant: dict) -> bool:
+        exp = grant.get("expires_at")
+        return bool(exp) and utcnow() > exp
+
+    def _current_state_for(request_p: dict, grant: dict = None) -> dict:
+        """Freshly observed state hashes used to detect drift/precondition
+        failure against a grant's frozen scope. Read-only; executes nothing."""
+        rrow = run_store.get_run(request_p["run_id"], tenant_id=request_p[
+            "tenant_id"])
+        run = json.loads(rrow["payload_json"]) if rrow else {}
+        cur = {
+            "tenant_id": request_p["tenant_id"], "run_id": request_p["run_id"],
+            "task_id": request_p["task_id"],
+            "approval_action_type": request_p["approval_action_type"],
+            "task_contract_hash": run.get("task_contract_hash"),
+            "task_envelope_hash": run.get("task_envelope_hash"),
+            "run_state_hash": run.get("run_state_hash"),
+            "run_chain_hash": run.get("run_chain_hash"),
+            "run_event_merkle_root": run.get("run_event_merkle_root"),
+            "policy_decision_hash": request_p["policy_decision_hash"],
+            "approval_package_hash": request_p["approval_package_hash"],
+            "approval_challenge_hash": request_p["approval_challenge_hash"],
+            "action_always_blocked": request_p["policy_decision_capsule"][
+                "always_blocked"],
+            "tool_broker_required": request_p.get("tool_broker_required",
+                                                  False),
+            "precondition_status": ("FAILED"
+                                    if run.get("authority_decision")
+                                    == "BLOCKED" or run.get(
+                                        "authority_hard_fail") else "OK"),
+            "precondition_reason": "authority is BLOCKED",
+        }
+        if grant is not None:
+            # Recompute the referenced decision's hash from its stored payload
+            # so a tampered decision record is caught as drift — comparing the
+            # grant's frozen hash against itself would be a no-op.
+            drow = decision_store.get_decision(
+                grant.get("approval_decision_id", ""), tenant_id=request_p[
+                    "tenant_id"])
+            cur["approval_decision_hash"] = (
+                _adec.decision_hash(drow) if drow
+                else "MISSING_DECISION")
+        return cur
+
+    def _record_decision(request_p: dict, user: dict, decision: str, *,
+                         body: dict, viewed_hash: str, challenge_passed: bool,
+                         acks: dict) -> dict:
+        dec_id = str(uuid.uuid4())
+        now = utcnow()
+        prev = decision_store.latest_hash(request_p["approval_request_id"],
+                                          tenant_id=user["tid"])
+        d = _adec.build_decision(
+            approval_decision_id=dec_id,
+            approval_request_id=request_p["approval_request_id"],
+            tenant_id=user["tid"], run_id=request_p["run_id"],
+            task_id=request_p["task_id"], decider_user_id=user["uid"],
+            decider_role=user["role"], decision=decision,
+            decision_reason=str(body.get("decision_reason", ""))[:2000],
+            approval_request_hash_snapshot=request_p["approval_request_hash"],
+            approval_package_hash_snapshot=request_p["approval_package_hash"],
+            approval_challenge_hash_snapshot=request_p[
+                "approval_challenge_hash"],
+            approval_precondition_hash_snapshot=request_p[
+                "approval_precondition_hash"],
+            viewed_package_hash=viewed_hash, acknowledgements=acks,
+            challenge_passed=challenge_passed, decision_time=now,
+            previous_decision_hash=prev)
+        decision_store.save({
+            "id": dec_id, "tenant_id": user["tid"],
+            "approval_request_id": request_p["approval_request_id"],
+            "run_id": request_p["run_id"], "task_id": request_p["task_id"],
+            "decider_user_id": user["uid"], "decider_role": user["role"],
+            "decider_actor_type": "HUMAN_USER", "decision": decision,
+            "decision_reason": d["decision_reason"],
+            "decision_hash": d["decision_hash"],
+            "decision_chain_hash": d["decision_chain_hash"],
+            "viewed_package_hash": viewed_hash,
+            "challenge_passed": 1 if challenge_passed else 0,
+            "payload_json": json.dumps(d), "created_at": now})
+        return d
+
+    def _deny_non_human_approver(user: dict) -> None:
+        # Human-only oversight: an AI worker / AI Employee can never decide.
+        if user["role"] in ("ai_worker",):
+            raise HTTPException(403, "AI worker cannot make approval "
+                                "decisions")
+
+    @app.post("/ai-approvals/{approval_id}/approve")
+    async def approve_ai_approval(approval_id: str, body: dict,
+                                  user: dict = Depends(current_user)):
+        # Approving executes nothing: it records a scoped human decision and,
+        # if policy allows, issues a non-transferable, revalidate-before-use
+        # approval grant that authorizes only a FUTURE gated transition.
+        require_permission(user, "case.update")
+        _deny_non_human_approver(user)
+        p = _load_approval_or_404(approval_id, user)
+        capsule = p["policy_decision_capsule"]
+        if p["approval_status"] not in _adec.DECIDABLE_STATUSES:
+            raise HTTPException(409, f"approval is {p['approval_status']}; no "
+                                "decision can be made")
+        if capsule["always_blocked"]:
+            raise HTTPException(403, "action is always blocked; approval "
+                                "cannot convert a forbidden action into an "
+                                "allowed one")
+        # Required approver role (owner satisfies manager, etc.).
+        if not _adec.role_satisfies(user["role"], p["required_approver_role"]):
+            raise HTTPException(403, "approver role "
+                                f"{user['role']} does not satisfy required "
+                                f"{p['required_approver_role']}")
+        # Separation of duties: the requester can never approve their own
+        # request while policy advertises self_approval_forbidden (true on every
+        # request). Enforced for all risk tiers — maker is never checker.
+        if p.get("self_approval_forbidden", True) \
+                and user["uid"] == p["requester_user_id"]:
+            raise HTTPException(403, "self-approval is forbidden; a different "
+                                "authorized human approver is required")
+        # Viewed-package binding: approver must have seen the current package.
+        viewed = str(body.get("viewed_package_hash", ""))
+        if viewed != p["approval_package_hash"]:
+            raise HTTPException(422, "viewed_package_hash does not match the "
+                                "current approval package hash")
+        # Acknowledgements + challenge completion.
+        required_acks = capsule["required_acknowledgements"]
+        acks = {a: bool(body.get("acknowledgements", {}).get(a))
+                for a in required_acks}
+        missing = [a for a, ok in acks.items() if not ok]
+        if missing:
+            raise HTTPException(422, "missing required acknowledgements: "
+                                + ", ".join(missing))
+        challenge_passed = bool(body.get("challenge_passed"))
+        if p["approval_challenge_required"] and not challenge_passed:
+            raise HTTPException(422, "approval challenge must be completed for "
+                                "this request")
+        # Precondition/authority must still hold server-side.
+        cur = _current_state_for(p)
+        if cur["precondition_status"] == "FAILED":
+            raise HTTPException(403, "approval preconditions no longer hold: "
+                                + cur["precondition_reason"])
+
+        # Dual control: a given human approver counts ONCE. The same user
+        # cannot fill a second slot of a quorum.
+        prior_approvers = {dd["decider_user_id"] for dd in
+                           decision_store.list_for_request(
+                               approval_id, tenant_id=user["tid"])
+                           if dd["decision"] == "APPROVE"}
+        if user["uid"] in prior_approvers:
+            raise HTTPException(409, "you have already approved this request; "
+                                "a different approver is required for quorum")
+
+        d = _record_decision(p, user, "APPROVE", body=body, viewed_hash=viewed,
+                             challenge_passed=challenge_passed, acks=acks)
+
+        # Quorum: a grant is issued only once the required number of DISTINCT
+        # human approvers have approved. required_approver_count==1 issues
+        # immediately; count>=2 enforces four-eyes with single-count-per-user.
+        # A full multi-approver quorum workflow (roles per slot, quorum groups)
+        # beyond distinct-approver counting is classified MISSING/NEXT.
+        approvers = prior_approvers | {user["uid"]}
+        required_count = int(p.get("required_approver_count", 1) or 1)
+        if len(approvers) < required_count:
+            nowq = utcnow()
+            p["approval_status"] = _adec.QUORUM_PENDING_STATUS
+            p["approval_decision_id"] = d["approval_decision_id"]
+            p["approval_decision_hash"] = d["decision_hash"]
+            p["approvals_recorded"] = len(approvers)
+            p["approvals_required"] = required_count
+            p["updated_at"] = nowq
+            approval_store.update_payload(
+                approval_id, tenant_id=user["tid"], payload=p,
+                status=_adec.QUORUM_PENDING_STATUS, updated_at=nowq)
+            audit.append(event_type="AI_APPROVAL_DECISION_RECORDED",
+                         actor=user["uid"],
+                         payload={"approval_request_id": approval_id,
+                                  "status": _adec.QUORUM_PENDING_STATUS,
+                                  "approvals": len(approvers),
+                                  "required": required_count})
+            return {"approval_request_id": approval_id,
+                    "approval_status": _adec.QUORUM_PENDING_STATUS,
+                    "approval_decision": d, "approval_grant": None,
+                    "approvals_recorded": len(approvers),
+                    "approvals_required": required_count,
+                    "quorum_status": "PENDING",
+                    "honesty_labels": _adec.DECISION_HONESTY_LABELS}
+
+        # Issue a non-transferable approval grant bound to the exact state.
+        tool_broker_required = bool(p.get("tool_broker_required"))
+        grant_id = str(uuid.uuid4())
+        now = utcnow()
+        nonce = uuid.uuid4().hex
+        nhash = _adec.grant_nonce_hash(
+            nonce=nonce, approval_request_id=approval_id,
+            approval_decision_id=d["approval_decision_id"],
+            run_state_hash=p["run_state_hash"],
+            task_contract_hash=p["task_contract_hash"],
+            policy_decision_hash=p["policy_decision_hash"])
+        expires = (datetime.utcnow() + timedelta(hours=24)).isoformat()
+        usage = ("CONSUMPTION_NOT_IMPLEMENTED" if tool_broker_required
+                 else "SINGLE_USE_READY")
+        gstatus = "NOT_CONSUMABLE" if tool_broker_required else "VALID"
+        next_status = ("APPROVED_BUT_NOT_CONSUMABLE" if tool_broker_required
+                       else "APPROVED_CONSUME_READY")
+        grant = _adec.build_grant(
+            approval_grant_id=grant_id, approval_request_id=approval_id,
+            approval_decision_id=d["approval_decision_id"],
+            tenant_id=user["tid"], run_id=p["run_id"], task_id=p["task_id"],
+            approval_action_type=p["approval_action_type"],
+            approval_scope=p["approval_package"]["approval_scope"],
+            allowed_next_transition=p["approval_package"][
+                "allowed_next_transition"],
+            task_contract_hash=p["task_contract_hash"],
+            task_envelope_hash=p["task_envelope_hash"],
+            run_state_hash=p["run_state_hash"],
+            run_chain_hash=p["run_chain_hash"],
+            run_event_merkle_root=p["approval_package"][
+                "run_event_merkle_root"],
+            policy_decision_hash=p["policy_decision_hash"],
+            approval_package_hash=p["approval_package_hash"],
+            approval_challenge_hash=p["approval_challenge_hash"],
+            approval_decision_hash=d["decision_hash"],
+            approval_precondition_hash=p["approval_precondition_hash"],
+            grant_nonce_hash=nhash, grant_status=gstatus,
+            grant_usage_policy=usage, single_use=True, expires_at=expires,
+            created_at=now)
+        grant["validated_at"] = now
+        grant["last_validation_status"] = gstatus
+        grant["last_validation_reason"] = ("Tool Broker required and not "
+                                           "implemented" if tool_broker_required
+                                           else "grant issued and validated")
+        grant["ledger_event_type"] = "APPROVAL_GRANT_ISSUED"
+        grant_store.save({
+            "id": grant_id, "tenant_id": user["tid"],
+            "approval_request_id": approval_id,
+            "approval_decision_id": d["approval_decision_id"],
+            "run_id": p["run_id"], "task_id": p["task_id"],
+            "approval_action_type": p["approval_action_type"],
+            "grant_status": gstatus, "grant_type": _adec.GRANT_TYPE,
+            "grant_usage_policy": usage, "single_use": 1,
+            "approval_grant_hash": grant["approval_grant_hash"],
+            "grant_nonce_hash": nhash,
+            "approval_decision_hash": d["decision_hash"],
+            "policy_decision_hash": p["policy_decision_hash"],
+            "task_contract_hash": p["task_contract_hash"],
+            "task_envelope_hash": p["task_envelope_hash"],
+            "run_state_hash": p["run_state_hash"],
+            "run_chain_hash": p["run_chain_hash"], "consume_check_count": 0,
+            "expires_at": expires, "revoked_at": None, "superseded_at": None,
+            "consumed_at": None, "validated_at": now,
+            "last_validation_status": gstatus,
+            "last_validation_reason": grant["last_validation_reason"],
+            "payload_json": json.dumps(grant), "created_at": now,
+            "updated_at": now})
+
+        # Supersede any older active grant for the same run/task/action scope,
+        # and propagate SUPERSEDED to that grant's request so request-level and
+        # grant-level state stay consistent.
+        for old in grant_store.active_for_scope(
+                tenant_id=user["tid"], run_id=p["run_id"], task_id=p["task_id"],
+                action_type=p["approval_action_type"], exclude_id=grant_id):
+            op = json.loads(old["payload_json"])
+            op["grant_status"] = "SUPERSEDED"
+            op["superseded_at"] = now
+            grant_store.update(old["id"], tenant_id=user["tid"], payload=op,
+                              status="SUPERSEDED", updated_at=now,
+                              superseded_at=now)
+            old_req = approval_store.payload(op["approval_request_id"],
+                                            tenant_id=user["tid"])
+            if old_req and old_req["approval_status"] in _adec.APPROVED_STATUSES:
+                old_req["approval_status"] = "SUPERSEDED"
+                old_req["updated_at"] = now
+                approval_store.update_payload(
+                    op["approval_request_id"], tenant_id=user["tid"],
+                    payload=old_req, status="SUPERSEDED", updated_at=now)
+
+        p["approval_status"] = next_status
+        p["approval_decision_id"] = d["approval_decision_id"]
+        p["approval_decision_hash"] = d["decision_hash"]
+        p["approval_grant_id"] = grant_id
+        p["approval_grant_hash"] = grant["approval_grant_hash"]
+        p["updated_at"] = now
+        approval_store.update_payload(approval_id, tenant_id=user["tid"],
+                                     payload=p, status=next_status,
+                                     updated_at=now)
+        audit.append(event_type="AI_APPROVAL_APPROVED", actor=user["uid"],
+                     payload={"approval_request_id": approval_id,
+                              "grant_id": grant_id, "status": next_status})
+        return {"approval_request_id": approval_id, "approval_status":
+                next_status, "approval_decision": d, "approval_grant": grant,
+                "honesty_labels": _adec.DECISION_HONESTY_LABELS}
+
+    def _terminal_decision(approval_id: str, user: dict, decision: str,
+                           status: str, body: dict):
+        require_permission(user, "case.update")
+        _deny_non_human_approver(user)
+        p = _load_approval_or_404(approval_id, user)
+        if p["approval_status"] not in _adec.DECIDABLE_STATUSES:
+            raise HTTPException(409, f"approval is {p['approval_status']}; no "
+                                "decision can be made")
+        if not _adec.role_satisfies(user["role"], p["required_approver_role"]):
+            raise HTTPException(403, "approver role does not satisfy required "
+                                "role")
+        d = _record_decision(p, user, decision, body=body,
+                             viewed_hash=str(body.get("viewed_package_hash",
+                                                      "")),
+                             challenge_passed=False, acks={})
+        now = utcnow()
+        p["approval_status"] = status
+        p["approval_decision_id"] = d["approval_decision_id"]
+        p["approval_decision_hash"] = d["decision_hash"]
+        p["updated_at"] = now
+        approval_store.update_payload(approval_id, tenant_id=user["tid"],
+                                     payload=p, status=status, updated_at=now)
+        audit.append(event_type=f"AI_APPROVAL_{decision}", actor=user["uid"],
+                     payload={"approval_request_id": approval_id,
+                              "status": status})
+        return {"approval_request_id": approval_id, "approval_status": status,
+                "approval_decision": d,
+                "honesty_labels": _adec.DECISION_HONESTY_LABELS}
+
+    @app.post("/ai-approvals/{approval_id}/reject")
+    async def reject_ai_approval(approval_id: str, body: dict,
+                                 user: dict = Depends(current_user)):
+        return _terminal_decision(approval_id, user, "REJECT", "REJECTED",
+                                  body)
+
+    @app.post("/ai-approvals/{approval_id}/changes")
+    async def request_changes_ai_approval(approval_id: str, body: dict,
+                                          user: dict = Depends(current_user)):
+        return _terminal_decision(approval_id, user, "REQUEST_CHANGES",
+                                  "CHANGES_REQUESTED", body)
+
+    @app.post("/ai-approvals/{approval_id}/revoke")
+    async def revoke_ai_approval(approval_id: str, body: dict,
+                                 user: dict = Depends(current_user)):
+        # Revoke an approved-but-unused grant. Terminal; executes nothing.
+        require_permission(user, "case.update")
+        _deny_non_human_approver(user)
+        p = _load_approval_or_404(approval_id, user)
+        if p["approval_status"] not in _adec.APPROVED_STATUSES:
+            raise HTTPException(409, "only an approved request with an unused "
+                                "grant can be revoked")
+        grant = grant_store.get_for_request(approval_id, tenant_id=user["tid"])
+        if grant is None:
+            raise HTTPException(404, "no approval grant to revoke")
+        if grant.get("consumed_at"):
+            raise HTTPException(409, "grant already consumed; cannot revoke")
+        if grant.get("superseded_at") or grant["grant_status"] == "SUPERSEDED":
+            raise HTTPException(409, "grant already superseded; cannot revoke")
+        if not _adec.role_satisfies(user["role"], p["required_approver_role"]):
+            raise HTTPException(403, "approver role does not satisfy required "
+                                "role")
+        d = _record_decision(p, user, "REVOKE", body=body,
+                             viewed_hash=p["approval_package_hash"],
+                             challenge_passed=False, acks={})
+        now = utcnow()
+        grant["grant_status"] = "REVOKED"
+        grant["revoked_at"] = now
+        grant["last_validation_status"] = "REVOKED"
+        grant["last_validation_reason"] = "approval grant was revoked"
+        grant_store.update(grant["approval_grant_id"], tenant_id=user["tid"],
+                          payload=grant, status="REVOKED", updated_at=now,
+                          revoked_at=now)
+        p["approval_status"] = "REVOKED"
+        p["approval_decision_id"] = d["approval_decision_id"]
+        p["updated_at"] = now
+        approval_store.update_payload(approval_id, tenant_id=user["tid"],
+                                     payload=p, status="REVOKED",
+                                     updated_at=now)
+        audit.append(event_type="AI_APPROVAL_REVOKED", actor=user["uid"],
+                     payload={"approval_request_id": approval_id})
+        return {"approval_request_id": approval_id, "approval_status":
+                "REVOKED", "approval_decision": d, "approval_grant": grant,
+                "honesty_labels": _adec.DECISION_HONESTY_LABELS}
+
+    @app.get("/ai-approvals/{approval_id}/grant")
+    async def get_ai_approval_grant(approval_id: str,
+                                    user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_approval_or_404(approval_id, user)     # tenant + existence
+        grant = grant_store.get_for_request(approval_id, tenant_id=user["tid"])
+        if grant is None:
+            raise HTTPException(404, "no approval grant issued")
+        return grant
+
+    @app.post("/ai-approvals/{approval_id}/consume-check")
+    async def consume_check_ai_approval(approval_id: str,
+                                        user: dict = Depends(current_user)):
+        # Validation ONLY. Consume-check answers "would this grant be valid?"
+        # It executes nothing, calls no Tool Broker, and never consumes.
+        require_permission(user, "case.read")
+        p = _load_approval_or_404(approval_id, user)
+        grant = grant_store.get_for_request(approval_id, tenant_id=user["tid"])
+        base = {"approval_request_id": approval_id,
+                "can_execute_now": False,
+                "tool_broker_required": bool(p.get("tool_broker_required")),
+                "honesty_labels": _adec.DECISION_HONESTY_LABELS}
+        if grant is None:
+            return {**base, "approval_grant_id": None,
+                    "grant_validation_status": "INVALID",
+                    "allowed_next_transition": None, "precondition_status":
+                    "INVALID", "drift_detected": False,
+                    "reason": "no approval grant issued for this request"}
+        cur = _current_state_for(p, grant)
+        res = _adec.validate_grant(grant, current=cur,
+                                   expired=_grant_expired(grant),
+                                   tool_broker_available=False)
+        now = utcnow()
+        grant["consume_check_count"] = grant.get("consume_check_count", 0) + 1
+        grant["validated_at"] = now
+        grant["last_validation_status"] = res["grant_validation_status"]
+        grant["last_validation_reason"] = res["reason"]
+        grant_store.update(grant["approval_grant_id"], tenant_id=user["tid"],
+                          payload=grant,
+                          status=grant["grant_status"], updated_at=now,
+                          consume_check_count=grant["consume_check_count"],
+                          validated_at=now,
+                          last_validation_status=res["grant_validation_status"],
+                          last_validation_reason=res["reason"])
+        return {**base, "approval_grant_id": grant["approval_grant_id"],
+                "grant_validation_status": res["grant_validation_status"],
+                "allowed_next_transition": res["allowed_next_transition"],
+                "precondition_status": res["precondition_status"],
+                "drift_detected": res["drift_detected"],
+                "reason": res["reason"]}
 
     # ---- UI pages -------------------------------------------------------------------------------------
     ui.mount(app)

@@ -677,6 +677,48 @@ CREATE INDEX IF NOT EXISTS ix_ai_approvals
 CREATE INDEX IF NOT EXISTS ix_ai_approvals_run
   ON ai_approval_requests(tenant_id, run_id);
 """),
+    (13, """
+-- v13: Human Approval Gate Decisions + Non-Transferable Grants (CORE-A4.2,
+-- PART 2). Records a scoped human decision and a local, non-transferable,
+-- revalidate-before-use approval grant. An approval grant authorizes only a
+-- future gated transition; it executes nothing and is not an OAuth/GNAP token.
+CREATE TABLE IF NOT EXISTS ai_approval_decisions (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  approval_request_id TEXT NOT NULL, run_id TEXT NOT NULL,
+  task_id TEXT NOT NULL, decider_user_id TEXT NOT NULL,
+  decider_role TEXT NOT NULL,
+  decider_actor_type TEXT NOT NULL DEFAULT 'HUMAN_USER',
+  decision TEXT NOT NULL, decision_reason TEXT NOT NULL DEFAULT '',
+  decision_hash TEXT NOT NULL, decision_chain_hash TEXT NOT NULL,
+  viewed_package_hash TEXT NOT NULL DEFAULT '',
+  challenge_passed INTEGER NOT NULL DEFAULT 0,
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_appr_decisions
+  ON ai_approval_decisions(tenant_id, approval_request_id, created_at);
+
+CREATE TABLE IF NOT EXISTS ai_approval_grants (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  approval_request_id TEXT NOT NULL, approval_decision_id TEXT NOT NULL,
+  run_id TEXT NOT NULL, task_id TEXT NOT NULL,
+  approval_action_type TEXT NOT NULL DEFAULT '',
+  grant_status TEXT NOT NULL DEFAULT 'ISSUED',
+  grant_type TEXT NOT NULL DEFAULT 'LOCAL_NON_TRANSFERABLE_APPROVAL_GRANT',
+  grant_usage_policy TEXT NOT NULL DEFAULT 'SINGLE_USE_READY',
+  single_use INTEGER NOT NULL DEFAULT 1,
+  approval_grant_hash TEXT NOT NULL, grant_nonce_hash TEXT NOT NULL,
+  approval_decision_hash TEXT NOT NULL, policy_decision_hash TEXT NOT NULL,
+  task_contract_hash TEXT NOT NULL DEFAULT '',
+  task_envelope_hash TEXT NOT NULL DEFAULT '',
+  run_state_hash TEXT, run_chain_hash TEXT,
+  consume_check_count INTEGER NOT NULL DEFAULT 0,
+  expires_at TEXT, revoked_at TEXT, superseded_at TEXT, consumed_at TEXT,
+  validated_at TEXT, last_validation_status TEXT, last_validation_reason TEXT,
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_appr_grants
+  ON ai_approval_grants(tenant_id, approval_request_id);
+CREATE INDEX IF NOT EXISTS ix_ai_appr_grants_scope
+  ON ai_approval_grants(tenant_id, run_id, task_id, approval_action_type);
+"""),
 ]
 
 

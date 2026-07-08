@@ -15,7 +15,7 @@ from finalis.portal.app import create_app
 from finalis.portal.db import MIGRATIONS, Database
 from finalis.portal.seed import seed
 
-EXPECTED_DB_VERSION = 12
+EXPECTED_DB_VERSION = 13
 
 
 @pytest.fixture()
@@ -82,8 +82,9 @@ class TestMigrations:
         assert {"ai_tasks", "ai_task_intake_events"} <= tables
         # Run Ledger (v11).
         assert {"ai_runs", "ai_run_events"} <= tables
-        # Human Approval Gate Foundation (v12).
-        assert {"ai_approval_requests"} <= tables
+        # Human Approval Gate Foundation (v12) + Decisions/Grants (v13).
+        assert {"ai_approval_requests", "ai_approval_decisions",
+                "ai_approval_grants"} <= tables
 
     def test_evidence_ve_columns_survived_renumber(self, tmp_path):
         db = Database(str(tmp_path / "c.db"))

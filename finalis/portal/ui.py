@@ -2401,13 +2401,17 @@ window.replayRun = async (id) => {
 
 APPROVALS_SECTIONS = """
 <section id="approvals-section"><h2>Human Approval Gate</h2>
-<p><small><b>Approval request creation does not approve or execute the
-action.</b> <b>Approval does not override consent, evidence, RBAC or proof
-failures.</b> <b>Approval challenge is required for high-risk approvals.</b>
-<b>Approval is scoped to this run, task, action and hash state.</b> <b>Approval
-decisions and grants are implemented in CORE-A4.2.</b> <b>Tool Broker is not
-implemented in this mission.</b> <b>Server-side policy remains
-authoritative.</b></small></p>
+<ul class="labels"><small>
+<li>Approval does not execute the action.</li>
+<li>Consume-check validates approval scope only; it does not execute the action.</li>
+<li>Approval does not override consent, evidence, RBAC or proof failures.</li>
+<li>AI Employee cannot approve its own work.</li>
+<li>Only an authorized human approver can approve.</li>
+<li>Approval is scoped to this run, task, action and hash state.</li>
+<li>Approval grant must be revalidated before future use.</li>
+<li>This is not OAuth, GNAP, or an external bearer token.</li>
+<li>Server-side policy remains authoritative.</li>
+</small></ul>
 <div id="approvals-list"><i>Loading approval requests…</i></div>
 <div id="approval-detail"></div>
 </section>
@@ -2437,6 +2441,14 @@ window.loadApprovals = async () => {
 window.openApproval = async (id) => {
   const a = await get('/ai-approvals/' + id);
   const pkg = a.approval_package || {};
+  const acks = pkg.required_acknowledgements || [];
+  let grant = null;
+  try { grant = await get('/ai-approvals/' + id + '/grant'); } catch (e) {}
+  const decided = a.approval_status !== 'PENDING'
+    && a.approval_status !== 'CHALLENGE_REQUIRED';
+  const ackBoxes = acks.map(r =>
+    `<label><input type="checkbox" class="ack" data-ack="${esc(r)}"> ${esc(r)}
+     </label>`).join('<br>');
   $('approval-detail').innerHTML = `
     <h3>Approval ${esc(a.approval_request_id.slice(0, 8))}
       <span class="badge">${esc(a.approval_status)}</span></h3>
@@ -2448,29 +2460,81 @@ window.openApproval = async (id) => {
       ${esc(String(a.required_approver_count))} · dual control
       ${a.dual_control_required ? 'yes' : 'no'} · challenge
       ${a.approval_challenge_required ? '<b>required</b>' : 'no'}</p>
-    <p><b>reason</b> ${esc(a.reason || '')}${a.blocked_reason
-      ? ' · <span class="err">' + esc(a.blocked_reason) + '</span>' : ''}</p>
-    <p><b>request_hash</b> <code>${esc((a.approval_request_hash
-      || '').slice(0, 14))}…</code> · <b>package_hash</b>
-      <code>${esc((a.approval_package_hash || '').slice(0, 14))}…</code></p>
+    <p><b>viewed package hash</b>
+      <code id="approval-viewed-hash">${esc(a.approval_package_hash)}</code></p>
     <p><b>policy_decision_hash</b> <code>${esc((a.policy_decision_hash
       || '').slice(0, 14))}…</code> · <b>challenge_hash</b>
       <code>${esc((a.approval_challenge_hash || '').slice(0, 14))}…</code></p>
-    <p><b>precondition_hash</b> <code>${esc((a.approval_precondition_hash
-      || '').slice(0, 14))}…</code></p>
     <p><button onclick="verifyApproval('${esc(id)}')">Verify hashes</button>
       <span id="approval-verify-msg"></span></p>
     <h4>An approval can never unlock</h4>
     <ul>${(pkg.forbidden_unlocks || []).map(f =>
       `<li><small>${esc(f)}</small></li>`).join('')}</ul>
-    <h4>Required acknowledgements (CORE-A4.2)</h4>
-    <ul>${(pkg.required_acknowledgements || []).map(r =>
-      `<li><small>${esc(r)}</small></li>`).join('')}</ul>
-    <p><button disabled title="PART 2">Approve (CORE-A4.2)</button>
-      <button disabled title="PART 2">Reject (CORE-A4.2)</button>
-      <small>Approve/reject buttons arrive in CORE-A4.2 (PART 2).</small></p>
+    <h4>Required acknowledgements</h4>
+    <div id="approval-acks">${decided ? '<i>decision recorded</i>'
+      : ackBoxes}</div>
+    ${a.approval_challenge_required && !decided
+      ? '<p><label><input type="checkbox" id="approval-challenge"> ' +
+        'Challenge completed — I reviewed the exact action, run, task, risk ' +
+        'and hash state</label></p>' : ''}
+    <p>${decided ? '' :
+      `<button onclick="decideApproval('${esc(id)}','approve')">Approve</button>
+       <button onclick="decideApproval('${esc(id)}','reject')">Reject</button>
+       <button onclick="decideApproval('${esc(id)}','changes')">Request
+         changes</button>`}
+      ${a.approval_status && a.approval_status.indexOf('APPROVED') === 0
+        ? `<button onclick="decideApproval('${esc(id)}','revoke')">Revoke
+           </button>` : ''}
+      <span id="approval-decide-msg"></span></p>
+    ${grant ? `<h4>Approval grant</h4>
+      <p><b>${esc(grant.grant_status)}</b> · type
+        <code>${esc(grant.grant_type)}</code> · usage
+        ${esc(grant.grant_usage_policy)}</p>
+      <p><b>grant_hash</b> <code>${esc((grant.approval_grant_hash
+        || '').slice(0, 14))}…</code> · <b>nonce_hash</b>
+        <code>${esc((grant.grant_nonce_hash || '').slice(0, 14))}…</code></p>
+      <p><button onclick="consumeCheck('${esc(id)}')">Consume-check</button>
+        <span id="approval-consume-msg"></span></p>
+      <p><small>Approval grant must be revalidated before future use.
+        Consume-check validates approval scope only; it does not execute the
+        action. This is not OAuth, GNAP, or an external bearer token.</small>
+        </p>` : ''}
+    <p><small>Approval does not execute the action. Only an authorized human
+      approver can approve. AI Employee cannot approve its own work.</small></p>
     <ul>${(a.honesty_labels || []).map(l =>
       `<li><small>${esc(l)}</small></li>`).join('')}</ul>`;
+};
+
+window.decideApproval = async (id, kind) => {
+  const path = {approve: 'approve', reject: 'reject', changes: 'changes',
+                revoke: 'revoke'}[kind];
+  const body = {decision_reason: 'via portal'};
+  if (kind === 'approve') {
+    body.viewed_package_hash = $('approval-viewed-hash').textContent;
+    const acks = {};
+    document.querySelectorAll('#approval-acks .ack').forEach(cb => {
+      acks[cb.dataset.ack] = cb.checked; });
+    body.acknowledgements = acks;
+    const ch = $('approval-challenge');
+    body.challenge_passed = ch ? ch.checked : false;
+  }
+  const {ok, data} = await send('POST', '/ai-approvals/' + id + '/' + path,
+                                body);
+  $('approval-decide-msg').innerHTML = ok
+    ? `<b class="ok">${esc(data.approval_status)}</b>`
+    : `<span class="err">${esc(data.detail || 'denied')}</span>`;
+  if (ok) { openApproval(id); loadApprovals(); }
+};
+
+window.consumeCheck = async (id) => {
+  const {ok, data} = await send('POST',
+    '/ai-approvals/' + id + '/consume-check', {});
+  $('approval-consume-msg').innerHTML = ok
+    ? `<b class="${data.grant_validation_status === 'VALID' ? 'ok' : 'err'}">
+       ${esc(data.grant_validation_status)}</b> <small>(can_execute_now:
+       ${data.can_execute_now}, drift: ${data.drift_detected}) ${esc(
+       data.reason)}</small>`
+    : `<span class="err">${esc(data.detail || '')}</span>`;
 };
 
 window.verifyApproval = async (id) => {

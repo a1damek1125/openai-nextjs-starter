@@ -924,6 +924,10 @@ def test_customer_panel_operational_invariant_matrix(server, page):
     def consent_check(channel, purpose):
         page.select_option("#check-channel", channel)
         page.select_option("#check-purpose", purpose)
+        # Clear the prior result so the wait blocks for THIS check's render
+        # rather than returning the stale b.ok/b.err left by the last call.
+        page.evaluate(
+            "document.getElementById('consent-explain').innerHTML = ''")
         page.click("#consent-check-btn")
         page.wait_for_selector(
             "#consent-explain b.ok, #consent-explain b.err", timeout=10000)

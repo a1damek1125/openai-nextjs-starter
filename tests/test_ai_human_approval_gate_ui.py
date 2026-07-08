@@ -1,7 +1,22 @@
-"""CORE-A4.1 — Human Approval Gate read-only UI. PART 1 renders the queue and
-detail with honesty labels; approve/reject controls are present but disabled
-and explicitly labeled PART 2 (CORE-A4.2)."""
+"""CORE-A4.2 — Human Approval Gate portal UI. PART 2 exposes functional
+approve/reject/request-changes/revoke controls, acknowledgements, the viewed
+package hash, grant summary and consume-check, all under no-execution labels.
+UI labels are convenience only; the server re-checks every decision."""
 from finalis.portal.ui import PORTAL_PAGE
+
+
+REQUIRED_LABELS = [
+    "Approval does not execute the action.",
+    "Consume-check validates approval scope only; it does not execute the "
+    "action.",
+    "Approval does not override consent, evidence, RBAC or proof failures.",
+    "AI Employee cannot approve its own work.",
+    "Only an authorized human approver can approve.",
+    "Approval is scoped to this run, task, action and hash state.",
+    "Approval grant must be revalidated before future use.",
+    "This is not OAuth, GNAP, or an external bearer token.",
+    "Server-side policy remains authoritative.",
+]
 
 
 class TestApprovalsUi:
@@ -13,27 +28,31 @@ class TestApprovalsUi:
         assert "loadApprovalsSection" in PORTAL_PAGE
         assert "if (window.loadApprovalsSection)" in PORTAL_PAGE
 
-    def test_honesty_labels_rendered_in_section(self):
-        # Section prose is line-wrapped in the source; assert on fragments
-        # that survive wrapping.
-        assert "does not approve or execute" in PORTAL_PAGE
-        assert "decisions and grants are implemented in CORE-A4.2." \
-            in PORTAL_PAGE
-        assert "Server-side policy remains\nauthoritative." in PORTAL_PAGE \
-            or "Server-side policy remains authoritative" in PORTAL_PAGE
+    def test_all_required_labels_present(self):
+        for lbl in REQUIRED_LABELS:
+            assert lbl in PORTAL_PAGE, f"missing label: {lbl}"
 
-    def test_decision_buttons_disabled_and_labeled_part2(self):
-        assert "Approve (CORE-A4.2)" in PORTAL_PAGE
-        assert "Reject (CORE-A4.2)" in PORTAL_PAGE
-        assert "Approve/reject buttons arrive in CORE-A4.2 (PART 2)." \
-            in PORTAL_PAGE
+    def test_decision_controls_present(self):
+        assert "decideApproval" in PORTAL_PAGE
+        for kind in ("approve", "reject", "changes", "revoke"):
+            assert f"'{kind}')" in PORTAL_PAGE
+        assert "'/' + path" in PORTAL_PAGE           # posts to the decision api
 
-    def test_verify_control_present(self):
+    def test_acknowledgement_and_challenge_inputs(self):
+        assert 'class="ack"' in PORTAL_PAGE
+        assert "approval-challenge" in PORTAL_PAGE
+        assert "approval-viewed-hash" in PORTAL_PAGE
+
+    def test_consume_check_control(self):
+        assert "consumeCheck" in PORTAL_PAGE
+        assert "/consume-check" in PORTAL_PAGE
+        assert "/grant" in PORTAL_PAGE
+
+    def test_grant_summary_and_verify(self):
+        assert "Approval grant" in PORTAL_PAGE
         assert "verifyApproval" in PORTAL_PAGE
 
-    def test_reads_only_from_approval_endpoints(self):
+    def test_labels_cannot_unlock_reads_from_server(self):
+        # The client only ever POSTs to server endpoints; it never fabricates
+        # an approval locally.
         assert "get('/ai-approvals')" in PORTAL_PAGE
-        assert "/ai-approvals/' + id" in PORTAL_PAGE
-
-    def test_forbidden_unlocks_surfaced(self):
-        assert "An approval can never unlock" in PORTAL_PAGE
