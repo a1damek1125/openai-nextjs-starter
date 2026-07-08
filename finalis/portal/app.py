@@ -1528,6 +1528,467 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
             feasibility_context=body.get("feasibility"))
         return {"gates": gates_json(gates), "persisted": False}
 
+    # ---- Relationship Core (CRM-B: persistence + API over CRM-A) --------------
+    from ..crm.adapters import NullCrmAdapter, default_policy, \
+        idempotency_key as make_idempotency_key
+    from ..crm.dedupe import duplicate_candidate, merge_parties
+    from ..crm.engine import RelationshipEngine
+    from ..crm.graph import CrossTenantLinkError
+    from ..crm.models import (ConsentRecord, ContactPoint,
+                              CustomerMemoryItem, CustomerPromise,
+                              ExternalCrmReference, ExternalFieldMapping,
+                              OrganizationProfile, Party, PersonProfile)
+    from ..crm.sync import SyncRequest, record_sync_event, sync_decision
+    from .crm_store import CrmStore
+
+    crm = RelationshipEngine(audit)
+    crm_store = CrmStore(db)
+    crm_store.hydrate(crm)               # DB is the source of truth
+    crm_adapter = NullCrmAdapter()       # SCAFFOLDED_ONLY — talks to nothing
+    app.state.crm, app.state.crm_store = crm, crm_store
+
+    # RBAC mapping (existing catalog, disclosed): reads -> case.read;
+    # writes -> case.update; memory verification -> action.approve;
+    # merge -> tenant.manage_users; external refs/sync -> tenant.
+    # manage_integrations. AI workers hold none of the human-judgment
+    # permissions, and the engine additionally refuses non-human actors.
+    def load_crm_party_or_404(party_id: str, user: dict) -> Party:
+        p = crm.graph.parties.get(party_id)
+        if p is None or p.tenant_id != user["tid"]:
+            raise HTTPException(404, "party not found")
+        return p
+
+    def crm_party_json(p: Party) -> dict:
+        return {"id": p.id, "kind": p.kind,
+                "display_name": p.display_name,
+                "roles": sorted(p.roles),
+                "contact_points": [{"id": c.id, "kind": c.kind,
+                                    "value": c.value,
+                                    "preferred": c.preferred}
+                                   for c in p.contact_points],
+                "merged_into_id": p.merged_into_id}
+
+    @app.get("/crm/parties")
+    async def crm_list_parties(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        rows = crm_store.list_parties(tenant_id=user["tid"])
+        # Bridge: legacy case-contact parties, read-only, labeled.
+        legacy = [{"id": r["id"], "kind": "person",
+                   "display_name": r["display_name"],
+                   "legacy_case_contact": True}
+                  for r in db.all("SELECT id, display_name FROM parties "
+                                  "WHERE tenant_id=?", user["tid"])]
+        return {"parties": rows, "legacy_case_contacts": legacy}
+
+    @app.post("/crm/parties")
+    async def crm_create_party(body: dict,
+                               user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        if not str(body.get("display_name", "")).strip():
+            raise HTTPException(400, "display_name required")
+        try:
+            p = Party(
+                tenant_id=user["tid"],
+                kind=body.get("kind", "person"),
+                display_name=body["display_name"],
+                person=PersonProfile(**body["person"])
+                if body.get("person") else None,
+                organization=OrganizationProfile(**body["organization"])
+                if body.get("organization") else None,
+                roles=set(body.get("roles", ["customer"])))
+            for cp in body.get("contact_points", []):
+                p.contact_points.append(ContactPoint(
+                    kind=cp["kind"], value=cp["value"],
+                    label=cp.get("label", "")))
+        except (ValueError, KeyError, TypeError) as e:
+            raise HTTPException(400, f"invalid party payload: {e}")
+        crm.graph.add_party(p)
+        crm_store.save_party(p)
+        audit.append(event_type="CRM_PARTY_CREATED", actor=user["uid"],
+                     payload={"party_id": p.id, "kind": p.kind})
+        return crm_party_json(p)
+
+    @app.get("/crm/parties/{party_id}")
+    async def crm_party_detail(party_id: str,
+                               user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        p = load_crm_party_or_404(party_id, user)
+        return {**crm_party_json(p),
+                "cases": crm.graph.cases_of(p.id, tenant_id=user["tid"]),
+                "open_promises": [
+                    {"promisor": x.promisor, "what": x.what,
+                     "status": x.status}
+                    for x in crm.open_promises(p.id,
+                                               tenant_id=user["tid"])]}
+
+    @app.patch("/crm/parties/{party_id}")
+    async def crm_update_party(party_id: str, body: dict,
+                               user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        p = load_crm_party_or_404(party_id, user)
+        if "display_name" in body:
+            if not str(body["display_name"]).strip():
+                raise HTTPException(400, "display_name cannot be empty")
+            p.display_name = body["display_name"]
+        if "roles" in body:
+            try:
+                p.roles = set(body["roles"])
+                p.__post_init__()
+            except ValueError as e:
+                raise HTTPException(400, str(e))
+        crm_store.save_party(p)
+        return crm_party_json(p)
+
+    @app.get("/crm/parties/{party_id}/contacts")
+    async def crm_contacts(party_id: str,
+                           user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return crm_party_json(load_crm_party_or_404(party_id, user)
+                              )["contact_points"]
+
+    @app.post("/crm/parties/{party_id}/contacts")
+    async def crm_add_contact(party_id: str, body: dict,
+                              user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        p = load_crm_party_or_404(party_id, user)
+        try:
+            cp = ContactPoint(kind=body.get("kind", ""),
+                              value=body.get("value", ""),
+                              label=body.get("label", ""))
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+        p.contact_points.append(cp)
+        crm_store.save_party(p)
+        return {"id": cp.id, "kind": cp.kind, "value": cp.value}
+
+    # -- consent -----------------------------------------------------------------
+    @app.get("/crm/parties/{party_id}/consents")
+    async def crm_consents(party_id: str,
+                           user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        load_crm_party_or_404(party_id, user)
+        return [{"channel": c.channel, "status": c.status,
+                 "source": c.source}
+                for c in crm.consents
+                if c.party_id == party_id and c.tenant_id == user["tid"]]
+
+    @app.post("/crm/parties/{party_id}/consents")
+    async def crm_record_consent(party_id: str, body: dict,
+                                 user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        load_crm_party_or_404(party_id, user)
+        try:
+            record = ConsentRecord(
+                tenant_id=user["tid"], party_id=party_id,
+                channel=body.get("channel", ""),
+                status=body.get("status", ""),
+                source=body.get("source", "portal"),
+                recorded_by=user["uid"])
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+        crm.record_consent(record)
+        crm_store.save_consent(record)
+        return {"channel": record.channel, "status": record.status}
+
+    @app.post("/crm/consent/check")
+    async def crm_consent_check(body: dict,
+                                user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        p = load_crm_party_or_404(body.get("party_id", ""), user)
+        d = crm.can_contact(p, channel=body.get("channel", "EMAIL"),
+                            purpose=body.get("purpose", "service"))
+        return {"allowed": d.allowed,
+                "requires_review": d.requires_review,
+                "reasons": d.reasons}
+
+    # -- promises ------------------------------------------------------------------
+    @app.get("/crm/parties/{party_id}/promises")
+    async def crm_promises_list(party_id: str,
+                                user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        load_crm_party_or_404(party_id, user)
+        return [{"id": p.id, "promisor": p.promisor, "what": p.what,
+                 "status": p.status, "case_id": p.case_id}
+                for p in crm.promises
+                if p.party_id == party_id and p.tenant_id == user["tid"]]
+
+    @app.post("/crm/parties/{party_id}/promises")
+    async def crm_add_promise(party_id: str, body: dict,
+                              user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        load_crm_party_or_404(party_id, user)
+        try:
+            promise = crm.record_promise(CustomerPromise(
+                tenant_id=user["tid"], party_id=party_id,
+                promisor=body.get("promisor", ""),
+                what=body.get("what", ""),
+                case_id=body.get("case_id")))
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+        crm_store.save_promise(promise)
+        return {"id": promise.id, "promisor": promise.promisor}
+
+    # -- memory --------------------------------------------------------------------
+    @app.get("/crm/parties/{party_id}/memory")
+    async def crm_memory_list(party_id: str,
+                              user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        load_crm_party_or_404(party_id, user)
+        items = crm.memory.for_party(party_id, tenant_id=user["tid"])
+        out = []
+        for m in items:
+            if m.sensitive:
+                d = rbac.access(actor_type="user",
+                                actor_id=rbac_user_id(user),
+                                tenant_id=user["tid"],
+                                action="document.view_sensitive")
+                if d.decision != "ALLOW":
+                    continue                 # sensitive hidden safely
+            out.append({"id": m.id, "memory_type": m.memory_type,
+                        "content": m.content, "source": m.source,
+                        "confidence": m.confidence,
+                        "sensitive": m.sensitive})
+        return out
+
+    @app.post("/crm/parties/{party_id}/memory")
+    async def crm_memory_add(party_id: str, body: dict,
+                             user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        load_crm_party_or_404(party_id, user)
+        try:
+            item = crm.memory.add(CustomerMemoryItem(
+                tenant_id=user["tid"], party_id=party_id,
+                memory_type=body.get("memory_type", "SERVICE_HISTORY"),
+                content=body.get("content") or {},
+                source=body.get("source", "human"),
+                confidence=float(body.get("confidence", 0.5)),
+                sensitive=bool(body.get("sensitive"))))
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+        crm_store.save_memory(item)
+        return {"id": item.id, "memory_type": item.memory_type}
+
+    def _load_memory_or_404(memory_id: str, user: dict):
+        item = next((m for m in crm.memory.items
+                     if m.id == memory_id
+                     and m.tenant_id == user["tid"]), None)
+        if item is None:
+            raise HTTPException(404, "memory item not found")
+        return item
+
+    @app.post("/crm/memory/{memory_id}/verify")
+    async def crm_memory_verify(memory_id: str,
+                                user: dict = Depends(current_user)):
+        require_permission(user, "action.approve")   # human judgment
+        item = _load_memory_or_404(memory_id, user)
+        crm.memory.verify(item, verified_by=user["uid"])
+        crm_store.save_memory(item)
+        return {"id": item.id, "memory_type": item.memory_type,
+                "verified_by": item.verified_by}
+
+    @app.post("/crm/memory/{memory_id}/dispute")
+    async def crm_memory_dispute(memory_id: str,
+                                 user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        item = _load_memory_or_404(memory_id, user)
+        crm.memory.dispute(item, by=user["uid"])
+        crm_store.save_memory(item)
+        return {"id": item.id, "memory_type": item.memory_type}
+
+    @app.post("/crm/memory/{memory_id}/mark-stale")
+    async def crm_memory_stale(memory_id: str,
+                               user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        item = _load_memory_or_404(memory_id, user)
+        item.memory_type = "STALE_FACT"
+        crm_store.save_memory(item)
+        return {"id": item.id, "memory_type": item.memory_type}
+
+    # -- relationships / case links -----------------------------------------------
+    @app.get("/crm/parties/{party_id}/relationships")
+    async def crm_relationships(party_id: str,
+                                user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        load_crm_party_or_404(party_id, user)
+        return [{"to_id": e.to_id, "to_kind": e.to_kind, "role": e.role}
+                for e in crm.graph.edges_of(party_id,
+                                            tenant_id=user["tid"])]
+
+    @app.post("/crm/relationships")
+    async def crm_add_relationship(body: dict,
+                                   user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        try:
+            if body.get("to_kind", "party") == "party":
+                edge = crm.graph.link_parties(
+                    tenant_id=user["tid"],
+                    from_id=body.get("from_id", ""),
+                    to_id=body.get("to_id", ""),
+                    role=body.get("role", "member_of"))
+            else:
+                if body["to_kind"] == "case":
+                    load_case_or_404(body.get("to_id", ""), user)
+                edge = crm.graph.link(
+                    tenant_id=user["tid"],
+                    party_id=body.get("from_id", ""),
+                    to_id=body.get("to_id", ""),
+                    to_kind=body["to_kind"],
+                    role=body.get("role", "customer"))
+        except CrossTenantLinkError as e:
+            raise HTTPException(404, str(e))
+        except KeyError:
+            raise HTTPException(400, "from_id, to_id, to_kind required")
+        crm_store.save_edge(edge)
+        return {"id": edge.id, "to_kind": edge.to_kind, "role": edge.role}
+
+    @app.get("/crm/cases/{case_id}/parties")
+    async def crm_case_parties(case_id: str,
+                               user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        load_case_or_404(case_id, user)
+        return [{"party_id": p.id, "display_name": p.display_name,
+                 "role": role}
+                for p, role in crm.graph.parties_of_case(
+                    case_id, tenant_id=user["tid"])]
+
+    # -- dedupe / merge -------------------------------------------------------------
+    @app.get("/crm/parties/{party_id}/dedupe-candidates")
+    async def crm_dedupe(party_id: str,
+                         user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        target = load_crm_party_or_404(party_id, user)
+        out = []
+        for other_id, other in crm.graph.parties.items():
+            if other_id == party_id or other.tenant_id != user["tid"] \
+                    or other.merged_into_id:
+                continue
+            cand = duplicate_candidate(target, other)
+            if cand.verdict != "NOT_DUPLICATE":
+                out.append({"party_id": other_id, "score": cand.score,
+                            "verdict": cand.verdict,
+                            "signals": cand.signals})
+        return out
+
+    @app.post("/crm/merge")
+    async def crm_merge(body: dict,
+                        user: dict = Depends(current_user)):
+        require_permission(user, "tenant.manage_users")
+        surviving = load_crm_party_or_404(
+            body.get("surviving_party_id", ""), user)
+        merged = load_crm_party_or_404(
+            body.get("merged_party_id", ""), user)
+        if not str(body.get("reason", "")).strip():
+            raise HTTPException(400, "merge requires a written reason")
+        cand = duplicate_candidate(surviving, merged)
+        try:
+            decision = merge_parties(cand, surviving=surviving,
+                                     merged=merged,
+                                     decided_by=user["uid"],
+                                     reason=body["reason"], audit=audit)
+        except PermissionError as e:
+            raise HTTPException(409, str(e))
+        crm_store.save_party(merged)
+        crm_store.save_merge_decision(decision)
+        return {"surviving_party_id": decision.surviving_party_id,
+                "merged_party_ids": decision.merged_party_ids,
+                "reason": decision.reason}
+
+    # -- external CRM references + sync decisions ------------------------------
+    @app.get("/crm/parties/{party_id}/external-references")
+    async def crm_ext_refs(party_id: str,
+                           user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        load_crm_party_or_404(party_id, user)
+        return crm_store.external_refs(party_id, tenant_id=user["tid"])
+
+    @app.post("/crm/parties/{party_id}/external-references")
+    async def crm_add_ext_ref(party_id: str, body: dict,
+                              user: dict = Depends(current_user)):
+        require_permission(user, "tenant.manage_integrations")
+        load_crm_party_or_404(party_id, user)
+        try:
+            ref = ExternalCrmReference(
+                tenant_id=user["tid"], party_id=party_id,
+                provider=body.get("provider", ""),
+                object_kind=body.get("object_kind", ""),
+                external_id=body.get("external_id", ""))
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+        crm_store.save_external_ref(ref)
+        return {"id": ref.id, "provider": ref.provider,
+                "external_id": ref.external_id}
+
+    def _sync_request(body: dict, user: dict,
+                      direction: str) -> SyncRequest:
+        return SyncRequest(
+            tenant_id=user["tid"], policy_tenant_id=user["tid"],
+            direction=direction, actor_id=user["uid"],
+            actor_has_permission=True,
+            field=body.get("field", ""),
+            internal_value=body.get("internal_value"),
+            internal_verified=bool(body.get("internal_verified")),
+            internal_changed=bool(body.get("internal_changed")),
+            external_value=body.get("external_value"),
+            external_changed=bool(body.get("external_changed")),
+            marketing_consent_denied=bool(
+                body.get("marketing_consent_denied")),
+            is_deletion=bool(body.get("is_deletion")))
+
+    def _sync_policy(user: dict, body: dict):
+        policy = default_policy(user["tid"])
+        policy.enabled = bool(body.get("policy_enabled"))
+        policy.dry_run = bool(body.get("policy_dry_run", True))
+        policy.allow_export = bool(body.get("policy_allow_export"))
+        policy.field_mappings = [ExternalFieldMapping(
+            provider=policy.provider, canonical_field=f,
+            external_field=f) for f in body.get("mapped_fields",
+                                                ["email", "phone"])]
+        return policy
+
+    @app.post("/crm/sync/dry-run")
+    async def crm_sync_dry_run(body: dict,
+                               user: dict = Depends(current_user)):
+        """Dry-run: decision + adapter dry-run push. NOTHING external is
+        written (NullCrmAdapter is SCAFFOLDED_ONLY, talks to nothing)."""
+        require_permission(user, "tenant.manage_integrations")
+        direction = body.get("direction", "export")
+        decision = sync_decision(_sync_request(body, user, direction),
+                                 _sync_policy(user, body))
+        key = make_idempotency_key(
+            tenant_id=user["tid"], provider="null-crm",
+            object_kind="Contact",
+            external_id=body.get("external_id", "x"),
+            operation=f"{direction}:{body.get('field', '')}")
+        adapter_result = crm_adapter.push_object(
+            tenant_id=user["tid"], object_kind="Contact",
+            payload={body.get("field", ""): body.get("internal_value")},
+            idempotency_key=key, dry_run=True)
+        event = record_sync_event(
+            tenant_id=user["tid"], provider="null-crm",
+            direction="dry_run", object_kind="Contact",
+            decision=decision,
+            detail={"field": body.get("field", ""),
+                    "note": body.get("note", "")},
+            idempotency_key=key, audit=audit)
+        crm_store.save_sync_event(event)
+        return {"decision": decision.decision,
+                "reasons": decision.reasons,
+                "idempotency_key": key,
+                "adapter": adapter_result,
+                "external_write_happened": False}
+
+    @app.post("/crm/sync/decision")
+    async def crm_sync_decision_api(body: dict,
+                                    user: dict = Depends(current_user)):
+        require_permission(user, "tenant.manage_integrations")
+        direction = body.get("direction", "import")
+        decision = sync_decision(_sync_request(body, user, direction),
+                                 _sync_policy(user, body))
+        return {"decision": decision.decision,
+                "reasons": decision.reasons,
+                "conflict": decision.conflict.__dict__
+                if decision.conflict else None}
+
     # ---- audit --------------------------------------------------------------------------------------
     @app.get("/audit/verify/{case_id}")
     async def audit_verify(case_id: str,

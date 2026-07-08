@@ -386,6 +386,120 @@ CREATE TABLE IF NOT EXISTS evidence_legal_holds (
 CREATE INDEX IF NOT EXISTS ix_evholds
   ON evidence_legal_holds(tenant_id, evidence_id);
 """),
+    (6, """
+-- v6: Relationship Core (CRM) persistence. Person/org/household profiles
+-- and addresses live as JSON columns on crm_parties (folded, disclosed);
+-- the legacy 'parties' table stays as case-contact storage and is
+-- bridged read-only by the API.
+CREATE TABLE IF NOT EXISTS crm_parties (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL REFERENCES tenants(id),
+  kind TEXT NOT NULL, display_name TEXT NOT NULL,
+  roles_json TEXT NOT NULL DEFAULT '[]',
+  person_json TEXT, organization_json TEXT, household_json TEXT,
+  addresses_json TEXT NOT NULL DEFAULT '[]',
+  merged_into_id TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE INDEX IF NOT EXISTS ix_crmp_tenant ON crm_parties(tenant_id);
+
+CREATE TABLE IF NOT EXISTS crm_contact_points (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  party_id TEXT NOT NULL REFERENCES crm_parties(id),
+  kind TEXT NOT NULL, value TEXT NOT NULL,
+  label TEXT NOT NULL DEFAULT '',
+  verified INTEGER NOT NULL DEFAULT 0,
+  preferred INTEGER NOT NULL DEFAULT 0);
+CREATE INDEX IF NOT EXISTS ix_crmcp ON crm_contact_points(tenant_id, party_id);
+CREATE INDEX IF NOT EXISTS ix_crmcp_value ON crm_contact_points(tenant_id, kind, value);
+
+CREATE TABLE IF NOT EXISTS crm_consent_records (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  party_id TEXT NOT NULL REFERENCES crm_parties(id),
+  channel TEXT NOT NULL, status TEXT NOT NULL,
+  source TEXT NOT NULL DEFAULT '', recorded_by TEXT NOT NULL,
+  recorded_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_crmconsent
+  ON crm_consent_records(tenant_id, party_id, channel);
+
+CREATE TABLE IF NOT EXISTS crm_relationship_edges (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  from_id TEXT NOT NULL, to_id TEXT NOT NULL,
+  to_kind TEXT NOT NULL, role TEXT NOT NULL,
+  created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_crmedge_from
+  ON crm_relationship_edges(tenant_id, from_id);
+CREATE INDEX IF NOT EXISTS ix_crmedge_to
+  ON crm_relationship_edges(tenant_id, to_kind, to_id);
+
+CREATE TABLE IF NOT EXISTS crm_activities (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  party_id TEXT NOT NULL, kind TEXT NOT NULL,
+  summary TEXT NOT NULL, case_id TEXT, occurred_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_crmact ON crm_activities(tenant_id, party_id);
+
+CREATE TABLE IF NOT EXISTS crm_promises (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  party_id TEXT NOT NULL, promisor TEXT NOT NULL,
+  what TEXT NOT NULL, due_at TEXT, status TEXT NOT NULL DEFAULT 'open',
+  case_id TEXT);
+CREATE INDEX IF NOT EXISTS ix_crmprom
+  ON crm_promises(tenant_id, party_id, status);
+
+CREATE TABLE IF NOT EXISTS crm_preferences (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  party_id TEXT NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL,
+  source TEXT NOT NULL DEFAULT 'stated');
+CREATE INDEX IF NOT EXISTS ix_crmpref ON crm_preferences(tenant_id, party_id);
+
+CREATE TABLE IF NOT EXISTS crm_facts (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  party_id TEXT NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL,
+  verified INTEGER NOT NULL DEFAULT 0, verified_by TEXT,
+  source TEXT NOT NULL DEFAULT 'unknown');
+CREATE INDEX IF NOT EXISTS ix_crmfact ON crm_facts(tenant_id, party_id, key);
+
+CREATE TABLE IF NOT EXISTS crm_memory_items (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  party_id TEXT NOT NULL, memory_type TEXT NOT NULL,
+  content_json TEXT NOT NULL DEFAULT '{}', source TEXT NOT NULL,
+  confidence REAL NOT NULL DEFAULT 0.5,
+  scope TEXT NOT NULL DEFAULT 'tenant',
+  sensitive INTEGER NOT NULL DEFAULT 0,
+  recorded_at TEXT NOT NULL, verified_by TEXT);
+CREATE INDEX IF NOT EXISTS ix_crmmem
+  ON crm_memory_items(tenant_id, party_id, memory_type);
+
+CREATE TABLE IF NOT EXISTS crm_merge_decisions (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  surviving_party_id TEXT NOT NULL,
+  merged_party_ids_json TEXT NOT NULL,
+  decided_by TEXT NOT NULL, reason TEXT NOT NULL DEFAULT '',
+  decided_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_crmmerge ON crm_merge_decisions(tenant_id);
+
+CREATE TABLE IF NOT EXISTS crm_external_references (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  party_id TEXT NOT NULL REFERENCES crm_parties(id),
+  provider TEXT NOT NULL, object_kind TEXT NOT NULL,
+  external_id TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_crmext
+  ON crm_external_references(tenant_id, provider, external_id);
+
+CREATE TABLE IF NOT EXISTS crm_external_sync_events (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  provider TEXT NOT NULL, direction TEXT NOT NULL,
+  object_kind TEXT NOT NULL, decision TEXT NOT NULL,
+  detail_json TEXT NOT NULL DEFAULT '{}', idempotency_key TEXT,
+  created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_crmsync
+  ON crm_external_sync_events(tenant_id, provider);
+
+CREATE TABLE IF NOT EXISTS crm_external_sync_cursors (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  provider TEXT NOT NULL, last_synced_at TEXT, cursor_token TEXT);
+CREATE INDEX IF NOT EXISTS ix_crmcursor
+  ON crm_external_sync_cursors(tenant_id, provider);
+"""),
 ]
 
 
