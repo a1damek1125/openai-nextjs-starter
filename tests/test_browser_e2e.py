@@ -314,6 +314,189 @@ def test_governance_ui_in_browser(server, page):
     assert "policy_denied" not in page.text_content("#gov-blocked")
 
 
+# ---------------------------------------------------------------------------
+# Q-D — Quote Builder browser E2E: owner flow, approval path, negatives,
+# restricted users. Real clicks through the Q-C UI over the Q-B APIs.
+# ---------------------------------------------------------------------------
+def _new_quote_with_line(page, *, cost="1000", price="2000", **fills):
+    """Create draft + approved terms + one line through the UI."""
+    page.wait_for_selector("#quote-create:not([hidden])", timeout=15000)
+    page.click("#quote-create-btn")
+    page.wait_for_selector("#quote-state:has-text('DRAFT')", timeout=10000)
+    page.click("text=Set assumptions/exclusions/terms")
+    page.wait_for_selector("text=approved terms template set")
+    page.fill("#ql-desc", fills.get("desc", "heat pump 12kW"))
+    page.fill("#ql-cost", cost)
+    page.fill("#ql-price", price)
+    if fills.get("discount"):
+        page.fill("#ql-discount", fills["discount"])
+    if fills.get("reason"):
+        page.fill("#ql-reason", fills["reason"])
+    page.click("#ql-add")
+    page.wait_for_selector(
+        f"#quote-detail td:has-text('{fills.get('desc', 'heat pump 12kW')}')")
+
+
+def test_quote_owner_flow_in_browser(server, page):
+    _login(page, server)
+
+    # Section banner carries the honesty labels.
+    page.wait_for_selector("#quotes-section", timeout=15000)
+    banner = " ".join(page.text_content("#quotes-section").split())
+    for label in ("MOCKED_AND_TESTED", "SCAFFOLDED_ONLY",
+                  "Change-order approval API is MISSING",
+                  "no real Stripe / invoicing / payment provider",
+                  "accepted quote does not mean the case is completed"):
+        assert label in banner, label
+
+    # Case detail links into the quote section.
+    page.locator("#cases table tr", has_text="Heat pump install") \
+        .locator("button").click()
+    page.wait_for_selector("#case-title")
+    page.click("text=Quotes…")
+
+    # Draft → terms → line → deposit → calculate.
+    _new_quote_with_line(page)
+    page.click("text=Set 30% deposit schedule")
+    page.wait_for_selector("text=Deposit schedule set")
+    page.click("text=Calculate")
+    page.wait_for_selector("#calc-totals", timeout=10000)
+    totals = page.text_content("#calc-totals")
+    assert "2000.00" in totals and "460.00" in totals \
+        and "2460.00" in totals and "mock" in totals
+    gates = page.text_content("#calc-gates")
+    for gate in ("readiness", "margin", "discount"):
+        assert gate in gates, gate
+    assert "SAFE" in gates and "READY" in gates
+    scores = " ".join(page.text_content("#calc-scores").split())
+    assert "Price confidence" in scores and "Evidence coverage" in scores
+    assert "SCAFFOLDED_ONLY" in scores          # risk/clarity labeled honest
+    assert "0.5000" in page.text_content("#quote-detail")  # 50% margin shown
+
+    # Send → immutable message; line editor gone.
+    page.click("button:has-text('Send')")
+    page.wait_for_selector("#quote-state:has-text('SENT')", timeout=10000)
+    assert "cannot be edited. Create a revision" in \
+        page.text_content("#quote-state-help")
+    assert page.locator("#quote-line-form").count() == 0
+
+    # Accept → payment requirements + NOT completed + change order path.
+    page.click("text=Client accepts (simulated)")
+    page.wait_for_selector("#quote-state:has-text('ACCEPTED')",
+                           timeout=10000)
+    msg = " ".join(page.text_content("#quote-msg").split())
+    assert "NOT completed" in msg and "WON_NOT_FULFILLED" in msg
+    assert "deposit 738.00" in msg
+    detail = page.text_content("#quote-detail")
+    assert "fulfillment blocked until paid" in detail
+    assert "Use a change order" in page.text_content("#quote-state-help")
+    page.fill("#co-desc", "extra duct run")
+    page.fill("#co-price", "450")
+    page.fill("#co-cost", "300")
+    page.click("#co-add")
+    page.wait_for_selector("#quote-detail li:has-text('extra duct run')",
+                           timeout=10000)
+    detail = page.text_content("#quote-detail")
+    assert "PENDING_APPROVAL" in detail
+    assert "0.3333" in detail                   # margin impact of the delta
+    assert "approval API is MISSING" in detail
+
+    # Mock PDF + events.
+    page.click("text=Generate mock PDF")
+    page.wait_for_selector("#pdf-label:has-text('MOCK_PDF_PROVIDER')",
+                           timeout=10000)
+    assert "not a real PDF" in page.text_content("#pdf-label")
+    events = page.text_content("#quote-events")
+    assert "QUOTE_ACCEPTED" in events and "QUOTE_SENT" in events
+
+
+def test_quote_approval_and_self_approval_in_browser(server, page):
+    # Restore the manager role (an earlier admin test demoted it) —
+    # through the real role-change UI, which is extra coverage by itself.
+    _login(page, server)
+    page.wait_for_selector("#admin-users table", timeout=15000)
+    row = page.locator("#admin-users tr", has_text="manager@demo.finalis")
+    row.locator("select").select_option("manager")
+    row.locator("button").click()
+    page.wait_for_selector("#invite-msg:has-text('Role updated to manager')")
+
+    # Manager drafts a quote with an over-threshold discount.
+    _login(page, server, email="manager@demo.finalis")
+    _new_quote_with_line(page, discount="500", reason="negotiation")
+    page.click("text=Calculate")
+    page.wait_for_selector("#calc-gates", timeout=10000)
+    gates = page.text_content("#calc-gates")
+    assert "REQUIRE_APPROVAL" in gates
+    assert "exceeds the auto-approval threshold" in gates  # business words
+    quote_ref = page.text_content("#quote-detail h3")[6:14]
+
+    # Self-approval refused; send refused while approval is pending.
+    page.click("button:has-text('Approve')")
+    page.wait_for_selector("#quote-msg:has-text('own quote')")
+    page.click("button:has-text('Send')")
+    page.wait_for_selector("#quote-msg:has-text('Refused')")
+    page.wait_for_selector("#quote-state:has-text('PRICE_CALCULATED')")
+
+    # Owner approves (different human), then the quote can be sent.
+    _login(page, server)
+    page.wait_for_selector("#quote-list table", timeout=15000)
+    page.locator("#quote-list tr", has_text=quote_ref) \
+        .locator("button").click()
+    page.wait_for_selector("button:has-text('Approve')", timeout=10000)
+    page.click("button:has-text('Approve')")
+    page.wait_for_selector("#quote-state:has-text('APPROVED')",
+                           timeout=10000)
+    page.click("button:has-text('Send')")
+    page.wait_for_selector("#quote-state:has-text('SENT')", timeout=10000)
+
+
+def test_quote_negative_paths_in_browser(server, page):
+    _login(page, server)
+    _new_quote_with_line(page, desc="boiler swap")
+    page.click("text=Calculate")
+    page.wait_for_selector("#calc-totals", timeout=10000)
+    page.click("button:has-text('Send')")
+    page.wait_for_selector("#quote-state:has-text('SENT')", timeout=10000)
+
+    # Decline without a reason → readable refusal, state unchanged.
+    page.once("dialog", lambda d: d.accept(""))
+    page.click("text=Client declines…")
+    page.wait_for_selector("#quote-msg:has-text('requires a reason')",
+                           timeout=10000)
+    page.wait_for_selector("#quote-state:has-text('SENT')")
+
+    # Expire → the UI stops inviting acceptance (button gone), offers
+    # revision instead (the API 409 for accept-after-expiry is API-tested).
+    page.click("button:has-text('Expire')")
+    page.wait_for_selector("#quote-state:has-text('EXPIRED')",
+                           timeout=10000)
+    assert page.locator("text=Client accepts (simulated)").count() == 0
+    page.click("button:has-text('Revise')")
+    page.wait_for_selector("#quote-detail h3:has-text('v2')",
+                           timeout=10000)
+    page.wait_for_selector("#quote-state:has-text('DRAFT')")
+
+
+def test_quote_viewer_and_cross_tenant_in_browser(server, page):
+    # Viewer: read-only — no create, no pricing admin, no action buttons.
+    _login(page, server, email="viewer@demo.finalis")
+    page.wait_for_selector("#quote-list table", timeout=15000)
+    assert page.is_hidden("#quote-create")
+    assert page.is_hidden("#pricing-admin")
+    page.locator("#quote-list button").first.click()
+    page.wait_for_selector("#quote-state", timeout=10000)
+    detail = page.text_content("#quote-detail")
+    for forbidden in ("Calculate", "Approve", "Send",
+                      "Client accepts", "Add line"):
+        assert forbidden not in detail, forbidden
+    assert "not editable" in detail or "change orders" in detail
+
+    # Other tenant sees no quotes at all.
+    _login(page, server, email="owner@other.finalis")
+    page.wait_for_selector("#quote-list:has-text('No quotes yet')",
+                           timeout=15000)
+
+
 def test_viewer_restricted_ui_in_browser(server, page):
     _login(page, server, email="viewer@demo.finalis")
     page.wait_for_selector("#admin-denied:not([hidden])", timeout=15000)

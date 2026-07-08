@@ -477,6 +477,9 @@ window.calcQuote = async (id) => {
   const gates = Object.entries(data.gates).map(([name, g]) =>
     `<li><b>${name}</b>: ${g.decision}${g.reasons.length
       ? ' — ' + g.reasons.join('; ') : ''}</li>`).join('');
+  // Re-render the detail FIRST — it resets #quote-calc, so filling the
+  // panel before the re-render would flash and vanish.
+  await openQuote(id);
   $('quote-calc').innerHTML = `
     <p id="calc-totals">Calculated: subtotal ${data.subtotal} ·
       tax ${data.tax_total} (mock) · <b>total ${data.total}</b></p>
@@ -485,7 +488,6 @@ window.calcQuote = async (id) => {
       · Evidence coverage: ${data.scores.evidence_coverage}
       <small>(risk &amp; clarity scores need case-context wiring —
       SCAFFOLDED_ONLY in the portal)</small></p>`;
-  openQuote(id);
 };
 
 window.qAct = async (id, action) => {
