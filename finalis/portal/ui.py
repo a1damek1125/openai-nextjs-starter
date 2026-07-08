@@ -143,6 +143,8 @@ window.loadSections = async () => {
   if (window.loadEvidenceSection)
     jobs.push(loadEvidenceSection(me, cases));
   if (window.loadCrmSection) jobs.push(loadCrmSection(me, cases));
+  if (window.loadWorkbenchSection)
+    jobs.push(loadWorkbenchSection(me, cases));
   await Promise.allSettled(jobs);
 };
 
@@ -1386,6 +1388,649 @@ window.syncDecisionRun = async () => {
 };
 """
 
+# ===========================================================================
+# V-F — Evidence Proof Workbench. A case-first, evidence-first, audit-ready
+# verification workbench over the tested Evidence V-A..V-E APIs. The UI
+# EXPLAINS proof status (Merkle inclusion, append-only consistency, proof
+# algebra, verdict lattice, verification state machine, derivative chain,
+# conflict matrix); server-side Evidence logic stays authoritative. Panels
+# with no server API are labeled honestly (MISSING / NOT_EXPOSED), never
+# faked. Every mandated honesty sentence lives in the static section below
+# so it is present in the served page regardless of JS execution.
+# ===========================================================================
+WORKBENCH_SECTIONS = """
+<section id="workbench-section"><h2>Evidence Proof Workbench</h2>
+<p><small><b>Finalis is evidence-first and case-first.</b> This workbench
+explains cryptographic proof status; <b>server-side Evidence verification
+remains authoritative</b> — a display score cannot unlock actions.
+<b>Integrity verification and business truth are separate verdicts.</b>
+<b>Cryptographic integrity is not the same as legal validity.</b>
+UI explanations are not legal advice. <b>Production readiness is false.</b>
+</small></p>
+
+<h3>Evidence Proof Dashboard</h3>
+<p><small id="wb-dash-note"><b>NON-AUTHORITATIVE UI SUMMARY — server-side
+Evidence verification remains the source of truth.</b> Counts are computed
+in the browser from list/detail APIs and never hide raw status or
+warnings.</small></p>
+<div class="cards" id="wb-dashboard"><i>Loading proof dashboard…</i></div>
+<div id="wb-msg"></div>
+
+<h3>Evidence List</h3>
+<p><small>Rows come only from <code>/evidence</code> (real API, tenant-scoped,
+permission-gated). No fake evidence rows.</small></p>
+<div id="wb-list"><i>Loading evidence…</i></div>
+
+<div id="wb-detail">
+<p><i>Select an evidence item to open its proof workbench.</i></p>
+
+<div class="wb-panel" id="wb-p-detail" hidden>
+  <h3>Evidence Detail</h3>
+  <p><small>Metadata is escaped before render. Never shown: secrets,
+  credentials, tokens, private keys, unsafe paths, cross-tenant data.</small></p>
+  <div id="wb-detail-body"></div>
+</div>
+
+<div class="wb-panel" id="wb-p-inclusion" hidden>
+  <h3>Merkle Inclusion Proof</h3>
+  <p><small><b>Merkle proof explains inclusion. It does not explain business
+  truth.</b> <b>Hash match proves byte-level consistency, not customer
+  intent.</b> Server-side Evidence verification remains authoritative; UI
+  recomputation, if shown, is explanatory only. RFC 9162 inclusion-proof
+  terminology (leaf, proof path, tree size, root).</small></p>
+  <div id="wb-inclusion-body"></div>
+</div>
+
+<div class="wb-panel" id="wb-p-consistency" hidden>
+  <h3>Merkle Consistency / Append-Only</h3>
+  <p><small><b>Inclusion proof shows that one item is in a tree. Consistency
+  proof shows whether the log evolved append-only.</b> Append-only evidence
+  cannot be assumed unless the server exposes and verifies consistency data
+  (RFC 9162). A standalone consistency proof-path endpoint is
+  <b>MISSING</b>; append-only status here is derived from Merkle-root
+  regeneration and root re-verification only.</small></p>
+  <div id="wb-consistency-body"></div>
+</div>
+
+<div class="wb-panel" id="wb-p-algebra" hidden>
+  <h3>Proof Algebra / Verdict</h3>
+  <p><small><b>Positive signals cannot average away a critical proof
+  failure.</b> Hard-fail dimensions force a non-verified verdict, readiness
+  0 and automation off; a display score cannot override the verdict.
+  Server decisions remain authoritative.</small></p>
+  <div id="wb-algebra-body"></div>
+</div>
+
+<div class="wb-panel" id="wb-p-state" hidden>
+  <h3>Verification State Machine</h3>
+  <p><small><b>Verification state is server-authoritative. UI state
+  explanation cannot unlock actions. Failed proof blocks automation.</b>
+  </small></p>
+  <div id="wb-state-body"></div>
+</div>
+
+<div class="wb-panel" id="wb-p-derivative" hidden>
+  <h3>Derivative Evidence Chain</h3>
+  <p><small><b>Derivative evidence must preserve parent linkage. A
+  derivative is not stronger than its parent evidence.</b> Redaction creates
+  a new derivative; it must not overwrite the original. Missing parent
+  evidence blocks derivative trust. OCR-derived text is displayed only if it
+  already exists — the <b>OCR router is not part of V-F</b>
+  (SCAFFOLDED_ONLY).</small></p>
+  <div id="wb-derivative-body"></div>
+</div>
+
+<div class="wb-panel" id="wb-p-contract" hidden>
+  <h3>Contract History / Decision Evidence</h3>
+  <p><small><b>Contract history is append-oriented.</b> Evidence can support
+  a contract event, but the UI cannot rewrite contract truth.
+  <b>Payment/quote acceptance wiring is not part of V-F.</b></small></p>
+  <div id="wb-contract-body"></div>
+</div>
+
+<div class="wb-panel" id="wb-p-provenance" hidden>
+  <h3>Provenance / C2PA Signal</h3>
+  <p><small><b>Provenance is a signal, not final truth. C2PA provenance is
+  not final truth</b> and does not automatically prove legal validity;
+  provenance conflicts require review. Finalis Evidence verification remains
+  authoritative. No provenance/C2PA API is exposed by the server —
+  classified <b>MISSING</b>; no C2PA data is faked.</small></p>
+  <div id="wb-provenance-body"></div>
+</div>
+
+<div class="wb-panel" id="wb-p-timestamp" hidden>
+  <h3>Timestamp / Evidence Record</h3>
+  <p><small><b>Timestamping proves existence at a time; it does not prove
+  business truth.</b> Expired or missing timestamp evidence requires review;
+  long-term evidence renewal is a separate production capability.
+  <b>RFC 3161 timestamp provider is not connected unless explicitly
+  configured. RFC 4998 evidence record renewal is not implemented unless
+  server exposes it.</b> No timestamp API is exposed — classified
+  <b>MISSING</b>.</small></p>
+  <div id="wb-timestamp-body"></div>
+</div>
+
+<div class="wb-panel" id="wb-p-scitt" hidden>
+  <h3>SCITT / Statement Receipt Readiness</h3>
+  <p><small><b>SCITT statement/receipt integration is not implemented.</b>
+  SCITT readiness is a future-compatible slot only (RFC 9943). SCITT can
+  support transparent statements, but Finalis remains the evidence
+  authority; <b>SCITT receipt presence does not equal business truth.</b>
+  No external transparency service is called in V-F. Classified
+  <b>MISSING</b>.</small></p>
+  <div id="wb-scitt-body"></div>
+</div>
+
+<div class="wb-panel" id="wb-p-crypto" hidden>
+  <h3>Cryptographic Agility / PQC Readiness</h3>
+  <p><small>Algorithm agility is required for long-term evidence.
+  <b>Unknown or deprecated algorithms require review.</b> PQC readiness is
+  informational unless server verification enforces it.
+  <b>Post-quantum cryptography is not implemented in V-F</b> (NIST FIPS
+  203/204/205 awareness only).</small></p>
+  <div id="wb-crypto-body"></div>
+</div>
+
+<div class="wb-panel" id="wb-p-conflict" hidden>
+  <h3>Evidence Conflict Matrix</h3>
+  <p><small><b>Cryptographic integrity is not the same as legal validity.
+  Provenance is not the same as integrity. A valid timestamp is not the same
+  as a valid business claim. A receipt is not the same as business truth.
+  Hash mismatch blocks automation.</b></small></p>
+  <div id="wb-conflict-body"></div>
+</div>
+
+<div class="wb-panel" id="wb-p-report" hidden>
+  <h3>Proof Explanation / Human Report</h3>
+  <p><small><b>UI explanations are not legal advice.</b> Evidence
+  verification does not automatically approve a case outcome; missing proof
+  data requires review; <b>hash mismatch blocks automation.</b> A signed
+  verification report export is <b>MISSING</b>.</small></p>
+  <div id="wb-report-body"></div>
+</div>
+
+<div class="wb-panel" id="wb-p-graph" hidden>
+  <h3>Evidence Chain Graph / Relationship</h3>
+  <p><small>Case → evidence → derivative → contract event → proof root →
+  timestamp/provenance/SCITT slots → algorithm metadata → warning. Simple
+  indented relationship view — explainability, not decoration.</small></p>
+  <div id="wb-graph-body"></div>
+</div>
+</div>
+
+<h3>Production Honesty</h3>
+<div id="wb-p-honesty"><ul>
+  <li><b>Production readiness is false.</b></li>
+  <li>External notarization is not connected.</li>
+  <li>Blockchain anchoring is not implemented.</li>
+  <li>RFC 3161 timestamp provider is not connected unless explicitly
+    configured.</li>
+  <li>RFC 4998 evidence record renewal is not implemented unless server
+    exposes it.</li>
+  <li>C2PA provenance is not final truth.</li>
+  <li>SCITT statement/receipt integration is not implemented.</li>
+  <li>Sigstore/Rekor integration is not implemented.</li>
+  <li>Post-quantum cryptography is not implemented in V-F.</li>
+  <li>MinIO Object Lock adapter is not implemented unless explicitly added
+    in a later mission.</li>
+  <li>OCR router is not part of V-F.</li>
+  <li>Payment/quote acceptance wiring is not part of V-F.</li>
+  <li>UI explanations are not legal advice.</li>
+  <li>Server-side Evidence logic remains authoritative.</li>
+</ul></div>
+</section>
+"""
+
+WORKBENCH_JS = """
+// --- V-F Evidence Proof Workbench (reuses global esc/$/get/send/ME) -------
+const wbMsg = (t, ok) => { $('wb-msg').innerHTML =
+  `<span class="${ok ? 'ok' : 'err'}">${esc(t)}</span>`; };
+const wbCanAudit = () => ME && ME.permissions.includes('audit.view');
+const wbCanAnalyze = () => ME && ME.permissions.includes('document.analyze');
+// A GET that degrades to null instead of throwing (used for role-gated
+// proof/contract/ledger endpoints so a viewer never breaks the section).
+const wbTry = async (p) => { try { return await get(p); }
+  catch (e) { return null; } };
+
+window.loadWorkbenchSection = async (me, cases) => {
+  window.WB_CASES = cases;
+  await wbLoadList();
+};
+
+window.wbLoadList = async (caseId) => {
+  const rows = await get('/evidence' + (caseId ? '?case_id=' + caseId : ''));
+  window.WB_ROWS = rows;
+  const ledger = wbCanAudit() ? (await wbTry('/evidence/merkle-roots')) : null;
+  // NON-AUTHORITATIVE UI summary from the list; raw state stays visible.
+  const by = {}; rows.forEach(r => by[r.state] = (by[r.state] || 0) + 1);
+  const verified = by.ADMISSIBLE || 0;
+  const pending = (by.QUARANTINED || 0) + (by.SCANNED_CLEAN || 0);
+  const failed = (by.REJECTED || 0);
+  const cards = [
+    ['evidence items', rows.length],
+    ['admissible (integrity path)', verified],
+    ['pending verification', pending],
+    ['rejected / failed', failed],
+    ['linked to a case', rows.filter(r => r.case_id).length],
+    ['Merkle roots in ledger', ledger ? ledger.length : 'audit.view only'],
+    ['provenance signal', 'MISSING (no API)'],
+    ['timestamp signal', 'MISSING (no API)'],
+    ['SCITT statement/receipt', 'MISSING (no API)'],
+    ['PQC-ready crypto', 'NOT_EXPOSED'],
+    ['classical-only crypto', 'sha-256 (informational)']];
+  $('wb-dashboard').innerHTML = cards.map(([k, v]) =>
+    `<div class="card"><b>${esc(String(v))}</b><span>${esc(k)}</span></div>`)
+    .join('');
+  $('wb-list').innerHTML = rows.length ?
+    '<table><tr><th>Evidence</th><th>Case</th><th>Type</th>' +
+    '<th>Server state</th><th>Sensitivity</th><th></th></tr>' +
+    rows.map(r => `<tr data-ev="${esc(r.id)}">
+      <td><small>${esc(r.id.slice(0, 8))}</small> ${esc(
+        r.original_filename || '')}</td>
+      <td><small>${esc((r.case_id || '').slice(0, 8))}</small></td>
+      <td>${esc(r.evidence_type)}</td><td>${esc(r.state)}</td>
+      <td>${esc(r.sensitivity)}</td>
+      <td><button onclick="wbOpen('${esc(r.id)}')">Open proof</button></td>
+      </tr>`).join('') + '</table>' :
+    '<i>No evidence yet.</i>';
+};
+
+// ---- Proof algebra (Finalis IP; NON-AUTHORITATIVE UI computation) --------
+// D1 HashIntegrity D2 MerkleInclusion D3 MerkleConsistency D4 Timestamp
+// D5 Provenance D6 DerivativeChain D7 ContractLink D8 TenantIsolation
+// D9 AlgorithmAgility D10 Freshness D11 BusinessContext.
+window.wbProofAlgebra = (d, proof, derivs, contracts, consistency) => {
+  const dims = {};
+  // D1 — hash integrity (server-computed).
+  dims.D1 = d.integrity ? (d.integrity.valid ? 'PASS' : 'FAIL') : 'UNKNOWN';
+  // D2 — Merkle inclusion (server proof.verifies; root vs stored root).
+  dims.D2 = proof == null ? 'NOT_EXPOSED'
+    : (proof.verifies && proof.root ? 'PASS' : 'FAIL');
+  // D3 — append-only consistency: only VERIFIED if the server verified it.
+  dims.D3 = consistency == null ? 'NOT_EXPOSED'
+    : (consistency.ok ? 'PASS' : 'FAIL');
+  // D4/D5 — no server API.
+  dims.D4 = 'NOT_EXPOSED'; dims.D5 = 'NOT_EXPOSED';
+  // D6 — derivative chain: every derivative must link to a present parent
+  // and cannot claim more trust than the (this) parent.
+  if (derivs == null) dims.D6 = 'NOT_EXPOSED';
+  else if (!derivs.length) dims.D6 = 'NOT_APPLICABLE';
+  else {
+    const parentVerified = dims.D1 === 'PASS';
+    const overTrust = derivs.some(x =>
+      (x.confidence != null) && !parentVerified && x.confidence >= 0.99);
+    const orphan = derivs.some(x => x.parent_evidence_id
+      && x.parent_evidence_id !== d.id);
+    dims.D6 = (overTrust || orphan) ? 'FAIL' : 'PASS';
+  }
+  // D7 — contract link (informational unless a contract requires it).
+  dims.D7 = contracts == null ? 'NOT_EXPOSED'
+    : (contracts.length ? 'PASS' : 'NOT_APPLICABLE');
+  // D8 — tenant isolation: detail loaded => server confirmed same tenant.
+  dims.D8 = 'PASS';
+  // D9 — algorithm agility (informational; sha-256 = classical, supported).
+  const alg = (d.integrity && d.integrity.algorithm || '').toLowerCase();
+  dims.D9 = !alg ? 'UNKNOWN'
+    : (/(md5|sha1|sha-1)/.test(alg) ? 'UNSUPPORTED_CRITICAL_ALGORITHM'
+      : 'PASS');
+  // D10 — freshness (soft; last integrity check known?).
+  dims.D10 = d.integrity && d.integrity.valid ? 'PASS' : 'UNKNOWN';
+  // D11 — business context (server state). Disputed/rejected is hard.
+  dims.D11 = ['REJECTED', 'DISPUTED'].includes(d.state) ? 'DISPUTED'
+    : (d.state === 'ADMISSIBLE' && d.human_verified ? 'PASS'
+      : 'REVIEW_REQUIRED');
+  return dims;
+};
+
+// Verdict lattice — a stronger verdict only if every lower proof holds.
+window.wbVerdict = (dims) => {
+  const zero = (verdict, why) => ({verdict, readiness: 0,
+    automation_allowed: false, hard_fail: true, why});
+  if (dims.D1 === 'FAIL')
+    return zero('TAMPER_WARNING', 'hash mismatch — byte-level integrity failed');
+  if (dims.D2 === 'FAIL')
+    return zero('FAILED_VERIFICATION', 'Merkle root/inclusion mismatch');
+  if (dims.D8 === 'FAIL')
+    return zero('FAILED_VERIFICATION', 'tenant isolation breach');
+  if (dims.D6 === 'FAIL')
+    return zero('REVIEW_REQUIRED', 'derivative parent missing or over-trusted');
+  if (dims.D3 === 'FAIL')
+    return zero('REVIEW_REQUIRED', 'append-only consistency failed');
+  if (dims.D9 === 'UNSUPPORTED_CRITICAL_ALGORITHM')
+    return zero('REVIEW_REQUIRED', 'unsupported/deprecated critical algorithm');
+  if (dims.D11 === 'DISPUTED')
+    return zero('REVIEW_REQUIRED', 'business context is disputed');
+  // No hard fail below this line — compute a display-only score.
+  const score = wbReadiness(dims);
+  if (dims.D1 !== 'PASS')
+    return {verdict: 'NOT_VERIFIED', readiness: score,
+      automation_allowed: false, hard_fail: false,
+      why: 'hash integrity not yet verified by the server'};
+  if (dims.D2 !== 'PASS')
+    return {verdict: 'REVIEW_REQUIRED', readiness: score,
+      automation_allowed: false, hard_fail: false,
+      why: 'inclusion proof missing or not exposed to your role'};
+  const business = dims.D11 === 'PASS';
+  if (dims.D3 === 'PASS')
+    return {verdict: 'VERIFIED_FOR_INTEGRITY', readiness: score,
+      automation_allowed: business, hard_fail: false,
+      why: business ? 'integrity + inclusion + consistency verified'
+        : 'integrity verified; business context still REVIEW_REQUIRED'};
+  return {verdict: 'VERIFIED_WITH_LIMITATIONS', readiness: score,
+    automation_allowed: false, hard_fail: false,
+    why: 'inclusion verified, append-only consistency not exposed/verified'};
+};
+
+// Display-only score. Zero on any hard-fail; never overrides the verdict.
+window.wbReadiness = (dims) => {
+  if (dims.D1 === 'FAIL' || dims.D2 === 'FAIL' || dims.D6 === 'FAIL'
+      || dims.D8 === 'FAIL' || dims.D3 === 'FAIL'
+      || dims.D9 === 'UNSUPPORTED_CRITICAL_ALGORITHM'
+      || dims.D11 === 'DISPUTED') return 0;
+  const g = (v) => v === 'PASS' ? 1 : 0;
+  const val = 0.25 * g(dims.D1) + 0.18 * g(dims.D2) + 0.15 * g(dims.D3)
+    + 0.12 * (dims.D6 === 'FAIL' ? 0 : 1) + 0.10 * g(dims.D7)
+    + 0.07 * g(dims.D4) + 0.05 * g(dims.D5) + 0.04 * 0 + 0.04 * g(dims.D9);
+  return Math.round(val * 100) / 100;
+};
+
+const WB_STATE_MAP = {
+  QUARANTINED: 'CAPTURED → HASHED → PROOF_PENDING',
+  SCANNED_CLEAN: 'HASHED (scanned) → PROOF_PENDING',
+  ADMISSIBLE: 'INCLUSION_PROOF_VERIFIED (if root present)',
+  REJECTED: 'REVIEW_REQUIRED → NOT_USABLE_FOR_AUTOMATION'};
+
+window.wbOpen = async (id) => {
+  const d = await get('/evidence/' + id);
+  const chain = await wbTry('/evidence/' + id + '/chain');
+  const derivs = await wbTry('/evidence/' + id + '/derivatives');
+  const contracts = wbCanAudit()
+    ? await wbTry('/evidence/' + id + '/contracts') : null;
+  const proof = wbCanAudit()
+    ? await wbTry('/evidence/' + id + '/merkle-proof') : null;
+  const immут = await wbTry('/evidence/' + id + '/immutability');
+  // Consistency is derived, not a standalone proof-path API.
+  let consistency = null;
+  if (proof && wbCanAudit()) {
+    const roots = await wbTry('/evidence/merkle-roots');
+    if (roots && roots.length) {
+      const v = await (async () => { try {
+        return await send('POST',
+          '/evidence/merkle-roots/' + roots[roots.length - 1].batch_id
+          + '/verify'); } catch (e) { return null; } })();
+      if (v && v.ok) consistency = {ok: v.data.root_intact
+        && v.data.chain_still_matches_root, data: v.data};
+    }
+  }
+  const dims = wbProofAlgebra(d, proof, derivs, contracts, consistency);
+  const verdict = wbVerdict(dims);
+  wbRender(d, {chain, derivs, contracts, proof, immut: immут, consistency,
+               dims, verdict});
+};
+
+window.wbRender = (d, x) => {
+  const show = (pid) => { $(pid).hidden = false; };
+  ['wb-p-detail', 'wb-p-inclusion', 'wb-p-consistency', 'wb-p-algebra',
+   'wb-p-state', 'wb-p-derivative', 'wb-p-contract', 'wb-p-provenance',
+   'wb-p-timestamp', 'wb-p-scitt', 'wb-p-crypto', 'wb-p-conflict',
+   'wb-p-report', 'wb-p-graph'].forEach(show);
+  const yn = (b) => b ? '<b class="ok">yes</b>' : '<b class="err">no</b>';
+  const hashV = d.integrity ? d.integrity.sha256 : null;
+
+  // --- Evidence Detail (escaped) ---
+  $('wb-detail-body').innerHTML = `
+    <ul>
+    <li>evidence id: <code>${esc(d.id)}</code></li>
+    <li>case id: <code>${esc(d.case_id || '—')}</code></li>
+    <li>type: ${esc(d.evidence_type)} · state:
+      <b>${esc(d.state)}</b> · sensitivity: ${esc(d.sensitivity)}</li>
+    <li>original filename (metadata only):
+      ${esc(d.original_filename || '—')}</li>
+    <li>declared mime: ${esc(d.declared_mime || '—')} · detected:
+      ${esc(d.detected_mime || '—')} · mismatch: ${yn(d.mime_mismatch)}</li>
+    <li>size: ${esc(String(d.size_bytes ?? '—'))} bytes</li>
+    <li>content hash (sha-256):
+      <code>${esc(hashV || 'not yet computed')}</code></li>
+    <li>hash algorithm: ${esc(d.integrity ? d.integrity.algorithm
+      : 'unknown')} · integrity valid: ${yn(d.integrity
+      && d.integrity.valid)}</li>
+    <li>human verified: ${yn(d.human_verified)} · legal hold:
+      ${yn(d.legal_hold)} · injection risk: ${esc(String(
+        d.injection_risk))}</li>
+    <li>scan: ${esc(d.scan.provider)} (${d.scan.is_mock ? 'MOCK' : 'real'})
+      · status ${esc(d.scan.status)}</li>
+    </ul>`;
+
+  // --- Merkle inclusion ---
+  const p = x.proof;
+  $('wb-inclusion-body').innerHTML = p == null ?
+    `<p><i>Inclusion proof not available to your role
+     (requires audit.view), or no Merkle root has been generated yet.</i>
+     Status: <b>PROOF_MISSING / SERVER_REVIEW_REQUIRED</b>.</p>` :
+    `<ul>
+     <li>leaf hash: <code>${esc(p.leaf_hash)}</code></li>
+     <li>leaf index: ${esc(String(p.index))} · tree size:
+       ${esc(String(p.size))}</li>
+     <li>hash algorithm: sha-256 (RFC 9162 style)</li>
+     <li>proof path (${(p.path || []).length} nodes):
+       ${(p.path || []).map(([h, r]) =>
+         `<code>${esc(String(r))}:${esc(h.slice(0, 10))}…</code>`)
+         .join(' ') || '<i>root is the leaf</i>'}</li>
+     <li>stored root: <code>${esc(p.root)}</code></li>
+     <li>inclusion status: <b class="${p.verifies ? 'ok' : 'err'}">
+       ${p.verifies ? 'VERIFIED' : 'NOT_VERIFIED / ROOT_MISMATCH'}</b></li>
+     </ul>
+     <p><small>Merkle proof explains inclusion. It does not explain business
+     truth.</small></p>`;
+
+  // --- Merkle consistency / append-only ---
+  const c = x.consistency;
+  $('wb-consistency-body').innerHTML = c == null ?
+    `<p><b>Merkle consistency proof is not exposed by the current API.</b>
+     Append-only status: <b>NOT_VERIFIED / NOT_EXPOSED</b>. Append-only
+     evidence cannot be assumed unless the server exposes and verifies
+     consistency data.</p>` :
+    `<ul><li>root intact (recomputed == stored):
+       ${yn(c.data.root_intact)}</li>
+     <li>live chain still matches root:
+       ${yn(c.data.chain_still_matches_root)}</li>
+     <li>append-only status: <b class="${c.ok ? 'ok' : 'err'}">
+       ${c.ok ? 'CONSISTENT' : 'CONSISTENCY_FAILED'}</b></li></ul>`;
+
+  // --- Proof algebra / verdict ---
+  const dims = x.dims, v = x.verdict;
+  const HARD = {D1: 1, D2: 1, D3: 1, D6: 1, D7: 1, D8: 1, D9: 1, D11: 1};
+  const DIM_NAMES = {D1: 'HashIntegrity', D2: 'MerkleInclusion',
+    D3: 'MerkleConsistency', D4: 'TimestampEvidence', D5: 'ProvenanceSignal',
+    D6: 'DerivativeChain', D7: 'ContractLink', D8: 'TenantIsolation',
+    D9: 'AlgorithmAgility', D10: 'Freshness', D11: 'BusinessContext'};
+  $('wb-algebra-body').innerHTML = `
+    <table><tr><th>Dim</th><th>Dimension</th><th>State</th>
+      <th>Hard-fail?</th></tr>` +
+    Object.keys(DIM_NAMES).map(k => {
+      const st = dims[k];
+      const bad = ['FAIL', 'DISPUTED',
+        'UNSUPPORTED_CRITICAL_ALGORITHM'].includes(st);
+      return `<tr><td>${k}</td><td>${esc(DIM_NAMES[k])}</td>
+        <td><b class="${st === 'PASS' ? 'ok' : (bad ? 'err' : '')}">
+        ${esc(st)}</b></td>
+        <td>${HARD[k] ? (bad ? '<b class="err">HARD-FAIL</b>' : 'hard')
+          : 'soft'}</td></tr>`;
+    }).join('') + '</table>' + `
+    <p><b>EvidenceVerdict:</b>
+      <b class="${v.verdict.startsWith('VERIFIED') ? 'ok' : 'err'}">
+      ${esc(v.verdict)}</b><br>
+      <b>EvidenceProofReadiness (NON-AUTHORITATIVE UI SUMMARY):</b>
+      ${esc(String(v.readiness))}
+      ${v.readiness === 0 ? '<b class="err">(zero — a hard-fail dimension '
+        + 'blocks it; positive signals cannot average it away)</b>' : ''}<br>
+      <b>automation_allowed (display only):</b> ${yn(v.automation_allowed)}
+      <br><small>Why not stronger: ${esc(v.why)}. A display score cannot
+      unlock actions; server decisions remain authoritative. Integrity
+      verification and business truth are separate verdicts.</small></p>`;
+
+  // --- Verification state machine ---
+  $('wb-state-body').innerHTML = `
+    <ul><li>current server state: <b>${esc(d.state)}</b></li>
+    <li>conceptual mapping: ${esc(WB_STATE_MAP[d.state]
+      || 'REVIEW_REQUIRED')}</li>
+    <li>blocking warning: ${v.hard_fail
+      ? '<b class="err">' + esc(v.why) + ' — failed proof blocks automation</b>'
+      : '<i>none from the proof algebra</i>'}</li>
+    <li>allowed next action: ${wbCanAnalyze()
+      ? 'verify-integrity (server-authoritative)'
+      : '<i>read-only for your role</i>'}</li></ul>
+    <p><small>Verification state is server-authoritative. UI state
+    explanation cannot unlock actions.</small></p>`;
+
+  // --- Derivative chain ---
+  const dv = x.derivs;
+  $('wb-derivative-body').innerHTML = dv == null ?
+    '<p><i>Derivatives not available to your role.</i></p>' :
+    (dv.length ? '<ul>' + dv.map(k => `<li>
+      kind: ${esc(k.derivative_kind || k.kind || 'derivative')} ·
+      parent: <code>${esc((k.parent_evidence_id || d.id).slice(0, 8))}</code>
+      · child hash: <code>${esc((k.manifest_hash || k.child_hash
+        || '—')).slice(0, 12)}…</code>
+      · confidence: ${esc(String(k.confidence ?? '—'))}
+      ${k.is_placeholder ? ' · <b class="err">placeholder (SCAFFOLDED_ONLY)'
+        + '</b>' : ''}
+      ${(k.confidence >= 0.99 && !(d.integrity && d.integrity.valid))
+        ? ' · <b class="err">derivative cannot exceed unverified parent</b>'
+        : ''}</li>`).join('') + '</ul>'
+     : '<p><i>No derivatives. A derivative is not stronger than its '
+       + 'parent evidence.</i></p>') +
+    '<p><small>Derivative evidence must preserve parent linkage. OCR '
+    + 'derivative generation is SCAFFOLDED_ONLY / not part of V-F.</small></p>';
+
+  // --- Contract history ---
+  const ct = x.contracts;
+  $('wb-contract-body').innerHTML = ct == null ?
+    '<p><i>Contract history requires audit.view.</i></p>' :
+    (ct.length ? '<table><tr><th>Contract</th><th>Decision</th>' +
+      '<th>Final</th><th>Causal</th><th>Hash</th><th>When</th></tr>' +
+      ct.map(r => `<tr><td><small>${esc(r.id.slice(0, 8))}</small></td>
+        <td>${esc(r.decision_type)}</td>
+        <td><b>${esc(r.final_decision)}</b></td>
+        <td>${esc(r.causal_result || '—')}</td>
+        <td><code>${esc((r.contract_hash || '—').slice(0, 10))}…</code></td>
+        <td><small>${esc(r.created_at)}</small></td></tr>`).join('')
+      + '</table>' : '<p><i>No contract events reference this evidence.</i></p>')
+    + '<p><small>Contract history is append-oriented and cannot be rewritten '
+    + 'from the UI.</small></p>';
+
+  // --- Provenance / C2PA (MISSING) ---
+  $('wb-provenance-body').innerHTML =
+    `<p><b>MISSING</b> — no provenance/C2PA API is exposed by the server;
+     no C2PA data is faked. Provenance is a signal, not final truth; C2PA
+     provenance is not final truth and does not prove legal validity.</p>`;
+
+  // --- Timestamp / evidence record (MISSING) ---
+  const im = x.immut;
+  $('wb-timestamp-body').innerHTML =
+    `<p><b>MISSING</b> — no RFC 3161 timestamp token and no RFC 4998
+     evidence record are exposed. Timestamping proves existence at a time;
+     it does not prove business truth.</p>` +
+    (im ? `<p><small>Local immutability (not external anchoring): native
+     WORM ${yn(im.native_worm)}; ${esc(im.note || '')}</small></p>` : '');
+
+  // --- SCITT (MISSING) ---
+  $('wb-scitt-body').innerHTML =
+    `<p><b>MISSING</b> — SCITT statement/receipt integration is not
+     implemented; no external transparency service is called. A receipt is
+     not the same as business truth.</p>`;
+
+  // --- Crypto agility / PQC ---
+  const alg = d.integrity ? d.integrity.algorithm : null;
+  const fam = !alg ? 'UNKNOWN'
+    : (/(md5|sha1|sha-1)/i.test(alg) ? 'DEPRECATED / UNSUPPORTED'
+      : 'CLASSICAL_ONLY');
+  $('wb-crypto-body').innerHTML = `<ul>
+    <li>hash algorithm: ${esc(alg || 'unknown')}</li>
+    <li>signature algorithm: <i>not exposed</i></li>
+    <li>algorithm family: <b>${esc(fam)}</b></li>
+    <li>PQC readiness: <b>UNKNOWN / NOT_EXPOSED</b> (server does not enforce
+      a PQC policy)</li></ul>
+    <p><small>${/(md5|sha1|sha-1)/i.test(alg || '')
+      ? 'Unknown or deprecated algorithms require review.'
+      : 'Informational only. Unknown or deprecated algorithms require '
+      + 'review.'}</small></p>`;
+
+  // --- Conflict matrix ---
+  const conflicts = [];
+  if (dims.D1 === 'FAIL') conflicts.push(
+    ['Integrity', 'hash mismatch', 'BLOCKS AUTOMATION']);
+  if (dims.D2 === 'FAIL') conflicts.push(
+    ['Integrity', 'Merkle root mismatch', 'REQUIRES REVIEW']);
+  if (dims.D2 === 'NOT_EXPOSED') conflicts.push(
+    ['Integrity', 'inclusion proof missing/not exposed', 'REVIEW']);
+  if (dims.D3 !== 'PASS') conflicts.push(
+    ['Chain', 'append-only consistency not verified', 'REVIEW']);
+  if (dims.D6 === 'FAIL') conflicts.push(
+    ['Chain', 'derivative parent missing or over-trust', 'BLOCKS TRUST']);
+  conflicts.push(['Provenance', 'provenance API MISSING', 'signal only']);
+  conflicts.push(['Timestamp', 'timestamp evidence MISSING', 'no proof of time']);
+  conflicts.push(['SCITT', 'receipt MISSING', 'not business truth']);
+  if (dims.D9 === 'UNSUPPORTED_CRITICAL_ALGORITHM') conflicts.push(
+    ['CryptoAgility', 'deprecated/unsupported algorithm', 'REVIEW']);
+  if (dims.D11 !== 'PASS') conflicts.push(
+    ['Business', 'evidence integrity vs disputed/unverified outcome',
+     'integrity ≠ business truth']);
+  $('wb-conflict-body').innerHTML =
+    '<table><tr><th>Category</th><th>Conflict</th><th>Effect</th></tr>' +
+    conflicts.map(([a, b, cc]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td>
+      <td><b>${esc(cc)}</b></td></tr>`).join('') + '</table>';
+
+  // --- Human report ---
+  $('wb-report-body').innerHTML = `<ul>
+    <li>What was checked: hash integrity, Merkle inclusion, append-only
+      consistency (if exposed), derivative linkage, contract linkage,
+      tenant isolation, algorithm family.</li>
+    <li>Hash checked: <code>${esc(hashV || 'not computed')}</code></li>
+    <li>Proof root used: <code>${esc(x.proof ? x.proof.root
+      : 'none / not exposed')}</code></li>
+    <li>Passed: ${esc(Object.keys(dims).filter(k => dims[k] === 'PASS')
+      .join(', ') || 'none')}</li>
+    <li>Failed: ${esc(Object.keys(dims).filter(k =>
+      ['FAIL', 'DISPUTED', 'UNSUPPORTED_CRITICAL_ALGORITHM']
+      .includes(dims[k])).join(', ') || 'none')}</li>
+    <li>Unknown/missing: ${esc(Object.keys(dims).filter(k =>
+      ['UNKNOWN', 'NOT_EXPOSED'].includes(dims[k])).join(', ')
+      || 'none')}</li>
+    <li>Verdict: <b>${esc(v.verdict)}</b> · readiness
+      ${esc(String(v.readiness))} (NON-AUTHORITATIVE UI SUMMARY)</li>
+    <li>Signed verification report export: <b>MISSING</b>.</li>
+    </ul><p><small>UI explanations are not legal advice. Evidence
+    verification does not automatically approve a case outcome.</small></p>`;
+
+  // --- Chain graph (indented relationship view) ---
+  $('wb-graph-body').innerHTML = `<ul>
+    <li>case <code>${esc((d.case_id || '—').slice(0, 8))}</code>
+      <ul><li>evidence <code>${esc(d.id.slice(0, 8))}</code> ·
+        ${esc(d.evidence_type)}
+        <ul>
+        <li>derivatives: ${x.derivs == null ? 'n/a'
+          : x.derivs.length}</li>
+        <li>contract events: ${x.contracts == null ? 'n/a'
+          : x.contracts.length}</li>
+        <li>proof root: ${x.proof ? 'present' : 'none/not exposed'}</li>
+        <li>timestamp/provenance/SCITT: MISSING slots</li>
+        <li>algorithm: ${esc(alg || 'unknown')}</li>
+        <li>warning: ${v.hard_fail ? esc(v.why) : 'none'}</li>
+        </ul></li></ul></li></ul>`;
+
+  $('workbench-section').scrollIntoView();
+  wbMsg('Opened proof workbench for ' + d.id.slice(0, 8)
+    + ' — server-side verification remains authoritative.', true);
+};
+
+// Case-first entry from the case detail row.
+window.proofFor = async (caseId) => {
+  await wbLoadList(caseId);
+  $('workbench-section').scrollIntoView();
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -1405,6 +2050,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 {QUOTES_SECTIONS}
 {EVIDENCE_SECTIONS}
 {CRM_SECTIONS}
+{WORKBENCH_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -1488,6 +2134,7 @@ window.openCase = async (id) => {{
      <button onclick="scheduleFor('${{id}}')">Schedule appointment…</button>
      <button onclick="quotesFor('${{id}}')">Quotes…</button>
      <button onclick="evidenceFor('${{id}}')">Evidence…</button>
+     <button onclick="proofFor('${{id}}')">Proof…</button>
      <button onclick="crmFor('${{id}}')">Customer…</button></p>
      <div id="case-msg"></div>
      <h4>Timeline (${{tl.length}})</h4>
@@ -1527,7 +2174,8 @@ boot();
 <script>{WIRING_JS}</script>
 <script>{QUOTES_JS}</script>
 <script>{EVIDENCE_JS}</script>
-<script>{CRM_JS}</script></body></html>"""
+<script>{CRM_JS}</script>
+<script>{WORKBENCH_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:

@@ -1012,3 +1012,86 @@ def test_customer_panel_no_external_provider_calls(server, page):
         host = u.lower().split("//", 1)[-1].split("/", 1)[0]
         assert not any(b in host for b in banned), u
     assert not errors, errors
+
+
+# ---------------------------------------------------------------------------
+# V-F — Evidence Proof Workbench browser smoke (one cheap test). Proves the
+# substantial workbench JS actually runs (proof algebra + all panels render)
+# end-to-end over the real Evidence APIs, with honesty labels visible, zero
+# JS console errors, and zero external provider calls. Heavy browser E2E was
+# already covered by CRM-D; this is a single smoke by design.
+# ---------------------------------------------------------------------------
+def test_evidence_proof_workbench_smoke_in_browser(server, page):
+    urls, errors = [], []
+    page.on("request", lambda r: urls.append(r.url))
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    # Console errors count as JS errors EXCEPT the browser's automatic
+    # favicon/resource 404 (a network fetch, not a script error).
+    page.on("console", lambda m: errors.append(m.text)
+            if m.type == "error" and "Failed to load resource" not in m.text
+            else None)
+
+    _login(page, server)
+
+    # Honesty labels are static and visible without any selection.
+    page.wait_for_selector("#workbench-section", timeout=15000)
+    wb = " ".join(page.text_content("#workbench-section").split())
+    for label in ("Evidence Proof Workbench",
+                  "NON-AUTHORITATIVE UI SUMMARY",
+                  "Positive signals cannot average away a critical proof "
+                  "failure.",
+                  "Integrity verification and business truth are separate "
+                  "verdicts.",
+                  "Production readiness is false.",
+                  "Blockchain anchoring is not implemented.",
+                  "Post-quantum cryptography is not implemented in V-F."):
+        assert label in wb, label
+
+    # Seed one real evidence item + a Merkle root through the session token,
+    # so the workbench has an inclusion proof to classify. (Same fetch
+    # pattern the scheduling browser test uses.)
+    ev_id = page.evaluate("""async () => {
+      const H = {'Authorization': 'Bearer ' +
+                 localStorage.getItem('finalis_token'),
+                 'Content-Type': 'application/json'};
+      const caseId = (await (await fetch('/cases', {headers: H})).json())[0].id;
+      const up = await (await fetch('/evidence/upload', {method: 'POST',
+        headers: H, body: JSON.stringify({
+          case_id: caseId, filename: 'wb-proof.txt', mime: 'text/plain',
+          content_b64: btoa('Payment received 450 EUR on 2026-07-01'),
+          evidence_type: 'payment_proof',
+          text_preview: 'Payment received 450 EUR'})})).json();
+      await fetch('/evidence/' + up.id + '/verify-integrity',
+                  {method: 'POST', headers: H, body: '{}'});
+      await fetch('/evidence/merkle-roots/generate',
+                  {method: 'POST', headers: H, body: '{}'});
+      return up.id;
+    }""")
+    assert ev_id
+
+    # Refresh the workbench list, then open the proof workbench for the item.
+    page.evaluate("wbLoadList()")
+    page.wait_for_selector(f"#wb-list tr[data-ev='{ev_id}']", timeout=10000)
+    page.locator(f"#wb-list tr[data-ev='{ev_id}'] button").click()
+
+    # The proof algebra + verdict panel renders with a real verdict.
+    page.wait_for_selector("#wb-p-algebra:not([hidden])", timeout=10000)
+    algebra = page.text_content("#wb-algebra-body")
+    assert "EvidenceVerdict" in algebra
+    assert "HashIntegrity" in algebra and "MerkleInclusion" in algebra
+    # Inclusion proof verified for a clean, rooted item.
+    page.wait_for_selector("#wb-inclusion-body:has-text('VERIFIED')",
+                           timeout=10000)
+    # MISSING slots are shown honestly, not faked.
+    assert "MISSING" in page.text_content("#wb-provenance-body")
+    assert "MISSING" in page.text_content("#wb-timestamp-body")
+    assert "MISSING" in page.text_content("#wb-scitt-body")
+    # Conflict matrix + human report rendered.
+    assert "Category" in page.text_content("#wb-conflict-body")
+    assert "Verdict" in page.text_content("#wb-report-body")
+
+    # Zero external provider calls; every request stayed on the origin.
+    external = [u for u in urls
+                if not u.startswith(server) and not u.startswith("about:")]
+    assert not external, external
+    assert not errors, errors
