@@ -5,6 +5,7 @@ import hashlib
 import json
 import uuid
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 
@@ -16,6 +17,8 @@ class AuditEvent:
     payload: dict[str, Any]
     hash_prev: str
     hash_self: str = ""
+    created_at: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat())
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
 
@@ -42,7 +45,7 @@ class AuditLog:
         material = json.dumps(
             {"id": ev.id, "event_type": ev.event_type, "actor": ev.actor,
              "case_id": ev.case_id, "payload": ev.payload,
-             "hash_prev": ev.hash_prev},
+             "created_at": ev.created_at, "hash_prev": ev.hash_prev},
             sort_keys=True, default=str,
         )
         return hashlib.sha256(material.encode()).hexdigest()

@@ -217,8 +217,8 @@ class DashboardService:
                      ) -> list[OwnerActionItem]:
         items: list[OwnerActionItem] = []
         for c in self._tenant_cases(tenant_id):
-            if c.state not in ACTIVE_STATES or c.id in self.snoozed \
-                    and self.snoozed[c.id] > now:
+            if c.state not in ACTIVE_STATES or (
+                    c.id in self.snoozed and self.snoozed[c.id] > now):
                 continue
             days = self._days_stalled(c, now)
             due = c.next_action_due_at
@@ -406,7 +406,7 @@ class DashboardService:
                 actor_type=e.actor,
                 summary=e.event_type.replace("_", " ").replace(".", " ")
                 .capitalize(),
-                created_at=""))
+                created_at=e.created_at))
             if len(rows) >= limit:
                 break
         return rows

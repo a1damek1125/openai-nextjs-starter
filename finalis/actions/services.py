@@ -200,10 +200,7 @@ class RateLimitSpamGuard:
         if history and (now - history[-1]) < timedelta(
                 minutes=self.rule.cooldown_minutes):
             return RateDecision(False, "cooldown")
-        day_count = sum(1 for hs in self._history.values() for t in hs
-                        if t.date() == now.date()
-                        and hs is not history or True
-                        for _ in [0]) if False else sum(
+        day_count = sum(
             1 for (cid, _a), hs in self._history.items() if cid == case_id
             for t in hs if t.date() == now.date())
         if day_count >= self.rule.max_per_day:
