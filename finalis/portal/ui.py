@@ -142,6 +142,7 @@ window.loadSections = async () => {
   if (window.loadQuoteSection) jobs.push(loadQuoteSection(me, cases));
   if (window.loadEvidenceSection)
     jobs.push(loadEvidenceSection(me, cases));
+  if (window.loadCrmSection) jobs.push(loadCrmSection(me, cases));
   await Promise.allSettled(jobs);
 };
 
@@ -983,6 +984,408 @@ window.runContract = async () => {
 };
 """
 
+CRM_SECTIONS = """
+<section id="crm-section"><h2>Customer Panel</h2>
+<p><b>Finalis is the source of operational truth for case outcomes.</b>
+Customer truth is verified, not guessed — AI can suggest, human
+verification decides.</p>
+<p><small><b>Case outcome fields are owned by Finalis</b> and cannot be
+synced externally. External CRM providers (HubSpot / Salesforce /
+Pipedrive / Zoho / Odoo / SuiteCRM / Twenty) are <b>not connected</b>;
+the NullCrmAdapter is a scaffold/dry-run only (SCAFFOLDED_ONLY), OAuth
+is not implemented, webhook ingestion is not implemented, sync is
+dry-run/decision only and <b>no external provider is called</b>.
+Marketing consent is never implied. Merge is human-only. Cross-tenant
+relationships are impossible. <b>Production readiness is false.</b>
+</small></p>
+<div class="cards" id="crm-dashboard"></div>
+<div id="crm-create" hidden>
+  <input id="crm-name" placeholder="display name" style="max-width:14rem"/>
+  <select id="crm-kind"><option>person</option><option>organization</option>
+  </select>
+  <input id="crm-email" placeholder="email" style="max-width:12rem"/>
+  <input id="crm-phone" placeholder="phone" style="max-width:10rem"/>
+  <button id="crm-create-btn" onclick="crmCreateParty()">Create
+    customer</button>
+</div>
+<div id="crm-msg"></div>
+<div id="crm-caseparties"></div>
+<h3>Customers</h3><div id="crm-list"><i>Loading customers…</i></div>
+<div id="crm-detail"></div>
+</section>
+"""
+
+CRM_JS = """
+const canCrmWrite = () => ME && ME.permissions.includes('case.update');
+const canVerifyMemory = () => ME &&
+  ME.permissions.includes('action.approve');
+const canMerge = () => ME &&
+  ME.permissions.includes('tenant.manage_users');
+const canSync = () => ME &&
+  ME.permissions.includes('tenant.manage_integrations');
+const cmsg = (t, ok) => { $('crm-msg').innerHTML =
+  `<span class="${ok ? 'ok' : 'err'}">${esc(t)}</span>`; };
+
+window.loadCrmSection = async (me, cases) => {
+  $('crm-create').hidden = !canCrmWrite();
+  window.CRM_CASES = cases;
+  await loadParties();
+};
+
+window.loadParties = async () => {
+  const data = await get('/crm/parties');
+  const parties = data.parties.filter(p => !p.merged_into_id);
+  const kinds = {};
+  parties.forEach(p => kinds[p.kind] = (kinds[p.kind] || 0) + 1);
+  $('crm-dashboard').innerHTML = [
+    ['customers', parties.length], ['persons', kinds.person || 0],
+    ['organizations', kinds.organization || 0],
+    ['legacy case contacts', data.legacy_case_contacts.length]]
+    .map(([k, v]) => `<div class="card"><b>${v}</b><span>${k}</span>
+      </div>`).join('');
+  $('crm-list').innerHTML = parties.length ?
+    '<table><tr><th>Name</th><th>Type</th><th></th></tr>' +
+    parties.map(p => `<tr data-party="${p.id}">
+      <td>${esc(p.display_name)}</td><td>${p.kind}</td>
+      <td><button onclick="openParty('${p.id}')">Open</button></td>
+      </tr>`).join('') + '</table>' :
+    '<i>No customers yet.</i>';
+};
+
+window.crmCreateParty = async () => {
+  const cps = [];
+  if ($('crm-email').value) cps.push({kind: 'EMAIL',
+                                      value: $('crm-email').value});
+  if ($('crm-phone').value) cps.push({kind: 'MOBILE',
+                                      value: $('crm-phone').value});
+  const {ok, data} = await send('POST', '/crm/parties', {
+    kind: $('crm-kind').value, display_name: $('crm-name').value,
+    contact_points: cps});
+  cmsg(ok ? 'Customer created.' : 'Refused: ' + data.detail, ok);
+  if (ok) { await loadParties(); openParty(data.id); }
+};
+
+window.crmFor = async (caseId) => {
+  const rows = await get(`/crm/cases/${caseId}/parties`);
+  $('crm-caseparties').innerHTML = '<p><b>Parties on the selected case:'
+    + '</b> ' + (rows.length ? rows.map(r =>
+      `${esc(r.display_name)} (${esc(r.role)})
+       <button onclick="openParty('${r.party_id}')">Open</button>`)
+      .join(' · ') : '<i>none linked yet</i>') + '</p>';
+  $('crm-section').scrollIntoView();
+};
+
+function customerReadiness(detail, consents, memory, dedupe) {
+  // NON-AUTHORITATIVE UI SUMMARY — server decisions remain authoritative.
+  if (memory.some(m => m.memory_type === 'DISPUTED_FACT'))
+    return {value: 0, note: 'disputed fact present — automation blocked ' +
+            'until a human resolves it'};
+  const denied = consents.filter(c => ['DENIED', 'REVOKED']
+    .includes(c.status)).length;
+  const consentReadiness = consents.length
+    ? 1 - denied / consents.length : 0.5;
+  const verified = memory.filter(m =>
+    m.memory_type === 'VERIFIED_FACT').length;
+  const memoryCoverage = memory.length ? verified / memory.length : 0.5;
+  const dupSafety = dedupe.length ? 0.3 : 1;
+  const promiseHealth = detail.open_promises.length > 3 ? 0.5 : 1;
+  const reachability = detail.contact_points.length ? 1 : 0;
+  const value = 0.30 * consentReadiness + 0.25 * memoryCoverage
+    + 0.20 * dupSafety + 0.15 * promiseHealth + 0.10 * reachability;
+  return {value: Math.round(value * 100) / 100, note: ''};
+}
+
+window.openParty = async (id) => {
+  const d = await get('/crm/parties/' + id);
+  const consents = await get(`/crm/parties/${id}/consents`);
+  const promises = await get(`/crm/parties/${id}/promises`);
+  const memory = await get(`/crm/parties/${id}/memory`);
+  const dedupe = await get(`/crm/parties/${id}/dedupe-candidates`);
+  const refs = await get(`/crm/parties/${id}/external-references`);
+  const rels = await get(`/crm/parties/${id}/relationships`);
+  const w = canCrmWrite();
+  const ready = customerReadiness(d, consents, memory, dedupe);
+  const groups = {VERIFIED_FACT: [], AI_SUGGESTED: [], DISPUTED_FACT: [],
+                  STALE_FACT: [], other: []};
+  memory.forEach(m => (groups[m.memory_type] || groups.other).push(m));
+  const memRow = (m) => `<li>${esc(JSON.stringify(m.content))}
+    <small>source ${esc(m.source)} · confidence ${m.confidence}
+    ${m.sensitive ? ' · SENSITIVE' : ''}</small>
+    ${w && m.memory_type === 'AI_SUGGESTED' && canVerifyMemory()
+      ? `<button onclick="memAct('${m.id}','verify','${id}')">verify as
+         human</button>` : ''}
+    ${w ? `<button onclick="memAct('${m.id}','dispute','${id}')">dispute
+      </button>
+      <button onclick="memAct('${m.id}','mark-stale','${id}')">mark stale
+      </button>` : ''}</li>`;
+  const consentRow = (c) => `<li>${c.channel}: <b>${c.status}</b>
+    <small>${esc(c.source)}</small></li>`;
+  const promiseRow = (p) => {
+    const overdue = p.due_at && p.status === 'open'
+      && new Date(p.due_at) < new Date();
+    return `<li${overdue ? ' class="err"' : ''}>${esc(p.what)}
+      <small>${p.status}${p.due_at ? ' · due ' + p.due_at.slice(0, 16)
+        : ''}${overdue ? ' · OVERDUE' : ''}
+      ${p.case_id ? ' · case ' + esc(p.case_id.slice(0, 8)) : ''}
+      </small></li>`;
+  };
+  $('crm-detail').innerHTML = `
+    <h3>${esc(d.display_name)} <span class="badge">${d.kind}</span></h3>
+    <p id="crm-readiness"><b>Customer Readiness Index
+      (NON-AUTHORITATIVE UI SUMMARY — server-side policy remains the
+      source of truth):</b> ${ready.value}
+      ${ready.note ? `<b class="err">${esc(ready.note)}</b>` : ''}</p>
+
+    <h4>Contact points</h4>
+    <ul>${d.contact_points.map(c => `<li>${c.kind}:
+      ${esc(c.value)}${c.preferred ? ' (preferred)' : ''}</li>`).join('')
+      || '<li><i>none</i></li>'}</ul>
+    ${w ? `<p><select id="cp-kind"><option>EMAIL</option>
+      <option>MOBILE</option><option>WHATSAPP</option></select>
+      <input id="cp-value" placeholder="value" style="max-width:12rem"/>
+      <button onclick="addContact('${id}')">Add contact</button>
+      <small>(editing an existing contact point is MISSING — future
+      API)</small></p>` : ''}
+
+    <h4>Consent Center</h4>
+    <p><small>Marketing consent is never implied. Revoked or denied
+    consent cannot be overridden by AI. Unknown marketing consent
+    requires human review. Service communication depends on tenant
+    policy.</small></p>
+    <ul>${consents.map(consentRow).join('')
+      || '<li><i>no consent recorded (UNKNOWN)</i></li>'}</ul>
+    ${w ? `<p><select id="consent-channel"><option>EMAIL</option>
+      <option>SMS</option><option>WHATSAPP</option>
+      <option>PHONE_CALL</option><option>MARKETING</option>
+      <option>SERVICE_UPDATES</option></select>
+      <select id="consent-status"><option>GRANTED</option>
+      <option>DENIED</option><option>REVOKED</option></select>
+      <button onclick="recordConsent('${id}')">Record consent</button>
+      </p>` : ''}
+    <p><select id="check-channel"><option>EMAIL</option>
+      <option>SMS</option><option>WHATSAPP</option>
+      <option>PHONE_CALL</option></select>
+      <select id="check-purpose"><option>service</option>
+      <option>marketing</option></select>
+      <button id="consent-check-btn" onclick="checkConsent('${id}')">
+      Check before outreach</button></p>
+    <div id="consent-explain"></div>
+
+    <h4>Promises <small>(operational commitments)</small></h4>
+    <p><b>Customer promised Finalis:</b></p>
+    <ul>${promises.filter(p => p.promisor === 'customer').map(promiseRow)
+      .join('') || '<li><i>none</i></li>'}</ul>
+    <p><b>Finalis promised the customer:</b></p>
+    <ul>${promises.filter(p => p.promisor === 'finalis').map(promiseRow)
+      .join('') || '<li><i>none</i></li>'}</ul>
+    ${w ? `<p><select id="promise-by"><option>customer</option>
+      <option>finalis</option></select>
+      <input id="promise-what" placeholder="what was promised"
+        style="max-width:16rem"/>
+      <input id="promise-due" type="datetime-local"
+        style="max-width:13rem"/>
+      <button onclick="addPromise('${id}')">Record promise</button></p>`
+      : ''}
+
+    <h4>Customer memory</h4>
+    <p><small>AI-suggested memory is not a verified fact. Only a human
+    can verify memory. Disputed facts block automation. Stale facts
+    cannot drive critical decisions alone. Sensitive memory requires
+    permission. <b>AI can suggest. Human verification decides.</b>
+    </small></p>
+    <p><b class="ok">Verified facts:</b></p>
+    <ul>${groups.VERIFIED_FACT.map(memRow).join('')
+      || '<li><i>none</i></li>'}</ul>
+    <p><b class="err">AI-suggested (lower trust — not verified):</b></p>
+    <ul style="opacity:.7">${groups.AI_SUGGESTED.map(memRow).join('')
+      || '<li><i>none</i></li>'}</ul>
+    <p><b>Disputed:</b></p>
+    <ul>${groups.DISPUTED_FACT.map(memRow).join('')
+      || '<li><i>none</i></li>'}</ul>
+    <p><b>Stale:</b></p>
+    <ul>${groups.STALE_FACT.map(memRow).join('')
+      || '<li><i>none</i></li>'}</ul>
+    ${w ? `<p><input id="mem-key" placeholder="fact key"
+        style="max-width:9rem"/>
+      <input id="mem-value" placeholder="value" style="max-width:11rem"/>
+      <select id="mem-source"><option>human</option>
+      <option>ai_worker</option></select>
+      <button onclick="addMemory('${id}')">Add memory</button></p>` : ''}
+
+    <h4>Case relationships</h4>
+    <ul>${rels.map(r => `<li>${r.to_kind}: ${esc(r.to_id.slice(0, 8))}
+      (${esc(r.role)})</li>`).join('') || '<li><i>none</i></li>'}</ul>
+    ${w ? `<p><select id="rel-case">${(window.CRM_CASES || []).map(c =>
+      `<option value="${c.id}">${esc(c.title)}</option>`).join('')}
+      </select>
+      <button onclick="linkCase('${id}')">Link to case</button></p>` : ''}
+
+    <h4>Duplicates / merge</h4>
+    <p><small>Merge is human-only. <b>AI may suggest candidates but
+    cannot approve merge.</b> Cross-tenant duplicates can never merge.
+    Conflicting verified facts require review. History is preserved —
+    the merged party is tombstoned, not deleted.</small></p>
+    <div id="crm-dedupe">${dedupe.length ? dedupe.map(c =>
+      `<div class="card"><b>${c.verdict}</b> score ${c.score}<br>
+       <small>${c.signals.map(esc).join('; ')}</small><br>
+       ${canMerge() ? `<button onclick="crmMerge('${id}',
+         '${c.party_id}')">Merge into this customer…</button>` : ''}
+       </div>`).join('') : '<i>No duplicate candidates.</i>'}</div>
+
+    <h4>External CRM (dry-run only)</h4>
+    <p><small>External CRM is not connected in production. Dry-run only
+    unless a provider is explicitly configured. External CRM cannot
+    overwrite verified Finalis data. No external provider is
+    called.</small></p>
+    <ul>${refs.map(r => `<li>${esc(r.provider)} / ${esc(r.object_kind)}
+      / ${esc(r.external_id)}</li>`).join('')
+      || '<li><i>no external references</i></li>'}</ul>
+    ${canSync() ? `<p>
+      <input id="ref-provider" placeholder="provider (e.g. hubspot)"
+        style="max-width:10rem"/>
+      <input id="ref-id" placeholder="external id"
+        style="max-width:8rem"/>
+      <button onclick="addExtRef('${id}')">Add reference</button></p>
+      <p><input id="sync-field" value="email" style="max-width:8rem"/>
+      <input id="sync-internal" placeholder="internal value"
+        style="max-width:10rem"/>
+      <input id="sync-external" placeholder="external value"
+        style="max-width:10rem"/>
+      <label><input type="checkbox" id="sync-verified"/> internal value
+      is human-verified</label>
+      <button id="sync-dryrun-btn" onclick="syncDryRun()">Sync
+        dry-run</button>
+      <button onclick="syncDecisionRun()">Sync decision</button></p>`
+      : ''}
+    <div id="sync-explain"></div>`;
+};
+
+window.addContact = async (id) => {
+  const {ok, data} = await send('POST', `/crm/parties/${id}/contacts`,
+    {kind: $('cp-kind').value, value: $('cp-value').value});
+  cmsg(ok ? 'Contact added (normalized to ' + data.value + ').'
+          : 'Refused: ' + data.detail, ok);
+  if (ok) openParty(id);
+};
+
+window.recordConsent = async (id) => {
+  const {ok, data} = await send('POST', `/crm/parties/${id}/consents`,
+    {channel: $('consent-channel').value,
+     status: $('consent-status').value, source: 'portal'});
+  cmsg(ok ? 'Consent recorded.' : 'Refused: ' + data.detail, ok);
+  if (ok) openParty(id);
+};
+
+window.checkConsent = async (id) => {
+  const channel = $('check-channel').value;
+  const purpose = $('check-purpose').value;
+  const {ok, data} = await send('POST', '/crm/consent/check',
+    {party_id: id, channel, purpose});
+  if (!ok) { cmsg('Refused: ' + data.detail, false); return; }
+  const result = data.allowed ? 'ALLOWED'
+    : (data.requires_review ? 'HUMAN_REVIEW' : 'BLOCKED');
+  $('consent-explain').innerHTML = `<p><b>Consent decision:</b>
+    channel ${channel} · purpose ${purpose} →
+    <b class="${data.allowed ? 'ok' : 'err'}">${result}</b><br>
+    <small>${data.reasons.map(esc).join('; ')}</small></p>`;
+};
+
+window.addPromise = async (id) => {
+  const body = {promisor: $('promise-by').value,
+                what: $('promise-what').value};
+  if ($('promise-due').value)
+    body.due_at = $('promise-due').value + ':00';
+  const {ok, data} = await send('POST', `/crm/parties/${id}/promises`,
+                                body);
+  cmsg(ok ? 'Promise recorded.' : 'Refused: ' + data.detail, ok);
+  if (ok) openParty(id);
+};
+
+window.addMemory = async (id) => {
+  const content = {};
+  content[$('mem-key').value || 'note'] = $('mem-value').value;
+  const {ok, data} = await send('POST', `/crm/parties/${id}/memory`,
+    {memory_type: 'VERIFIED_FACT', content,
+     source: $('mem-source').value, confidence: 0.9});
+  if (ok && data.memory_type === 'AI_SUGGESTED') {
+    cmsg('Stored as AI_SUGGESTED — AI-suggested memory is not a ' +
+         'verified fact until a human verifies it.', true);
+  } else {
+    cmsg(ok ? 'Memory added.' : 'Refused: ' + data.detail, ok);
+  }
+  if (ok) openParty(id);
+};
+
+window.memAct = async (memId, action, partyId) => {
+  const {ok, data} = await send('POST', `/crm/memory/${memId}/${action}`,
+                                {});
+  cmsg(ok ? action + ' → ' + data.memory_type
+          : 'Refused: ' + data.detail, ok);
+  openParty(partyId);
+};
+
+window.linkCase = async (id) => {
+  const {ok, data} = await send('POST', '/crm/relationships',
+    {from_id: id, to_id: $('rel-case').value, to_kind: 'case',
+     role: 'customer'});
+  cmsg(ok ? 'Linked to case.' : 'Refused: ' + data.detail, ok);
+  if (ok) openParty(id);
+};
+
+window.crmMerge = async (survivingId, mergedId) => {
+  const reason = prompt('Merge reason (required — merge is human-only)');
+  if (reason === null) return;
+  const {ok, data} = await send('POST', '/crm/merge',
+    {surviving_party_id: survivingId, merged_party_id: mergedId,
+     reason});
+  cmsg(ok ? 'Merged. History preserved (tombstoned).'
+          : 'Refused: ' + data.detail, ok);
+  await loadParties();
+  openParty(survivingId);
+};
+
+window.addExtRef = async (id) => {
+  const {ok, data} = await send('POST',
+    `/crm/parties/${id}/external-references`,
+    {provider: $('ref-provider').value, object_kind: 'Contact',
+     external_id: $('ref-id').value});
+  cmsg(ok ? 'External reference mapped (reference only — not core '
+        + 'identity).' : 'Refused: ' + data.detail, ok);
+  if (ok) openParty(id);
+};
+
+window.syncDryRun = async () => {
+  const {ok, data} = await send('POST', '/crm/sync/dry-run',
+    {field: $('sync-field').value,
+     internal_value: $('sync-internal').value,
+     external_value: $('sync-external').value,
+     internal_verified: $('sync-verified').checked});
+  if (!ok) { cmsg('Refused: ' + data.detail, false); return; }
+  $('sync-explain').innerHTML = `<p><b>Dry-run:</b>
+    <b>${data.decision}</b> — ${data.reasons.map(esc).join('; ')}<br>
+    idempotency key <code>${data.idempotency_key.slice(0, 12)}…</code> ·
+    external write happened: <b>${data.external_write_happened}</b>
+    (adapter: ${esc(data.adapter.provider || 'null-crm')}, mock)</p>`;
+};
+
+window.syncDecisionRun = async () => {
+  const {ok, data} = await send('POST', '/crm/sync/decision',
+    {direction: 'import', field: $('sync-field').value,
+     internal_value: $('sync-internal').value,
+     external_value: $('sync-external').value,
+     internal_verified: $('sync-verified').checked,
+     internal_changed: true, external_changed: true});
+  if (!ok) { cmsg('Refused: ' + data.detail, false); return; }
+  $('sync-explain').innerHTML = `<p><b>Sync decision:</b>
+    <b>${data.decision}</b> — ${data.reasons.map(esc).join('; ')}
+    ${data.conflict ? `<br><small>conflict on
+      '${esc(data.conflict.field)}': internal
+      '${esc(data.conflict.internal_value)}' vs external
+      '${esc(data.conflict.external_value)}' →
+      ${esc(data.conflict.resolution)}</small>` : ''}</p>`;
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -1001,6 +1404,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 {WIRING_SECTIONS}
 {QUOTES_SECTIONS}
 {EVIDENCE_SECTIONS}
+{CRM_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -1083,7 +1487,8 @@ window.openCase = async (id) => {{
      <button onclick="markWon('${{id}}')">Close WON</button>
      <button onclick="scheduleFor('${{id}}')">Schedule appointment…</button>
      <button onclick="quotesFor('${{id}}')">Quotes…</button>
-     <button onclick="evidenceFor('${{id}}')">Evidence…</button></p>
+     <button onclick="evidenceFor('${{id}}')">Evidence…</button>
+     <button onclick="crmFor('${{id}}')">Customer…</button></p>
      <div id="case-msg"></div>
      <h4>Timeline (${{tl.length}})</h4>
      <ul id="case-timeline">${{tl.slice(-12).map(e=>`<li>${{e.event_type}}
@@ -1121,7 +1526,8 @@ boot();
 </script>
 <script>{WIRING_JS}</script>
 <script>{QUOTES_JS}</script>
-<script>{EVIDENCE_JS}</script></body></html>"""
+<script>{EVIDENCE_JS}</script>
+<script>{CRM_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:

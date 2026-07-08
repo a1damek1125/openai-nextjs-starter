@@ -2408,7 +2408,8 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         require_permission(user, "case.read")
         load_crm_party_or_404(party_id, user)
         return [{"id": p.id, "promisor": p.promisor, "what": p.what,
-                 "status": p.status, "case_id": p.case_id}
+                 "status": p.status, "case_id": p.case_id,
+                 "due_at": p.due_at.isoformat() if p.due_at else None}
                 for p in crm.promises
                 if p.party_id == party_id and p.tenant_id == user["tid"]]
 
@@ -2417,16 +2418,24 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                               user: dict = Depends(current_user)):
         require_permission(user, "case.update")
         load_crm_party_or_404(party_id, user)
+        due_at = None
+        if body.get("due_at"):
+            try:
+                due_at = datetime.fromisoformat(body["due_at"])
+            except ValueError:
+                raise HTTPException(400, "invalid due_at")
         try:
             promise = crm.record_promise(CustomerPromise(
                 tenant_id=user["tid"], party_id=party_id,
                 promisor=body.get("promisor", ""),
-                what=body.get("what", ""),
+                what=body.get("what", ""), due_at=due_at,
                 case_id=body.get("case_id")))
         except ValueError as e:
             raise HTTPException(400, str(e))
         crm_store.save_promise(promise)
-        return {"id": promise.id, "promisor": promise.promisor}
+        return {"id": promise.id, "promisor": promise.promisor,
+                "due_at": promise.due_at.isoformat()
+                if promise.due_at else None}
 
     # -- memory --------------------------------------------------------------------
     @app.get("/crm/parties/{party_id}/memory")
