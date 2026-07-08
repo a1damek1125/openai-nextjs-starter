@@ -1570,6 +1570,22 @@ permission-gated). No fake evidence rows.</small></p>
 </div>
 </div>
 
+<div class="wb-panel" id="wb-p-report-artifact" hidden>
+  <h3>Proof Report Package</h3>
+  <p><small>A canonical, replayable proof-report artifact
+  (<code>/evidence/{id}/proof-reports</code>). <b>Report hash is
+  implemented.</b> <b>Report signing requires configured signing
+  infrastructure.</b> <b>Safe view is not a separate proof.</b>
+  <b>UI report display is not legal advice.</b> Cryptographic verification
+  is not the same as legal validity. <b>Server-side Evidence logic remains
+  authoritative</b> — a display score cannot unlock actions. Fields:
+  report_id · report_hash · package_hash · canonicalization_version ·
+  report_hash_input_schema_version · report_signature_status ·
+  signature_envelope_type · redaction_profile · replay_status ·
+  generated_at · final_technical_verdict.</small></p>
+  <div id="wb-report-artifact-body"></div>
+</div>
+
 <h3>Production Honesty</h3>
 <div id="wb-p-honesty"><ul>
   <li><b>Production readiness is false.</b></li>
@@ -1787,7 +1803,9 @@ window.wbRender = (d, x) => {
   ['wb-p-detail', 'wb-p-inclusion', 'wb-p-consistency', 'wb-p-algebra',
    'wb-p-state', 'wb-p-derivative', 'wb-p-contract', 'wb-p-provenance',
    'wb-p-timestamp', 'wb-p-scitt', 'wb-p-crypto', 'wb-p-conflict',
-   'wb-p-report', 'wb-p-graph'].forEach(show);
+   'wb-p-report', 'wb-p-report-artifact', 'wb-p-graph'].forEach(show);
+  window.WB_EVIDENCE_ID = d.id;
+  wbLoadReports(d.id);
   const yn = (b) => b ? '<b class="ok">yes</b>' : '<b class="err">no</b>';
   const hashV = d.integrity ? d.integrity.sha256 : null;
 
@@ -2059,6 +2077,70 @@ window.wbRender = (d, x) => {
   $('workbench-section').scrollIntoView();
   wbMsg('Opened proof workbench for ' + d.id.slice(0, 8)
     + ' — server-side verification remains authoritative.', true);
+};
+
+// --- Proof Report Package (EVIDENCE-REPORT-C2) ---------------------------
+window.wbRenderReport = (m, pkg) => {
+  const yn = (b) => b ? '<b class="ok">yes</b>' : '<b class="err">no</b>';
+  $('wb-report-artifact-body').innerHTML = `<ul>
+    <li>report_id: <code>${esc(m.report_id)}</code></li>
+    <li>report_hash: <code>${esc((m.report_hash || '').slice(0, 20))}…</code>
+      <small>(Report hash is implemented.)</small></li>
+    <li>package_hash: <code>${esc(((pkg && pkg.package_hash)
+      || '').slice(0, 20))}…</code></li>
+    <li>canonicalization_version: ${esc(m.canonicalization_version)}
+      (${esc(m.canonicalization_profile)})</li>
+    <li>report_hash_input_schema_version:
+      ${esc(m.report_hash_input_schema_version)}</li>
+    <li>report_signature_status: <b>${esc(m.report_signature_status)}</b>
+      · signature_envelope_type: ${esc(m.signature_envelope_type)}
+      <small>(Report signing requires configured signing infrastructure.)
+      </small></li>
+    <li>redaction_profile: ${esc(m.redaction_profile)} · safe view
+      available: ${yn(m.safe_view_available)}
+      <small>(Safe view is not a separate proof.)</small></li>
+    <li>replay_status: ${esc(m.replay_status)} · generated_at:
+      <small>${esc(m.generated_at)}</small></li>
+    <li>final_technical_verdict: <b class="${
+      (m.final_verdict || '').startsWith('VERIFIED') ? 'ok' : 'err'}">
+      ${esc(m.final_verdict)}</b> · warnings ${esc(String(
+        m.warnings_count))} · conflicts ${esc(String(m.conflicts_count))}
+      · missing capabilities ${esc(String(m.missing_capabilities_count))}</li>
+    </ul>
+    <p><small>UI report display is not legal advice. Cryptographic
+    verification is not the same as legal validity. Server-side Evidence
+    logic remains authoritative.</small></p>`;
+};
+
+window.wbLoadReports = async (id) => {
+  const rows = await wbTry('/evidence/' + id + '/proof-reports');
+  const canGen = wbCanAudit();
+  const head = canGen
+    ? `<p><button onclick="wbGenReport('${esc(id)}')">Generate proof
+       report</button> <small>(canonical, replayable, server-verified)
+       </small></p>` : '<p><small>Proof reports require audit.view.</small></p>';
+  if (rows && rows.length) {
+    const latest = rows[rows.length - 1];
+    const full = await wbTry('/evidence/proof-reports/' + latest.report_id);
+    if (full) wbRenderReport(full.report_metadata, full.package);
+    $('wb-report-artifact-body').innerHTML = head
+      + $('wb-report-artifact-body').innerHTML
+      + `<p><small>${rows.length} report artifact(s) on record — new
+         reports never overwrite prior ones.</small></p>`;
+  } else {
+    $('wb-report-artifact-body').innerHTML = head
+      + '<p><i>No proof report generated yet.</i></p>';
+  }
+};
+
+window.wbGenReport = async (id) => {
+  const {ok, data} = await send('POST',
+    '/evidence/' + id + '/proof-reports', {});
+  if (!ok) { wbMsg('Refused: ' + (data.detail || ''), false); return; }
+  wbRenderReport(data.report_metadata, data.package);
+  wbMsg('Proof report generated — report_hash '
+    + (data.report_metadata.report_hash || '').slice(0, 12)
+    + '. Report signing requires configured signing infrastructure.', true);
 };
 
 // Case-first entry from the case detail row.

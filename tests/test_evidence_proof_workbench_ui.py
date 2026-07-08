@@ -220,6 +220,37 @@ class TestMerkleConsistencyD3Integration:
             assert fake not in page, fake
 
 
+class TestProofReportPackageIntegration:
+    """EVIDENCE-REPORT-C2: V-F surfaces the canonical proof-report artifact."""
+
+    def test_references_report_endpoints(self, page):
+        assert "/proof-reports" in page
+        assert "wbGenReport" in page and "wbLoadReports" in page
+        assert 'id="wb-p-report-artifact"' in page
+
+    def test_report_field_labels_present(self, norm):
+        for label in ("report_id", "report_hash", "canonicalization_version",
+                      "report_hash_input_schema_version",
+                      "report_signature_status", "signature_envelope_type",
+                      "redaction_profile", "replay_status"):
+            assert label in norm, label
+
+    def test_report_honesty_labels_present(self, norm):
+        for msg in ("Report hash is implemented.",
+                    "Report signing requires configured signing "
+                    "infrastructure.",
+                    "Safe view is not a separate proof.",
+                    "UI report display is not legal advice.",
+                    "Server-side Evidence logic remains authoritative."):
+            assert msg in norm, msg
+
+    def test_no_hardcoded_fake_report_rows(self, page):
+        assert "full.report_metadata" in page or "data.report_metadata" \
+            in page                              # rendered from API response
+        for fake in ("report-0001", "fake_report_hash", "RID-DEMO"):
+            assert fake not in page, fake
+
+
 def test_46_existing_portal_sections_still_served(page):
     # V-F did not remove any prior section (regression guard).
     for section in ('id="quotes-section"', 'id="evidence-section"',

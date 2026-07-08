@@ -246,6 +246,44 @@ class EvidenceStore:
                         "AND tenant_id=?", root_id, tenant_id)
         return dict(r) if r else None
 
+    # -- Canonical Evidence Report Package registry (EVIDENCE-REPORT-C2) ----------
+    def save_report(self, *, report_id: str, tenant_id: str, evidence_id: str,
+                    case_id, report_type: str, report_version: int,
+                    report_status: str, report_hash: str, package_hash: str,
+                    final_verdict: str, payload_json: str, package_json: str,
+                    parent_report_id, supersedes_report_id, generated_by: str,
+                    created_at: str) -> None:
+        self.db.insert("evidence_proof_reports", {
+            "id": report_id, "tenant_id": tenant_id,
+            "evidence_id": evidence_id, "case_id": case_id,
+            "report_type": report_type, "report_version": report_version,
+            "report_status": report_status, "report_hash": report_hash,
+            "package_hash": package_hash, "final_verdict": final_verdict,
+            "payload_json": payload_json, "package_json": package_json,
+            "parent_report_id": parent_report_id,
+            "supersedes_report_id": supersedes_report_id,
+            "generated_by": generated_by, "created_at": created_at})
+
+    def get_report(self, report_id: str, *,
+                   tenant_id: str) -> Optional[dict]:
+        r = self.db.one("SELECT * FROM evidence_proof_reports WHERE id=? "
+                        "AND tenant_id=?", report_id, tenant_id)
+        return dict(r) if r else None
+
+    def reports_for_evidence(self, evidence_id: str, *,
+                             tenant_id: str) -> list[dict]:
+        return [dict(r) for r in self.db.all(
+            "SELECT * FROM evidence_proof_reports WHERE evidence_id=? AND "
+            "tenant_id=? ORDER BY created_at", evidence_id, tenant_id)]
+
+    def latest_report_hash_for_evidence(self, evidence_id: str, *,
+                                        tenant_id: str) -> Optional[str]:
+        r = self.db.one(
+            "SELECT report_hash FROM evidence_proof_reports WHERE "
+            "evidence_id=? AND tenant_id=? ORDER BY created_at DESC LIMIT 1",
+            evidence_id, tenant_id)
+        return r["report_hash"] if r else None
+
     def save_policy_version(self, version: str, fingerprint: str, *,
                             created_at: str) -> None:
         if self.db.one("SELECT id FROM evidence_policy_versions WHERE "

@@ -15,7 +15,7 @@ from finalis.portal.app import create_app
 from finalis.portal.db import MIGRATIONS, Database
 from finalis.portal.seed import seed
 
-EXPECTED_DB_VERSION = 7
+EXPECTED_DB_VERSION = 8
 
 
 @pytest.fixture()
@@ -74,6 +74,8 @@ class TestMigrations:
                 "crm_memory_items", "crm_merge_decisions",
                 "crm_external_references",
                 "crm_external_sync_events"} <= tables
+        # Canonical Evidence Report Package registry (v8).
+        assert {"evidence_proof_reports"} <= tables
 
     def test_evidence_ve_columns_survived_renumber(self, tmp_path):
         db = Database(str(tmp_path / "c.db"))

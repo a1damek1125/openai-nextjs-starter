@@ -1554,6 +1554,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                                      decide_file_treatment,
                                      scanner_risk_contribution)
     from ..evidence import transparency as _mrk
+    from ..evidence import reports as _rpt
 
     vault_dir = tempfile.mkdtemp(prefix="finalis-evidence-") \
         if db_path == ":memory:" \
@@ -2322,6 +2323,175 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         return {"root_id": root_id, "algorithm": "sha256",
                 "chain_length": len(lineage), "lineage": lineage,
                 "checkpoint": _checkpoint(row), "notes": _CONSISTENCY_NOTES}
+
+    # -- Canonical Evidence Report Package (EVIDENCE-REPORT-C2) ---------------------
+    def _gather_evidence_signals(ev, user: dict) -> dict:
+        """Assemble the server-side proof signals a report captures. Reuses
+        the same tested Evidence data (integrity, Merkle inclusion, server-
+        verified consistency, derivatives, contracts) — no faked values."""
+        j = evidence_json(ev)
+        events = estore.all_chain_events(tenant_id=user["tid"])
+        leaves = [_leaf_for(cr) for cr in events]
+        inclusion = {"status": "NOT_EXPOSED"}
+        idx = next((i for i, cr in enumerate(events)
+                    if cr["evidence_id"] == ev.id), None)
+        if idx is not None and leaves:
+            pr = _mrk.build_proof(leaves, idx)
+            inclusion = {"status": "VERIFIED" if _mrk.verify_proof(pr)
+                         else "NOT_VERIFIED", "root_id": None,
+                         "root_hash": pr.root, "tree_size": pr.size,
+                         "leaf_index": pr.index, "leaf_hash": pr.leaf_hash}
+        consistency = {"status": "NOT_EXPOSED"}
+        roots = estore.merkle_roots(tenant_id=user["tid"])
+        if len(roots) >= 2:
+            prev, cur = roots[-2], roots[-1]
+            rep = _mrk.consistency_report(
+                old_leaves=json.loads(prev["leaves_json"]),
+                old_root=prev["root"], old_size=prev["size"],
+                new_leaves=json.loads(cur["leaves_json"]),
+                new_root=cur["root"], new_size=cur["size"])
+            consistency = {"status": rep.status,
+                           "append_only_verified": rep.append_only_verified,
+                           "previous_root_id": prev["id"],
+                           "current_root_id": cur["id"],
+                           "proof_nodes": rep.proof_nodes}
+        derivatives = [
+            {"id": d.get("id"),
+             "parent_evidence_id": d.get("parent_evidence_id", ev.id),
+             "orphan": bool(d.get("parent_evidence_id")
+                            and d.get("parent_evidence_id") != ev.id)}
+            for d in estore.derivatives(ev.id, tenant_id=user["tid"])]
+        contracts = [{"id": c["id"], "final_decision": c["final_decision"]}
+                     for c in estore.contracts(tenant_id=user["tid"],
+                                               evidence_id=ev.id)]
+        integ = j.get("integrity") or {}
+        ca = getattr(ev, "created_at", None)
+        src = getattr(ev, "source_type", None) or getattr(ev, "source", None)
+        return {"evidence": {
+                    "id": ev.id, "case_id": ev.case_id,
+                    "evidence_type": ev.evidence_type,
+                    "source": str(src) if src is not None else "upload",
+                    "created_at": ca.isoformat()
+                    if hasattr(ca, "isoformat") else ca,
+                    "content_hash": integ.get("sha256"),
+                    "algorithm": integ.get("algorithm"),
+                    "integrity_valid": integ.get("valid"),
+                    "state": ev.state, "human_verified": ev.human_verified},
+                "inclusion": inclusion, "consistency": consistency,
+                "derivatives": derivatives, "contracts": contracts}
+
+    @app.post("/evidence/{evidence_id}/proof-reports")
+    async def create_proof_report(evidence_id: str,
+                                  user: dict = Depends(current_user)):
+        require_permission(user, "audit.view")
+        ev = load_evidence_or_404(evidence_id, user)
+        signals = _gather_evidence_signals(ev, user)
+        rid = str(uuid.uuid4())
+        parent = estore.reports_for_evidence(evidence_id, tenant_id=user["tid"])
+        payload = _rpt.build_report_payload(
+            report_id=rid, tenant_id=user["tid"], generated_by=user["uid"],
+            generated_at=utcnow(), signals=signals,
+            supersedes_report_id=parent[-1]["id"] if parent else None)
+        package = _rpt.build_package(payload)
+        estore.save_report(
+            report_id=rid, tenant_id=user["tid"], evidence_id=evidence_id,
+            case_id=ev.case_id, report_type=_rpt.REPORT_TYPE,
+            report_version=_rpt.REPORT_VERSION, report_status="GENERATED",
+            report_hash=payload["report_metadata"]["report_hash"],
+            package_hash=package["package_hash"],
+            final_verdict=payload["report_metadata"]["final_verdict"],
+            payload_json=json.dumps(payload),
+            package_json=json.dumps(package), parent_report_id=None,
+            supersedes_report_id=parent[-1]["id"] if parent else None,
+            generated_by=user["uid"], created_at=utcnow())
+        audit.append(event_type="EVIDENCE_PROOF_REPORT_GENERATED",
+                     actor=user["uid"],
+                     payload={"report_id": rid, "evidence_id": evidence_id,
+                              "report_hash": payload["report_metadata"][
+                                  "report_hash"]})
+        return {"report_id": rid, "package": package, **payload}
+
+    def _load_report_or_404(report_id: str, user: dict) -> dict:
+        row = estore.get_report(report_id, tenant_id=user["tid"])
+        if row is None:                          # incl. cross-tenant
+            raise HTTPException(404, "proof report not found")
+        return row
+
+    @app.get("/evidence/proof-reports/{report_id}")
+    async def get_proof_report(report_id: str,
+                               user: dict = Depends(current_user)):
+        require_permission(user, "audit.view")
+        row = _load_report_or_404(report_id, user)
+        payload = json.loads(row["payload_json"])
+        return {"report_id": report_id, "package": json.loads(
+            row["package_json"]), **payload}
+
+    @app.get("/evidence/proof-reports/{report_id}/safe")
+    async def get_proof_report_safe(report_id: str,
+                                    user: dict = Depends(current_user)):
+        # Safe/redacted view available to document.view roles (no audit.view
+        # needed) — omits restricted fields, never changes stored truth.
+        require_permission(user, "document.view")
+        row = _load_report_or_404(report_id, user)
+        return _rpt.safe_view(json.loads(row["payload_json"]))
+
+    @app.post("/evidence/proof-reports/{report_id}/verify")
+    async def verify_proof_report(report_id: str,
+                                  user: dict = Depends(current_user)):
+        require_permission(user, "audit.view")
+        row = _load_report_or_404(report_id, user)
+        result = _rpt.verify_report_artifact(
+            json.loads(row["payload_json"]), row["report_hash"],
+            row["package_hash"])
+        return {"report_id": report_id, **result, "verified_at": utcnow()}
+
+    @app.get("/evidence/{evidence_id}/proof-reports")
+    async def list_proof_reports(evidence_id: str,
+                                 user: dict = Depends(current_user)):
+        require_permission(user, "audit.view")
+        load_evidence_or_404(evidence_id, user)
+        return [{"report_id": r["id"], "report_hash": r["report_hash"],
+                 "package_hash": r["package_hash"],
+                 "final_verdict": r["final_verdict"],
+                 "report_status": r["report_status"],
+                 "created_at": r["created_at"],
+                 "supersedes_report_id": r["supersedes_report_id"]}
+                for r in estore.reports_for_evidence(
+                    evidence_id, tenant_id=user["tid"])]
+
+    @app.get("/evidence/proof-reports/{report_id}/diff")
+    async def diff_proof_reports(report_id: str, other_report_id: str,
+                                 user: dict = Depends(current_user)):
+        require_permission(user, "audit.view")
+        a = _load_report_or_404(report_id, user)
+        b = _load_report_or_404(other_report_id, user)
+        pa, pb = json.loads(a["payload_json"]), json.loads(b["payload_json"])
+
+        def _flat(obj, prefix=""):
+            out = {}
+            if isinstance(obj, dict):
+                for k, v in obj.items():
+                    out.update(_flat(v, f"{prefix}.{k}" if prefix else k))
+            elif isinstance(obj, list):
+                out[prefix] = _rpt.canonical_json(obj)
+            else:
+                out[prefix] = obj
+            return out
+        VOL = tuple(_rpt.EXCLUDED_HASH_FIELDS)
+        fa, fb = _flat(pa), _flat(pb)
+        changed = []
+        for k in sorted(set(fa) | set(fb)):
+            if any(k.endswith(v) for v in VOL):
+                continue                         # ignore volatile fields
+            if fa.get(k) != fb.get(k):
+                changed.append({"field": k, "a": fa.get(k), "b": fb.get(k)})
+        return {"report_id": report_id, "other_report_id": other_report_id,
+                "report_hash_a": a["report_hash"],
+                "report_hash_b": b["report_hash"],
+                "identical_proof_state": a["report_hash"] == b["report_hash"],
+                "changed_fields": changed,
+                "note": "Volatile fields (ids, timestamps, hashes, signature) "
+                        "are excluded from the diff."}
 
     # ---- Relationship Core (CRM-B: persistence + API over CRM-A) --------------
     from ..crm.adapters import NullCrmAdapter, default_policy, \

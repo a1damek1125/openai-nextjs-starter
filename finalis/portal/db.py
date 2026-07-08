@@ -543,6 +543,24 @@ CREATE TABLE IF NOT EXISTS crm_external_sync_cursors (
 CREATE INDEX IF NOT EXISTS ix_crmcursor
   ON crm_external_sync_cursors(tenant_id, provider);
 """),
+    (8, """
+-- v8: Canonical Evidence Report Package registry (EVIDENCE-REPORT-C2).
+-- Immutable-ish proof-report artifacts: the full canonical payload + package
+-- are stored verbatim so a report is replayable/verifiable later. New reports
+-- never overwrite prior ones (new id); supersedes/parent link the lineage.
+CREATE TABLE IF NOT EXISTS evidence_proof_reports (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  evidence_id TEXT NOT NULL, case_id TEXT,
+  report_type TEXT NOT NULL, report_version INTEGER NOT NULL DEFAULT 1,
+  report_status TEXT NOT NULL DEFAULT 'GENERATED',
+  report_hash TEXT NOT NULL, package_hash TEXT NOT NULL,
+  final_verdict TEXT NOT NULL,
+  payload_json TEXT NOT NULL, package_json TEXT NOT NULL,
+  parent_report_id TEXT, supersedes_report_id TEXT,
+  generated_by TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_evreport
+  ON evidence_proof_reports(tenant_id, evidence_id, created_at);
+"""),
 ]
 
 
