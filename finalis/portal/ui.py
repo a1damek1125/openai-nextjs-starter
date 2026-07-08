@@ -45,6 +45,213 @@ document.getElementById('login-form').onsubmit = async (e) => {{
 }};
 </script></body></html>"""
 
+# Plain strings (single braces) interpolated into the PORTAL_PAGE f-string:
+# the wiring sections' JS stays readable instead of double-brace escaped.
+WIRING_SECTIONS = """
+<section id="sched-section"><h2>Scheduling</h2>
+<p><small>Calendar &amp; video providers are <b>mocks</b> — links are
+simulated. Appointments are in-memory and <b>do not survive a server
+restart</b> yet.</small></p>
+<div id="sched-book" hidden>
+  Case: <select id="sched-case"></select>
+  Type: <select id="sched-type">
+    <option>CALLBACK</option><option>PHONE_CALL</option>
+    <option>VIDEO_CALL</option><option>SALES_CONSULTATION</option>
+    <option>OFFER_REVIEW</option><option>TECHNICIAN_VISIT</option>
+    <option>SERVICE_DELIVERY</option><option>POST_SALE_CHECKIN</option>
+  </select>
+  Day: <input id="sched-day" type="date" style="max-width:11rem"/>
+  Resource: <input id="sched-resource" style="max-width:14rem"
+    placeholder="tech-1 (required for visits)"/>
+  <button id="find-slots" onclick="loadSlots()">Find slots</button>
+  <div id="sched-slots"></div>
+  <div id="sched-msg"></div>
+</div>
+<h3>Appointments</h3><div id="sched-appts"></div>
+</section>
+
+<section id="admin-section"><h2>Admin — Users &amp; Access</h2>
+<p id="admin-me"></p>
+<p id="admin-denied" hidden><i>Your role cannot manage users
+(enforced server-side).</i></p>
+<div id="admin-manage" hidden>
+  <div id="admin-users"></div>
+  <h3>Invite user</h3>
+  <input id="invite-email" placeholder="email" style="max-width:16rem"/>
+  <select id="invite-role">
+    <option>viewer</option><option>technician</option><option>operator</option>
+    <option>accountant</option><option>manager</option>
+  </select>
+  <button id="invite-btn" onclick="inviteUser()">Invite (simulated email)</button>
+  <span id="invite-msg"></span>
+</div>
+<div id="admin-logs-wrap" hidden>
+  <h3>Access log (recent decisions)</h3><ul id="admin-logs"></ul>
+</div>
+</section>
+
+<section id="gov-section" hidden><h2>Governance — AI Activity</h2>
+<h3>Blocked actions</h3>
+<div id="gov-blocked"></div>
+<h3>Agent traces</h3>
+<p><small id="gov-traces-note"><b>SCAFFOLDED_ONLY:</b> this endpoint is live,
+tenant-scoped and permission-gated, but portal agents are not yet wired
+through the governed runtime — the list stays empty until that
+producer wiring lands.</small></p>
+<div id="gov-traces"></div>
+</section>
+"""
+
+WIRING_JS = """
+const $ = (id) => document.getElementById(id);
+const ROLES = ['owner','manager','operator','technician','accountant','viewer'];
+const send = async (method, path, body) => {
+  const r = await fetch(path, {method, headers: H(),
+                               body: body ? JSON.stringify(body) : '{}'});
+  return {ok: r.ok, data: await r.json()};
+};
+
+window.loadSections = async () => {
+  let me; try { me = await get('/admin/me'); } catch (e) { return; }
+  window.ME = me;
+  const cases = await get('/cases');
+  $('admin-me').innerHTML = `Tenant <b>${me.tenant_id}</b> · role
+    <b id="me-role">${me.role}</b> · ${me.permissions.length} permissions`;
+  // Visibility mirrors permissions; the server re-checks every call.
+  const canBook = ['owner','manager','operator'].includes(me.role);
+  const canManage = me.permissions.includes('tenant.manage_users');
+  const canLogs = me.permissions.includes('access_log.view');
+  const canAudit = me.permissions.includes('audit.view');
+  $('sched-book').hidden = !canBook;
+  $('sched-case').innerHTML = cases.map(c =>
+    `<option value="${c.id}">${c.title}</option>`).join('');
+  if (!$('sched-day').value) $('sched-day').value =
+    new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+  $('admin-manage').hidden = !canManage;
+  $('admin-denied').hidden = canManage;
+  $('admin-logs-wrap').hidden = !canLogs;
+  $('gov-section').hidden = !canAudit;
+  const jobs = [loadAppts()];
+  if (canManage) jobs.push(loadUsers());
+  if (canLogs) jobs.push(loadLogs());
+  if (canAudit) jobs.push(loadGov());
+  await Promise.allSettled(jobs);
+};
+
+window.loadUsers = async () => {
+  const us = await get('/admin/users');
+  $('admin-users').innerHTML =
+    '<table><tr><th>Email</th><th>Role</th><th>Change role</th></tr>' +
+    us.map(u => `<tr><td>${u.email}</td><td>${u.role}</td>
+      <td><select id="role-${u.id}">${ROLES.map(r =>
+        `<option ${r === u.role ? 'selected' : ''}>${r}</option>`).join('')}
+      </select>
+      <button onclick="changeRole('${u.id}')">Change</button></td></tr>`)
+    .join('') + '</table>';
+};
+window.changeRole = async (id) => {
+  const {ok, data} = await send('PATCH', `/admin/memberships/${id}/role`,
+                                {role: $('role-' + id).value});
+  $('invite-msg').innerText = ok ? 'Role updated to ' + data.role +
+    ' (takes effect on next login)' : 'Refused: ' + data.detail;
+  loadUsers(); loadLogs();
+};
+window.inviteUser = async () => {
+  const {ok, data} = await send('POST', '/admin/users/invite',
+    {email: $('invite-email').value, role: $('invite-role').value});
+  $('invite-msg').innerText = ok ?
+    'Invitation ' + data.status + ' (simulated email — no real send)' :
+    'Refused: ' + data.detail;
+};
+window.loadLogs = async () => {
+  const logs = await get('/admin/access-logs');
+  $('admin-logs').innerHTML = logs.slice(-10).reverse().map(e =>
+    `<li><b>${e.payload.decision}</b> ${e.payload.action}
+     <small>${e.actor} · ${e.payload.reasons.join(', ')}</small></li>`)
+    .join('') || '<li><i>No access decisions yet.</i></li>';
+};
+
+window.loadSlots = async () => {
+  const q = new URLSearchParams({appointment_type: $('sched-type').value});
+  if ($('sched-day').value) q.set('day', $('sched-day').value);
+  if ($('sched-resource').value) q.set('resource_id', $('sched-resource').value);
+  const r = await fetch('/scheduling/availability?' + q, {headers: H()});
+  const slots = await r.json();
+  if (!r.ok) { $('sched-slots').innerHTML =
+    `<span class="err">${slots.detail || 'error'}</span>`; return; }
+  $('sched-slots').innerHTML = slots.length ? 'Free: ' + slots.map(s =>
+    `<button onclick="bookSlot('${s.start_at}')">
+     ${s.start_at.slice(11, 16)}</button>`).join('') : '<i>No free slots.</i>';
+};
+window.bookSlot = async (start) => {
+  const body = {case_id: $('sched-case').value,
+                appointment_type: $('sched-type').value,
+                start_at: start.replace(' ', 'T')};
+  if ($('sched-resource').value) body.resource_id = $('sched-resource').value;
+  const {ok, data} = await send('POST', '/scheduling/appointments', body);
+  $('sched-msg').innerHTML = ok ?
+    `Booked: <b id="booked-status">${data.status}</b>` +
+    (data.video_meeting_url ?
+      ` · video link (mock): ${data.video_meeting_url}` : '') +
+    (data.confirmation_url ?
+      ` · client confirmation link: <a id="confirm-link"
+        href="${data.confirmation_url}">${data.confirmation_url}</a>` : '') :
+    `<span class="err">Blocked: ${data.detail || ''}</span>`;
+  loadAppts();
+};
+window.loadAppts = async () => {
+  const as = await get('/scheduling/appointments');
+  const canOp = ['owner','manager','operator'].includes(ME.role);
+  $('sched-appts').innerHTML = as.length ?
+    '<table><tr><th>Case</th><th>Type</th><th>Start</th><th>Status</th>' +
+    '<th></th></tr>' + as.map(a =>
+      `<tr data-appt="${a.id}"><td>${a.case_id.slice(0, 8)}</td>
+       <td>${a.type}</td><td>${a.start_at}</td><td>${a.status}</td><td>` +
+      (canOp ? `<button onclick="apptOp('${a.id}','complete')">Complete</button>
+        <button onclick="apptOp('${a.id}','no-show')">No-show</button>
+        <button onclick="apptReschedule('${a.id}')">Reschedule</button>
+        <button onclick="apptCancel('${a.id}')">Cancel</button>` : '') +
+      '</td></tr>').join('') + '</table>' :
+    '<i>No appointments yet (in-memory only — cleared on restart).</i>';
+};
+window.apptOp = async (id, op, body) => {
+  const {ok, data} = await send('POST',
+    `/scheduling/appointments/${id}/${op}`, body || {});
+  $('sched-msg').innerText = ok ? op + ' → ' + data.status +
+    (data.lifecycle_view ? ' · case is now: ' + data.lifecycle_view : '') :
+    'Refused: ' + (data.detail || '');
+  loadAppts();
+};
+window.apptReschedule = (id) => {
+  const ns = prompt('New start (YYYY-MM-DDTHH:MM:SS)');
+  if (ns) apptOp(id, 'reschedule', {new_start: ns});
+};
+window.apptCancel = (id) => {
+  const reason = prompt('Cancellation reason (required)');
+  if (reason !== null) apptOp(id, 'cancel', {reason: reason, by: 'company'});
+};
+window.scheduleFor = (id) => {
+  $('sched-case').value = id;
+  $('sched-section').scrollIntoView();
+};
+
+window.loadGov = async () => {
+  const blocked = await get('/governance/blocked');
+  $('gov-blocked').innerHTML = blocked.length ? blocked.map(b =>
+    `<div class="card"><span class="badge">${b.event}</span>
+     <p>${b.explanation}</p></div>`).join('') :
+    '<i>No blocked AI actions for this tenant.</i>';
+  const traces = await get('/governance/traces');
+  $('gov-traces').innerHTML = traces.length ?
+    '<table><tr><th>Action</th><th>Tool</th><th>Status</th><th>Policy</th>' +
+    '<th>When</th></tr>' + traces.slice(-15).reverse().map(t =>
+      `<tr><td>${t.payload.action}</td><td>${t.payload.tool}</td>
+       <td>${t.payload.status}</td><td>${t.payload.policy || '-'}</td>
+       <td><small>${t.created_at}</small></td></tr>`).join('') + '</table>' :
+    '<i>No agent traces yet (producer wiring pending).</i>';
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -60,6 +267,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <section><h2>Case Detail</h2><div id="case-detail"><i>Select a case.</i></div></section>
 <section><h2>Pipeline</h2><div id="pipeline"></div></section>
 <section><h2>Recent Activity</h2><ul id="activity"></ul></section>
+{WIRING_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -104,6 +312,7 @@ async function boot() {{
       `<li>[${{e.actor_type}}] ${{e.summary}}</li>`).join('');
     document.getElementById('loading').hidden = true;
     document.getElementById('app').hidden = false;
+    if (window.loadSections) loadSections();
   }} catch (e) {{
     document.getElementById('loading').hidden = true;
     document.getElementById('error').hidden = false;
@@ -138,7 +347,8 @@ window.openCase = async (id) => {{
           .map(s=>`<option>${{s}}</option>`).join('')}}
      </select>
      <button onclick="doTransition('${{id}}')">Transition</button>
-     <button onclick="markWon('${{id}}')">Close WON</button></p>
+     <button onclick="markWon('${{id}}')">Close WON</button>
+     <button onclick="scheduleFor('${{id}}')">Schedule appointment…</button></p>
      <div id="case-msg"></div>
      <h4>Timeline (${{tl.length}})</h4>
      <ul id="case-timeline">${{tl.slice(-12).map(e=>`<li>${{e.event_type}}
@@ -173,7 +383,8 @@ window.markWon = async (id) => {{
   boot(); openCase(id);
 }};
 boot();
-</script></body></html>"""
+</script>
+<script>{WIRING_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:

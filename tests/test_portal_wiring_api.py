@@ -446,6 +446,26 @@ class TestGovernanceApi:
         h = login(client)
         assert client.get("/governance/blocked", headers=h).json() == []
 
+    def test_portal_page_serves_wiring_sections_honestly(self, client):
+        """W2 static checks: sections exist, call the tested APIs, and the
+        honesty labels (mock providers, in-memory persistence, scaffolded
+        traces producer) are shown. Behaviour in a real browser is W3."""
+        page = client.get("/portal").text
+        for marker in [
+                'id="sched-section"', 'id="admin-section"',
+                'id="gov-section"',
+                "/scheduling/availability", "/scheduling/appointments",
+                "/admin/users", "/admin/users/invite",
+                "/admin/memberships/", "/admin/access-logs",
+                "/governance/blocked", "/governance/traces",
+                "do not survive a server\nrestart", "mock",
+                "SCAFFOLDED_ONLY", "simulated email",
+                "scheduleFor"]:
+            assert marker in page, marker
+        # No static fake data: user/appointment/blocked tables are built
+        # from fetch() responses only.
+        assert "owner@demo.finalis" not in page
+
     def test_audit_chain_still_verifies_after_wiring_traffic(self, client):
         h = login(client)
         client.get("/admin/users", headers=h)
