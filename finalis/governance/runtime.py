@@ -255,7 +255,8 @@ class GovernedRuntime:
         ev = self.audit.append(
             event_type="AGENT_TRACE", actor=trace.agent_name,
             case_id=trace.case_id,
-            payload={"trace_id": trace.id, "action": trace.action_type,
+            payload={"trace_id": trace.id, "tenant_id": trace.tenant_id,
+                     "action": trace.action_type,
                      "tool": trace.tool_name, "status": trace.status,
                      "policy": trace.policy_decision, "reason": reason})
         trace.audit_event_id = ev.id

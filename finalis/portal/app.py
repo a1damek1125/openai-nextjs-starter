@@ -626,6 +626,16 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                 tenant_id=user["tid"], user_id=uid, role=user["role"]))
         return uid
 
+    def require_permission(user: dict, action: str) -> str:
+        """Deny-by-default server-side gate through the RbacEngine (which
+        also audits every decision as ACCESS_DECISION)."""
+        uid = rbac_user_id(user)
+        d = rbac.access(actor_type="user", actor_id=uid,
+                        tenant_id=user["tid"], action=action)
+        if d.decision != "ALLOW":
+            raise HTTPException(403, "; ".join(d.reasons))
+        return uid
+
     @app.get("/admin/me")
     async def admin_me(user: dict = Depends(current_user)):
         uid = rbac_user_id(user)
@@ -635,11 +645,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
 
     @app.get("/admin/users")
     async def admin_users(user: dict = Depends(current_user)):
-        rbac_user_id(user)
-        d = rbac.access(actor_type="user", actor_id=f"portal-{user['uid']}",
-                        tenant_id=user["tid"], action="tenant.manage_users")
-        if d.decision != "ALLOW":
-            raise HTTPException(403, "; ".join(d.reasons))
+        require_permission(user, "tenant.manage_users")
         return [{"id": r["id"], "email": r["email"], "role": r["role"]}
                 for r in db.all("SELECT * FROM users WHERE tenant_id=?",
                                 user["tid"])]
@@ -647,6 +653,8 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
     @app.post("/admin/users/invite")
     async def admin_invite(body: dict, user: dict = Depends(current_user)):
         uid = rbac_user_id(user)
+        if body.get("role", "viewer") not in ROLE_PERMISSIONS:
+            raise HTTPException(400, "unknown role")
         try:
             inv = rbac.invite(tenant_id=user["tid"],
                               email=body.get("email", ""),
@@ -659,7 +667,13 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
     @app.patch("/admin/memberships/{target_user_id}/role")
     async def admin_change_role(target_user_id: str, body: dict,
                                 user: dict = Depends(current_user)):
-        uid = rbac_user_id(user)
+        # change_role's own guards cover escalation + last-owner, but the
+        # base permission must be enforced here: without it a viewer could
+        # demote a manager to viewer (viewer ⊆ viewer passes escalation).
+        uid = require_permission(user, "tenant.manage_users")
+        new_role = body.get("role")
+        if new_role not in ROLE_PERMISSIONS:
+            raise HTTPException(400, "unknown or missing role")
         target = rbac.membership_of(f"portal-{target_user_id}", user["tid"])
         if target is None:
             # Materialize the target portal user into rbac first.
@@ -673,32 +687,44 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
             target = rbac.membership_of(f"portal-{target_user_id}",
                                         user["tid"])
         try:
-            rbac.change_role(target.id, body["role"], actor_user_id=uid)
+            rbac.change_role(target.id, new_role, actor_user_id=uid)
         except PermissionError as e:
             raise HTTPException(403, str(e))
-        db.update("users", target_user_id, {"role": body["role"]})
-        return {"role": body["role"]}
+        db.update("users", target_user_id, {"role": new_role})
+        return {"role": new_role}
 
     @app.get("/admin/access-logs")
     async def admin_access_logs(user: dict = Depends(current_user)):
-        rbac_user_id(user)
-        d = rbac.access(actor_type="user", actor_id=f"portal-{user['uid']}",
-                        tenant_id=user["tid"], action="access_log.view")
-        if d.decision != "ALLOW":
-            raise HTTPException(403, "not permitted")
+        require_permission(user, "access_log.view")
+        rows = [e for e in audit.events(event_type="ACCESS_DECISION")
+                if (e.payload or {}).get("tenant_id") == user["tid"]]
         return [{"event_type": e.event_type, "actor": e.actor,
                  "payload": e.payload, "created_at": e.created_at}
-                for e in audit.events(event_type="ACCESS_DECISION")[-50:]]
+                for e in rows[-50:]]
 
     # ---- governance visibility (redacted traces from audit) --------------------------
+    def tenant_owns_event(e, tid: str) -> bool:
+        """Tenant isolation for shared audit streams: an event belongs to
+        the caller when its payload names their tenant or its case does."""
+        if (e.payload or {}).get("tenant_id") == tid:
+            return True
+        if e.case_id:
+            row = db.one("SELECT id FROM cases WHERE id=? AND tenant_id=?",
+                         e.case_id, tid)
+            return row is not None
+        return False
+
     @app.get("/governance/traces")
     async def governance_traces(user: dict = Depends(current_user)):
-        rows = [e for e in audit.events(event_type="AGENT_TRACE")[-50:]]
+        require_permission(user, "audit.view")
+        rows = [e for e in audit.events(event_type="AGENT_TRACE")
+                if tenant_owns_event(e, user["tid"])]
         return [{"payload": e.payload, "created_at": e.created_at}
-                for e in rows]
+                for e in rows[-50:]]
 
     @app.get("/governance/blocked")
     async def governance_blocked(user: dict = Depends(current_user)):
+        require_permission(user, "audit.view")
         out = []
         for e in audit.events():
             if e.event_type in ("AGENT_TRACE", "CALL_PERMISSION_CHECKED",
@@ -707,10 +733,11 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                                 "WORKFLOW_STOPPED_WASTE"):
                 p = e.payload or {}
                 status = p.get("status") or p.get("result") or ""
-                if "BLOCK" in str(status) or e.event_type in (
+                if ("BLOCK" in str(status) or e.event_type in (
                         "FOLLOW_UP_RATE_LIMITED",
                         "CALL_BLOCKED_ANTI_HARASSMENT",
-                        "WORKFLOW_STOPPED_WASTE"):
+                        "WORKFLOW_STOPPED_WASTE")) \
+                        and tenant_owns_event(e, user["tid"]):
                     out.append({"event": e.event_type, "detail": p,
                                 "explanation": _explain_block(e)})
         return out[-30:]
@@ -726,6 +753,14 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         if e.event_type == "WORKFLOW_STOPPED_WASTE":
             return ("AI stopped this workflow because it was repeating "
                     "actions without new information.")
+        status = str(p.get("status") or p.get("result") or "")
+        if "HARD_BLOCKER" in status:
+            return ("Action blocked by a non-negotiable safety rule "
+                    "(for example: the client opted out or is on the "
+                    "do-not-call list).")
+        if "PERMISSION" in status:
+            return ("Action blocked because the AI agent does not have "
+                    "permission to do this.")
         reasons = p.get("reasons") or [p.get("reason", "policy")]
         return "Action blocked: " + ", ".join(str(r) for r in reasons)
 
@@ -734,30 +769,51 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
     sched = SchedulingEngine(audit)
     app.state.scheduling = sched
 
+    def tenant_scoped(tid: str, ident: Optional[str]) -> Optional[str]:
+        """The mock engine's calendars are process-global; namespacing the
+        user/resource ids per tenant keeps tenant A's 'tech-1' a different
+        calendar from tenant B's 'tech-1'."""
+        return f"{tid}::{ident}" if ident else None
+
     @app.get("/scheduling/availability")
     async def sched_availability(appointment_type: str = "VIDEO_CALL",
                                  day: Optional[str] = None,
                                  resource_id: Optional[str] = None,
                                  user_: dict = Depends(current_user)):
-        d = datetime.fromisoformat(day) if day else \
-            datetime.utcnow() + timedelta(days=1)
-        slots = sched.available_slots(day=d,
-                                      appointment_type=appointment_type,
-                                      resource_id=resource_id)
+        if appointment_type not in APPOINTMENT_TYPES:
+            raise HTTPException(400, "unknown appointment type")
+        try:
+            d = datetime.fromisoformat(day) if day else \
+                datetime.utcnow() + timedelta(days=1)
+        except ValueError:
+            raise HTTPException(400, "invalid day")
+        slots = sched.available_slots(
+            day=d, appointment_type=appointment_type,
+            resource_id=tenant_scoped(user_["tid"], resource_id))
         return json.loads(json.dumps(slots, default=str))
 
     @app.post("/scheduling/appointments")
     async def sched_book(body: dict, user: dict = Depends(current_user)):
         require_role(user, "owner", "manager", "operator")
+        if not body.get("case_id") or not body.get("start_at"):
+            raise HTTPException(400, "case_id and start_at are required")
+        appt_type = body.get("appointment_type", "CALLBACK")
+        if appt_type not in APPOINTMENT_TYPES:
+            raise HTTPException(400, "unknown appointment type")
+        try:
+            start_at = datetime.fromisoformat(body["start_at"])
+        except ValueError:
+            raise HTTPException(400, "invalid start_at")
         case = load_case_or_404(body["case_id"], user)
         vector = load_vector(case.id)
         try:
             appt, token = sched.book(
                 tenant_id=user["tid"], case_id=case.id,
-                appointment_type=body.get("appointment_type", "CALLBACK"),
-                start_at=datetime.fromisoformat(body["start_at"]),
-                user_id=body.get("user_id"),
-                resource_id=body.get("resource_id"), vector=vector)
+                appointment_type=appt_type, start_at=start_at,
+                user_id=tenant_scoped(user["tid"], body.get("user_id")),
+                resource_id=tenant_scoped(user["tid"],
+                                          body.get("resource_id")),
+                vector=vector)
         except ValueError as e:
             raise HTTPException(409, str(e))
         save_vector(case.id, vector)
@@ -775,8 +831,10 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                 if a.tenant_id == user["tid"]]
 
     @app.post("/scheduling/appointments/{appt_id}/{op}")
-    async def sched_op(appt_id: str, op: str, body: dict,
+    async def sched_op(appt_id: str, op: str,
+                       body: Optional[dict] = None,
                        user: dict = Depends(current_user)):
+        body = body or {}
         require_role(user, "owner", "manager", "operator")
         appt = sched.appointments.get(appt_id)
         if appt is None or appt.tenant_id != user["tid"]:
@@ -784,6 +842,8 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         vector = load_vector(appt.case_id)
         try:
             if op == "reschedule":
+                if not body.get("new_start"):
+                    raise HTTPException(400, "new_start required")
                 sched.reschedule(appt_id, new_start=datetime.fromisoformat(
                     body["new_start"]), actor=user["uid"])
             elif op == "cancel":
@@ -811,8 +871,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                 "lifecycle_view": load_vector(appt.case_id)
                 .derived_outcome_view()}
 
-    @app.get("/confirm/{token}", response_class=__import__(
-        "fastapi.responses", fromlist=["HTMLResponse"]).HTMLResponse)
+    @app.get("/confirm/{token}", response_class=HTMLResponse)
     async def confirm_page(token: str):
         from .ui import STYLE
         return (f"<!doctype html><html><head><meta charset='utf-8'>"

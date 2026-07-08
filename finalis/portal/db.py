@@ -249,6 +249,13 @@ class DbAuditLog(AuditLog):
                             created_at=r["created_at"], id=r["id"])
             self._events.append(ev)
 
+    def verify_chain(self) -> bool:
+        # The DB is the source of truth: another writer (seeder, second app
+        # instance) may have appended rows this instance never saw, so a
+        # stale in-memory view would report a false chain break.
+        self._load()
+        return super().verify_chain()
+
     def append(self, *, event_type: str, actor: str,
                case_id: Optional[str] = None,
                payload: Optional[dict[str, Any]] = None) -> AuditEvent:
