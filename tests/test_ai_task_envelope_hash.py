@@ -39,13 +39,13 @@ def test_key_order_independent():
 
 
 def test_hash_excludes_itself():
+    # The builder never emits the hash field, so a pure envelope cannot carry
+    # its own hash; and hashing is a genuine function of its input (injecting
+    # a hash field really does change the digest — the hash is not constant).
     e = _env()
-    e2 = dict(e)
-    e2["canonical_task_envelope_hash"] = "injected"   # not part of the input
-    assert T.envelope_hash(e2) != T.envelope_hash(e) or True
-    # the builder never includes the hash; recomputation over the pure
-    # envelope is stable regardless of any injected hash field.
     assert "canonical_task_envelope_hash" not in e
+    e2 = {**e, "canonical_task_envelope_hash": "injected"}
+    assert T.envelope_hash(e2) != T.envelope_hash(e)
 
 
 @pytest.mark.parametrize("field,value", [

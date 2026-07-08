@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import sqlite3
 import uuid
 from datetime import datetime, timedelta
 from typing import Optional
@@ -3263,22 +3264,35 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
             "canonical_task_contract": contract,
             "honesty_labels": _tasks.HONESTY_LABELS,
         }
-        task_store.save({
-            "id": task_id, "tenant_id": user["tid"],
-            "requester_user_id": user["uid"], "requester_role": user["role"],
-            "assigned_ai_employee_id": emp.id,
-            "capability_snapshot_hash": snap["capability_snapshot_hash"],
-            "source_channel": source_channel, "idempotency_key": idem,
-            "deduplication_key": dedup_key, "envelope_hash": env_hash,
-            "contract_hash": con_hash, "task_type": task_type,
-            "segment": meta["segment"], "task_status": status,
-            "task_version": 1, "risk_level": risk_level,
-            "authority_decision": decision.decision,
-            "authority_hard_fail": int(decision.hard_fail),
-            "subject_type": subject_type, "subject_id": subject_id,
-            "expires_at": expires_at, "stale_after": stale_after,
-            "payload_json": json.dumps(payload), "created_by": user["uid"],
-            "created_at": now, "updated_at": now, "cancelled_at": None})
+        try:
+            task_store.save({
+                "id": task_id, "tenant_id": user["tid"],
+                "requester_user_id": user["uid"],
+                "requester_role": user["role"],
+                "assigned_ai_employee_id": emp.id,
+                "capability_snapshot_hash": snap["capability_snapshot_hash"],
+                "source_channel": source_channel, "idempotency_key": idem,
+                "deduplication_key": dedup_key, "envelope_hash": env_hash,
+                "contract_hash": con_hash, "task_type": task_type,
+                "segment": meta["segment"], "task_status": status,
+                "task_version": 1, "risk_level": risk_level,
+                "authority_decision": decision.decision,
+                "authority_hard_fail": int(decision.hard_fail),
+                "subject_type": subject_type, "subject_id": subject_id,
+                "expires_at": expires_at, "stale_after": stale_after,
+                "payload_json": json.dumps(payload), "created_by": user["uid"],
+                "created_at": now, "updated_at": now, "cancelled_at": None})
+        except sqlite3.IntegrityError:
+            # A concurrent worker won the idempotency race (UNIQUE index).
+            # Resolve deterministically against the winner, never 500.
+            winner = task_store.find_by_idempotency(
+                tenant_id=user["tid"], requester_user_id=user["uid"],
+                idempotency_key=str(idem)) if idem else None
+            if winner is not None and winner["envelope_hash"] == env_hash:
+                return {"idempotent_replay": True,
+                        **_build_task_response(winner)}
+            raise HTTPException(409, "idempotency key reused with a "
+                                "different task envelope")
 
         # Append-only intake events (intake audit, NOT a run ledger).
         ev = lambda t, r="": task_store.add_event(  # noqa: E731
@@ -3354,10 +3368,16 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         require_permission(user, "case.update")
         row = _load_task_or_404(task_id, user)
         payload = json.loads(row["payload_json"])
-        # Optimistic concurrency (if an expected version is supplied).
-        if "expected_task_version" in body and \
-                int(body["expected_task_version"]) != payload["task_version"]:
-            raise HTTPException(409, "stale task_version")
+        # Optimistic concurrency (if an expected version is supplied). A
+        # non-integer expected_task_version is a client error, not a 500.
+        if "expected_task_version" in body:
+            try:
+                expected = int(body["expected_task_version"])
+            except (TypeError, ValueError):
+                raise HTTPException(400, "expected_task_version must be an "
+                                    "integer")
+            if expected != payload["task_version"]:
+                raise HTTPException(409, "stale task_version")
         # A terminal task cannot be edited; task text cannot set status.
         if payload["task_status"] in ("BLOCKED", "CANCELLED", "EXPIRED",
                                       "NOT_IMPLEMENTED"):
@@ -3373,7 +3393,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         task_store.update(task_id, {
             "payload_json": json.dumps(payload),
             "task_version": payload["task_version"],
-            "updated_at": payload["updated_at"]})
+            "updated_at": payload["updated_at"]}, tenant_id=user["tid"])
         return payload
 
     @app.post("/ai-tasks/{task_id}/cancel")
@@ -3391,7 +3411,8 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         task_store.update(task_id, {"task_status": "CANCELLED",
                                     "payload_json": json.dumps(payload),
                                     "task_version": payload["task_version"],
-                                    "updated_at": now, "cancelled_at": now})
+                                    "updated_at": now, "cancelled_at": now},
+                          tenant_id=user["tid"])
         task_store.add_event(task_id=task_id, tenant_id=user["tid"],
                              actor_id=user["uid"], actor_type="human",
                              event_type="TASK_CANCELLED")

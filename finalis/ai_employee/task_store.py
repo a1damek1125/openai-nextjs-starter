@@ -33,8 +33,19 @@ class AITaskStore:
             tenant_id, requester_user_id, idempotency_key)
         return dict(r) if r else None
 
-    def update(self, task_id: str, fields: dict) -> None:
-        self.db.update("ai_tasks", task_id, fields)
+    def update(self, task_id: str, fields: dict, *,
+               tenant_id: Optional[str] = None) -> None:
+        # Defense-in-depth: scope the write to the tenant when known, so a
+        # mutation can never touch another tenant's row even if a caller
+        # forgot the prior tenant-scoped load.
+        if tenant_id is not None:
+            sets = ", ".join(f"{k}=?" for k in fields)
+            self.db.conn.execute(
+                f"UPDATE ai_tasks SET {sets} WHERE id=? AND tenant_id=?",
+                (*fields.values(), task_id, tenant_id))
+            self.db.conn.commit()
+        else:
+            self.db.update("ai_tasks", task_id, fields)
 
     # -- append-only intake events ---------------------------------------------
     def add_event(self, *, task_id: str, tenant_id: str, actor_id: str,

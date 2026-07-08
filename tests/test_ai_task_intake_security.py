@@ -150,6 +150,19 @@ class TestConcurrencyAndStatus:
             "priority": "LOW", "expected_task_version": 1}, headers=h)
         assert stale.status_code == 409
 
+    def test_non_integer_version_is_400_not_500(self, client):
+        # Regression (swarm-review finding): a non-integer expected_task_version
+        # must be a clean 400, never an unhandled 500.
+        h = _login(client)
+        cid = _case(client, h)
+        t = client.post("/ai-tasks", json={
+            "task_type": "case_summary", "task_title": "v",
+            "subject_type": "case", "subject_id": cid}, headers=h).json()
+        for bad in ("abc", None, {"x": 1}):
+            r = client.patch(f"/ai-tasks/{t['task_id']}", json={
+                "expected_task_version": bad, "priority": "HIGH"}, headers=h)
+            assert r.status_code == 400, bad
+
     def test_patch_cannot_set_status_or_authority(self, client):
         h = _login(client)
         cid = _case(client, h)

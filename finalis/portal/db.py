@@ -606,7 +606,9 @@ CREATE TABLE IF NOT EXISTS ai_tasks (
   updated_at TEXT NOT NULL, cancelled_at TEXT);
 CREATE INDEX IF NOT EXISTS ix_ai_tasks
   ON ai_tasks(tenant_id, created_at);
-CREATE INDEX IF NOT EXISTS ix_ai_tasks_idem
+-- UNIQUE so a concurrent multi-worker retry cannot defeat idempotency; NULL
+-- keys stay distinct in SQLite, so keyless tasks are never blocked.
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_tasks_idem
   ON ai_tasks(tenant_id, requester_user_id, idempotency_key);
 
 CREATE TABLE IF NOT EXISTS ai_task_intake_events (
