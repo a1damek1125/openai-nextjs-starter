@@ -62,7 +62,7 @@ def book(client, h, *, appt_type="CALLBACK", start=AT10, resource=None,
 class TestMigrationAndPersistence:
     def test_1_migration_v4_creates_tables(self, tmp_path):
         db = Database(str(tmp_path / "m.db"))
-        assert db.migrate() == 4
+        assert db.migrate() >= 4          # v4 or any later migration
         for table in ("scheduling_appointments",
                       "scheduling_appointment_events"):
             assert db.one("SELECT name FROM sqlite_master WHERE name=?",

@@ -310,6 +310,82 @@ CREATE TABLE IF NOT EXISTS scheduling_appointment_events (
 CREATE INDEX IF NOT EXISTS ix_sched_events
   ON scheduling_appointment_events(tenant_id, appointment_id);
 """),
+    (5, """
+-- v5: Evidence Trust Fabric metadata (bytes live in the storage
+-- provider's vault — the DB stores pointer + hash, never raw content).
+CREATE TABLE IF NOT EXISTS evidence_objects (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL REFERENCES tenants(id),
+  case_id TEXT NOT NULL, evidence_type TEXT NOT NULL,
+  state TEXT NOT NULL,
+  original_filename TEXT NOT NULL DEFAULT '',
+  declared_mime TEXT NOT NULL DEFAULT '', detected_mime TEXT,
+  extension TEXT NOT NULL DEFAULT '',
+  size_bytes INTEGER NOT NULL DEFAULT 0,
+  mime_mismatch INTEGER NOT NULL DEFAULT 0,
+  active_content INTEGER NOT NULL DEFAULT 0,
+  storage_provider TEXT NOT NULL, storage_key TEXT NOT NULL,
+  sha256 TEXT NOT NULL,
+  sensitivity TEXT NOT NULL DEFAULT 'normal',
+  injection_risk REAL NOT NULL DEFAULT 0,
+  symbols_json TEXT NOT NULL DEFAULT '[]',
+  parser_kind TEXT NOT NULL DEFAULT 'OCR_NOT_RUN',
+  human_verified INTEGER NOT NULL DEFAULT 0,
+  legal_hold INTEGER NOT NULL DEFAULT 0,
+  retention_until TEXT,
+  uploaded_by TEXT NOT NULL, source_kind TEXT NOT NULL DEFAULT 'unknown',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE INDEX IF NOT EXISTS ix_evidence_tenant_case
+  ON evidence_objects(tenant_id, case_id);
+CREATE INDEX IF NOT EXISTS ix_evidence_state
+  ON evidence_objects(tenant_id, state);
+
+CREATE TABLE IF NOT EXISTS evidence_chain_events (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  evidence_id TEXT NOT NULL REFERENCES evidence_objects(id),
+  event_type TEXT NOT NULL, actor TEXT NOT NULL,
+  payload_json TEXT NOT NULL DEFAULT '{}',
+  hash_prev TEXT NOT NULL, hash_self TEXT NOT NULL,
+  created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_evchain
+  ON evidence_chain_events(tenant_id, evidence_id);
+
+CREATE TABLE IF NOT EXISTS evidence_access_events (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  evidence_id TEXT NOT NULL, actor_kind TEXT NOT NULL,
+  actor_id TEXT NOT NULL, purpose TEXT NOT NULL,
+  decision TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE INDEX IF NOT EXISTS ix_evaccess
+  ON evidence_access_events(tenant_id, evidence_id);
+
+CREATE TABLE IF NOT EXISTS evidence_decision_contracts (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  case_id TEXT NOT NULL, decision_type TEXT NOT NULL,
+  actor TEXT NOT NULL,
+  evidence_ids_json TEXT NOT NULL DEFAULT '[]',
+  admissible_json TEXT NOT NULL DEFAULT '[]',
+  rejected_json TEXT NOT NULL DEFAULT '[]',
+  facts_json TEXT NOT NULL DEFAULT '{}',
+  hard_blockers_json TEXT NOT NULL DEFAULT '[]',
+  trust_summary REAL NOT NULL DEFAULT 0,
+  ai_access_level TEXT NOT NULL DEFAULT 'none',
+  human_verified INTEGER NOT NULL DEFAULT 0,
+  final_decision TEXT NOT NULL,
+  audit_event_id TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE INDEX IF NOT EXISTS ix_evcontracts
+  ON evidence_decision_contracts(tenant_id, case_id, decision_type);
+
+CREATE TABLE IF NOT EXISTS evidence_legal_holds (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  evidence_id TEXT NOT NULL REFERENCES evidence_objects(id),
+  reason TEXT NOT NULL, placed_by TEXT NOT NULL,
+  released_at TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE INDEX IF NOT EXISTS ix_evholds
+  ON evidence_legal_holds(tenant_id, evidence_id);
+"""),
 ]
 
 
