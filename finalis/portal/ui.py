@@ -51,7 +51,9 @@ WIRING_SECTIONS = """
 <section id="sched-section"><h2>Scheduling</h2>
 <p><small>Calendar &amp; video providers are <b>mocks</b> — links are
 simulated. Appointments are in-memory and <b>do not survive a server
-restart</b> yet.</small></p>
+restart</b> yet. Real Google / Microsoft / Cal.com / LiveKit providers are
+<b>not connected</b> (BLOCKED_BY_CREDENTIALS — adapters ready,
+credentials pending).</small></p>
 <div id="sched-book" hidden>
   Case: <select id="sched-case"></select>
   Type: <select id="sched-type">
@@ -71,6 +73,8 @@ restart</b> yet.</small></p>
 </section>
 
 <section id="admin-section"><h2>Admin — Users &amp; Access</h2>
+<p><small>Local demo session — buttons below are convenience only; every
+action is re-checked server-side by the RBAC engine.</small></p>
 <p id="admin-me"></p>
 <p id="admin-denied" hidden><i>Your role cannot manage users
 (enforced server-side).</i></p>

@@ -459,6 +459,7 @@ class TestGovernanceApi:
                 "/admin/memberships/", "/admin/access-logs",
                 "/governance/blocked", "/governance/traces",
                 "do not survive a server\nrestart", "mock",
+                "BLOCKED_BY_CREDENTIALS", "re-checked server-side",
                 "SCAFFOLDED_ONLY", "simulated email",
                 "scheduleFor"]:
             assert marker in page, marker

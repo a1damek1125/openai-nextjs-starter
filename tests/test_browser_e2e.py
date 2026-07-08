@@ -138,3 +138,196 @@ def test_full_portal_flow_in_browser(server, page):
 
     # 10. Audit stays VALID after the full journey.
     assert "VALID" in page.text_content("#case-detail")
+
+
+# ---------------------------------------------------------------------------
+# W3 — Portal Wiring browser E2E: admin/RBAC, scheduling, governance UI.
+# Tests share the module-scoped server+browser; each starts with a login.
+# ---------------------------------------------------------------------------
+def _login(page, server, email="owner@demo.finalis"):
+    page.goto(server + "/")
+    page.fill("#email", email)
+    page.fill("#password", "demo1234")
+    page.click("#login-form button[type=submit]")
+    page.wait_for_url("**/portal")
+    page.wait_for_selector("#app:not([hidden])", timeout=15000)
+
+
+def test_admin_rbac_ui_in_browser(server, page):
+    _login(page, server)
+
+    # Tenant / role / permissions visible.
+    page.wait_for_selector("#admin-me:has-text('demo-hvac')", timeout=15000)
+    assert "owner" in page.text_content("#me-role")
+    assert "permissions" in page.text_content("#admin-me")
+    assert "re-checked server-side" in page.content()
+
+    # User list from the real API.
+    page.wait_for_selector("#admin-users table")
+    users = page.text_content("#admin-users")
+    for email in ("owner@demo.finalis", "manager@demo.finalis",
+                  "viewer@demo.finalis"):
+        assert email in users
+    assert "demo1234" not in page.content()          # no secrets anywhere
+
+    # Invite (honestly labeled simulated).
+    assert "simulated email" in page.text_content("#invite-btn")
+    page.fill("#invite-email", "invited@demo.finalis")
+    page.click("#invite-btn")
+    page.wait_for_selector("#invite-msg:has-text('Invitation pending')")
+
+    # Role change from the UI: manager → operator (server persists it).
+    row = page.locator("#admin-users tr", has_text="manager@demo.finalis")
+    row.locator("select").select_option("operator")
+    row.locator("button").click()
+    page.wait_for_selector("#invite-msg:has-text('Role updated to operator')")
+    page.wait_for_selector(
+        "#admin-users tr:has-text('manager@demo.finalis'):has-text('operator')")
+
+    # Access log renders real decisions.
+    assert "ALLOW" in page.text_content("#admin-logs")
+
+
+def test_scheduling_ui_full_flow_in_browser(server, page):
+    _login(page, server)
+    page.wait_for_selector("#sched-book:not([hidden])", timeout=15000)
+
+    # Honest labels: mocks, restart caveat, providers not connected.
+    sched_text = " ".join(page.text_content("#sched-section").split())
+    assert "mock" in sched_text
+    assert "do not survive a server restart" in sched_text
+    assert "BLOCKED_BY_CREDENTIALS" in sched_text
+
+    # 1. Availability from the API → book a VIDEO_CALL.
+    page.select_option("#sched-type", "VIDEO_CALL")
+    page.fill("#sched-day", "2030-03-13")
+    page.click("#find-slots")
+    page.wait_for_selector("#sched-slots button", timeout=10000)
+    page.locator("#sched-slots button").first.click()
+    page.wait_for_selector("#booked-status", timeout=10000)
+    assert page.text_content("#booked-status") == "PENDING_CLIENT_CONFIRMATION"
+    msg = page.text_content("#sched-msg")
+    assert "meet.finalis.example" in msg and "mock" in msg
+    confirm_href = page.get_attribute("#confirm-link", "href")
+    assert confirm_href.startswith("/confirm/")
+
+    # 2. Client confirms on the public page (no auth needed — same
+    #    navigation pattern as the upload-link flow above).
+    page.goto(server + confirm_href)
+    page.click("#confirm-btn")
+    page.wait_for_selector("#done:not([hidden])", timeout=10000)
+
+    # 3. Portal shows the confirmed appointment; completing a VIDEO_CALL
+    #    must NOT claim the case is fulfilled (fulfillment untouched).
+    page.goto(server + "/portal")
+    page.wait_for_selector("#app:not([hidden])", timeout=15000)
+    page.wait_for_selector(
+        "#sched-appts tr:has-text('VIDEO_CALL'):has-text('CONFIRMED')",
+        timeout=10000)
+    page.locator("#sched-appts tr", has_text="VIDEO_CALL").first \
+        .locator("button", has_text="Complete").click()
+    page.wait_for_selector("#sched-msg:has-text('complete → COMPLETED')",
+                           timeout=10000)
+    assert "WON_COMPLETED" not in page.text_content("#sched-msg")
+
+    # 4. Reschedule + cancel-with-reason + no-show via UI dialogs.
+    page.select_option("#sched-type", "CALLBACK")
+    page.click("#find-slots")
+    page.wait_for_selector("#sched-slots button", timeout=10000)
+    page.locator("#sched-slots button").first.click()
+    page.wait_for_selector(
+        "#sched-appts tr:has-text('CALLBACK'):has-text('CONFIRMED')",
+        timeout=10000)
+    cb_row = page.locator("#sched-appts tr", has_text="CALLBACK").first
+    page.once("dialog", lambda d: d.accept("2030-03-14T11:00:00"))
+    cb_row.locator("button", has_text="Reschedule").click()
+    page.wait_for_selector("#sched-appts tr:has-text('RESCHEDULED')",
+                           timeout=10000)
+    page.once("dialog", lambda d: d.accept("client asked to cancel"))
+    page.locator("#sched-appts tr", has_text="RESCHEDULED").first \
+        .locator("button", has_text="Cancel").click()
+    page.wait_for_selector("#sched-appts tr:has-text('CANCELLED_BY_COMPANY')",
+                           timeout=10000)
+    # Fresh callback for the no-show path.
+    page.click("#find-slots")
+    page.wait_for_selector("#sched-slots button", timeout=10000)
+    page.locator("#sched-slots button").first.click()
+    page.wait_for_selector(
+        "#sched-appts tr:has-text('CALLBACK'):has-text('CONFIRMED')",
+        timeout=10000)
+    page.locator("#sched-appts tr:has-text('CALLBACK'):has-text('CONFIRMED')") \
+        .first.locator("button", has_text="No-show").click()
+    page.wait_for_selector("#sched-appts tr:has-text('NO_SHOW')",
+                           timeout=10000)
+
+    # 5. Technician visit completes fulfillment → WON_COMPLETED.
+    #    Deal/payment prep uses the portal's own mock lifecycle endpoints,
+    #    driven from the browser session (fetch with the session token).
+    page.evaluate("""async () => {
+      const caseId = document.getElementById('sched-case').value;
+      const H = {'Authorization': 'Bearer ' +
+                 localStorage.getItem('finalis_token'),
+                 'Content-Type': 'application/json'};
+      for (const step of ['accept-offer', 'invoice', 'payment']) {
+        const r = await fetch(`/cases/${caseId}/lifecycle/${step}`,
+                              {method: 'POST', headers: H, body: '{}'});
+        if (!r.ok) throw new Error(step);
+      }
+    }""")
+    page.select_option("#sched-type", "TECHNICIAN_VISIT")
+    page.fill("#sched-resource", "tech-1")
+    page.click("#find-slots")
+    page.wait_for_selector("#sched-slots button", timeout=10000)
+    page.locator("#sched-slots button").first.click()
+    page.wait_for_selector("#sched-appts tr:has-text('TECHNICIAN_VISIT')",
+                           timeout=10000)
+    page.locator("#sched-appts tr", has_text="TECHNICIAN_VISIT").first \
+        .locator("button", has_text="Complete").click()
+    page.wait_for_selector("#sched-msg:has-text('WON_COMPLETED')",
+                           timeout=10000)
+
+
+def test_governance_ui_in_browser(server, page):
+    _login(page, server)
+    page.wait_for_selector("#gov-section:not([hidden])", timeout=15000)
+
+    # Traces area is honestly labeled while the producer is scaffolded.
+    assert "SCAFFOLDED_ONLY" in page.text_content("#gov-traces-note")
+    page.wait_for_selector("#gov-traces:has-text('No agent traces yet')")
+
+    # Produce a REAL rate-limit block through the UI: the second photo
+    # request within the cooldown is refused by the ACE spam guard.
+    page.locator("#cases table tr", has_text="Boiler service") \
+        .locator("button").click()
+    page.wait_for_selector("#case-title")
+    page.click("text=Request photos")
+    page.wait_for_selector("#case-msg:has-text('Upload link')",
+                           timeout=10000)
+    page.click("text=Request photos")
+    page.wait_for_selector("#case-msg:has-text('rate_limited')",
+                           timeout=10000)
+
+    # The governance section explains the block in business language.
+    page.evaluate("loadGov()")
+    page.wait_for_selector(
+        "#gov-blocked:has-text('contact limit or cooldown')", timeout=10000)
+    assert "policy_denied" not in page.text_content("#gov-blocked")
+
+
+def test_viewer_restricted_ui_in_browser(server, page):
+    _login(page, server, email="viewer@demo.finalis")
+    page.wait_for_selector("#admin-denied:not([hidden])", timeout=15000)
+
+    # Admin management, governance, and booking controls are hidden;
+    # the restriction message is in business language.
+    assert "cannot manage users" in page.text_content("#admin-denied")
+    assert page.is_hidden("#admin-manage")
+    assert page.is_hidden("#admin-logs-wrap")
+    assert page.is_hidden("#gov-section")
+    assert page.is_hidden("#sched-book")
+
+    # Appointment list is read-only: no operation buttons rendered.
+    page.wait_for_selector("#sched-appts table", timeout=10000)
+    appts = page.text_content("#sched-appts")
+    for forbidden in ("Complete", "No-show", "Reschedule", "Cancel"):
+        assert forbidden not in appts
