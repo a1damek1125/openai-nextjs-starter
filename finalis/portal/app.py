@@ -2973,6 +2973,81 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                 "events_total": len(fresh.events()),
                 "events_case": len(fresh.events(case_id=case_id))}
 
+    # ---- AI Employee identity + authority boundary (CORE-A1) --------------------------
+    from ..ai_employee.authority import evaluate_ai_employee_authority
+    from ..ai_employee.identity import (HONESTY_LABELS as AI_HONESTY,
+                                        capability_snapshot, employee_json)
+    from ..ai_employee.store import AIEmployeeStore
+    ai_store = AIEmployeeStore(db)
+    app.state.ai_store = ai_store
+
+    def _load_ai_employee_or_404(ai_employee_id: str, user: dict):
+        emp = ai_store.get(ai_employee_id, tenant_id=user["tid"])
+        if emp is None:                         # incl. cross-tenant
+            raise HTTPException(404, "AI employee not found")
+        return emp
+
+    @app.get("/ai-employees")
+    async def list_ai_employees(user: dict = Depends(current_user)):
+        require_permission(user, "tenant.view")
+        emps = ai_store.list(tenant_id=user["tid"])
+        if not emps:                            # lazily seed the tenant default
+            emps = [ai_store.get_or_create_default(tenant_id=user["tid"],
+                                                   created_by="system")]
+        return [employee_json(e) for e in emps]
+
+    @app.post("/ai-employees/default")
+    async def create_default_ai_employee(user: dict = Depends(current_user)):
+        # Creating/registering identity is an admin action, never an AI or
+        # viewer action — an AI employee can never create/modify identity.
+        require_permission(user, "tenant.manage_users")
+        emp = ai_store.get_or_create_default(tenant_id=user["tid"],
+                                             created_by=user["uid"])
+        return employee_json(emp)
+
+    @app.get("/ai-employees/{ai_employee_id}")
+    async def get_ai_employee(ai_employee_id: str,
+                              user: dict = Depends(current_user)):
+        require_permission(user, "tenant.view")
+        return employee_json(_load_ai_employee_or_404(ai_employee_id, user))
+
+    @app.get("/ai-employees/{ai_employee_id}/authority")
+    async def get_ai_employee_authority(ai_employee_id: str,
+                                        user: dict = Depends(current_user)):
+        require_permission(user, "tenant.view")
+        emp = _load_ai_employee_or_404(ai_employee_id, user)
+        prof = employee_json(emp)
+        return {"ai_employee_id": emp.id,
+                "read_only_action_types": prof["read_only_action_types"],
+                "draft_only_action_types": prof["draft_only_action_types"],
+                "approval_required_action_types":
+                    prof["approval_required_action_types"],
+                "forbidden_action_types": prof["forbidden_action_types"],
+                "production_autonomy_enabled": False,
+                "honesty_labels": AI_HONESTY}
+
+    @app.get("/ai-employees/{ai_employee_id}/capability-snapshot")
+    async def get_ai_capability_snapshot(ai_employee_id: str,
+                                         user: dict = Depends(current_user)):
+        require_permission(user, "tenant.view")
+        return capability_snapshot(
+            _load_ai_employee_or_404(ai_employee_id, user))
+
+    @app.post("/ai-employees/{ai_employee_id}/authority/check")
+    async def check_ai_employee_authority(ai_employee_id: str, body: dict,
+                                          user: dict = Depends(current_user)):
+        # Deterministic, side-effect-free pre-check. Task text / body cannot
+        # change the decision — only action_type/segment/subject drive it.
+        require_permission(user, "tenant.view")
+        emp = _load_ai_employee_or_404(ai_employee_id, user)
+        decision = evaluate_ai_employee_authority(
+            employee=emp, action_type=str(body.get("action_type", "")),
+            tenant_id=user["tid"], object_type=str(body.get("object_type", "")),
+            object_id=str(body.get("object_id", "")),
+            segment=str(body.get("segment", "")),
+            subject_tenant_id=body.get("subject_tenant_id"))
+        return {"ai_employee_id": emp.id, **decision.to_json()}
+
     # ---- UI pages -------------------------------------------------------------------------------------
     ui.mount(app)
     return app

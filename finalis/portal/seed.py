@@ -37,6 +37,12 @@ def seed(db: Database) -> dict:
     auth.create_user(tenant_id="other-tenant", email="owner@other.finalis",
                      password="demo1234", role="owner")
 
+    # A tenant-scoped, non-autonomous AI employee per tenant (CORE-A1).
+    from ..ai_employee.store import AIEmployeeStore
+    ai_store = AIEmployeeStore(db)
+    ai_store.get_or_create_default(tenant_id=DEMO_TENANT, created_by="seed")
+    ai_store.get_or_create_default(tenant_id="other-tenant", created_by="seed")
+
     now = datetime.utcnow()
     cases = []
 

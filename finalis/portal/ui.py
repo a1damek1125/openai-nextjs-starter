@@ -145,6 +145,7 @@ window.loadSections = async () => {
   if (window.loadCrmSection) jobs.push(loadCrmSection(me, cases));
   if (window.loadWorkbenchSection)
     jobs.push(loadWorkbenchSection(me, cases));
+  if (window.loadAIEmployeeSection) jobs.push(loadAIEmployeeSection(me));
   await Promise.allSettled(jobs);
 };
 
@@ -2150,6 +2151,53 @@ window.proofFor = async (caseId) => {
 };
 """
 
+# ===========================================================================
+# CORE-A1 — Finalis AI Employee identity + authority boundary (portal view).
+# ===========================================================================
+AIEMP_SECTIONS = """
+<section id="aiemp-section"><h2>Finalis AI Employee</h2>
+<p><small><b>Finalis AI Employee is not a human user.</b> It is a
+tenant-scoped, non-autonomous worker that can propose work and draft outputs
+within an authority boundary. <b>AI Employee cannot override server-side
+policy.</b> <b>AI Employee cannot verify memory as human truth.</b>
+<b>AI Employee cannot override consent.</b> <b>AI Employee cannot rewrite
+evidence.</b> <b>AI Employee cannot approve its own work.</b> Human approval
+is required for sensitive actions. <b>Production autonomy is disabled.</b>
+Server-side policy remains authoritative. This is not a production autonomous
+worker.</small></p>
+<div id="aiemp-profile"><i>Loading AI Employee…</i></div>
+</section>
+"""
+
+AIEMP_JS = """
+window.loadAIEmployeeSection = async (me) => {
+  let emps; try { emps = await get('/ai-employees'); }
+  catch (e) { $('aiemp-profile').innerHTML =
+    '<i>AI Employee profile is not available for your role.</i>'; return; }
+  if (!emps || !emps.length) {
+    $('aiemp-profile').innerHTML = '<i>No AI Employee registered.</i>';
+    return; }
+  const e = emps[0];
+  const chips = (arr) => (arr || []).map(a =>
+    `<span class="badge">${esc(a)}</span>`).join(' ');
+  $('aiemp-profile').innerHTML = `
+    <p><b>${esc(e.display_name)}</b> · identity type
+      <b>${esc(e.identity_type)}</b> · status ${esc(e.status)} · role
+      ${esc(e.role)} · production autonomy:
+      <b class="err">${e.production_autonomy_enabled ? 'ENABLED'
+        : 'disabled'}</b></p>
+    <p><b>Segment capabilities:</b> ${chips(e.segment_capabilities)}</p>
+    <p><b>Read-only actions:</b> ${chips(e.read_only_action_types)}</p>
+    <p><b>Draft-only actions:</b> ${chips(e.draft_only_action_types)}</p>
+    <p><b>Approval-required actions:</b>
+      ${chips(e.approval_required_action_types)}</p>
+    <p><b class="err">Forbidden actions:</b>
+      ${chips(e.forbidden_action_types)}</p>
+    <ul>${(e.honesty_labels || []).map(l =>
+      `<li><small>${esc(l)}</small></li>`).join('')}</ul>`;
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -2170,6 +2218,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 {EVIDENCE_SECTIONS}
 {CRM_SECTIONS}
 {WORKBENCH_SECTIONS}
+{AIEMP_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -2294,7 +2343,8 @@ boot();
 <script>{QUOTES_JS}</script>
 <script>{EVIDENCE_JS}</script>
 <script>{CRM_JS}</script>
-<script>{WORKBENCH_JS}</script></body></html>"""
+<script>{WORKBENCH_JS}</script>
+<script>{AIEMP_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:

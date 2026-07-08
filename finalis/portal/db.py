@@ -561,6 +561,26 @@ CREATE TABLE IF NOT EXISTS evidence_proof_reports (
 CREATE INDEX IF NOT EXISTS ix_evreport
   ON evidence_proof_reports(tenant_id, evidence_id, created_at);
 """),
+    (9, """
+-- v9: Finalis AI Employee identity (CORE-A1). Tenant-scoped, non-autonomous
+-- AI worker identity + authority boundary. No global unrestricted identity;
+-- every dangerous capability is disabled and cannot be flipped by a prompt.
+CREATE TABLE IF NOT EXISTS ai_employees (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  display_name TEXT NOT NULL DEFAULT 'Finalis AI Employee',
+  internal_name TEXT NOT NULL DEFAULT 'finalis-ai-employee',
+  identity_type TEXT NOT NULL DEFAULT 'AI_EMPLOYEE',
+  role TEXT NOT NULL DEFAULT 'ai_worker',
+  segment_capabilities_json TEXT NOT NULL DEFAULT '[]',
+  status TEXT NOT NULL DEFAULT 'ACTIVE',
+  identity_version INTEGER NOT NULL DEFAULT 1,
+  profile_version TEXT NOT NULL DEFAULT 'finalis-ai-employee-profile-v1',
+  human_supervisor_required INTEGER NOT NULL DEFAULT 1,
+  default_supervisor_role TEXT NOT NULL DEFAULT 'owner',
+  created_by TEXT NOT NULL DEFAULT 'system',
+  created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_employees ON ai_employees(tenant_id);
+"""),
 ]
 
 
