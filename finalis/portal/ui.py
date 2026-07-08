@@ -146,6 +146,7 @@ window.loadSections = async () => {
   if (window.loadWorkbenchSection)
     jobs.push(loadWorkbenchSection(me, cases));
   if (window.loadAIEmployeeSection) jobs.push(loadAIEmployeeSection(me));
+  if (window.loadTasksSection) jobs.push(loadTasksSection(me));
   await Promise.allSettled(jobs);
 };
 
@@ -2198,6 +2199,111 @@ window.loadAIEmployeeSection = async (me) => {
 };
 """
 
+# ===========================================================================
+# CORE-A2 — Secure Work Intake Registry / Task Delegation Inbox (portal view).
+# ===========================================================================
+TASKS_SECTIONS = """
+<section id="tasks-section"><h2>Task Delegation Inbox</h2>
+<p><small><b>Task creation does not execute side effects.</b> <b>AI Employee
+can draft or prepare work only within its authority boundary.</b>
+<b>Sensitive actions require human approval.</b> <b>Task text is treated as
+untrusted input.</b> <b>Task contract defines the accepted purpose, scope and
+boundaries.</b> <b>Input security flags are advisory; server-side authority
+decision remains authoritative.</b> Server-side policy remains authoritative.
+<b>Slack and Microsoft Teams intake are not implemented in this mission.</b>
+<b>Run Ledger is not implemented in this mission.</b> <b>Tool Broker is not
+implemented in this mission.</b></small></p>
+<div id="tasks-create" hidden>
+  <select id="task-type"></select>
+  <input id="task-title" placeholder="task title" style="max-width:12rem"/>
+  <input id="task-desc" placeholder="description (untrusted)"
+    style="max-width:16rem"/>
+  <input id="task-subject" placeholder="subject id (case/customer)"
+    style="max-width:10rem"/>
+  <button id="task-create-btn" onclick="createTask()">Delegate task</button>
+</div>
+<div id="task-msg"></div>
+<div id="tasks-list"><i>Loading tasks…</i></div>
+<div id="task-detail"></div>
+</section>
+"""
+
+TASKS_JS = """
+window.loadTasksSection = async (me) => {
+  $('tasks-create').hidden = !(me.permissions.includes('case.update'));
+  try {
+    const t = await get('/ai-tasks/types');
+    $('task-type').innerHTML = Object.keys(t.task_types).map(k =>
+      `<option value="${esc(k)}">${esc(k)}</option>`).join('');
+  } catch (e) {}
+  await loadTasks();
+};
+
+window.loadTasks = async () => {
+  let rows; try { rows = await get('/ai-tasks'); }
+  catch (e) { $('tasks-list').innerHTML =
+    '<i>Tasks are not available for your role.</i>'; return; }
+  $('tasks-list').innerHTML = rows.length ?
+    '<table><tr><th>Type</th><th>Segment</th><th>Status</th>' +
+    '<th>Decision</th><th>Risk</th><th></th></tr>' + rows.map(t =>
+      `<tr><td>${esc(t.task_type)}</td><td>${esc(t.segment)}</td>
+       <td><b>${esc(t.task_status)}</b></td>
+       <td>${esc(t.authority_decision)}</td>
+       <td>${esc(t.risk_level)}</td>
+       <td><button onclick="openTask('${esc(t.task_id)}')">Open</button>
+       </td></tr>`).join('') + '</table>' : '<i>No tasks yet.</i>';
+};
+
+window.createTask = async () => {
+  const body = {task_type: $('task-type').value,
+                task_title: $('task-title').value,
+                task_description: $('task-desc').value};
+  if ($('task-subject').value) {
+    body.subject_type = 'case'; body.subject_id = $('task-subject').value; }
+  const {ok, data} = await send('POST', '/ai-tasks', body);
+  $('task-msg').innerHTML = ok
+    ? `<span class="ok">Task ${esc((data.task_status || ''))} — envelope `
+      + `${esc((data.canonical_task_envelope_hash || '').slice(0, 10))}…, `
+      + `contract ${esc((data.canonical_task_contract_hash || '')
+        .slice(0, 10))}…</span>`
+    : `<span class="err">Refused: ${esc(data.detail || '')}</span>`;
+  if (ok) { await loadTasks(); openTask(data.task_id); }
+};
+
+window.openTask = async (id) => {
+  const t = await get('/ai-tasks/' + id);
+  const chips = (a) => (a || []).map(x =>
+    `<span class="badge">${esc(x)}</span>`).join(' ');
+  $('task-detail').innerHTML = `
+    <h3>${esc(t.task_type)} <span class="badge">${esc(t.task_status)}</span>
+      </h3>
+    <p>segment ${esc(t.segment)} · purpose ${esc(t.purpose_category)} ·
+      priority ${esc(t.priority)} · risk <b>${esc(t.risk_level)}</b>
+      <small>(${esc(t.risk_reason)})</small></p>
+    <p><b>Authority decision:</b> <b class="${t.authority_hard_fail
+      ? 'err' : 'ok'}">${esc(t.authority_decision)}</b>
+      <small>${esc(t.authority_reason)}</small></p>
+    <p><b>Requires:</b> human approval ${t.requires_human_approval} ·
+      consent check ${t.requires_consent_check} · evidence check
+      ${t.requires_evidence_check} · tool broker ${t.requires_tool_broker}</p>
+    <p><b>Allowed data scopes:</b> ${chips(t.allowed_data_scopes)}</p>
+    <p><b class="err">Forbidden data scopes:</b>
+      ${chips(t.forbidden_data_scopes)}</p>
+    <p><b class="err">Input security flags:</b>
+      ${chips(t.input_security_flags)}</p>
+    <p><b class="err">Unsafe requested actions:</b>
+      ${chips(t.unsafe_requested_actions)}</p>
+    <p><b>Envelope hash:</b>
+      <code>${esc(t.canonical_task_envelope_hash)}</code></p>
+    <p><b>Contract hash:</b>
+      <code>${esc(t.canonical_task_contract_hash)}</code></p>
+    <p><small>Task description is UNTRUSTED user input:
+      <i>${esc(t.task_description)}</i></small></p>
+    <ul>${(t.honesty_labels || []).map(l =>
+      `<li><small>${esc(l)}</small></li>`).join('')}</ul>`;
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -2219,6 +2325,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 {CRM_SECTIONS}
 {WORKBENCH_SECTIONS}
 {AIEMP_SECTIONS}
+{TASKS_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -2344,7 +2451,8 @@ boot();
 <script>{EVIDENCE_JS}</script>
 <script>{CRM_JS}</script>
 <script>{WORKBENCH_JS}</script>
-<script>{AIEMP_JS}</script></body></html>"""
+<script>{AIEMP_JS}</script>
+<script>{TASKS_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:

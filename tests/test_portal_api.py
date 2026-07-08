@@ -125,8 +125,8 @@ class TestPersistence:
 
     def test_migration_idempotent(self, tmp_path):
         db = Database(str(tmp_path / "m.db"))
-        assert db.migrate() == 9              # re-running is a no-op
-        assert db.one("SELECT MAX(version) v FROM schema_version")["v"] == 9
+        assert db.migrate() == 10              # re-running is a no-op
+        assert db.one("SELECT MAX(version) v FROM schema_version")["v"] == 10
 
 
 class TestFullPortalFlowE2E:

@@ -3048,6 +3048,355 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
             subject_tenant_id=body.get("subject_tenant_id"))
         return {"ai_employee_id": emp.id, **decision.to_json()}
 
+    # ---- Secure Work Intake Registry + Canonical Task Contract (CORE-A2) --------------
+    from ..ai_employee import tasks as _tasks
+    from ..ai_employee.task_store import AITaskStore
+    task_store = AITaskStore(db)
+    app.state.task_store = task_store
+
+    _DECISION_TO_STATUS = {
+        "BLOCKED": "BLOCKED", "APPROVAL_REQUIRED": "ACCEPTED",
+        "ALLOWED_DRAFT_ONLY": "ACCEPTED", "READ_ONLY_ALLOWED": "ACCEPTED",
+        "HUMAN_REVIEW": "NEEDS_CLARIFICATION", "NOT_IMPLEMENTED":
+        "NOT_IMPLEMENTED"}
+
+    def _build_task_response(row: dict) -> dict:
+        return json.loads(row["payload_json"])
+
+    @app.get("/ai-tasks/types")
+    async def ai_task_types(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {"task_types": {t: {"segment": m["segment"],
+                                   "proposed_action": m["action"],
+                                   "purpose_category": m["purpose_category"],
+                                   "default_risk": m["risk"],
+                                   "allowed_output_types": m["outputs"],
+                                   "allowed_data_scopes": m["scopes"]}
+                               for t, m in _tasks.TASK_TYPES.items()},
+                "source_channels": sorted(_tasks.SOURCE_CHANNELS),
+                "honesty_labels": _tasks.HONESTY_LABELS}
+
+    @app.post("/ai-tasks")
+    async def create_ai_task(body: dict, user: dict = Depends(current_user)):
+        require_permission(user, "case.update")     # delegating work = write
+        task_type = str(body.get("task_type", ""))
+        if task_type not in _tasks.TASK_TYPES:
+            raise HTTPException(400, f"unsupported task_type '{task_type}'")
+        meta = _tasks.TASK_TYPES[task_type]
+
+        # Assigned AI employee (tenant-scoped; default if unspecified).
+        emp_id = body.get("assigned_ai_employee_id")
+        emp = (ai_store.get(emp_id, tenant_id=user["tid"]) if emp_id
+               else ai_store.get_or_create_default(tenant_id=user["tid"]))
+        if emp is None:
+            raise HTTPException(404, "assigned AI employee not found")
+        snap = capability_snapshot(emp)
+
+        title = str(body.get("task_title", ""))
+        desc = str(body.get("task_description", ""))
+        subject_type = body.get("subject_type")
+        subject_id = body.get("subject_id")
+        subject_tenant_id = body.get("subject_tenant_id")
+        source_channel = str(body.get("source_channel", "WEB"))
+        if source_channel not in _tasks.SOURCE_CHANNELS:
+            raise HTTPException(400, "invalid source_channel")
+        priority = str(body.get("priority", "NORMAL"))
+        purpose = str(body.get("task_purpose")
+                      or f"{task_type} for segment {meta['segment']}")
+
+        # Untrusted-input detection (advisory; never changes the decision).
+        flags = _tasks.detect_input_security_flags(title, desc)
+        unsafe = _tasks.detect_unsafe_requested_actions(title, desc)
+        risk_level, risk_reason = _tasks.classify_risk(task_type, unsafe)
+
+        # CORE-A1 authority pre-check drives the decision — NOT the task text.
+        decision = evaluate_ai_employee_authority(
+            employee=emp, action_type=meta["action"], tenant_id=user["tid"],
+            object_type=str(subject_type or ""),
+            object_id=str(subject_id or ""), segment=meta["segment"],
+            subject_tenant_id=subject_tenant_id)
+
+        status = _DECISION_TO_STATUS.get(decision.decision, "NOT_IMPLEMENTED")
+        clarification_qs: list = []
+        # Missing required subject -> clarification.
+        if task_type in _tasks.SUBJECT_REQUIRED and not subject_id \
+                and status not in ("BLOCKED", "NOT_IMPLEMENTED"):
+            status = "NEEDS_CLARIFICATION"
+            clarification_qs = [f"Which {subject_type or 'subject'} is this "
+                                f"{task_type} about? A subject reference is "
+                                "required."]
+        # Expiry at intake -> cannot be accepted.
+        expires_at = body.get("expires_at")
+        if expires_at and status not in ("BLOCKED", "NOT_IMPLEMENTED") \
+                and str(expires_at) < utcnow():
+            status = "EXPIRED"
+        stale_after = body.get("stale_after")
+        due_at = body.get("due_at")
+
+        allowed_scopes, forbidden_scopes = _tasks.derive_data_scopes(task_type)
+        requires_approval = decision.decision == "APPROVAL_REQUIRED"
+        requires_consent = decision.required_consent_check
+        requires_evidence = decision.required_evidence_check
+        requires_tool_broker = decision.required_tool_broker
+        requires_run_ledger = status == "ACCEPTED"
+
+        envelope = _tasks.build_envelope(
+            tenant_id=user["tid"], requester_user_id=user["uid"],
+            assigned_ai_employee_id=emp.id, source_channel=source_channel,
+            source_thread_ref=body.get("source_thread_ref"),
+            source_message_ref=body.get("source_message_ref"),
+            task_type=task_type, segment=meta["segment"],
+            subject_type=subject_type, subject_id=subject_id, task_title=title,
+            task_description=desc, priority=priority, due_at=due_at,
+            expires_at=expires_at, task_purpose=purpose,
+            purpose_category=meta["purpose_category"],
+            authority_decision=decision.decision,
+            authority_reason=decision.reason, risk_level=risk_level,
+            requires_human_approval=requires_approval,
+            requires_consent_check=requires_consent,
+            requires_evidence_check=requires_evidence,
+            requires_tool_broker=requires_tool_broker,
+            forbidden_side_effects=_tasks.FORBIDDEN_SIDE_EFFECTS,
+            input_security_flags=flags)
+        env_hash = _tasks.envelope_hash(envelope)
+
+        contract = _tasks.build_contract(
+            tenant_id=user["tid"], requester_user_id=user["uid"],
+            assigned_ai_employee_id=emp.id,
+            capability_snapshot_hash=snap["capability_snapshot_hash"],
+            task_type=task_type, segment=meta["segment"],
+            subject_type=subject_type, subject_id=subject_id,
+            task_purpose=purpose, purpose_category=meta["purpose_category"],
+            allowed_data_scopes=allowed_scopes,
+            forbidden_data_scopes=forbidden_scopes,
+            allowed_output_types=meta["outputs"],
+            forbidden_side_effects=_tasks.FORBIDDEN_SIDE_EFFECTS,
+            authority_decision=decision.decision,
+            authority_hard_fail=decision.hard_fail,
+            requires_human_approval=requires_approval,
+            requires_consent_check=requires_consent,
+            requires_evidence_check=requires_evidence,
+            requires_tool_broker=requires_tool_broker,
+            requires_run_ledger=requires_run_ledger, risk_level=risk_level,
+            risk_reason=risk_reason, expires_at=expires_at,
+            stale_after=stale_after, clarification_required=bool(
+                clarification_qs), clarification_questions=clarification_qs)
+        con_hash = _tasks.contract_hash(contract)
+        dedup_key = _tasks.deduplication_key(
+            tenant_id=user["tid"], requester_user_id=user["uid"],
+            source_channel=source_channel, task_type=task_type,
+            subject_type=str(subject_type or ""),
+            subject_id=str(subject_id or ""), task_title=title)
+
+        idem = body.get("idempotency_key")
+        if idem:
+            prior = task_store.find_by_idempotency(
+                tenant_id=user["tid"], requester_user_id=user["uid"],
+                idempotency_key=str(idem))
+            if prior is not None:
+                if prior["envelope_hash"] == env_hash:
+                    task_store.add_event(
+                        task_id=prior["id"], tenant_id=user["tid"],
+                        actor_id=user["uid"], actor_type="human",
+                        event_type="IDEMPOTENCY_REPLAYED",
+                        reason="same idempotency key + same envelope")
+                    return {"idempotent_replay": True,
+                            **_build_task_response(prior)}
+                task_store.add_event(
+                    task_id=prior["id"], tenant_id=user["tid"],
+                    actor_id=user["uid"], actor_type="human",
+                    event_type="IDEMPOTENCY_CONFLICT",
+                    reason="same idempotency key + different envelope")
+                raise HTTPException(409, "idempotency key reused with a "
+                                    "different task envelope")
+
+        task_id = str(uuid.uuid4())
+        now = utcnow()
+        payload = {
+            "task_id": task_id, "tenant_id": user["tid"],
+            "requester_user_id": user["uid"], "requester_role": user["role"],
+            "assigned_ai_employee_id": emp.id,
+            "assigned_ai_employee_capability_snapshot_hash":
+                snap["capability_snapshot_hash"],
+            "source_channel": source_channel,
+            "source_channel_status": "ACTIVE" if source_channel in (
+                "WEB", "API") else "NOT_IMPLEMENTED",
+            "idempotency_key": idem, "deduplication_key": dedup_key,
+            "canonical_task_envelope_hash": env_hash,
+            "canonical_task_envelope_version": _tasks.ENVELOPE_VERSION,
+            "canonical_task_contract_hash": con_hash,
+            "canonical_task_contract_version": _tasks.CONTRACT_VERSION,
+            "task_type": task_type, "task_title": title,
+            "task_description": desc,
+            "task_description_trust": "UNTRUSTED_USER_INPUT",
+            "task_status": status, "task_version": 1,
+            "segment": meta["segment"], "segment_confidence": 1.0,
+            "segment_reason": f"task type '{task_type}' maps to segment",
+            "priority": priority, "due_at": due_at, "expires_at": expires_at,
+            "stale_after": stale_after, "created_at": now, "updated_at": now,
+            "subject_type": subject_type, "subject_id": subject_id,
+            "task_purpose": purpose,
+            "purpose_category": meta["purpose_category"],
+            "allowed_data_scopes": allowed_scopes,
+            "forbidden_data_scopes": forbidden_scopes,
+            "sensitive_data_flags": [],
+            "authority_decision": decision.decision,
+            "authority_reason": decision.reason,
+            "authority_hard_fail": decision.hard_fail,
+            "authority_snapshot_version": emp.profile_version,
+            "risk_level": risk_level, "risk_reason": risk_reason,
+            "requires_human_approval": requires_approval,
+            "requires_consent_check": requires_consent,
+            "requires_evidence_check": requires_evidence,
+            "requires_tool_broker": requires_tool_broker,
+            "requires_run_ledger": requires_run_ledger,
+            "requires_clarification": bool(clarification_qs),
+            "clarification_questions": clarification_qs,
+            "clarification_reason": (clarification_qs[0] if clarification_qs
+                                     else None),
+            "allowed_output_types": meta["outputs"],
+            "forbidden_side_effects": _tasks.FORBIDDEN_SIDE_EFFECTS,
+            "unsafe_requested_actions": unsafe,
+            "input_security_flags": flags,
+            "draft_artifact_placeholder": None, "latest_result_summary": None,
+            "canonical_task_envelope": envelope,
+            "canonical_task_contract": contract,
+            "honesty_labels": _tasks.HONESTY_LABELS,
+        }
+        task_store.save({
+            "id": task_id, "tenant_id": user["tid"],
+            "requester_user_id": user["uid"], "requester_role": user["role"],
+            "assigned_ai_employee_id": emp.id,
+            "capability_snapshot_hash": snap["capability_snapshot_hash"],
+            "source_channel": source_channel, "idempotency_key": idem,
+            "deduplication_key": dedup_key, "envelope_hash": env_hash,
+            "contract_hash": con_hash, "task_type": task_type,
+            "segment": meta["segment"], "task_status": status,
+            "task_version": 1, "risk_level": risk_level,
+            "authority_decision": decision.decision,
+            "authority_hard_fail": int(decision.hard_fail),
+            "subject_type": subject_type, "subject_id": subject_id,
+            "expires_at": expires_at, "stale_after": stale_after,
+            "payload_json": json.dumps(payload), "created_by": user["uid"],
+            "created_at": now, "updated_at": now, "cancelled_at": None})
+
+        # Append-only intake events (intake audit, NOT a run ledger).
+        ev = lambda t, r="": task_store.add_event(  # noqa: E731
+            task_id=task_id, tenant_id=user["tid"], actor_id=user["uid"],
+            actor_type="human", event_type=t, reason=r)
+        ev("TASK_CREATED")
+        ev("CAPABILITY_SNAPSHOT_CAPTURED", snap["capability_snapshot_hash"])
+        ev("AUTHORITY_CHECKED", decision.decision)
+        ev("TASK_CONTRACT_CREATED", con_hash)
+        ev("DATA_SCOPE_BOUNDARY_SET")
+        if flags != ["NONE"]:
+            ev("UNTRUSTED_INPUT_FLAGGED", ", ".join(flags))
+        ev({"ACCEPTED": "TASK_ACCEPTED", "BLOCKED": "TASK_BLOCKED",
+            "NEEDS_CLARIFICATION": "TASK_NEEDS_CLARIFICATION",
+            "NOT_IMPLEMENTED": "TASK_NOT_IMPLEMENTED",
+            "EXPIRED": "TASK_EXPIRED"}.get(status, "TASK_CREATED"),
+           decision.reason)
+        audit.append(event_type="AI_TASK_INTAKE", actor=user["uid"],
+                     payload={"task_id": task_id, "task_type": task_type,
+                              "status": status,
+                              "authority_decision": decision.decision})
+        return payload
+
+    def _load_task_or_404(task_id: str, user: dict) -> dict:
+        row = task_store.get(task_id, tenant_id=user["tid"])
+        if row is None:                          # incl. cross-tenant
+            raise HTTPException(404, "task not found")
+        return row
+
+    @app.get("/ai-tasks")
+    async def list_ai_tasks(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return [json.loads(r["payload_json"])
+                for r in task_store.list(tenant_id=user["tid"])]
+
+    @app.get("/ai-tasks/{task_id}")
+    async def get_ai_task(task_id: str, user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _build_task_response(_load_task_or_404(task_id, user))
+
+    @app.get("/ai-tasks/{task_id}/envelope")
+    async def get_ai_task_envelope(task_id: str,
+                                   user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        p = _build_task_response(_load_task_or_404(task_id, user))
+        return {"canonical_task_envelope_hash":
+                p["canonical_task_envelope_hash"],
+                "canonical_task_envelope_version":
+                p["canonical_task_envelope_version"],
+                "canonical_task_envelope": p["canonical_task_envelope"]}
+
+    @app.get("/ai-tasks/{task_id}/contract")
+    async def get_ai_task_contract(task_id: str,
+                                   user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        p = _build_task_response(_load_task_or_404(task_id, user))
+        return {"canonical_task_contract_hash":
+                p["canonical_task_contract_hash"],
+                "canonical_task_contract_version":
+                p["canonical_task_contract_version"],
+                "canonical_task_contract": p["canonical_task_contract"]}
+
+    @app.get("/ai-tasks/{task_id}/intake-events")
+    async def get_ai_task_events(task_id: str,
+                                 user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_task_or_404(task_id, user)
+        return task_store.events(task_id, tenant_id=user["tid"])
+
+    @app.patch("/ai-tasks/{task_id}")
+    async def patch_ai_task(task_id: str, body: dict,
+                            user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        row = _load_task_or_404(task_id, user)
+        payload = json.loads(row["payload_json"])
+        # Optimistic concurrency (if an expected version is supplied).
+        if "expected_task_version" in body and \
+                int(body["expected_task_version"]) != payload["task_version"]:
+            raise HTTPException(409, "stale task_version")
+        # A terminal task cannot be edited; task text cannot set status.
+        if payload["task_status"] in ("BLOCKED", "CANCELLED", "EXPIRED",
+                                      "NOT_IMPLEMENTED"):
+            raise HTTPException(409, f"task is {payload['task_status']} and "
+                                "cannot be modified")
+        for f in ("task_title", "task_description", "priority", "due_at",
+                  "expires_at", "stale_after"):
+            if f in body:
+                payload[f] = body[f]
+        # Untrusted payload can NEVER set status/authority/scopes directly.
+        payload["task_version"] += 1
+        payload["updated_at"] = utcnow()
+        task_store.update(task_id, {
+            "payload_json": json.dumps(payload),
+            "task_version": payload["task_version"],
+            "updated_at": payload["updated_at"]})
+        return payload
+
+    @app.post("/ai-tasks/{task_id}/cancel")
+    async def cancel_ai_task(task_id: str,
+                             user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        row = _load_task_or_404(task_id, user)
+        payload = json.loads(row["payload_json"])
+        if payload["task_status"] in ("BLOCKED", "NOT_IMPLEMENTED",
+                                      "EXPIRED", "CANCELLED"):
+            raise HTTPException(409, f"task is {payload['task_status']}")
+        payload["task_status"] = "CANCELLED"
+        payload["task_version"] += 1
+        now = utcnow()
+        task_store.update(task_id, {"task_status": "CANCELLED",
+                                    "payload_json": json.dumps(payload),
+                                    "task_version": payload["task_version"],
+                                    "updated_at": now, "cancelled_at": now})
+        task_store.add_event(task_id=task_id, tenant_id=user["tid"],
+                             actor_id=user["uid"], actor_type="human",
+                             event_type="TASK_CANCELLED")
+        return payload
+
     # ---- UI pages -------------------------------------------------------------------------------------
     ui.mount(app)
     return app

@@ -581,6 +581,42 @@ CREATE TABLE IF NOT EXISTS ai_employees (
   created_at TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS ix_ai_employees ON ai_employees(tenant_id);
 """),
+    (10, """
+-- v10: Secure Work Intake Registry + Canonical Task Contract (CORE-A2).
+-- Delegated work intake — NOT execution. Full canonical envelope + contract
+-- are stored verbatim; task text is untrusted; append-only intake events.
+CREATE TABLE IF NOT EXISTS ai_tasks (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  requester_user_id TEXT NOT NULL, requester_role TEXT NOT NULL DEFAULT '',
+  assigned_ai_employee_id TEXT NOT NULL,
+  capability_snapshot_hash TEXT NOT NULL DEFAULT '',
+  source_channel TEXT NOT NULL DEFAULT 'WEB',
+  idempotency_key TEXT, deduplication_key TEXT NOT NULL DEFAULT '',
+  envelope_hash TEXT NOT NULL, contract_hash TEXT NOT NULL,
+  task_type TEXT NOT NULL, segment TEXT NOT NULL DEFAULT '',
+  task_status TEXT NOT NULL DEFAULT 'CREATED',
+  task_version INTEGER NOT NULL DEFAULT 1,
+  risk_level TEXT NOT NULL DEFAULT 'MEDIUM',
+  authority_decision TEXT NOT NULL DEFAULT '',
+  authority_hard_fail INTEGER NOT NULL DEFAULT 0,
+  subject_type TEXT, subject_id TEXT,
+  expires_at TEXT, stale_after TEXT,
+  payload_json TEXT NOT NULL,
+  created_by TEXT NOT NULL, created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL, cancelled_at TEXT);
+CREATE INDEX IF NOT EXISTS ix_ai_tasks
+  ON ai_tasks(tenant_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_ai_tasks_idem
+  ON ai_tasks(tenant_id, requester_user_id, idempotency_key);
+
+CREATE TABLE IF NOT EXISTS ai_task_intake_events (
+  id TEXT PRIMARY KEY, task_id TEXT NOT NULL, tenant_id TEXT NOT NULL,
+  actor_id TEXT NOT NULL, actor_type TEXT NOT NULL DEFAULT 'human',
+  event_type TEXT NOT NULL, reason TEXT NOT NULL DEFAULT '',
+  metadata_json TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_task_events
+  ON ai_task_intake_events(tenant_id, task_id, created_at);
+"""),
 ]
 
 
