@@ -124,3 +124,171 @@ def consistency_proof_ok(old_leaves: list[str],
         return False
     return merkle_root(new_leaves[:len(old_leaves)]) \
         == merkle_root(old_leaves)
+
+
+# ---------------------------------------------------------------------------
+# Finalis Evidence Transparency Log Core (EVIDENCE-MERKLE-C1).
+#
+# The system persists the full ordered leaf list for every root checkpoint,
+# so append-only consistency is verified AUTHORITATIVELY by full-leaf
+# recomputation (prefix relation is tree-shape independent). Alongside that,
+# a compact RFC 9162 / RFC 6962 consistency proof is generated over the
+# canonical Merkle Tree Head (mth) and server-verified before a VERIFIED
+# verdict is returned. No blockchain, no external notarization, no external
+# transparency service — Finalis-owned, local, deterministic.
+# ---------------------------------------------------------------------------
+SUPPORTED_HASH_ALGORITHMS = {"sha256", "sha-256"}
+
+
+def _largest_pow2_lt(n: int) -> int:
+    """Largest power of two strictly smaller than n (n >= 2)."""
+    k = 1
+    while (k << 1) < n:
+        k <<= 1
+    return k
+
+
+def mth(leaves: list[str]) -> str:
+    """RFC 9162 canonical Merkle Tree Head (power-of-two split, no odd-node
+    duplication). Used only for the compact consistency proof; the stored
+    checkpoint `root` keeps Finalis' existing construction."""
+    n = len(leaves)
+    if n == 0:
+        return _sha(NODE_PREFIX, b"EMPTY")
+    if n == 1:
+        return leaves[0]
+    k = _largest_pow2_lt(n)
+    return parent_hash(mth(leaves[:k]), mth(leaves[k:]))
+
+
+def _subproof(m: int, leaves: list[str], b: bool) -> list[str]:
+    n = len(leaves)
+    if m == n:
+        return [] if b else [mth(leaves)]
+    k = _largest_pow2_lt(n)
+    if m <= k:
+        return _subproof(m, leaves[:k], b) + [mth(leaves[k:])]
+    return _subproof(m - k, leaves[k:], False) + [mth(leaves[:k])]
+
+
+def consistency_proof(m: int, leaves: list[str]) -> list[str]:
+    """RFC 6962/9162 consistency proof PROOF(m, D[n]) — the compact node set
+    that proves the size-m tree is a prefix of the size-n tree. Empty for the
+    trivial m==0 / m==n cases; deterministic for a given (m, leaves)."""
+    n = len(leaves)
+    if m <= 0 or m >= n:
+        return []
+    return _subproof(m, leaves, True)
+
+
+def verify_consistency(first_size: int, second_size: int, first_hash: str,
+                       second_hash: str, proof: list[str]) -> bool:
+    """RFC 6962 consistency-proof verifier: reconstruct both the old and new
+    canonical tree heads from `proof` and confirm they match. Pure, no I/O."""
+    if first_size < 0 or second_size < 0 or first_size > second_size:
+        return False
+    if first_size == second_size:
+        return first_hash == second_hash and len(proof) == 0
+    if first_size == 0:
+        return len(proof) == 0
+    nodes = list(proof)
+    fn, sn = first_size - 1, second_size - 1
+    while fn & 1:
+        fn >>= 1
+        sn >>= 1
+    if fn == 0:
+        seed = first_hash
+    else:
+        if not nodes:
+            return False
+        seed = nodes[0]
+        nodes = nodes[1:]
+    node1 = node2 = seed
+    for c in nodes:
+        if sn == 0:
+            return False
+        if (fn & 1) or (fn == sn):
+            node1 = parent_hash(c, node1)
+            node2 = parent_hash(c, node2)
+            while fn != 0 and (fn & 1) == 0:
+                fn >>= 1
+                sn >>= 1
+        else:
+            node2 = parent_hash(node2, c)
+        fn >>= 1
+        sn >>= 1
+    return node1 == first_hash and node2 == second_hash and sn == 0
+
+
+# Consistency-report statuses (server-authoritative).
+CONSISTENCY_STATUSES = {
+    "VERIFIED", "NOT_VERIFIED", "PROOF_MISSING", "ROOT_NOT_FOUND",
+    "INVALID_RANGE", "UNSUPPORTED_ALGORITHM", "SERVER_REVIEW_REQUIRED"}
+
+
+@dataclass
+class ConsistencyReport:
+    status: str
+    append_only_verified: bool
+    proof_nodes: list
+    reason: str
+    previous_tree_hash: str = ""
+    current_tree_hash: str = ""
+
+
+def consistency_report(*, old_leaves: list, old_root: str, old_size: int,
+                       new_leaves: list, new_root: str, new_size: int,
+                       algorithm: str = "sha256") -> ConsistencyReport:
+    """Authoritative append-only verdict between two stored checkpoints.
+
+    VERIFIED requires ALL of: supported algorithm; previous_size <=
+    current_size; full historical leaf order present on both sides; the
+    previous leaf list is a byte-exact prefix of the current one; both stored
+    roots recompute from their leaves (tamper check); and the compact RFC 9162
+    consistency proof reconstructs both canonical tree heads."""
+    if algorithm.lower() not in SUPPORTED_HASH_ALGORITHMS:
+        return ConsistencyReport(
+            "UNSUPPORTED_ALGORITHM", False, [],
+            f"hash algorithm '{algorithm}' is not supported — verification "
+            "refused")
+    if old_size > new_size:
+        return ConsistencyReport(
+            "INVALID_RANGE", False, [],
+            "Merkle consistency proof requires previous tree size <= "
+            "current tree size.")
+    # Historical leaf order must be fully present to reconstruct a proof.
+    if len(old_leaves) != old_size or len(new_leaves) != new_size:
+        return ConsistencyReport(
+            "PROOF_MISSING", False, [],
+            "Historical leaf order is missing, so consistency proof cannot "
+            "be reconstructed.")
+    # Stored roots must recompute from their own leaves (tamper detection).
+    if merkle_root(old_leaves) != old_root \
+            or merkle_root(new_leaves) != new_root:
+        return ConsistencyReport(
+            "NOT_VERIFIED", False, [],
+            "A stored root does not match its recorded leaves — append-only "
+            "consistency is not verified.")
+    old_th, new_th = mth(old_leaves), mth(new_leaves)
+    if old_size == new_size:
+        ok = old_leaves == new_leaves
+        return ConsistencyReport(
+            "VERIFIED" if ok else "NOT_VERIFIED", ok, [],
+            "Trivial same-root consistency: identical tree size and leaves."
+            if ok else "Roots of equal size differ — not append-only.",
+            old_th, new_th)
+    if new_leaves[:old_size] != old_leaves:
+        return ConsistencyReport(
+            "NOT_VERIFIED", False, [],
+            "Previous root is not part of the current append-only history "
+            "(leaf prefix does not match).", old_th, new_th)
+    proof = consistency_proof(old_size, new_leaves)
+    if not verify_consistency(old_size, new_size, old_th, new_th, proof):
+        return ConsistencyReport(
+            "SERVER_REVIEW_REQUIRED", False, proof,
+            "Generated consistency proof failed server-side verification.",
+            old_th, new_th)
+    return ConsistencyReport(
+        "VERIFIED", True, proof,
+        "Server-verified append-only extension: previous tree is a prefix "
+        "of the current tree.", old_th, new_th)

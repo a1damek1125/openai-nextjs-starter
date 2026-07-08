@@ -2228,6 +2228,101 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                     == row["root"] if len(current_leaves) >= len(
                         stored_leaves) else False}
 
+    # -- Transparency Log Core: server-verified consistency proofs -----------------
+    def _checkpoint(row: dict) -> dict:
+        """Honest checkpoint metadata. Signatures / witness cosignatures /
+        SCITT receipts are future-ready slots only — none are implemented,
+        no external transparency service is called."""
+        import hashlib as _h
+        cp = _h.sha256(
+            f"FINALIS_EVIDENCE_CHECKPOINT_V1|{row['tenant_id']}|"
+            f"{row['root']}|{row['size']}|sha256".encode()).hexdigest()
+        return {"checkpoint_hash": cp, "checkpoint_algorithm": "sha256",
+                "checkpoint_created_at": row["created_at"],
+                "checkpoint_signature_status": "NOT_IMPLEMENTED",
+                "witness_cosignature_status": "NOT_IMPLEMENTED",
+                "scitt_receipt_status": "NOT_IMPLEMENTED"}
+
+    _CONSISTENCY_NOTES = [
+        "Finalis server-verified append-only consistency.",
+        "Merkle consistency proves append-only tree evolution only; it does "
+        "not prove legal validity.",
+        "Checkpoint signatures are not implemented.",
+        "Witness cosignatures are not implemented.",
+        "SCITT receipts are not implemented.",
+        "No external transparency service is called.",
+    ]
+
+    @app.get("/evidence/merkle-roots/{current_root_id}/consistency")
+    async def evidence_merkle_consistency(
+            current_root_id: str, previous_root_id: Optional[str] = None,
+            user: dict = Depends(current_user)):
+        require_permission(user, "audit.view")
+        if not previous_root_id:
+            raise HTTPException(400, "previous_root_id is required")
+
+        def _shell(status: str, reason: str, cur=None, prev=None):
+            return {"previous_root_id": previous_root_id,
+                    "current_root_id": current_root_id,
+                    "previous_tree_size": prev["size"] if prev else None,
+                    "current_tree_size": cur["size"] if cur else None,
+                    "previous_root_hash": prev["root"] if prev else None,
+                    "current_root_hash": cur["root"] if cur else None,
+                    "consistency_proof_nodes": [], "algorithm": "sha256",
+                    "status": status, "append_only_verified": False,
+                    "reason": reason, "verified_at": utcnow(),
+                    "checkpoint": _checkpoint(cur) if cur else None,
+                    "notes": _CONSISTENCY_NOTES}
+
+        # Tenant-scoped lookups: a cross-tenant root id simply isn't found —
+        # roots are never compared across tenants.
+        cur = estore.get_merkle_root(current_root_id, tenant_id=user["tid"])
+        prev = estore.get_merkle_root(previous_root_id, tenant_id=user["tid"])
+        if cur is None or prev is None:
+            return _shell("ROOT_NOT_FOUND",
+                          "A referenced root was not found for this tenant "
+                          "(cross-tenant consistency checks are not allowed).",
+                          cur, prev)
+        report = _mrk.consistency_report(
+            old_leaves=json.loads(prev["leaves_json"]),
+            old_root=prev["root"], old_size=prev["size"],
+            new_leaves=json.loads(cur["leaves_json"]),
+            new_root=cur["root"], new_size=cur["size"], algorithm="sha256")
+        return {"previous_root_id": previous_root_id,
+                "current_root_id": current_root_id,
+                "previous_tree_size": prev["size"],
+                "current_tree_size": cur["size"],
+                "previous_root_hash": prev["root"],
+                "current_root_hash": cur["root"],
+                "previous_tree_hash": report.previous_tree_hash,
+                "current_tree_hash": report.current_tree_hash,
+                "consistency_proof_nodes": report.proof_nodes,
+                "algorithm": "sha256", "status": report.status,
+                "append_only_verified": report.append_only_verified,
+                "reason": report.reason, "verified_at": utcnow(),
+                "checkpoint": _checkpoint(cur), "notes": _CONSISTENCY_NOTES}
+
+    @app.get("/evidence/merkle-roots/{root_id}/lineage")
+    async def evidence_merkle_lineage(root_id: str,
+                                      user: dict = Depends(current_user)):
+        require_permission(user, "audit.view")
+        row = estore.get_merkle_root(root_id, tenant_id=user["tid"])
+        if row is None:
+            raise HTTPException(404, "root not found")
+        roots = estore.merkle_roots(tenant_id=user["tid"])   # created_at order
+        lineage, prev_id = [], None
+        for r in roots:
+            lineage.append({"root_id": r["id"], "tree_size": r["size"],
+                            "root_hash": r["root"],
+                            "previous_root_id": prev_id,
+                            "created_at": r["created_at"]})
+            prev_id = r["id"]
+            if r["id"] == root_id:
+                break
+        return {"root_id": root_id, "algorithm": "sha256",
+                "chain_length": len(lineage), "lineage": lineage,
+                "checkpoint": _checkpoint(row), "notes": _CONSISTENCY_NOTES}
+
     # ---- Relationship Core (CRM-B: persistence + API over CRM-A) --------------
     from ..crm.adapters import NullCrmAdapter, default_policy, \
         idempotency_key as make_idempotency_key

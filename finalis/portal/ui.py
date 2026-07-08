@@ -1446,9 +1446,21 @@ permission-gated). No fake evidence rows.</small></p>
   <p><small><b>Inclusion proof shows that one item is in a tree. Consistency
   proof shows whether the log evolved append-only.</b> Append-only evidence
   cannot be assumed unless the server exposes and verifies consistency data
-  (RFC 9162). A standalone consistency proof-path endpoint is
-  <b>MISSING</b>; append-only status here is derived from Merkle-root
-  regeneration and root re-verification only.</small></p>
+  (RFC 9162). The Finalis Evidence Transparency Log now exposes a
+  server-verified consistency proof between root checkpoints
+  (<code>/evidence/merkle-roots/{id}/consistency</code>);
+  <b>Merkle consistency proves append-only tree evolution only; it does not
+  prove legal validity.</b> Server-side Evidence verification remains
+  authoritative; UI explanation cannot unlock actions.</small></p>
+  <p><small><b>Status legend:</b> VERIFIED → “Merkle consistency proof is
+  server-verified.” · NOT_VERIFIED → “Append-only consistency is not
+  verified.” · PROOF_MISSING → “Historical leaf order was not stored, so
+  consistency proof cannot be reconstructed.” · INVALID_RANGE → previous
+  tree size exceeds current tree size.</small></p>
+  <p><small><b>Transparency checkpoint (future-ready slots):</b> Checkpoint
+  signatures are not implemented. Witness cosignatures are not implemented.
+  SCITT receipts are not implemented. No external transparency service is
+  called.</small></p>
   <div id="wb-consistency-body"></div>
 </div>
 
@@ -1749,17 +1761,19 @@ window.wbOpen = async (id) => {
   const proof = wbCanAudit()
     ? await wbTry('/evidence/' + id + '/merkle-proof') : null;
   const immут = await wbTry('/evidence/' + id + '/immutability');
-  // Consistency is derived, not a standalone proof-path API.
+  // Server-verified append-only consistency between the two latest root
+  // checkpoints (Finalis Evidence Transparency Log). Needs >= 2 checkpoints;
+  // with fewer, append-only stays NOT_EXPOSED (never assumed).
   let consistency = null;
-  if (proof && wbCanAudit()) {
+  if (wbCanAudit()) {
     const roots = await wbTry('/evidence/merkle-roots');
-    if (roots && roots.length) {
-      const v = await (async () => { try {
-        return await send('POST',
-          '/evidence/merkle-roots/' + roots[roots.length - 1].batch_id
-          + '/verify'); } catch (e) { return null; } })();
-      if (v && v.ok) consistency = {ok: v.data.root_intact
-        && v.data.chain_still_matches_root, data: v.data};
+    if (roots && roots.length >= 2) {
+      const cur = roots[roots.length - 1].batch_id;
+      const prev = roots[roots.length - 2].batch_id;
+      const d = await wbTry('/evidence/merkle-roots/' + cur
+        + '/consistency?previous_root_id=' + prev);
+      if (d) consistency = {ok: d.append_only_verified,
+                            status: d.status, data: d};
     }
   }
   const dims = wbProofAlgebra(d, proof, derivs, contracts, consistency);
@@ -1823,19 +1837,42 @@ window.wbRender = (d, x) => {
      <p><small>Merkle proof explains inclusion. It does not explain business
      truth.</small></p>`;
 
-  // --- Merkle consistency / append-only ---
+  // --- Merkle consistency / append-only (server-verified) ---
   const c = x.consistency;
+  const CMSG = {
+    VERIFIED: 'Merkle consistency proof is server-verified.',
+    NOT_VERIFIED: 'Append-only consistency is not verified.',
+    PROOF_MISSING: 'Historical leaf order was not stored, so consistency '
+      + 'proof cannot be reconstructed.',
+    ROOT_NOT_FOUND: 'A referenced root checkpoint was not found for this '
+      + 'tenant.',
+    INVALID_RANGE: 'Invalid range: previous tree size exceeds current tree '
+      + 'size.',
+    UNSUPPORTED_ALGORITHM: 'Unsupported hash algorithm — verification '
+      + 'refused.',
+    SERVER_REVIEW_REQUIRED: 'Generated proof failed server-side '
+      + 'verification — review required.'};
   $('wb-consistency-body').innerHTML = c == null ?
-    `<p><b>Merkle consistency proof is not exposed by the current API.</b>
-     Append-only status: <b>NOT_VERIFIED / NOT_EXPOSED</b>. Append-only
-     evidence cannot be assumed unless the server exposes and verifies
-     consistency data.</p>` :
-    `<ul><li>root intact (recomputed == stored):
-       ${yn(c.data.root_intact)}</li>
-     <li>live chain still matches root:
-       ${yn(c.data.chain_still_matches_root)}</li>
-     <li>append-only status: <b class="${c.ok ? 'ok' : 'err'}">
-       ${c.ok ? 'CONSISTENT' : 'CONSISTENCY_FAILED'}</b></li></ul>`;
+    `<p><b>Append-only status: NOT_VERIFIED / NOT_EXPOSED.</b> Fewer than two
+     root checkpoints exist for this tenant (or proof is not available to
+     your role), so append-only tree evolution cannot be proven yet.
+     Append-only evidence cannot be assumed unless the server exposes and
+     verifies consistency data.</p>` :
+    `<ul>
+     <li>previous tree size: ${esc(String(c.data.previous_tree_size))} →
+       current tree size: ${esc(String(c.data.current_tree_size))}</li>
+     <li>consistency proof nodes:
+       ${(c.data.consistency_proof_nodes || []).length}</li>
+     <li>status: <b class="${c.status === 'VERIFIED' ? 'ok' : 'err'}">
+       ${esc(c.status)}</b> · append-only verified: ${yn(c.ok)}</li>
+     <li>${esc(CMSG[c.status] || c.data.reason || '')}</li>
+     <li><small>checkpoint signatures: NOT_IMPLEMENTED · witness
+       cosignatures: NOT_IMPLEMENTED · SCITT receipts: NOT_IMPLEMENTED</small>
+       </li>
+     </ul>
+     <p><small>Merkle consistency proves append-only tree evolution only;
+     it does not prove legal validity. Server-side Evidence verification
+     remains authoritative.</small></p>`;
 
   // --- Proof algebra / verdict ---
   const dims = x.dims, v = x.verdict;

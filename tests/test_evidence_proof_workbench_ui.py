@@ -183,6 +183,43 @@ class TestServerAuthorityLabels:
             assert verdict in page, verdict
 
 
+class TestMerkleConsistencyD3Integration:
+    """EVIDENCE-MERKLE-C1: V-F D3 now shows server-verified consistency."""
+
+    def test_references_consistency_endpoint(self, page):
+        assert "/evidence/merkle-roots/" in page
+        assert "consistency?previous_root_id=" in page
+
+    def test_server_verified_messages_present(self, norm):
+        for msg in ("Merkle consistency proof is server-verified.",
+                    "Append-only consistency is not verified.",
+                    "Historical leaf order was not stored, so consistency "
+                    "proof cannot be reconstructed.",
+                    "Merkle consistency proves append-only tree evolution "
+                    "only; it does not prove legal validity."):
+            assert msg in norm, msg
+
+    def test_future_slots_labeled_not_implemented(self, norm):
+        for msg in ("Checkpoint signatures are not implemented.",
+                    "Witness cosignatures are not implemented.",
+                    "SCITT receipts are not implemented."):
+            assert msg in norm, msg
+
+    def test_d3_not_always_not_exposed_when_data_exists(self, page):
+        # The workbench now drives D3 from the server's append_only_verified,
+        # not a permanent NOT_EXPOSED.
+        assert "append_only_verified" in page
+        assert "/consistency?previous_root_id=" in page
+        # NOT_EXPOSED remains only the <2-checkpoint / no-permission fallback.
+        assert "consistency == null ? 'NOT_EXPOSED'" in page
+
+    def test_no_hardcoded_fake_consistency_proof_nodes(self, page):
+        # Proof nodes come from the API response, never baked into the page.
+        assert "c.data.consistency_proof_nodes" in page
+        for fake in ("proof_node_0", "abc123deadbeef", "sha256:fake"):
+            assert fake not in page, fake
+
+
 def test_46_existing_portal_sections_still_served(page):
     # V-F did not remove any prior section (regression guard).
     for section in ('id="quotes-section"', 'id="evidence-section"',
