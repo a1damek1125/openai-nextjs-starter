@@ -732,3 +732,283 @@ def test_viewer_restricted_ui_in_browser(server, page):
     appts = page.text_content("#sched-appts")
     for forbidden in ("Complete", "No-show", "Reschedule", "Cancel"):
         assert forbidden not in appts
+
+
+# ---------------------------------------------------------------------------
+# CRM-D — Customer Panel browser E2E + operational invariant hardening.
+# Real clicks through the CRM-C UI over the tested CRM-B APIs, proving the
+# operational invariants are visible to a real user in a real browser:
+# consent non-overridable / marketing never implied, AI-suggested memory is
+# not verified truth (only a human verifies), a disputed fact blocks
+# automation, merge is human-only + reason-required + tombstone, external
+# data cannot overwrite verified Finalis truth, no external provider is
+# ever called, RBAC hides write affordances from a viewer. The deterministic
+# server-side matrices behind these live in
+# tests/test_crm_customer_panel_invariants.py.
+#
+# Note the openParty() re-render contract: every state-changing action
+# re-renders #crm-detail, which recreates the form inputs. Tests therefore
+# wait for a business result to appear before filling the next form.
+# ---------------------------------------------------------------------------
+def test_customer_panel_owner_browser_e2e_invariants(server, page):
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    _login(page, server)
+    page.wait_for_selector("#crm-create:not([hidden])", timeout=15000)
+
+    # 1. Create a customer with contacts — the server normalizes them.
+    page.fill("#crm-name", "Owner Journey Co")
+    page.fill("#crm-email", "  Jan@Testowy.PL ")
+    page.fill("#crm-phone", "+48 600-700-800")
+    page.click("#crm-create-btn")
+    page.wait_for_selector("#crm-detail h3:has-text('Owner Journey Co')",
+                           timeout=10000)
+    detail = page.text_content("#crm-detail")
+    assert "jan@testowy.pl" in detail                 # email normalized
+    assert "+48600700800" in detail                   # phone normalized
+    assert "NON-AUTHORITATIVE UI SUMMARY" in detail
+
+    # 2. Consent: a REVOKED channel blocks outreach and the UI says the
+    #    block is non-overridable (consent is never overridden by AI).
+    page.select_option("#consent-channel", "WHATSAPP")
+    page.select_option("#consent-status", "REVOKED")
+    page.click("text=Record consent")
+    page.wait_for_selector("#crm-detail li:has-text('REVOKED')",
+                           timeout=10000)
+    page.select_option("#check-channel", "WHATSAPP")
+    page.select_option("#check-purpose", "service")
+    page.click("#consent-check-btn")
+    page.wait_for_selector("#consent-explain:has-text('BLOCKED')",
+                           timeout=10000)
+    assert "non-overrideable" in page.text_content("#consent-explain")
+
+    # 3. Marketing on unknown consent → HUMAN_REVIEW (never implied).
+    page.select_option("#check-channel", "EMAIL")
+    page.select_option("#check-purpose", "marketing")
+    page.click("#consent-check-btn")
+    page.wait_for_selector("#consent-explain:has-text('HUMAN_REVIEW')",
+                           timeout=10000)
+
+    # 4. A promise past its due date is flagged OVERDUE.
+    page.select_option("#promise-by", "finalis")
+    page.fill("#promise-what", "send quote by Friday")
+    page.fill("#promise-due", "2020-01-01T09:00")
+    page.click("text=Record promise")
+    page.wait_for_selector("#crm-detail li:has-text('send quote by Friday')",
+                           timeout=10000)
+    assert "OVERDUE" in page.text_content("#crm-detail")
+
+    # 5. Memory trust: an AI worker suggestion is NOT a verified fact; a
+    #    human verifies it; disputing it drops readiness to 0 because a
+    #    disputed fact blocks automation.
+    page.fill("#mem-key", "boiler_model")
+    page.fill("#mem-value", "Viessmann V200")
+    page.select_option("#mem-source", "ai_worker")
+    page.click("text=Add memory")
+    page.wait_for_selector("#crm-msg:has-text('AI_SUGGESTED')", timeout=10000)
+    page.wait_for_selector("button:has-text('verify as human')",
+                           timeout=10000)
+    page.click("button:has-text('verify as human')")
+    page.wait_for_selector("#crm-msg:has-text('VERIFIED_FACT')",
+                           timeout=10000)
+    page.locator("#crm-detail button", has_text="dispute").first.click()
+    page.wait_for_selector("#crm-msg:has-text('DISPUTED_FACT')",
+                           timeout=10000)
+    page.wait_for_selector(
+        "#crm-readiness:has-text('disputed fact present')", timeout=10000)
+
+    # 6. Link the customer to a case (case-first relationship).
+    page.click("text=Link to case")
+    page.wait_for_selector("#crm-msg:has-text('Linked to case')",
+                           timeout=10000)
+
+    # 7. Dedupe + human merge: a duplicate (same email + phone) is detected,
+    #    only a human can approve the merge, a reason is required, and the
+    #    merged party is tombstoned — history preserved, never deleted.
+    page.fill("#crm-name", "Owner Journey Dup")
+    page.fill("#crm-email", "jan@testowy.pl")
+    page.fill("#crm-phone", "+48600700800")
+    page.click("#crm-create-btn")
+    page.wait_for_selector("#crm-detail h3:has-text('Owner Journey Dup')",
+                           timeout=10000)
+    page.wait_for_selector("#crm-dedupe:has-text('LIKELY_DUPLICATE')",
+                           timeout=10000)
+    assert "same email" in page.text_content("#crm-dedupe")
+    page.once("dialog", lambda d: d.accept("same client, typo"))
+    page.click("text=Merge into this customer…")
+    page.wait_for_selector("#crm-msg:has-text('tombstoned')", timeout=10000)
+    # Merge re-renders the survivor's detail (the tombstoned duplicate drops
+    # out of dedupe). Wait for that settle before touching the next form,
+    # else the re-render clears the external-reference inputs.
+    page.wait_for_selector(
+        "#crm-dedupe:has-text('No duplicate candidates')", timeout=10000)
+
+    # 8. External CRM reference + sync: a dry-run writes nothing externally,
+    #    and a human-verified internal value cannot be overwritten by
+    #    external data (conflict requires review).
+    page.fill("#ref-provider", "hubspot")
+    page.fill("#ref-id", "hs-777")
+    page.click("text=Add reference")
+    page.wait_for_selector("#crm-detail li:has-text('hs-777')", timeout=10000)
+    page.fill("#sync-internal", "verified@finalis.pl")
+    page.fill("#sync-external", "other@ext.com")
+    page.check("#sync-verified")
+    page.click("#sync-dryrun-btn")
+    page.wait_for_selector(
+        "#sync-explain:has-text('external write happened')", timeout=10000)
+    assert "false" in page.text_content("#sync-explain")
+    page.click("text=Sync decision")
+    page.wait_for_selector(
+        "#sync-explain:has-text('CONFLICT_REQUIRES_REVIEW')", timeout=10000)
+
+    assert not errors, errors
+
+
+def test_customer_panel_honesty_labels_browser_visible(server, page):
+    _login(page, server)
+    page.wait_for_selector("#crm-section", timeout=15000)
+
+    # Section banner carries the source-of-truth / not-connected labels.
+    banner = " ".join(page.text_content("#crm-section").split())
+    for label in (
+            "Finalis is the source of operational truth for case outcomes.",
+            "AI can suggest",
+            "Case outcome fields are owned by Finalis",
+            "not connected", "SCAFFOLDED_ONLY",
+            "OAuth is not implemented",
+            "webhook ingestion is not implemented",
+            "no external provider is called",
+            "Marketing consent is never implied",
+            "Merge is human-only", "Production readiness is false"):
+        assert label in banner, label
+
+    # In-detail safety labels are visible once a customer is open. (A
+    # customer exists from the owner-journey test on the shared server.)
+    page.wait_for_selector("#crm-list table", timeout=15000)
+    page.locator("#crm-list button").first.click()
+    page.wait_for_selector("#crm-detail h3", timeout=10000)
+    d = " ".join(page.text_content("#crm-detail").split())
+    for label in (
+            "NON-AUTHORITATIVE UI SUMMARY",
+            "server-side policy remains the source of truth",
+            "Only a human can verify memory",
+            "Disputed facts block automation",
+            "AI-suggested memory is not a verified fact",
+            "AI can suggest. Human verification decides.",
+            "AI may suggest candidates but cannot approve merge",
+            "tombstoned, not deleted",
+            "External CRM cannot overwrite verified Finalis data",
+            "No external provider is called"):
+        assert label in d, label
+
+
+def test_customer_panel_operational_invariant_matrix(server, page):
+    """The consent and sync decision matrices proven through the real UI —
+    the same deterministic outcomes a user sees in the browser."""
+    _login(page, server)
+    page.wait_for_selector("#crm-create:not([hidden])", timeout=15000)
+    page.fill("#crm-name", "Matrix Customer")
+    page.fill("#crm-email", "matrix@demo.pl")
+    page.click("#crm-create-btn")
+    page.wait_for_selector("#crm-detail h3:has-text('Matrix Customer')",
+                           timeout=10000)
+
+    def consent_check(channel, purpose):
+        page.select_option("#check-channel", channel)
+        page.select_option("#check-purpose", purpose)
+        page.click("#consent-check-btn")
+        page.wait_for_selector(
+            "#consent-explain b.ok, #consent-explain b.err", timeout=10000)
+        return page.text_content("#consent-explain")
+
+    # Consent matrix: service/unknown → ALLOWED; marketing/unknown →
+    # HUMAN_REVIEW; revoked channel → BLOCKED.
+    assert "ALLOWED" in consent_check("EMAIL", "service")
+    assert "HUMAN_REVIEW" in consent_check("EMAIL", "marketing")
+    page.select_option("#consent-channel", "SMS")
+    page.select_option("#consent-status", "REVOKED")
+    page.click("text=Record consent")
+    page.wait_for_selector("#crm-detail li:has-text('REVOKED')",
+                           timeout=10000)
+    assert "BLOCKED" in consent_check("SMS", "service")
+
+    # Sync matrix: verified internal → CONFLICT_REQUIRES_REVIEW; equal
+    # values → SKIP_NO_CHANGE; dry-run never writes externally.
+    page.fill("#sync-field", "email")
+    page.fill("#sync-internal", "verified@finalis.pl")
+    page.fill("#sync-external", "other@ext.com")
+    page.check("#sync-verified")
+    page.click("text=Sync decision")
+    page.wait_for_selector(
+        "#sync-explain:has-text('CONFLICT_REQUIRES_REVIEW')", timeout=10000)
+    page.fill("#sync-internal", "same@x.pl")
+    page.fill("#sync-external", "same@x.pl")
+    page.uncheck("#sync-verified")
+    page.click("text=Sync decision")
+    page.wait_for_selector("#sync-explain:has-text('SKIP_NO_CHANGE')",
+                           timeout=10000)
+    page.click("#sync-dryrun-btn")
+    page.wait_for_selector(
+        "#sync-explain:has-text('external write happened')", timeout=10000)
+    assert "false" in page.text_content("#sync-explain")
+
+
+def test_customer_panel_viewer_read_only_browser_e2e(server, page):
+    _login(page, server, email="viewer@demo.finalis")
+    page.wait_for_selector("#crm-list table", timeout=15000)
+
+    # No create panel for a read-only user.
+    assert page.is_hidden("#crm-create")
+
+    # Open a customer: the detail carries no write affordances at all.
+    page.locator("#crm-list button").first.click()
+    page.wait_for_selector("#crm-detail h3", timeout=10000)
+    detail = page.text_content("#crm-detail")
+    for forbidden in ("Add contact", "Record consent", "Record promise",
+                      "Add memory", "Link to case",
+                      "Merge into this customer", "Add reference",
+                      "Sync dry-run", "Sync decision", "verify as human"):
+        assert forbidden not in detail, forbidden
+    # A read-only preview (consent check) is still offered — it is a read.
+    assert "Check before outreach" in detail
+
+
+def test_customer_panel_no_external_provider_calls(server, page):
+    """Naming a CRM provider and running a full sync must not cause a single
+    request to leave the Finalis origin. No external provider is ever
+    called."""
+    urls = []
+    errors = []
+    page.on("request", lambda r: urls.append(r.url))
+    page.on("pageerror", lambda e: errors.append(str(e)))
+
+    _login(page, server)
+    page.wait_for_selector("#crm-create:not([hidden])", timeout=15000)
+    page.fill("#crm-name", "Network Guard Co")
+    page.click("#crm-create-btn")
+    page.wait_for_selector("#crm-detail h3:has-text('Network Guard Co')",
+                           timeout=10000)
+    page.fill("#ref-provider", "hubspot")
+    page.fill("#ref-id", "hs-net-1")
+    page.click("text=Add reference")
+    page.wait_for_selector("#crm-detail li:has-text('hs-net-1')",
+                           timeout=10000)
+    page.fill("#sync-internal", "a@finalis.pl")
+    page.fill("#sync-external", "b@hubspot.com")
+    page.click("#sync-dryrun-btn")
+    page.wait_for_selector(
+        "#sync-explain:has-text('external write happened')", timeout=10000)
+    page.click("text=Sync decision")
+    page.wait_for_selector("#sync-explain", timeout=10000)
+
+    # Every request stayed on the Finalis origin.
+    external = [u for u in urls
+                if not u.startswith(server) and not u.startswith("about:")]
+    assert not external, external
+    # No request host names a CRM SaaS or an OAuth endpoint.
+    banned = ("hubspot", "salesforce", "pipedrive", "zoho", "odoo",
+              "suitecrm", "twenty", "oauth")
+    for u in urls:
+        host = u.lower().split("//", 1)[-1].split("/", 1)[0]
+        assert not any(b in host for b in banned), u
+    assert not errors, errors
