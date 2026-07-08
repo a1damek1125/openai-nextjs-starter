@@ -15,7 +15,7 @@ from finalis.portal.app import create_app
 from finalis.portal.db import MIGRATIONS, Database
 from finalis.portal.seed import seed
 
-EXPECTED_DB_VERSION = 13
+EXPECTED_DB_VERSION = 14
 
 
 @pytest.fixture()
@@ -85,6 +85,8 @@ class TestMigrations:
         # Human Approval Gate Foundation (v12) + Decisions/Grants (v13).
         assert {"ai_approval_requests", "ai_approval_decisions",
                 "ai_approval_grants"} <= tables
+        # ViktorAI Lifecycle Kernel transition ledger (v14).
+        assert {"ai_task_transitions"} <= tables
 
     def test_evidence_ve_columns_survived_renumber(self, tmp_path):
         db = Database(str(tmp_path / "c.db"))

@@ -719,6 +719,34 @@ CREATE INDEX IF NOT EXISTS ix_ai_appr_grants
 CREATE INDEX IF NOT EXISTS ix_ai_appr_grants_scope
   ON ai_approval_grants(tenant_id, run_id, task_id, approval_action_type);
 """),
+    (14, """
+-- v14: ViktorAI Deterministic Lifecycle Kernel (CORE-A5). Append-only task
+-- transition ledger. The state machine controls lifecycle state ONLY; a
+-- transition executes nothing (no Tool Broker, LLM, payment, message, CRM,
+-- evidence rewrite or consent override). Server-side state is authoritative.
+CREATE TABLE IF NOT EXISTS ai_task_transitions (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, task_id TEXT NOT NULL,
+  run_id TEXT, approval_request_id TEXT, approval_grant_id TEXT,
+  transition_index INTEGER NOT NULL,
+  transition_idempotency_key TEXT,
+  from_state TEXT NOT NULL, to_state TEXT NOT NULL,
+  transition_event TEXT NOT NULL, transition_status TEXT NOT NULL,
+  requested_by_actor_id TEXT NOT NULL, requested_by_actor_type TEXT NOT NULL,
+  requested_by_role TEXT NOT NULL DEFAULT '',
+  task_version_before INTEGER, task_version_after INTEGER,
+  transition_hash TEXT NOT NULL, previous_transition_hash TEXT,
+  transition_chain_hash TEXT NOT NULL,
+  guard_vector_hash TEXT NOT NULL DEFAULT '',
+  task_state_hash_after TEXT,
+  input_hash TEXT NOT NULL DEFAULT '',
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_task_transitions
+  ON ai_task_transitions(tenant_id, task_id, transition_index);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_task_transitions_idx
+  ON ai_task_transitions(tenant_id, task_id, transition_index);
+CREATE INDEX IF NOT EXISTS ix_ai_task_transitions_idem
+  ON ai_task_transitions(tenant_id, task_id, transition_idempotency_key);
+"""),
 ]
 
 

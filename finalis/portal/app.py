@@ -3328,6 +3328,26 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         return [json.loads(r["payload_json"])
                 for r in task_store.list(tenant_id=user["tid"])]
 
+    # ViktorAI state-machine routes with bare single-segment paths must be
+    # registered BEFORE /ai-tasks/{task_id} or the path param would shadow
+    # them. Handlers reference lifecycle helpers bound later in create_app
+    # (resolved at request time, after create_app has finished).
+    @app.get("/ai-tasks/state-machine")
+    async def lifecycle_state_machine(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _lc.state_matrix()
+
+    @app.get("/ai-tasks/state-machine/verify")
+    async def lifecycle_state_machine_verify(
+            user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _lc.verify_graph()
+
+    @app.get("/ai-tasks/lifecycle-dashboard")
+    async def lifecycle_dashboard(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _lc_dashboard_summary(user)
+
     @app.get("/ai-tasks/{task_id}")
     async def get_ai_task(task_id: str, user: dict = Depends(current_user)):
         require_permission(user, "case.read")
@@ -3378,11 +3398,16 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                                     "integer")
             if expected != payload["task_version"]:
                 raise HTTPException(409, "stale task_version")
-        # A terminal task cannot be edited; task text cannot set status.
+        # A terminal task cannot be edited; task text cannot set status. This
+        # honours BOTH the intake status and the lifecycle-kernel terminal
+        # states, so a task the state machine drove to a terminal state stays
+        # immutable (no PATCH bypass / reopen).
+        _terminal_lc = {"COMPLETED_NO_SIDE_EFFECTS", "CANCELLED", "FAILED",
+                        "EXPIRED", "SUPERSEDED", "BLOCKED", "NOT_IMPLEMENTED"}
         if payload["task_status"] in ("BLOCKED", "CANCELLED", "EXPIRED",
-                                      "NOT_IMPLEMENTED"):
-            raise HTTPException(409, f"task is {payload['task_status']} and "
-                                "cannot be modified")
+                                      "NOT_IMPLEMENTED") \
+                or payload.get("lifecycle_state") in _terminal_lc:
+            raise HTTPException(409, "task is terminal and cannot be modified")
         for f in ("task_title", "task_description", "priority", "due_at",
                   "expires_at", "stale_after"):
             if f in body:
@@ -3403,8 +3428,11 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         row = _load_task_or_404(task_id, user)
         payload = json.loads(row["payload_json"])
         if payload["task_status"] in ("BLOCKED", "NOT_IMPLEMENTED",
-                                      "EXPIRED", "CANCELLED"):
-            raise HTTPException(409, f"task is {payload['task_status']}")
+                                      "EXPIRED", "CANCELLED") \
+                or payload.get("lifecycle_state") in {
+                    "COMPLETED_NO_SIDE_EFFECTS", "CANCELLED", "FAILED",
+                    "EXPIRED", "SUPERSEDED", "BLOCKED", "NOT_IMPLEMENTED"}:
+            raise HTTPException(409, "task is terminal")
         payload["task_status"] = "CANCELLED"
         payload["task_version"] += 1
         now = utcnow()
@@ -4509,6 +4537,670 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                 "precondition_status": res["precondition_status"],
                 "drift_detected": res["drift_detected"],
                 "reason": res["reason"]}
+
+    # ---- ViktorAI Deterministic Lifecycle Kernel (CORE-A5) --------------------------
+    from ..ai_employee import lifecycle as _lc
+    from ..ai_employee.lifecycle_store import AITaskTransitionStore
+    transition_store = AITaskTransitionStore(db)
+    app.state.transition_store = transition_store
+
+    def _lc_current_state(task_id: str, tid: str, task_payload: dict) -> str:
+        last = transition_store.latest_applied(task_id, tenant_id=tid)
+        if last:
+            return last["to_state"]
+        return _lc.initial_state_from_status(task_payload["task_status"])
+
+    def _lc_run_for_task(task_id: str, tid: str):
+        r = db.one("SELECT payload_json FROM ai_runs WHERE task_id=? AND "
+                   "tenant_id=? ORDER BY created_at DESC LIMIT 1", task_id, tid)
+        return json.loads(r["payload_json"]) if r else None
+
+    def _lc_grant_for_task(task_id: str, tid: str):
+        r = db.one("SELECT payload_json FROM ai_approval_grants WHERE "
+                   "task_id=? AND tenant_id=? ORDER BY created_at DESC LIMIT 1",
+                   task_id, tid)
+        return json.loads(r["payload_json"]) if r else None
+
+    def _lc_subject_access(task_payload: dict, tid: str) -> str:
+        sid = task_payload.get("subject_id")
+        if not sid:
+            return "NOT_APPLICABLE"
+        if task_payload.get("subject_type") == "case":
+            row = db.one("SELECT id FROM cases WHERE id=? AND tenant_id=?",
+                         sid, tid)
+            return "VERIFIED" if row else "NOT_VERIFIED"
+        # Other subject types cannot be verified deterministically here.
+        return "UNKNOWN"
+
+    def _lc_grant_validation(task_payload: dict, tid: str) -> tuple:
+        """(status, grant) — consume-check-style validation of the task's
+        approval grant against current run/task hash state. Executes nothing."""
+        grant = _lc_grant_for_task(task_payload["task_id"], tid)
+        if grant is None:
+            return "NONE", None
+        run = _lc_run_for_task(task_payload["task_id"], tid)
+        cur = {"tenant_id": tid, "run_id": grant["run_id"],
+               "task_id": grant["task_id"],
+               "approval_action_type": grant["approval_action_type"],
+               "task_contract_hash": (run or {}).get("task_contract_hash"),
+               "task_envelope_hash": (run or {}).get("task_envelope_hash"),
+               "run_state_hash": (run or {}).get("run_state_hash"),
+               "run_chain_hash": (run or {}).get("run_chain_hash"),
+               "run_event_merkle_root": (run or {}).get(
+                   "run_event_merkle_root"),
+               "policy_decision_hash": grant["policy_decision_hash"],
+               "approval_package_hash": grant["approval_package_hash"],
+               "approval_challenge_hash": grant["approval_challenge_hash"],
+               "approval_decision_hash": grant["approval_decision_hash"]}
+        expired = bool(grant.get("expires_at")) and utcnow() > grant[
+            "expires_at"]
+        res = _adec.validate_grant(grant, current=cur, expired=expired,
+                                   tool_broker_available=False)
+        return res["grant_validation_status"], grant
+
+    # Lifecycle states in which a draft artifact has been produced (a
+    # DRAFT_CREATED transition was applied) or the work is past drafting.
+    _POST_DRAFT_STATES = {"DRAFT_READY", "REVIEW_READY",
+                          "COMPLETION_CHECK_REQUIRED", "COMPLETION_BLOCKED",
+                          "COMPLETED_NO_SIDE_EFFECTS"}
+
+    def _lc_completion_ctx(task_payload: dict, tid: str, *, state: str = None,
+                           replay_mismatch=False, chain_mismatch=False) -> dict:
+        gs, _ = _lc_grant_validation(task_payload, tid)
+        if state is None:
+            state = _lc_current_state(task_payload["task_id"], tid,
+                                      task_payload)
+        return {
+            "approval_grant_validation_status": gs,
+            "evidence_ok": task_payload.get("evidence_status") != "FAILED"
+            and task_payload.get("evidence_status") != "MISSING",
+            "evidence_failed": task_payload.get("evidence_status") == "FAILED",
+            "consent_ok": task_payload.get("consent_status") != "DENIED",
+            "consent_status": task_payload.get("consent_status"),
+            "subject_access_status": _lc_subject_access(task_payload, tid),
+            # Draft presence is derived from lifecycle progression (a draft was
+            # created), not a placeholder field that is never populated.
+            "draft_present": state in _POST_DRAFT_STATES
+            or task_payload.get("draft_artifact_placeholder") is not None,
+            "run_ok": True, "replay_mismatch": replay_mismatch,
+            "chain_mismatch": chain_mismatch,
+            "contract_hash_changed": False,
+        }
+
+    def _lc_context(task_payload: dict, user: dict, body: dict, *, event: str,
+                    from_state: str) -> dict:
+        tid = user["tid"]
+        run = _lc_run_for_task(task_payload["task_id"], tid)
+        grant_status, grant = _lc_grant_validation(task_payload, tid)
+        now = utcnow()
+        expected_v = body.get("expected_task_version")
+        contract_hash = task_payload.get("canonical_task_contract_hash")
+        envelope_hash = task_payload.get("canonical_task_envelope_hash")
+        exp_ch = body.get("expected_task_contract_hash")
+        exp_eh = body.get("expected_task_envelope_hash")
+        exp_rsh = body.get("expected_run_state_hash")
+        edge = _lc.find_edge(from_state, event)
+        completing = bool(edge) and edge["to"] == "COMPLETED_NO_SIDE_EFFECTS"
+        completion_ready = False
+        if completing:
+            comp = _lc.evaluate_completion(
+                task_payload, _lc_completion_ctx(task_payload, tid))
+            completion_ready = _lc.completion_ready(comp)
+        ctx = {
+            "tenant_id": tid, "task_id": task_payload["task_id"],
+            "run_id": (run or {}).get("run_id"),
+            "approval_grant_hash": (grant or {}).get("approval_grant_hash"),
+            "tenant_match": True,
+            "actor_authorized": user["role"] not in ("viewer", "ai_worker"),
+            "actor_id": user["uid"], "actor_type": "human",
+            "actor_role": user["role"],
+            "from_state": from_state, "event": event,
+            "task_type": task_payload.get("task_type"),
+            "segment": task_payload.get("segment"),
+            "risk_level": task_payload.get("risk_level"),
+            "authority_decision": task_payload.get("authority_decision"),
+            "authority_blocked": task_payload.get("authority_decision")
+            == "BLOCKED" or bool(task_payload.get("authority_hard_fail")),
+            "expected_version": expected_v,
+            "current_version": task_payload["task_version"],
+            "version_match": (expected_v is None
+                              or int(expected_v) == task_payload[
+                                  "task_version"]),
+            "contract_hash": contract_hash, "envelope_hash": envelope_hash,
+            "contract_hash_match": exp_ch is None or exp_ch == contract_hash,
+            "envelope_hash_match": exp_eh is None or exp_eh == envelope_hash,
+            "run_state_hash": (run or {}).get("run_state_hash"),
+            "run_state_match": exp_rsh is None or exp_rsh == (run or {}).get(
+                "run_state_hash"),
+            "expired": bool(task_payload.get("expires_at"))
+            and now > task_payload["expires_at"],
+            "expires_at": task_payload.get("expires_at"),
+            "stale": bool(task_payload.get("stale_after"))
+            and now > task_payload["stale_after"],
+            "stale_after": task_payload.get("stale_after"),
+            "subject_required": bool(task_payload.get("subject_id")),
+            "subject_access_status": _lc_subject_access(task_payload, tid),
+            "approval_grant_validation_status": grant_status,
+            "consent_required": bool(task_payload.get("requires_consent_check")),
+            "consent_ok": task_payload.get("consent_status") != "DENIED",
+            "consent_status": task_payload.get("consent_status"),
+            "evidence_required": bool(task_payload.get(
+                "requires_evidence_check")),
+            "evidence_ok": task_payload.get("evidence_status") not in (
+                "FAILED", "MISSING"),
+            "evidence_status": task_payload.get("evidence_status"),
+            "completion_ready": completion_ready,
+            "side_effect_attempted": bool(body.get("side_effect_attempted"))
+            or event in _lc.FORBIDDEN_SIDE_EFFECT_EVENTS,
+            "patch_bypass": bool(body.get("_patch_bypass")),
+            "via": body.get("_via", "state_machine"),
+            "idempotency_key": body.get("transition_idempotency_key"),
+        }
+        return ctx
+
+    def _lc_task_snapshot(task_payload: dict, state: str, tid: str, *,
+                          chain_hash: str, completion_status: str,
+                          recon_status: str) -> dict:
+        gs, grant = _lc_grant_validation(task_payload, tid)
+        run = _lc_run_for_task(task_payload["task_id"], tid)
+        now = utcnow()
+        snap = {
+            "task_id": task_payload["task_id"], "tenant_id": tid,
+            "lifecycle_state": state, "task_version": task_payload[
+                "task_version"],
+            "task_contract_hash": task_payload.get(
+                "canonical_task_contract_hash"),
+            "task_envelope_hash": task_payload.get(
+                "canonical_task_envelope_hash"),
+            "assigned_ai_employee_id": task_payload.get(
+                "assigned_ai_employee_id"),
+            "requester_user_id": task_payload.get("requester_user_id"),
+            "risk_level": task_payload.get("risk_level"),
+            "authority_decision": task_payload.get("authority_decision"),
+            "requires_human_approval": bool(task_payload.get(
+                "requires_human_approval")),
+            "approval_grant_id": (grant or {}).get("approval_grant_id"),
+            "approval_grant_hash": (grant or {}).get("approval_grant_hash"),
+            "approval_grant_validation_status": gs,
+            "run_id": (run or {}).get("run_id"),
+            "run_state_hash": (run or {}).get("run_state_hash"),
+            "completion_status": completion_status,
+            "reconciliation_status": recon_status,
+            "terminal": state in _lc.TERMINAL_STATES,
+            "expired": bool(task_payload.get("expires_at"))
+            and now > task_payload["expires_at"],
+            "stale": bool(task_payload.get("stale_after"))
+            and now > task_payload["stale_after"],
+            "transition_chain_hash": chain_hash,
+        }
+        snap["task_state_hash"] = _lc.task_state_hash(snap)
+        snap["task_lifecycle_snapshot_hash"] = _lc.lifecycle_snapshot_hash(snap)
+        return snap
+
+    def _lc_recon_status(task_id: str, tid: str, task_payload: dict,
+                         state: str) -> str:
+        rep = _lc.replay(
+            _lc.initial_state_from_status(task_payload["task_status"]),
+            transition_store.list(task_id, tenant_id=tid))
+        if rep["replay_errors"] or rep["replayed_state"] != state:
+            return "MISMATCHED"
+        return "MATCHED"
+
+    def _lc_decide(task_payload: dict, user: dict, body: dict, event: str):
+        state = _lc_current_state(task_payload["task_id"], user["tid"],
+                                  task_payload)
+        ctx = _lc_context(task_payload, user, body, event=event,
+                          from_state=state)
+        decision = _lc.decide_transition(ctx)
+        return state, ctx, decision
+
+    def _lc_build_record(task_payload, user, body, event, state, ctx, decision,
+                         *, applied: bool, tid: str):
+        pre = _lc.build_preconditions(ctx)
+        post = _lc.build_postconditions(ctx, decision, applied=applied)
+        capsule = _lc.build_policy_capsule(ctx, decision)
+        prev = transition_store.latest(task_payload["task_id"], tenant_id=tid)
+        prev_hash = prev["transition_hash"] if prev else None
+        run = _lc_run_for_task(task_payload["task_id"], tid)
+        grant = _lc_grant_for_task(task_payload["task_id"], tid)
+        now = utcnow()
+        record = {
+            "task_transition_id": str(uuid.uuid4()), "tenant_id": tid,
+            "task_id": task_payload["task_id"],
+            "run_id": (run or {}).get("run_id"),
+            "approval_request_id": (grant or {}).get("approval_request_id"),
+            "approval_grant_id": (grant or {}).get("approval_grant_id"),
+            "transition_idempotency_key": body.get(
+                "transition_idempotency_key"),
+            "idempotency_input_hash": _lc_idem_hash(user, task_payload[
+                "task_id"], body),
+            "from_state": state, "to_state": decision["to_state"],
+            "transition_event": event,
+            "transition_status": decision["transition_status"],
+            "requested_by_actor_id": user["uid"],
+            "requested_by_actor_type": "human",
+            "requested_by_role": user["role"],
+            "task_version_before": task_payload["task_version"],
+            "task_version_after": (task_payload["task_version"] + 1)
+            if applied and decision["transition_status"] == "ALLOWED"
+            else task_payload["task_version"],
+            "expected_task_version": body.get("expected_task_version"),
+            "authority_decision": ctx["authority_decision"],
+            "authority_hard_fail": ctx["authority_blocked"],
+            "approval_grant_validation_status": ctx[
+                "approval_grant_validation_status"],
+            "subject_access_status": ctx["subject_access_status"],
+            "consent_status": ctx.get("consent_status"),
+            "evidence_status": ctx.get("evidence_status"),
+            "completion_status": decision.get("_completion_status"),
+            "guard_results": decision["guards"],
+            "guard_vector_hash": decision["guard_vector_hash"],
+            "failed_guards": decision["failed_guards"],
+            "transition_policy_capsule": capsule,
+            "transition_policy_capsule_hash": capsule["policy_output_hash"],
+            "transition_precondition": pre,
+            "transition_precondition_hash": _lc.hash_pre(pre),
+            "transition_postcondition": post,
+            "transition_postcondition_hash": _lc.hash_post(post),
+            "transition_input_hash": _lc.transition_input_hash(ctx),
+            "transition_output_hash": _lc.transition_output_hash(decision),
+            "reason": decision["reason"],
+            "blocked_reason": decision["blocked_reason"],
+            "created_at": now, "honesty_labels": _lc.HONESTY_LABELS,
+        }
+        record["previous_transition_hash"] = prev_hash
+        record["transition_hash"] = _lc.transition_hash(record)
+        record["transition_chain_hash"] = _lc.transition_chain_hash(
+            prev_hash, record["transition_hash"])
+        return record
+
+    def _lc_persist(record: dict, tid: str, index: int) -> None:
+        transition_store.save({
+            "id": record["task_transition_id"], "tenant_id": tid,
+            "task_id": record["task_id"], "run_id": record.get("run_id"),
+            "approval_request_id": record.get("approval_request_id"),
+            "approval_grant_id": record.get("approval_grant_id"),
+            "transition_index": index,
+            "transition_idempotency_key": record.get(
+                "transition_idempotency_key"),
+            "from_state": record["from_state"], "to_state": record["to_state"],
+            "transition_event": record["transition_event"],
+            "transition_status": record["transition_status"],
+            "requested_by_actor_id": record["requested_by_actor_id"],
+            "requested_by_actor_type": record["requested_by_actor_type"],
+            "requested_by_role": record["requested_by_role"],
+            "task_version_before": record["task_version_before"],
+            "task_version_after": record["task_version_after"],
+            "transition_hash": record["transition_hash"],
+            "previous_transition_hash": record.get("previous_transition_hash"),
+            "transition_chain_hash": record["transition_chain_hash"],
+            "guard_vector_hash": record["guard_vector_hash"],
+            "task_state_hash_after": record.get("task_state_hash_after"),
+            "input_hash": record["transition_input_hash"],
+            "payload_json": json.dumps(record), "created_at":
+            record["created_at"]})
+
+    def _lc_deny_non_human(user: dict) -> None:
+        if user["role"] == "ai_worker":
+            raise HTTPException(403, "AI worker cannot force lifecycle "
+                                "transitions")
+
+    def _lc_idem_hash(user: dict, task_id: str, body: dict) -> str:
+        """Canonical idempotency hash of the client's REQUEST (not the live
+        server state, which advances precisely because the apply succeeded)."""
+        return _lc._sha({
+            "tenant_id": user["tid"], "task_id": task_id,
+            "actor_id": user["uid"],
+            "event": str(body.get("transition_event", "")),
+            "transition_idempotency_key": body.get(
+                "transition_idempotency_key"),
+            "expected_task_version": body.get("expected_task_version"),
+            "expected_task_contract_hash": body.get(
+                "expected_task_contract_hash"),
+            "expected_task_envelope_hash": body.get(
+                "expected_task_envelope_hash"),
+            "expected_run_state_hash": body.get("expected_run_state_hash")})
+
+    def _lc_record_response(prior: dict) -> dict:
+        return {
+            "task_id": prior["task_id"], "from_state": prior["from_state"],
+            "to_state": prior["to_state"],
+            "transition_event": prior["transition_event"],
+            "transition_status": prior["transition_status"],
+            "reason": prior["reason"], "blocked_reason": prior["blocked_reason"],
+            "guard_results": prior["guard_results"],
+            "failed_guards": prior["failed_guards"],
+            "guard_vector_hash": prior["guard_vector_hash"],
+            "transition_input_hash": prior["transition_input_hash"],
+            "transition_output_hash": prior["transition_output_hash"],
+            "transition_hash": prior["transition_hash"],
+            "transition_chain_hash": prior["transition_chain_hash"],
+            "applied": prior["transition_status"] == "ALLOWED",
+            "idempotent_replay": True,
+            "honesty_labels": _lc.HONESTY_LABELS}
+
+    def _lc_dashboard_summary(user: dict) -> dict:
+        by_state, by_blocker = {}, {}
+        stale = expired = appr_pending = comp_blocked = recon = 0
+        for row in task_store.list(tenant_id=user["tid"]):
+            tp = json.loads(row["payload_json"])
+            st = _lc_current_state(tp["task_id"], user["tid"], tp)
+            by_state[st] = by_state.get(st, 0) + 1
+            if st == "APPROVAL_PENDING":
+                appr_pending += 1
+            if st == "COMPLETION_BLOCKED":
+                comp_blocked += 1
+            if st == "RECONCILIATION_REQUIRED":
+                recon += 1
+            now = utcnow()
+            if tp.get("expires_at") and now > tp["expires_at"]:
+                expired += 1
+            if tp.get("stale_after") and now > tp["stale_after"]:
+                stale += 1
+            last = transition_store.latest_applied(tp["task_id"],
+                                                   tenant_id=user["tid"])
+            if last and last.get("failed_guards"):
+                for gname in last["failed_guards"]:
+                    by_blocker[gname] = by_blocker.get(gname, 0) + 1
+        top = sorted(by_blocker.items(), key=lambda kv: (-kv[1], kv[0]))[:10]
+        return {"tasks_by_state": by_state, "tasks_by_blocker_type": by_blocker,
+                "stale_tasks_count": stale, "expired_tasks_count": expired,
+                "approval_pending_count": appr_pending,
+                "completion_blocked_count": comp_blocked,
+                "reconciliation_required_count": recon,
+                "top_blockers": [{"blocker": k, "count": v} for k, v in top],
+                "honesty_labels": _lc.HONESTY_LABELS}
+
+    @app.get("/ai-tasks/{task_id}/state")
+    async def lifecycle_get_state(task_id: str,
+                                  user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        row = _load_task_or_404(task_id, user)
+        tp = json.loads(row["payload_json"])
+        state = _lc_current_state(task_id, user["tid"], tp)
+        comp = _lc.evaluate_completion(
+            tp, _lc_completion_ctx(tp, user["tid"]))
+        recon = _lc_recon_status(task_id, user["tid"], tp, state)
+        last = transition_store.latest(task_id, tenant_id=user["tid"])
+        chain = last["transition_chain_hash"] if last else _lc.GENESIS
+        snap = _lc_task_snapshot(tp, state, user["tid"], chain_hash=chain,
+                                 completion_status=comp["completion_status"],
+                                 recon_status=recon)
+        return {"task_id": task_id, "lifecycle_state": state,
+                "task_version": tp["task_version"],
+                "task_state_hash": snap["task_state_hash"],
+                "task_lifecycle_snapshot_hash": snap[
+                    "task_lifecycle_snapshot_hash"],
+                "allowed_next_transitions": _lc.allowed_events(state),
+                "completion_status": comp["completion_status"],
+                "completion_blockers": comp["completion_blockers"],
+                "reconciliation_status": recon,
+                "terminal": state in _lc.TERMINAL_STATES,
+                "risk_level": tp.get("risk_level"),
+                "safe_view": {"lifecycle_state": state,
+                              "allowed_next_transitions":
+                              [e["event"] for e in _lc.allowed_events(state)],
+                              "completion_status": comp["completion_status"],
+                              "reconciliation_status": recon,
+                              "risk_level": tp.get("risk_level")},
+                "honesty_labels": _lc.HONESTY_LABELS}
+
+    @app.get("/ai-tasks/{task_id}/transitions")
+    async def lifecycle_list_transitions(task_id: str,
+                                         user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_task_or_404(task_id, user)
+        return {"task_id": task_id,
+                "transitions": transition_store.list(task_id,
+                                                     tenant_id=user["tid"]),
+                "honesty_labels": _lc.HONESTY_LABELS}
+
+    def _lc_transition_response(state, ctx, decision, tp, tid, *, applied):
+        comp_status = decision.get("_completion_status")
+        recon = _lc_recon_status(tp["task_id"], tid, tp, decision["to_state"]
+                                 if applied and decision["transition_status"]
+                                 == "ALLOWED" else state)
+        return {
+            "task_id": tp["task_id"], "from_state": state,
+            "to_state": decision["to_state"],
+            "transition_event": ctx["event"],
+            "transition_status": decision["transition_status"],
+            "reason": decision["reason"],
+            "blocked_reason": decision["blocked_reason"],
+            "guard_results": decision["guards"],
+            "failed_guards": decision["failed_guards"],
+            "guard_vector_hash": decision["guard_vector_hash"],
+            "transition_input_hash": _lc.transition_input_hash(ctx),
+            "transition_output_hash": _lc.transition_output_hash(decision),
+            "reconciliation_status": recon,
+            "honesty_labels": _lc.HONESTY_LABELS}
+
+    @app.post("/ai-tasks/{task_id}/transitions/dry-run")
+    async def lifecycle_dry_run(task_id: str, body: dict,
+                                user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        _lc_deny_non_human(user)
+        row = _load_task_or_404(task_id, user)
+        tp = json.loads(row["payload_json"])
+        event = str(body.get("transition_event", ""))
+        version_before = tp["task_version"]
+        state, ctx, decision = _lc_decide(tp, user, body, event)
+        resp = _lc_transition_response(state, ctx, decision, tp, user["tid"],
+                                       applied=False)
+        resp["dry_run"] = True
+        # Postcondition: dry-run mutated nothing.
+        assert json.loads(_load_task_or_404(task_id, user)["payload_json"])[
+            "task_version"] == version_before
+        return resp
+
+    @app.post("/ai-tasks/{task_id}/transitions")
+    async def lifecycle_apply(task_id: str, body: dict,
+                              user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        _lc_deny_non_human(user)
+        row = _load_task_or_404(task_id, user)
+        tp = json.loads(row["payload_json"])
+        event = str(body.get("transition_event", ""))
+        tid = user["tid"]
+        idem = body.get("transition_idempotency_key")
+
+        idem_hash = _lc_idem_hash(user, task_id, body)
+
+        # Idempotency: same key + same request -> replay prior result; same key
+        # + different request -> conflict. The comparison keys off the client's
+        # request, not the live state (which advances when the apply succeeds).
+        if idem:
+            prior = transition_store.find_by_idempotency(
+                task_id, tenant_id=tid, key=str(idem))
+            if prior is not None:
+                if prior.get("idempotency_input_hash") == idem_hash:
+                    return _lc_record_response(prior)
+                raise HTTPException(409, "idempotency key reused with a "
+                                    "different transition input")
+
+        state, ctx, decision = _lc_decide(tp, user, body, event)
+
+        if decision["transition_status"] != "ALLOWED":
+            # Record a safe denial event (does not advance state/version).
+            idx = transition_store.next_index(task_id, tenant_id=tid)
+            record = _lc_build_record(tp, user, body, event, state, ctx,
+                                      decision, applied=False, tid=tid)
+            _lc_persist(record, tid, idx)
+            audit.append(event_type="AI_TASK_TRANSITION_DENIED",
+                         actor=user["uid"],
+                         payload={"task_id": task_id, "event": event,
+                                  "status": decision["transition_status"]})
+            resp = _lc_transition_response(state, ctx, decision, tp, tid,
+                                           applied=False)
+            resp["applied"] = False
+            return resp
+
+        # ALLOWED: optimistic compare-and-swap on task_version. The lifecycle
+        # state lives in payload.lifecycle_state and the transition ledger; the
+        # intake `task_status` column is NOT overwritten (it is the immutable
+        # intake outcome and the stable initial state for replay). Terminal
+        # immutability is enforced by the lifecycle_state check in PATCH/cancel.
+        new_version = tp["task_version"] + 1
+        to_state = decision["to_state"]
+        tp["task_version"] = new_version
+        tp["lifecycle_state"] = to_state
+        tp["updated_at"] = utcnow()
+        idx = transition_store.next_index(task_id, tenant_id=tid)
+        record = _lc_build_record(tp, user, body, event, state, ctx, decision,
+                                  applied=True, tid=tid)
+        snap = _lc_task_snapshot(tp, to_state, tid,
+                                 chain_hash=record["transition_chain_hash"],
+                                 completion_status="NOT_CHECKED",
+                                 recon_status="MATCHED")
+        record["task_state_hash_after"] = snap["task_state_hash"]
+        # Atomic: the task UPDATE and the ledger INSERT commit together (single
+        # transaction on the shared connection), so a crash cannot half-apply.
+        cur = db.conn.execute(
+            "UPDATE ai_tasks SET task_version=?, payload_json=?, "
+            "updated_at=? WHERE id=? AND tenant_id=? AND task_version=?",
+            (new_version, json.dumps(tp), tp["updated_at"],
+             task_id, tid, new_version - 1))
+        if cur.rowcount != 1:
+            db.conn.rollback()
+            raise HTTPException(409, "stale task_version (concurrent update)")
+        _lc_persist(record, tid, idx)   # single commit flushes UPDATE + INSERT
+        task_store.add_event(task_id=task_id, tenant_id=tid, actor_id=user[
+            "uid"], actor_type="human", event_type=f"LIFECYCLE_{event}")
+        audit.append(event_type="AI_TASK_TRANSITION_APPLIED", actor=user["uid"],
+                     payload={"task_id": task_id, "from": state,
+                              "to": decision["to_state"], "event": event})
+        resp = _lc_transition_response(decision["to_state"], ctx, decision, tp,
+                                       tid, applied=True)
+        resp["applied"] = True
+        resp["task_version_after"] = new_version
+        resp["task_state_hash"] = snap["task_state_hash"]
+        resp["transition_hash"] = record["transition_hash"]
+        resp["transition_chain_hash"] = record["transition_chain_hash"]
+        return resp
+
+    @app.post("/ai-tasks/{task_id}/transitions/verify")
+    async def lifecycle_verify(task_id: str,
+                               user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        row = _load_task_or_404(task_id, user)
+        tp = json.loads(row["payload_json"])
+        transitions = transition_store.list(task_id, tenant_id=user["tid"])
+        tamper, chain_ok, prev = [], True, None
+        for t in transitions:
+            recomputed = _lc.transition_hash(t)
+            if recomputed != t["transition_hash"]:
+                tamper.append(f"transition {t['from_state']}->{t['to_state']}: "
+                              "hash mismatch")
+            expect_chain = _lc.transition_chain_hash(prev, t["transition_hash"])
+            if expect_chain != t["transition_chain_hash"]:
+                chain_ok = False
+                tamper.append("transition chain hash mismatch")
+            prev = t["transition_hash"]
+        state = _lc_current_state(task_id, user["tid"], tp)
+        rep = _lc.replay(
+            _lc.initial_state_from_status(tp["task_status"]), transitions)
+        state_ok = rep["replayed_state"] == state and not rep["replay_errors"]
+        status = "MATCHED" if (not tamper and chain_ok and state_ok) \
+            else "MISMATCHED"
+        return {"task_id": task_id, "verification_status": status,
+                "tamper_detected": bool(tamper), "tamper_reasons": tamper,
+                "transition_chain_status": "VALID" if chain_ok else
+                "MISMATCHED", "replayed_state": rep["replayed_state"],
+                "stored_state": state,
+                "stored_vs_replay": "MATCHED" if state_ok else "MISMATCHED",
+                "honesty_labels": _lc.HONESTY_LABELS}
+
+    @app.post("/ai-tasks/{task_id}/transitions/replay")
+    async def lifecycle_replay(task_id: str,
+                               user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        row = _load_task_or_404(task_id, user)
+        tp = json.loads(row["payload_json"])
+        transitions = transition_store.list(task_id, tenant_id=user["tid"])
+        rep = _lc.replay(
+            _lc.initial_state_from_status(tp["task_status"]), transitions)
+        stored = _lc_current_state(task_id, user["tid"], tp)
+        return {"task_id": task_id, "replayed_state": rep["replayed_state"],
+                "stored_state": stored,
+                "replay_status": "MATCHED" if (rep["replayed_state"] == stored
+                                               and not rep["replay_errors"])
+                else "MISMATCHED",
+                "applied_count": rep["applied_count"],
+                "replay_errors": rep["replay_errors"],
+                "replay_completion_status": rep["replay_completion_status"],
+                "executed_task": False, "honesty_labels": _lc.HONESTY_LABELS}
+
+    @app.post("/ai-tasks/{task_id}/transitions/reconcile")
+    async def lifecycle_reconcile(task_id: str,
+                                  user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        row = _load_task_or_404(task_id, user)
+        tp = json.loads(row["payload_json"])
+        tid = user["tid"]
+        transitions = transition_store.list(task_id, tenant_id=tid)
+        stored = _lc_current_state(task_id, tid, tp)
+        rep = _lc.replay(
+            _lc.initial_state_from_status(tp["task_status"]), transitions)
+        state_match = rep["replayed_state"] == stored and not rep[
+            "replay_errors"]
+        # transition chain integrity
+        chain_ok, prev = True, None
+        for t in transitions:
+            if _lc.transition_hash(t) != t["transition_hash"] or \
+                    _lc.transition_chain_hash(prev, t["transition_hash"]) != t[
+                        "transition_chain_hash"]:
+                chain_ok = False
+            prev = t["transition_hash"]
+        gs, _g = _lc_grant_validation(tp, tid)
+        grant_ok = (not tp.get("requires_human_approval")) or gs in (
+            "VALID", "NONE")
+        comp = _lc.evaluate_completion(tp, _lc_completion_ctx(
+            tp, tid, replay_mismatch=not state_match, chain_mismatch=not
+            chain_ok))
+        factors = {"stored_matches_replay": state_match,
+                   "transition_chain_matches": chain_ok,
+                   "approval_grant_scope_matches": grant_ok,
+                   "completion_state_matches_criteria": True}
+        consistent = all(factors.values())
+        status = "MATCHED" if consistent else "MISMATCHED"
+        recon_hash = _lc._sha({"factors": factors, "stored": stored,
+                               "replayed": rep["replayed_state"]})
+        return {"task_id": task_id, "reconciliation_status": status,
+                "lifecycle_reconciliation_hash": recon_hash,
+                "stored_state": stored, "replayed_state": rep["replayed_state"],
+                "factors": factors, "auto_healed": False,
+                "completion_status": comp["completion_status"],
+                "honesty_labels": _lc.HONESTY_LABELS}
+
+    @app.post("/ai-tasks/{task_id}/completion/check")
+    async def lifecycle_completion_check(task_id: str,
+                                         user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        row = _load_task_or_404(task_id, user)
+        tp = json.loads(row["payload_json"])
+        tid = user["tid"]
+        state = _lc_current_state(task_id, tid, tp)
+        rep = _lc.replay(_lc.initial_state_from_status(tp["task_status"]),
+                         transition_store.list(task_id, tenant_id=tid))
+        mismatch = rep["replayed_state"] != state or bool(rep["replay_errors"])
+        comp = _lc.evaluate_completion(
+            tp, _lc_completion_ctx(tp, tid, replay_mismatch=mismatch))
+        return {"task_id": task_id, "executed_task": False, **comp}
+
+    @app.get("/ai-tasks/{task_id}/completion")
+    async def lifecycle_completion_detail(task_id: str,
+                                          user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        row = _load_task_or_404(task_id, user)
+        tp = json.loads(row["payload_json"])
+        comp = _lc.evaluate_completion(
+            tp, _lc_completion_ctx(tp, user["tid"]))
+        return {"task_id": task_id, "completion_criteria": comp[
+            "completion_criteria"], "completion_status": comp[
+            "completion_status"], "completion_blockers": comp[
+            "completion_blockers"], "completion_criteria_hash": comp[
+            "completion_criteria_hash"], "completion_result_hash": comp[
+            "completion_result_hash"], "honesty_labels": _lc.HONESTY_LABELS}
 
     # ---- UI pages -------------------------------------------------------------------------------------
     ui.mount(app)

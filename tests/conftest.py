@@ -100,6 +100,69 @@ class Gate:
         return self.c.post(f"/ai-approvals/{aid}/consume-check",
                            headers=self.h(approver)).json()
 
+    # -- CORE-A5 lifecycle helpers --------------------------------------------
+    def make_task(self, task_type="case_summary", requester=MANAGER,
+                  subject=True):
+        hdr = self.h(requester)
+        cid = self.case_id(hdr)
+        body = {"task_type": task_type, "task_title": "t",
+                "task_description": "please do the thing"}
+        if subject:
+            body.update(subject_type="case", subject_id=cid)
+        return self.c.post("/ai-tasks", json=body, headers=hdr).json()[
+            "task_id"]
+
+    def lc_state(self, task_id, actor=OWNER):
+        return self.c.get(f"/ai-tasks/{task_id}/state",
+                          headers=self.h(actor)).json()
+
+    def transition(self, task_id, event, actor=OWNER, **body):
+        body["transition_event"] = event
+        return self.c.post(f"/ai-tasks/{task_id}/transitions", json=body,
+                           headers=self.h(actor))
+
+    def dry_run(self, task_id, event, actor=OWNER, **body):
+        body["transition_event"] = event
+        return self.c.post(f"/ai-tasks/{task_id}/transitions/dry-run",
+                           json=body, headers=self.h(actor))
+
+    def walk(self, task_id, events, actor=OWNER):
+        last = None
+        for ev in events:
+            last = self.transition(task_id, ev, actor).json()
+        return last
+
+    def patch_task_payload(self, task_id, **fields):
+        import json
+        row = self.db.one("SELECT payload_json FROM ai_tasks WHERE id=?",
+                          task_id)
+        p = json.loads(row["payload_json"])
+        p.update(fields)
+        self.db.conn.execute("UPDATE ai_tasks SET payload_json=? WHERE id=?",
+                             (json.dumps(p), task_id))
+        self.db.conn.commit()
+
+    def approved_grant_task(self, task_type="merge_proposal"):
+        """Create a task with a VALID approval grant (walked to APPROVAL_PENDING
+        and approved by a second owner)."""
+        hdr = self.h(MANAGER)
+        cid = self.case_id(hdr)
+        tk = self.c.post("/ai-tasks", json={
+            "task_type": task_type, "task_title": "m",
+            "task_description": "please do the thing", "subject_type": "case",
+            "subject_id": cid}, headers=hdr).json()
+        run = self.c.post("/ai-runs", json={"task_id": tk["task_id"]},
+                          headers=hdr).json()
+        ap = self.c.post("/ai-approvals", json={"run_id": run["run_id"]},
+                         headers=hdr).json()
+        acks = {a: True for a in ap["policy_decision_capsule"][
+            "required_acknowledgements"]}
+        self.c.post(f"/ai-approvals/{ap['approval_request_id']}/approve",
+                    json={"viewed_package_hash": ap["approval_package_hash"],
+                          "acknowledgements": acks, "challenge_passed": True},
+                    headers=self.h(OWNER2))
+        return tk["task_id"], ap["approval_request_id"]
+
 
 @pytest.fixture()
 def gate():

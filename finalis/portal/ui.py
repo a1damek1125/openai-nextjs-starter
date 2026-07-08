@@ -149,6 +149,7 @@ window.loadSections = async () => {
   if (window.loadTasksSection) jobs.push(loadTasksSection(me));
   if (window.loadRunsSection) jobs.push(loadRunsSection(me));
   if (window.loadApprovalsSection) jobs.push(loadApprovalsSection(me));
+  if (window.loadLifecycleSection) jobs.push(loadLifecycleSection(me));
   await Promise.allSettled(jobs);
 };
 
@@ -2547,6 +2548,123 @@ window.verifyApproval = async (id) => {
 };
 """
 
+LIFECYCLE_SECTIONS = """
+<section id="lifecycle-section"><h2>Task Lifecycle Kernel</h2>
+<ul class="labels"><small>
+<li>State transition does not execute the action.</li>
+<li>Transition dry-run does not mutate state.</li>
+<li>Transition replay reconstructs lifecycle state; it does not re-run the task.</li>
+<li>Transition reconciliation compares stored and replayed state; it does not auto-heal silently.</li>
+<li>Completion Loop checks readiness only; it does not execute the task.</li>
+<li>Approval grant validation does not call external providers.</li>
+<li>Tool Broker is not implemented in this mission.</li>
+<li>LLM runtime is not implemented in this mission.</li>
+<li>Server-side task state is authoritative.</li>
+</small></ul>
+<p id="lifecycle-graph"><i>Loading state machine…</i></p>
+<div id="lifecycle-list"><i>Loading tasks…</i></div>
+<div id="lifecycle-detail"></div>
+</section>
+"""
+
+LIFECYCLE_JS = """
+window.loadLifecycleSection = async (me) => {
+  try {
+    const g = await get('/ai-tasks/state-machine/verify');
+    $('lifecycle-graph').innerHTML =
+      `Transition graph: <b class="${g.graph_verification_status === 'MATCHED'
+        ? 'ok' : 'err'}">${esc(g.graph_verification_status)}</b>
+       <small>(${esc(String(g.states_checked))} states, ${esc(String(
+         g.edges_checked))} edges)</small>`;
+  } catch (e) { $('lifecycle-graph').innerHTML = ''; }
+  await loadLifecycleTasks();
+};
+
+window.loadLifecycleTasks = async () => {
+  let tasks; try { tasks = await get('/ai-tasks'); }
+  catch (e) { $('lifecycle-list').innerHTML =
+    '<i>Tasks are not available for your role.</i>'; return; }
+  const rows = await Promise.all(tasks.slice(0, 25).map(async t => {
+    let s; try { s = await get('/ai-tasks/' + t.task_id + '/state'); }
+    catch (e) { return ''; }
+    return `<tr><td><small>${esc(t.task_id.slice(0, 8))}</small></td>
+      <td>${esc(t.task_type)}</td><td><b>${esc(s.lifecycle_state)}</b></td>
+      <td>${esc(s.completion_status)}</td>
+      <td>${esc(s.reconciliation_status)}</td>
+      <td><button onclick="openLifecycle('${esc(t.task_id)}')">Open</button>
+      </td></tr>`; }));
+  $('lifecycle-list').innerHTML = tasks.length
+    ? '<table><tr><th>Task</th><th>Type</th><th>State</th><th>Completion</th>' +
+      '<th>Reconcile</th><th></th></tr>' + rows.join('') + '</table>'
+    : '<i>No tasks yet.</i>';
+};
+
+window.openLifecycle = async (id) => {
+  const s = await get('/ai-tasks/' + id + '/state');
+  const tr = await get('/ai-tasks/' + id + '/transitions');
+  const comp = await get('/ai-tasks/' + id + '/completion');
+  $('lifecycle-detail').innerHTML = `
+    <h3>Task ${esc(id.slice(0, 8))}
+      <span class="badge">${esc(s.lifecycle_state)}</span></h3>
+    <p><b>task_state_hash</b> <code>${esc((s.task_state_hash
+      || '').slice(0, 14))}…</code> · version ${esc(String(s.task_version))}
+      · risk ${esc(s.risk_level)}</p>
+    <p><b>Allowed next:</b> ${(s.allowed_next_transitions || []).map(e =>
+      `<button onclick="applyTransition('${esc(id)}','${esc(e.event)}')">
+       ${esc(e.event)}</button>`).join(' ') || '<i>none</i>'}
+      <span id="lifecycle-msg"></span></p>
+    <p><button onclick="verifyLifecycle('${esc(id)}')">Verify</button>
+      <button onclick="replayLifecycle('${esc(id)}')">Replay</button>
+      <button onclick="reconcileLifecycle('${esc(id)}')">Reconcile</button>
+      <span id="lifecycle-vmsg"></span></p>
+    <h4>Completion — ${esc(comp.completion_status)}</h4>
+    <ul>${(comp.completion_blockers || []).map(b =>
+      `<li><small>${esc(b.blocker_code)} [${esc(b.severity)}] —
+       ${esc(b.remediation_hint)}</small></li>`).join('') ||
+      '<li><small>no blockers</small></li>'}</ul>
+    <h4>Transition history (${tr.transitions.length})</h4>
+    <table><tr><th>#</th><th>From</th><th>Event</th><th>To</th><th>Status</th>
+      </tr>${tr.transitions.map((t, i) => `<tr><td>${i}</td>
+      <td>${esc(t.from_state)}</td><td>${esc(t.transition_event)}</td>
+      <td>${esc(t.to_state)}</td><td>${esc(t.transition_status)}</td></tr>`)
+      .join('')}</table>
+    <ul>${(s.honesty_labels || []).map(l =>
+      `<li><small>${esc(l)}</small></li>`).join('')}</ul>`;
+};
+
+window.applyTransition = async (id, event) => {
+  const {ok, data} = await send('POST', '/ai-tasks/' + id + '/transitions',
+                                {transition_event: event});
+  $('lifecycle-msg').innerHTML = ok
+    ? `<b class="${data.transition_status === 'ALLOWED' ? 'ok' : 'err'}">
+       ${esc(data.transition_status)}</b> ${esc(data.blocked_reason || '')}`
+    : `<span class="err">${esc(data.detail || '')}</span>`;
+  if (ok && data.applied) { openLifecycle(id); loadLifecycleTasks(); }
+};
+
+window.verifyLifecycle = async (id) => {
+  const {data} = await send('POST', '/ai-tasks/' + id + '/transitions/verify',
+                            {});
+  $('lifecycle-vmsg').innerHTML =
+    `verify <b class="${data.verification_status === 'MATCHED' ? 'ok'
+      : 'err'}">${esc(data.verification_status)}</b>`;
+};
+window.replayLifecycle = async (id) => {
+  const {data} = await send('POST', '/ai-tasks/' + id + '/transitions/replay',
+                            {});
+  $('lifecycle-vmsg').innerHTML = `replay <b>${esc(data.replay_status)}</b> → `
+    + esc(data.replayed_state);
+};
+window.reconcileLifecycle = async (id) => {
+  const {data} = await send('POST',
+    '/ai-tasks/' + id + '/transitions/reconcile', {});
+  $('lifecycle-vmsg').innerHTML =
+    `reconcile <b class="${data.reconciliation_status === 'MATCHED' ? 'ok'
+      : 'err'}">${esc(data.reconciliation_status)}</b>
+     (auto_healed: ${data.auto_healed})`;
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -2571,6 +2689,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 {TASKS_SECTIONS}
 {RUNS_SECTIONS}
 {APPROVALS_SECTIONS}
+{LIFECYCLE_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -2699,7 +2818,8 @@ boot();
 <script>{AIEMP_JS}</script>
 <script>{TASKS_JS}</script>
 <script>{RUNS_JS}</script>
-<script>{APPROVALS_JS}</script></body></html>"""
+<script>{APPROVALS_JS}</script>
+<script>{LIFECYCLE_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:
