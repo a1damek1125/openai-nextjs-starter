@@ -895,6 +895,622 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
             raise HTTPException(404, "invalid or expired")
         return {"status": appt.status}
 
+    # ---- quotes (Quote Builder Q-B: persistence + API over the Q-A engine) ----
+    from decimal import Decimal, InvalidOperation
+
+    from ..quotes.engine import QuoteEngine
+    from ..quotes.models import (AcceptanceEvidence, IllegalQuoteTransition,
+                                 PaymentMilestone, PaymentSchedule,
+                                 PriceBook, PriceBookItem, PricingRule,
+                                 QuoteImmutableError, QuoteLineItem,
+                                 quote_transition)
+    from ..quotes.pricing import calculate_quote
+    from ..quotes.providers import (MockInvoiceHandoffProvider,
+                                    MockPdfProvider)
+    from ..quotes.scores import evidence_coverage_score
+    from .quote_store import QuoteStore
+
+    qstore = QuoteStore(db)
+    qengine = QuoteEngine(audit)
+    qpdf = MockPdfProvider()
+    qhandoff = MockInvoiceHandoffProvider()
+    app.state.quotes, app.state.quote_store = qengine, qstore
+
+    def load_quote_or_404(quote_id: str, user: dict):
+        q = qstore.load_quote(quote_id, tenant_id=user["tid"])
+        if q is None:
+            raise HTTPException(404, "quote not found")  # incl. cross-tenant
+        qengine.quotes[q.id] = q
+        return q
+
+    def hydrate_approvals(quote_id: str, user: dict) -> None:
+        qengine.approvals = qstore.load_approvals(quote_id,
+                                                  tenant_id=user["tid"])
+
+    def persist_approvals(user: dict) -> None:
+        for req in qengine.approvals:
+            qstore.save_approval(user["tid"], req)
+
+    _LINE_DEC = ["quantity", "material_cost", "labor_cost",
+                 "subcontractor_cost", "travel_cost", "permit_cost",
+                 "overhead_allocation", "risk_contingency",
+                 "requested_discount"]
+    _LINE_OPT_DEC = ["price_book_price", "manual_price"]
+
+    def parse_line(body: dict) -> QuoteLineItem:
+        if not str(body.get("description", "")).strip():
+            raise HTTPException(400, "line item needs a description")
+        kw = {}
+        try:
+            for f in _LINE_DEC:
+                if f in body:
+                    kw[f] = Decimal(str(body[f]))
+            for f in _LINE_OPT_DEC:
+                if body.get(f) is not None:
+                    kw[f] = Decimal(str(body[f]))
+        except (InvalidOperation, ValueError):
+            raise HTTPException(400, "invalid number in line item")
+        return QuoteLineItem(
+            description=body["description"], sku=body.get("sku"),
+            discount_reason=body.get("discount_reason", ""),
+            is_free_item=bool(body.get("is_free_item")),
+            cost_known=bool(body.get("cost_known", True)),
+            cost_age_days=int(body.get("cost_age_days", 0)),
+            tax_category=body.get("tax_category", "standard"),
+            is_custom=bool(body.get("is_custom")),
+            created_by=body.get("created_by", "human"), **kw)
+
+    def quote_json(q) -> dict:
+        return {
+            "id": q.id, "case_id": q.case_id, "state": q.state,
+            "version": q.version, "revised_from_id": q.revised_from_id,
+            "currency": q.currency, "created_by": q.created_by,
+            "editable": q.editable,
+            "subtotal": str(q.subtotal), "tax_total": str(q.tax_total),
+            "total": str(q.total),
+            "valid_until": str(q.valid_until) if q.valid_until else None,
+            "assumptions": q.assumptions, "exclusions": q.exclusions,
+            "terms_template_approved": q.terms_template_approved,
+            "tax_engine_is_mock": True,
+            "line_items": [{
+                "id": li.id, "description": li.description,
+                "sku": li.sku, "quantity": str(li.quantity),
+                "line_cost": str(li.line_cost),
+                "price_before_discount": str(li.price_before_discount),
+                "applied_discount": str(li.applied_discount),
+                "price_after_discount": str(li.price_after_discount),
+                "margin_percent": str(li.margin_percent)
+                if li.margin_percent is not None else None,
+                "line_total": str(li.line_total),
+                "requires_human_review": li.requires_human_review,
+            } for li in q.line_items],
+            "payment_schedule": [
+                {"label": m.label, "fraction": str(m.fraction),
+                 "trigger": m.trigger, "is_deposit": m.is_deposit,
+                 "blocks_fulfillment_until_paid":
+                     m.blocks_fulfillment_until_paid}
+                for m in q.payment_schedule.milestones]
+            if q.payment_schedule else [],
+        }
+
+    def gates_json(gates: dict) -> dict:
+        return {name: {"decision": g.decision, "reasons": g.reasons,
+                       "hard_blockers": g.hard_blockers}
+                for name, g in gates.items()}
+
+    @app.get("/quotes")
+    async def list_quotes(case_id: Optional[str] = None,
+                          user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return qstore.list_quotes(tenant_id=user["tid"], case_id=case_id)
+
+    @app.post("/quotes")
+    async def create_quote(body: dict,
+                           user: dict = Depends(current_user)):
+        require_permission(user, "offer.create")
+        if not body.get("case_id"):
+            raise HTTPException(400, "case_id is required")
+        case = load_case_or_404(body["case_id"], user)
+        row = db.one("SELECT client_party_id FROM cases WHERE id=?",
+                     case.id)
+        q = qengine.create_draft(
+            tenant_id=user["tid"], case_id=case.id,
+            customer_party_id=body.get("customer_party_id")
+            or (row["client_party_id"] if row else None),
+            created_by=user["uid"],
+            currency=body.get("currency", "EUR"))
+        qstore.save_quote(q)
+        return quote_json(q)
+
+    @app.get("/quotes/{quote_id}")
+    async def get_quote(quote_id: str,
+                        user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return quote_json(load_quote_or_404(quote_id, user))
+
+    @app.patch("/quotes/{quote_id}")
+    async def patch_quote(quote_id: str, body: dict,
+                          user: dict = Depends(current_user)):
+        require_permission(user, "offer.create")
+        q = load_quote_or_404(quote_id, user)
+        if q.state == "PRICE_CALCULATED":     # edits invalidate the calc
+            quote_transition(q, "DRAFT")
+        try:
+            q.assert_editable()
+        except QuoteImmutableError as e:
+            raise HTTPException(409, str(e))
+        for f in ("assumptions", "exclusions", "terms_template_id",
+                  "custom_terms_text", "customer_party_id"):
+            if f in body:
+                setattr(q, f, body[f])
+        if "terms_template_approved" in body:
+            q.terms_template_approved = bool(body["terms_template_approved"])
+        if "cost_volatility" in body:
+            q.cost_volatility = float(body["cost_volatility"])
+        qstore.save_quote(q)
+        return quote_json(q)
+
+    @app.post("/quotes/{quote_id}/lines")
+    async def add_quote_line(quote_id: str, body: dict,
+                             user: dict = Depends(current_user)):
+        require_permission(user, "offer.create")
+        q = load_quote_or_404(quote_id, user)
+        if q.state == "PRICE_CALCULATED":     # edits invalidate the calc
+            quote_transition(q, "DRAFT")
+        try:
+            qengine.add_line(q, parse_line(body))
+        except QuoteImmutableError as e:
+            raise HTTPException(409, str(e))
+        qstore.save_quote(q)
+        return quote_json(q)
+
+    @app.post("/quotes/{quote_id}/calculate")
+    async def calculate_quote_api(quote_id: str, body: Optional[dict] = None,
+                                  user: dict = Depends(current_user)):
+        require_permission(user, "offer.create")
+        body = body or {}
+        q = load_quote_or_404(quote_id, user)
+        if q.state == "PRICE_CALCULATED":     # recalculation is legal
+            quote_transition(q, "DRAFT")
+        book = qstore.default_price_book(user["tid"])
+        rules = qstore.load_pricing_rules(user["tid"])
+        try:
+            qengine.calculate(q, price_book=book, pricing_rules=rules,
+                              now=datetime.utcnow())
+        except QuoteImmutableError as e:
+            raise HTTPException(409, str(e))
+        gates = qengine.evaluate_gates(
+            q, readiness_context=body.get("readiness") or {},
+            feasibility_context=body.get("feasibility"))
+        qstore.save_quote(q)
+        ev = q.evidence
+        return {**quote_json(q), "gates": gates_json(gates), "scores": {
+            "price_confidence": round(qengine.price_confidence(q), 4),
+            "evidence_coverage": round(evidence_coverage_score(
+                required_facts_covered=ev.required_facts_covered,
+                source_reliability=ev.source_reliability,
+                evidence_recency=ev.evidence_recency,
+                scope_consistency=ev.scope_consistency,
+                human_verified_facts=ev.human_verified_facts,
+                pricing_data_coverage=ev.pricing_data_coverage), 4)}}
+
+    @app.post("/quotes/{quote_id}/approve")
+    async def approve_quote(quote_id: str,
+                            user: dict = Depends(current_user)):
+        require_permission(user, "offer.approve")
+        q = load_quote_or_404(quote_id, user)
+        hydrate_approvals(quote_id, user)
+        try:
+            qengine.approve(q, approver_id=user["uid"])
+        except PermissionError as e:
+            raise HTTPException(403, str(e))
+        except IllegalQuoteTransition as e:
+            raise HTTPException(409, str(e))
+        persist_approvals(user)
+        qstore.save_quote(q)
+        return quote_json(q)
+
+    @app.post("/quotes/{quote_id}/reject")
+    async def reject_quote(quote_id: str, body: dict,
+                           user: dict = Depends(current_user)):
+        require_permission(user, "offer.approve")
+        if not str(body.get("reason", "")).strip():
+            raise HTTPException(400, "rejection requires a reason")
+        q = load_quote_or_404(quote_id, user)
+        try:
+            quote_transition(q, "REJECTED_BY_APPROVER")
+        except IllegalQuoteTransition as e:
+            raise HTTPException(409, str(e))
+        for req in qstore.load_approvals(quote_id, tenant_id=user["tid"]):
+            if req.status == "PENDING":
+                req.status = "REJECTED"
+                req.approver_id = user["uid"]
+                qstore.save_approval(user["tid"], req)
+        audit.append(event_type="QUOTE_REJECTED_BY_APPROVER",
+                     actor=user["uid"], case_id=q.case_id,
+                     payload={"quote_id": q.id,
+                              "reason": body["reason"]})
+        qstore.save_quote(q)
+        return quote_json(q)
+
+    @app.post("/quotes/{quote_id}/send")
+    async def send_quote(quote_id: str, body: Optional[dict] = None,
+                         user: dict = Depends(current_user)):
+        require_permission(user, "offer.create")
+        body = body or {}
+        q = load_quote_or_404(quote_id, user)
+        if q.revised_from_id:      # supersede path needs the ancestor
+            old = qstore.load_quote(q.revised_from_id,
+                                    tenant_id=user["tid"])
+            if old is not None:
+                qengine.quotes[old.id] = old
+        hydrate_approvals(quote_id, user)
+        try:
+            result = qengine.send(
+                q, actor_type="human",
+                readiness_context=body.get("readiness") or {},
+                feasibility_context=body.get("feasibility"),
+                now=datetime.utcnow())
+        except IllegalQuoteTransition as e:
+            raise HTTPException(409, str(e))
+        if result.decision != "SENT":
+            raise HTTPException(409, "; ".join(result.reasons))
+        qstore.save_quote(q)
+        if q.revised_from_id and q.revised_from_id in qengine.quotes:
+            qstore.save_quote(qengine.quotes[q.revised_from_id])
+        return {**quote_json(q), "send_result": result.decision}
+
+    @app.post("/quotes/{quote_id}/accept")
+    async def accept_quote(quote_id: str, body: Optional[dict] = None,
+                           user: dict = Depends(current_user)):
+        """Demo/simulated client acceptance. Creates payment/invoice/
+        fulfillment REQUIREMENT placeholders — never completes the case."""
+        require_permission(user, "offer.create")
+        body = body or {}
+        q = load_quote_or_404(quote_id, user)
+        channel = body.get("channel", "portal_click")
+        evidence = None
+        if body.get("evidence"):
+            e = body["evidence"]
+            if not e.get("kind") or not e.get("reference_id"):
+                raise HTTPException(400, "evidence needs kind and "
+                                         "reference_id")
+            evidence = AcceptanceEvidence(kind=e["kind"],
+                                          reference_id=e["reference_id"],
+                                          recorded_by=user["uid"],
+                                          note=e.get("note", ""))
+        elif channel != "portal_click":
+            raise HTTPException(400, "manual acceptance requires "
+                                     "AcceptanceEvidence")
+        try:
+            reqs = qengine.accept(q, channel=channel, evidence=evidence,
+                                  now=datetime.utcnow())
+        except IllegalQuoteTransition as e:
+            raise HTTPException(409, str(e))
+        except ValueError as e:
+            qstore.save_quote(q)              # EXPIRED state persists
+            raise HTTPException(409, str(e))
+        qstore.save_quote(q)
+        qstore.save_payment_requirements(user["tid"], reqs)
+        # Lifecycle: deal accepted, money + delivery OPEN (mock providers).
+        v = load_vector(q.case_id)
+        v.deal = DealState.ACCEPTED_BY_CLIENT
+        v.transaction = TransactionState.INVOICE_REQUIRED
+        v.fulfillment = FulfillmentState.REQUIRED
+        save_vector(q.case_id, v)
+        handoff = qhandoff.handoff(q, reqs)
+        audit.append(event_type="INVOICE_HANDOFF_PREPARED",
+                     actor="mock-invoice-handoff", case_id=q.case_id,
+                     payload=handoff)
+        return {**quote_json(q),
+                "payment_requirements": [
+                    {"label": r.label, "amount": str(r.amount),
+                     "trigger": r.trigger,
+                     "blocks_fulfillment_until_paid":
+                         r.blocks_fulfillment_until_paid} for r in reqs],
+                "invoice_handoff": handoff,
+                "lifecycle_view": v.derived_outcome_view(),
+                "case_completed": False}
+
+    @app.post("/quotes/{quote_id}/decline")
+    async def decline_quote(quote_id: str, body: dict,
+                            user: dict = Depends(current_user)):
+        require_permission(user, "offer.create")
+        if not str(body.get("reason", "")).strip():
+            raise HTTPException(400, "declining requires a reason")
+        q = load_quote_or_404(quote_id, user)
+        try:
+            qengine.decline(q, reason=body["reason"])
+        except IllegalQuoteTransition as e:
+            raise HTTPException(409, str(e))
+        qstore.save_quote(q)
+        return quote_json(q)
+
+    @app.post("/quotes/{quote_id}/expire")
+    async def expire_quote(quote_id: str,
+                           user: dict = Depends(current_user)):
+        require_permission(user, "offer.create")
+        q = load_quote_or_404(quote_id, user)
+        try:
+            quote_transition(q, "EXPIRED")
+        except IllegalQuoteTransition as e:
+            raise HTTPException(409, str(e))
+        audit.append(event_type="QUOTE_EXPIRED", actor=user["uid"],
+                     case_id=q.case_id, payload={"quote_id": q.id})
+        qstore.save_quote(q)
+        return quote_json(q)
+
+    @app.post("/quotes/{quote_id}/revise")
+    async def revise_quote(quote_id: str,
+                           user: dict = Depends(current_user)):
+        require_permission(user, "offer.create")
+        q = load_quote_or_404(quote_id, user)
+        try:
+            new = qengine.revise(q, revised_by=user["uid"])
+        except (QuoteImmutableError, IllegalQuoteTransition) as e:
+            raise HTTPException(409, str(e))
+        qstore.save_quote(q)
+        qstore.save_quote(new)
+        return quote_json(new)
+
+    @app.post("/quotes/{quote_id}/generate-pdf")
+    async def generate_quote_pdf(quote_id: str,
+                                 user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        q = load_quote_or_404(quote_id, user)
+        html = qpdf.render(q)
+        doc_id = str(uuid.uuid4())
+        db.insert("quote_pdf_documents", {
+            "id": doc_id, "tenant_id": user["tid"], "quote_id": q.id,
+            "html": html, "is_mock": 1})
+        audit.append(event_type="QUOTE_DOCUMENT_GENERATED",
+                     actor="mock-pdf", case_id=q.case_id,
+                     payload={"quote_id": q.id, "document_id": doc_id,
+                              "is_mock": True})
+        return {"document_id": doc_id, "is_mock": True,
+                "provider": qpdf.name, "html": html}
+
+    @app.get("/quotes/{quote_id}/events")
+    async def quote_events(quote_id: str,
+                           user: dict = Depends(current_user)):
+        require_permission(user, "audit.view")
+        load_quote_or_404(quote_id, user)
+        return [{"event_type": e.event_type, "actor": e.actor,
+                 "payload": e.payload, "created_at": e.created_at}
+                for e in audit.events()
+                if (e.payload or {}).get("quote_id") == quote_id]
+
+    @app.get("/quotes/{quote_id}/evidence")
+    async def quote_evidence(quote_id: str,
+                             user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        q = load_quote_or_404(quote_id, user)
+        ev = q.evidence
+        import dataclasses as _dc
+        return {"bundle": _dc.asdict(ev),
+                "evidence_coverage_score": round(evidence_coverage_score(
+                    required_facts_covered=ev.required_facts_covered,
+                    source_reliability=ev.source_reliability,
+                    evidence_recency=ev.evidence_recency,
+                    scope_consistency=ev.scope_consistency,
+                    human_verified_facts=ev.human_verified_facts,
+                    pricing_data_coverage=ev.pricing_data_coverage), 4)}
+
+    @app.get("/quotes/{quote_id}/payment-schedule")
+    async def get_payment_schedule(quote_id: str,
+                                   user: dict = Depends(current_user)):
+        require_permission(user, "payment.view")
+        q = load_quote_or_404(quote_id, user)
+        return {"milestones": quote_json(q)["payment_schedule"],
+                "payment_requirements": qstore.load_payment_requirements(
+                    quote_id, tenant_id=user["tid"])}
+
+    @app.post("/quotes/{quote_id}/payment-schedule")
+    async def set_payment_schedule(quote_id: str, body: dict,
+                                   user: dict = Depends(current_user)):
+        require_permission(user, "offer.create")
+        q = load_quote_or_404(quote_id, user)
+        try:
+            schedule = PaymentSchedule(milestones=[
+                PaymentMilestone(
+                    label=m["label"], fraction=Decimal(str(m["fraction"])),
+                    trigger=m.get("trigger", "on_acceptance"),
+                    is_deposit=bool(m.get("is_deposit")),
+                    blocks_fulfillment_until_paid=bool(
+                        m.get("blocks_fulfillment_until_paid")))
+                for m in body.get("milestones", [])])
+        except (KeyError, InvalidOperation):
+            raise HTTPException(400, "invalid milestone payload")
+        if q.state == "PRICE_CALCULATED":     # edits invalidate the calc
+            quote_transition(q, "DRAFT")
+        try:
+            qengine.set_payment_schedule(q, schedule)
+        except QuoteImmutableError as e:
+            raise HTTPException(409, str(e))
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+        qstore.save_quote(q)
+        return quote_json(q)
+
+    @app.get("/quotes/{quote_id}/change-orders")
+    async def list_change_orders(quote_id: str,
+                                 user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        load_quote_or_404(quote_id, user)
+        return qstore.load_change_orders(quote_id, tenant_id=user["tid"])
+
+    @app.post("/quotes/{quote_id}/change-orders")
+    async def create_change_order(quote_id: str, body: dict,
+                                  user: dict = Depends(current_user)):
+        require_permission(user, "offer.create")
+        q = load_quote_or_404(quote_id, user)
+        if not str(body.get("description", "")).strip() \
+                or "price_delta" not in body:
+            raise HTTPException(400, "description and price_delta required")
+        try:
+            price_delta = Decimal(str(body["price_delta"]))
+            cost_delta = Decimal(str(body.get("cost_delta", "0")))
+        except InvalidOperation:
+            raise HTTPException(400, "invalid amount")
+        try:
+            co = qengine.create_change_order(
+                q, description=body["description"],
+                price_delta=price_delta, cost_delta=cost_delta,
+                reason=body.get("reason", ""), requested_by=user["uid"])
+        except ValueError as e:
+            raise HTTPException(409, str(e))
+        # Recalculated margin on the delta — same math as line margins.
+        from ..quotes.pricing import margin_percent as _margin
+        co_margin = _margin(co.price_delta, co.cost_delta) \
+            if co.price_delta > Decimal("0") else None
+        qstore.save_change_order(user["tid"], co, margin_percent=co_margin)
+        return {"id": co.id, "status": co.status,
+                "price_delta": str(co.price_delta),
+                "cost_delta": str(co.cost_delta),
+                "margin_percent": str(co_margin)
+                if co_margin is not None else None,
+                "requires_approval": True}
+
+    # -- price books & pricing rules --------------------------------------------
+    @app.get("/price-books")
+    async def list_price_books(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return [dict(r) for r in db.all(
+            "SELECT id, name, currency FROM price_books WHERE tenant_id=?",
+            user["tid"])]
+
+    @app.post("/price-books")
+    async def create_price_book(body: dict,
+                                user: dict = Depends(current_user)):
+        require_permission(user, "offer.create")
+        book = PriceBook(tenant_id=user["tid"],
+                         name=body.get("name", "default"),
+                         currency=body.get("currency", "EUR"))
+        qstore.save_price_book(book)
+        return {"id": book.id, "name": book.name}
+
+    @app.get("/price-books/{book_id}/items")
+    async def list_price_book_items(book_id: str,
+                                    user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        book = qstore.load_price_book(book_id, tenant_id=user["tid"])
+        if book is None:
+            raise HTTPException(404, "price book not found")
+        return [{"sku": i.sku, "name": i.name,
+                 "list_price": str(i.list_price),
+                 "tax_category": i.tax_category}
+                for i in book.items.values()]
+
+    @app.post("/price-books/{book_id}/items")
+    async def add_price_book_item(book_id: str, body: dict,
+                                  user: dict = Depends(current_user)):
+        require_permission(user, "offer.create")
+        book = qstore.load_price_book(book_id, tenant_id=user["tid"])
+        if book is None:
+            raise HTTPException(404, "price book not found")
+        if not body.get("sku") or "list_price" not in body:
+            raise HTTPException(400, "sku and list_price required")
+        try:
+            item = PriceBookItem(
+                sku=body["sku"], name=body.get("name", body["sku"]),
+                list_price=Decimal(str(body["list_price"])),
+                cost_hint=Decimal(str(body["cost_hint"]))
+                if body.get("cost_hint") is not None else None,
+                tax_category=body.get("tax_category", "standard"))
+        except InvalidOperation:
+            raise HTTPException(400, "invalid price")
+        qstore.save_price_book_item(book, item)
+        return {"sku": item.sku, "list_price": str(item.list_price)}
+
+    @app.get("/pricing-rules")
+    async def list_pricing_rules(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return [{"id": r.id, "name": r.name,
+                 "applies_to_sku": r.applies_to_sku,
+                 "min_quantity": str(r.min_quantity),
+                 "discount_percent": str(r.discount_percent),
+                 "priority": r.priority}
+                for r in qstore.load_pricing_rules(user["tid"])]
+
+    @app.post("/pricing-rules")
+    async def create_pricing_rule(body: dict,
+                                  user: dict = Depends(current_user)):
+        require_permission(user, "offer.create")
+        if not body.get("name"):
+            raise HTTPException(400, "name required")
+        try:
+            rule = PricingRule(
+                tenant_id=user["tid"], name=body["name"],
+                applies_to_sku=body.get("applies_to_sku", "*"),
+                min_quantity=Decimal(str(body.get("min_quantity", "0"))),
+                discount_percent=Decimal(str(
+                    body.get("discount_percent", "0"))),
+                priority=int(body.get("priority", 0)))
+        except (InvalidOperation, ValueError):
+            raise HTTPException(400, "invalid rule payload")
+        qstore.save_pricing_rule(rule)
+        return {"id": rule.id, "name": rule.name}
+
+    @app.patch("/pricing-rules/{rule_id}")
+    async def patch_pricing_rule(rule_id: str, body: dict,
+                                 user: dict = Depends(current_user)):
+        require_permission(user, "offer.create")
+        row = db.one("SELECT * FROM pricing_rules WHERE id=? AND "
+                     "tenant_id=?", rule_id, user["tid"])
+        if row is None:
+            raise HTTPException(404, "pricing rule not found")
+        fields = {}
+        for f in ("name", "applies_to_sku"):
+            if f in body:
+                fields[f] = body[f]
+        for f in ("min_quantity", "discount_percent"):
+            if f in body:
+                fields[f] = str(Decimal(str(body[f])))
+        if "priority" in body:
+            fields["priority"] = int(body["priority"])
+        if "active" in body:
+            fields["active"] = int(bool(body["active"]))
+        db.update("pricing_rules", rule_id, fields)
+        return {"id": rule_id, **{k: str(v) for k, v in fields.items()}}
+
+    # -- stateless pricing utilities ------------------------------------------------
+    @app.post("/pricing/calculate")
+    async def pricing_calculate(body: dict,
+                                user: dict = Depends(current_user)):
+        """Stateless what-if calculation (nothing persisted; mock tax)."""
+        require_permission(user, "case.read")
+        from ..quotes.models import Quote as _Quote
+        q = _Quote(tenant_id=user["tid"], case_id="what-if")
+        q.line_items = [parse_line(l) for l in body.get("lines", [])]
+        if not q.line_items:
+            raise HTTPException(400, "lines required")
+        calculate_quote(q, target_margin=qengine.thresholds.target_margin,
+                        max_auto_discount=qengine.thresholds
+                        .max_auto_discount,
+                        price_book=qstore.default_price_book(user["tid"]),
+                        pricing_rules=qstore.load_pricing_rules(
+                            user["tid"]))
+        return {**quote_json(q), "persisted": False}
+
+    @app.post("/pricing/validate")
+    async def pricing_validate(body: dict,
+                               user: dict = Depends(current_user)):
+        """Stateless gate check for a hypothetical quote."""
+        require_permission(user, "case.read")
+        from ..quotes.models import Quote as _Quote
+        q = _Quote(tenant_id=user["tid"], case_id="what-if",
+                   customer_party_id="what-if")
+        q.line_items = [parse_line(l) for l in body.get("lines", [])]
+        if not q.line_items:
+            raise HTTPException(400, "lines required")
+        calculate_quote(q, target_margin=qengine.thresholds.target_margin,
+                        max_auto_discount=qengine.thresholds
+                        .max_auto_discount)
+        gates = qengine.evaluate_gates(
+            q, readiness_context=body.get("readiness") or {},
+            feasibility_context=body.get("feasibility"))
+        return {"gates": gates_json(gates), "persisted": False}
+
     # ---- audit --------------------------------------------------------------------------------------
     @app.get("/audit/verify/{case_id}")
     async def audit_verify(case_id: str,

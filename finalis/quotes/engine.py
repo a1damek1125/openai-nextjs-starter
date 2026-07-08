@@ -308,6 +308,8 @@ class QuoteEngine:
         import uuid
         new = copy.deepcopy(quote)
         new.id = str(uuid.uuid4())
+        for li in new.line_items:           # a new version owns its lines
+            li.id = str(uuid.uuid4())
         new.state = "DRAFT"
         new.version = quote.version + 1
         new.revised_from_id = quote.id

@@ -169,6 +169,108 @@ CREATE TABLE IF NOT EXISTS call_sessions (
   created_at TEXT NOT NULL DEFAULT (datetime('now')));
 CREATE INDEX IF NOT EXISTS ix_calls_tenant ON call_sessions(tenant_id, case_id);
 """),
+    (3, """
+-- v3: Quote Builder persistence (money stored as TEXT-encoded Decimal —
+-- SQLite REAL would reintroduce float drift the pricing math forbids).
+CREATE TABLE IF NOT EXISTS quotes (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL REFERENCES tenants(id),
+  case_id TEXT NOT NULL, customer_party_id TEXT,
+  currency TEXT NOT NULL DEFAULT 'EUR',
+  state TEXT NOT NULL DEFAULT 'DRAFT',
+  version INTEGER NOT NULL DEFAULT 1, revised_from_id TEXT,
+  created_by TEXT NOT NULL DEFAULT 'human',
+  subtotal TEXT NOT NULL DEFAULT '0', tax_total TEXT NOT NULL DEFAULT '0',
+  total TEXT NOT NULL DEFAULT '0',
+  rounding_adjustment TEXT NOT NULL DEFAULT '0',
+  valid_days INTEGER NOT NULL DEFAULT 30, valid_until TEXT,
+  cost_volatility REAL NOT NULL DEFAULT 0,
+  sent_at TEXT, accepted_at TEXT,
+  assumptions_json TEXT NOT NULL DEFAULT '[]',
+  exclusions_json TEXT NOT NULL DEFAULT '[]',
+  terms_template_id TEXT, terms_template_approved INTEGER NOT NULL DEFAULT 0,
+  custom_terms_text TEXT NOT NULL DEFAULT '',
+  payment_schedule_json TEXT, evidence_json TEXT,
+  acceptance_evidence_json TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE INDEX IF NOT EXISTS ix_quotes_tenant ON quotes(tenant_id, case_id);
+CREATE INDEX IF NOT EXISTS ix_quotes_state ON quotes(tenant_id, state);
+
+CREATE TABLE IF NOT EXISTS quote_line_items (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  quote_id TEXT NOT NULL REFERENCES quotes(id),
+  position INTEGER NOT NULL DEFAULT 0,
+  description TEXT NOT NULL DEFAULT '', sku TEXT,
+  line_total TEXT NOT NULL DEFAULT '0', margin_percent TEXT,
+  body_json TEXT NOT NULL DEFAULT '{}');
+CREATE INDEX IF NOT EXISTS ix_qlines_quote ON quote_line_items(tenant_id, quote_id);
+
+CREATE TABLE IF NOT EXISTS price_books (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  name TEXT NOT NULL DEFAULT 'default',
+  currency TEXT NOT NULL DEFAULT 'EUR',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE INDEX IF NOT EXISTS ix_pbooks_tenant ON price_books(tenant_id);
+
+CREATE TABLE IF NOT EXISTS price_book_items (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  price_book_id TEXT NOT NULL REFERENCES price_books(id),
+  sku TEXT NOT NULL, name TEXT NOT NULL DEFAULT '',
+  list_price TEXT NOT NULL, cost_hint TEXT,
+  tax_category TEXT NOT NULL DEFAULT 'standard');
+CREATE INDEX IF NOT EXISTS ix_pbitems_book ON price_book_items(tenant_id, price_book_id, sku);
+
+CREATE TABLE IF NOT EXISTS pricing_rules (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  name TEXT NOT NULL, applies_to_sku TEXT NOT NULL DEFAULT '*',
+  min_quantity TEXT NOT NULL DEFAULT '0',
+  discount_percent TEXT NOT NULL DEFAULT '0',
+  priority INTEGER NOT NULL DEFAULT 0,
+  active INTEGER NOT NULL DEFAULT 1);
+CREATE INDEX IF NOT EXISTS ix_prules_tenant ON pricing_rules(tenant_id, active);
+
+CREATE TABLE IF NOT EXISTS quote_approvals (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  quote_id TEXT NOT NULL REFERENCES quotes(id),
+  reason TEXT NOT NULL DEFAULT '', requested_by TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'PENDING', approver_id TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE INDEX IF NOT EXISTS ix_qapprovals ON quote_approvals(tenant_id, quote_id, status);
+
+CREATE TABLE IF NOT EXISTS change_orders (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  quote_id TEXT NOT NULL REFERENCES quotes(id),
+  description TEXT NOT NULL, price_delta TEXT NOT NULL,
+  cost_delta TEXT NOT NULL DEFAULT '0', margin_percent TEXT,
+  reason TEXT NOT NULL DEFAULT '', requested_by TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'PENDING_APPROVAL', approver_id TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE INDEX IF NOT EXISTS ix_corders ON change_orders(tenant_id, quote_id);
+
+CREATE TABLE IF NOT EXISTS acceptance_evidence (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  quote_id TEXT NOT NULL REFERENCES quotes(id),
+  kind TEXT NOT NULL, reference_id TEXT NOT NULL,
+  recorded_by TEXT NOT NULL, note TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE INDEX IF NOT EXISTS ix_accev ON acceptance_evidence(tenant_id, quote_id);
+
+CREATE TABLE IF NOT EXISTS payment_requirements (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  quote_id TEXT NOT NULL REFERENCES quotes(id),
+  label TEXT NOT NULL, amount TEXT NOT NULL,
+  trigger_event TEXT NOT NULL DEFAULT 'on_acceptance',
+  blocks_fulfillment_until_paid INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'REQUIRED');
+CREATE INDEX IF NOT EXISTS ix_payreqs ON payment_requirements(tenant_id, quote_id);
+
+CREATE TABLE IF NOT EXISTS quote_pdf_documents (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  quote_id TEXT NOT NULL REFERENCES quotes(id),
+  html TEXT NOT NULL, is_mock INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE INDEX IF NOT EXISTS ix_qpdfs ON quote_pdf_documents(tenant_id, quote_id);
+"""),
 ]
 
 
