@@ -652,6 +652,31 @@ CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_run_events_idx
 CREATE INDEX IF NOT EXISTS ix_ai_run_events
   ON ai_run_events(tenant_id, run_id, event_index);
 """),
+    (12, """
+-- v12: Human Approval Gate Foundation (CORE-A4.1, PART 1). Scoped, policy-
+-- bound approval REQUESTS only — no approve/reject/grant/consume here.
+-- Creating an approval request approves and executes nothing.
+CREATE TABLE IF NOT EXISTS ai_approval_requests (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, run_id TEXT NOT NULL,
+  task_id TEXT NOT NULL, requester_user_id TEXT NOT NULL,
+  assigned_ai_employee_id TEXT NOT NULL DEFAULT '',
+  approval_action_type TEXT NOT NULL DEFAULT '',
+  approval_status TEXT NOT NULL DEFAULT 'REQUESTED',
+  approval_risk_level TEXT NOT NULL DEFAULT 'MEDIUM',
+  required_approver_role TEXT NOT NULL DEFAULT 'owner',
+  approval_request_hash TEXT NOT NULL, approval_package_hash TEXT NOT NULL,
+  approval_challenge_hash TEXT, approval_precondition_hash TEXT NOT NULL,
+  policy_decision_hash TEXT NOT NULL,
+  task_contract_hash TEXT NOT NULL DEFAULT '',
+  task_envelope_hash TEXT NOT NULL DEFAULT '',
+  run_state_hash TEXT, run_chain_hash TEXT,
+  expires_at TEXT, payload_json TEXT NOT NULL,
+  created_by TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_approvals
+  ON ai_approval_requests(tenant_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_ai_approvals_run
+  ON ai_approval_requests(tenant_id, run_id);
+"""),
 ]
 
 

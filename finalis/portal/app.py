@@ -3770,6 +3770,279 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                            "tamper_reasons"),
                 "honesty_labels": _rl.HONESTY_LABELS}
 
+    # ---- Human Approval Gate Foundation (CORE-A4.1, PART 1) --------------------------
+    from ..ai_employee import approvals as _appr
+    from ..ai_employee.approval_store import AIApprovalStore
+    approval_store = AIApprovalStore(db)
+    app.state.approval_store = approval_store
+
+    @app.get("/ai-approvals/policy")
+    async def ai_approval_policy(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {"approval_policy_matrix": _appr.APPROVAL_POLICY_MATRIX,
+                "always_blocked_actions": sorted(_appr.ALWAYS_BLOCKED_ACTIONS),
+                "forbidden_unlocks": _appr.FORBIDDEN_UNLOCKS,
+                "honesty_labels": _appr.HONESTY_LABELS}
+
+    @app.post("/ai-approvals")
+    async def create_ai_approval(body: dict,
+                                 user: dict = Depends(current_user)):
+        # Creating an approval REQUEST approves and executes nothing. An AI
+        # worker can never create an approval (human oversight only).
+        require_permission(user, "case.update")
+        if user["role"] == "ai_worker":
+            raise HTTPException(403, "AI worker cannot create approval "
+                                "requests")
+        run_id = str(body.get("run_id", ""))
+        rrow = run_store.get_run(run_id, tenant_id=user["tid"])
+        if rrow is None:
+            raise HTTPException(404, "run not found")
+        run = json.loads(rrow["payload_json"])
+        trow = task_store.get(run["task_id"], tenant_id=user["tid"])
+        if trow is None:
+            raise HTTPException(404, "task not found")
+        task = json.loads(trow["payload_json"])
+        action_type = _tasks.TASK_TYPES.get(task["task_type"], {}).get(
+            "action", task["task_type"])
+
+        ar_id = str(uuid.uuid4())
+        now = utcnow()
+        expires = None
+        risk = run["risk_level"]
+        capsule = _appr.build_policy_capsule(
+            tenant_id=user["tid"], run_id=run_id, task_id=run["task_id"],
+            approval_request_id=ar_id, action_type=action_type,
+            subject_type=task.get("subject_type"),
+            subject_id=task.get("subject_id"), risk_level=risk,
+            authority_decision=run["authority_decision"],
+            authority_hard_fail=run["authority_hard_fail"],
+            consent_requirement=task["requires_consent_check"],
+            evidence_requirement=task["requires_evidence_check"],
+            proof_requirement=False,
+            allowed_next_transition="PAUSED -> (approved future transition "
+            "in CORE-A4.2)", created_at=now)
+        pdh = _appr.policy_decision_hash(capsule)
+        challenge_needed = capsule["challenge_required"]
+        preconditions = _appr.build_preconditions(
+            tenant_id=user["tid"], run_id=run_id, task_id=run["task_id"],
+            approval_action_type=action_type,
+            subject_type=task.get("subject_type"),
+            subject_id=task.get("subject_id"),
+            task_contract_hash=run["task_contract_hash"],
+            task_envelope_hash=run["task_envelope_hash"],
+            run_state_hash=run["run_state_hash"],
+            run_chain_hash=run["run_chain_hash"],
+            run_event_merkle_root=run["run_event_merkle_root"],
+            policy_decision_hash=pdh,
+            authority_decision=run["authority_decision"],
+            consent_required=task["requires_consent_check"],
+            evidence_required=task["requires_evidence_check"],
+            proof_required=False, challenge_required=challenge_needed)
+        pre_hash = _appr.precondition_hash(preconditions)
+        approval_scope = {"action_type": action_type,
+                          "subject_type": task.get("subject_type"),
+                          "subject_id": task.get("subject_id"),
+                          "run_id": run_id, "task_id": run["task_id"]}
+        # Build the package first WITHOUT the challenge to get its hash, then
+        # bind the challenge to that viewed package hash, then finalize.
+        base_pkg = _appr.build_package(
+            approval_request_id=ar_id, tenant_id=user["tid"], run_id=run_id,
+            task_id=run["task_id"],
+            task_contract_hash=run["task_contract_hash"],
+            task_envelope_hash=run["task_envelope_hash"],
+            run_chain_hash=run["run_chain_hash"],
+            run_state_hash=run["run_state_hash"],
+            run_event_merkle_root=run["run_event_merkle_root"],
+            assigned_ai_employee_id=run["assigned_ai_employee_id"],
+            requester_user_id=user["uid"], capsule=capsule,
+            approval_action_type=action_type, approval_scope=approval_scope,
+            allowed_next_transition=capsule["allowed_next_transition"],
+            risk_level=risk, authority_decision=run["authority_decision"],
+            authority_reason=run["authority_reason"],
+            requires_consent_check=task["requires_consent_check"],
+            requires_evidence_check=task["requires_evidence_check"],
+            requires_tool_broker=task["requires_tool_broker"],
+            evidence_refs=[], proof_report_refs=[], consent_refs=[],
+            subject_refs=[task["subject_id"]] if task.get("subject_id")
+            else [], data_scope_refs=task["allowed_data_scopes"],
+            preconditions=preconditions, challenge=None)
+        viewed_pkg_hash = _appr.package_hash(base_pkg)
+        challenge = _appr.build_challenge(
+            approval_request_id=ar_id, tenant_id=user["tid"],
+            viewed_package_hash=viewed_pkg_hash,
+            required_acknowledgements=capsule["required_acknowledgements"],
+            risk_level=risk, subject_required=bool(task.get("subject_id")),
+            created_at=now, expires_at=expires, required=challenge_needed)
+        package = {**base_pkg, "approval_challenge": challenge}
+        pkg_hash = _appr.package_hash(package)
+
+        if capsule["always_blocked"]:
+            status = "BLOCKED"
+        elif challenge_needed:
+            status = "CHALLENGE_REQUIRED"
+        else:
+            status = "PENDING"
+
+        request_core = {
+            "approval_request_id": ar_id, "tenant_id": user["tid"],
+            "run_id": run_id, "task_id": run["task_id"],
+            "task_contract_hash": run["task_contract_hash"],
+            "task_envelope_hash": run["task_envelope_hash"],
+            "run_chain_hash": run["run_chain_hash"],
+            "run_state_hash": run["run_state_hash"],
+            "run_event_merkle_root": run["run_event_merkle_root"],
+            "requester_user_id": user["uid"],
+            "assigned_ai_employee_id": run["assigned_ai_employee_id"],
+            "requested_by_actor_id": user["uid"],
+            "requested_by_actor_type": "HUMAN_USER",
+            "policy_decision_id": capsule["policy_decision_id"],
+            "policy_decision_hash": pdh,
+            "approval_action_type": action_type,
+            "approval_scope": approval_scope, "approval_status": status,
+            "approval_risk_level": risk,
+            "approval_policy_version": _appr.POLICY_CAPSULE_VERSION,
+            "approval_package_hash": pkg_hash,
+            "approval_precondition_hash": pre_hash,
+            "required_approver_role": capsule["required_approver_role"],
+            "required_approver_count": capsule["required_approver_count"],
+            "minimum_approval_level": capsule["required_approver_role"],
+            "quorum_group_id": None,
+            "dual_control_required": capsule["dual_control_required"],
+            "self_approval_forbidden": True, "ai_approval_forbidden": True,
+            "evidence_required": task["requires_evidence_check"],
+            "consent_required": task["requires_consent_check"],
+            "proof_report_required": False,
+            "tool_broker_required": task["requires_tool_broker"],
+            "subject_access_required": bool(task.get("subject_id")),
+            "approval_challenge_required": challenge_needed,
+            "approval_challenge_hash": challenge["challenge_hash"],
+            "expires_at": expires,
+            "safe_view_available": True, "redaction_profile": "FULL_VIEW",
+            "reason": ("high-risk approval requires an anti-rubber-stamp "
+                       "challenge" if challenge_needed
+                       else "approval request created"),
+            "blocked_reason": (capsule["blocked_reasons"][0]
+                               if capsule["blocked_reasons"] else None),
+        }
+        request_core["approval_request_hash"] = _appr.request_hash(
+            request_core)
+        payload = {**request_core,
+                   "approval_package": package,
+                   "policy_decision_capsule": capsule,
+                   "approval_challenge": challenge,
+                   "preconditions": preconditions,
+                   "created_at": now, "updated_at": now,
+                   "honesty_labels": _appr.HONESTY_LABELS}
+        approval_store.save({
+            "id": ar_id, "tenant_id": user["tid"], "run_id": run_id,
+            "task_id": run["task_id"], "requester_user_id": user["uid"],
+            "assigned_ai_employee_id": run["assigned_ai_employee_id"],
+            "approval_action_type": action_type, "approval_status": status,
+            "approval_risk_level": risk,
+            "required_approver_role": capsule["required_approver_role"],
+            "approval_request_hash": request_core["approval_request_hash"],
+            "approval_package_hash": pkg_hash,
+            "approval_challenge_hash": challenge["challenge_hash"],
+            "approval_precondition_hash": pre_hash, "policy_decision_hash": pdh,
+            "task_contract_hash": run["task_contract_hash"],
+            "task_envelope_hash": run["task_envelope_hash"],
+            "run_state_hash": run["run_state_hash"],
+            "run_chain_hash": run["run_chain_hash"], "expires_at": expires,
+            "payload_json": json.dumps(payload), "created_by": user["uid"],
+            "created_at": now, "updated_at": now})
+        audit.append(event_type="AI_APPROVAL_REQUESTED", actor=user["uid"],
+                     payload={"approval_request_id": ar_id, "run_id": run_id,
+                              "status": status, "risk": risk})
+        return payload
+
+    def _load_approval_or_404(approval_id: str, user: dict) -> dict:
+        p = approval_store.payload(approval_id, tenant_id=user["tid"])
+        if p is None:                            # incl. cross-tenant
+            raise HTTPException(404, "approval request not found")
+        return p
+
+    @app.get("/ai-approvals")
+    async def list_ai_approvals(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return [json.loads(r["payload_json"])
+                for r in approval_store.list(tenant_id=user["tid"])]
+
+    @app.get("/ai-approvals/{approval_id}")
+    async def get_ai_approval(approval_id: str,
+                              user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _load_approval_or_404(approval_id, user)
+
+    @app.get("/ai-approvals/{approval_id}/safe")
+    async def get_ai_approval_safe(approval_id: str,
+                                   user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _appr.safe_view(_load_approval_or_404(approval_id, user))
+
+    @app.get("/ai-approvals/{approval_id}/package")
+    async def get_ai_approval_package(approval_id: str,
+                                      user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        p = _load_approval_or_404(approval_id, user)
+        return {"approval_package_hash": p["approval_package_hash"],
+                "approval_package": p["approval_package"]}
+
+    @app.get("/ai-approvals/{approval_id}/challenge")
+    async def get_ai_approval_challenge(approval_id: str,
+                                        user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        p = _load_approval_or_404(approval_id, user)
+        return {"approval_challenge_required":
+                p["approval_challenge_required"],
+                "approval_challenge_hash": p["approval_challenge_hash"],
+                "approval_challenge": p["approval_challenge"]}
+
+    @app.post("/ai-approvals/{approval_id}/verify")
+    async def verify_ai_approval(approval_id: str,
+                                 user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        p = _load_approval_or_404(approval_id, user)
+        pkg_ok = _appr.package_hash(p["approval_package"]) \
+            == p["approval_package_hash"]
+        ch_ok = _appr.challenge_hash(p["approval_challenge"]) \
+            == p["approval_challenge_hash"]
+        pre_ok = _appr.precondition_hash(p["preconditions"]) \
+            == p["approval_precondition_hash"]
+        pol_ok = _appr.policy_decision_hash(p["policy_decision_capsule"]) \
+            == p["policy_decision_hash"]
+        # request hash recomputed over the stored request core
+        core = {k: v for k, v in p.items()
+                if k not in ("approval_package", "policy_decision_capsule",
+                             "approval_challenge", "preconditions",
+                             "created_at", "updated_at", "honesty_labels",
+                             "approval_request_hash")}
+        req_ok = _appr.request_hash({**core,
+                                     "approval_request_hash": ""}) \
+            == p["approval_request_hash"]
+        # challenge must be bound to THIS package (anti-reuse)
+        challenge_bound = p["approval_challenge"]["viewed_package_hash"] \
+            == _appr.package_hash({**p["approval_package"],
+                                   "approval_challenge": None})
+        all_ok = all([pkg_ok, ch_ok, pre_ok, pol_ok, req_ok, challenge_bound])
+        return {"approval_request_id": approval_id,
+                "verification_status": "MATCHED" if all_ok else "MISMATCHED",
+                "approval_package_hash_status":
+                    "MATCHED" if pkg_ok else "MISMATCHED",
+                "approval_request_hash_status":
+                    "MATCHED" if req_ok else "MISMATCHED",
+                "approval_challenge_hash_status":
+                    "MATCHED" if ch_ok else "MISMATCHED",
+                "approval_precondition_hash_status":
+                    "MATCHED" if pre_ok else "MISMATCHED",
+                "policy_decision_hash_status":
+                    "MATCHED" if pol_ok else "MISMATCHED",
+                "challenge_bound_to_package":
+                    "VALID" if challenge_bound else "REUSE_DETECTED",
+                "reason": ("all approval foundation hashes match"
+                           if all_ok else "approval hash verification failed"),
+                "verified_at": utcnow(),
+                "honesty_labels": _appr.HONESTY_LABELS}
+
     # ---- UI pages -------------------------------------------------------------------------------------
     ui.mount(app)
     return app

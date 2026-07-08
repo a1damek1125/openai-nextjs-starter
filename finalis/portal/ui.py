@@ -148,6 +148,7 @@ window.loadSections = async () => {
   if (window.loadAIEmployeeSection) jobs.push(loadAIEmployeeSection(me));
   if (window.loadTasksSection) jobs.push(loadTasksSection(me));
   if (window.loadRunsSection) jobs.push(loadRunsSection(me));
+  if (window.loadApprovalsSection) jobs.push(loadApprovalsSection(me));
   await Promise.allSettled(jobs);
 };
 
@@ -2398,6 +2399,90 @@ window.replayRun = async (id) => {
 };
 """
 
+APPROVALS_SECTIONS = """
+<section id="approvals-section"><h2>Human Approval Gate</h2>
+<p><small><b>Approval request creation does not approve or execute the
+action.</b> <b>Approval does not override consent, evidence, RBAC or proof
+failures.</b> <b>Approval challenge is required for high-risk approvals.</b>
+<b>Approval is scoped to this run, task, action and hash state.</b> <b>Approval
+decisions and grants are implemented in CORE-A4.2.</b> <b>Tool Broker is not
+implemented in this mission.</b> <b>Server-side policy remains
+authoritative.</b></small></p>
+<div id="approvals-list"><i>Loading approval requests…</i></div>
+<div id="approval-detail"></div>
+</section>
+"""
+
+APPROVALS_JS = """
+window.loadApprovalsSection = async (me) => { await loadApprovals(); };
+
+window.loadApprovals = async () => {
+  let rows; try { rows = await get('/ai-approvals'); }
+  catch (e) { $('approvals-list').innerHTML =
+    '<i>Approval requests are not available for your role.</i>'; return; }
+  $('approvals-list').innerHTML = rows.length ?
+    '<table><tr><th>Request</th><th>Action</th><th>Risk</th><th>Status</th>' +
+    '<th>Approver</th><th>Challenge</th><th></th></tr>' + rows.map(a =>
+      `<tr><td><small>${esc(a.approval_request_id.slice(0, 8))}</small></td>
+       <td>${esc(a.approval_action_type)}</td>
+       <td>${esc(a.approval_risk_level)}</td>
+       <td><b>${esc(a.approval_status)}</b></td>
+       <td>${esc(a.required_approver_role)}</td>
+       <td>${a.approval_challenge_required ? 'required' : 'no'}</td>
+       <td><button onclick="openApproval('${esc(a.approval_request_id)}')">
+         Open</button></td></tr>`).join('') + '</table>'
+    : '<i>No approval requests yet.</i>';
+};
+
+window.openApproval = async (id) => {
+  const a = await get('/ai-approvals/' + id);
+  const pkg = a.approval_package || {};
+  $('approval-detail').innerHTML = `
+    <h3>Approval ${esc(a.approval_request_id.slice(0, 8))}
+      <span class="badge">${esc(a.approval_status)}</span></h3>
+    <p><b>action</b> ${esc(a.approval_action_type)} · <b>risk</b>
+      ${esc(a.approval_risk_level)} · run
+      <code>${esc((a.run_id || '').slice(0, 8))}</code> · task
+      <code>${esc((a.task_id || '').slice(0, 8))}</code></p>
+    <p><b>required approver</b> ${esc(a.required_approver_role)} ×
+      ${esc(String(a.required_approver_count))} · dual control
+      ${a.dual_control_required ? 'yes' : 'no'} · challenge
+      ${a.approval_challenge_required ? '<b>required</b>' : 'no'}</p>
+    <p><b>reason</b> ${esc(a.reason || '')}${a.blocked_reason
+      ? ' · <span class="err">' + esc(a.blocked_reason) + '</span>' : ''}</p>
+    <p><b>request_hash</b> <code>${esc((a.approval_request_hash
+      || '').slice(0, 14))}…</code> · <b>package_hash</b>
+      <code>${esc((a.approval_package_hash || '').slice(0, 14))}…</code></p>
+    <p><b>policy_decision_hash</b> <code>${esc((a.policy_decision_hash
+      || '').slice(0, 14))}…</code> · <b>challenge_hash</b>
+      <code>${esc((a.approval_challenge_hash || '').slice(0, 14))}…</code></p>
+    <p><b>precondition_hash</b> <code>${esc((a.approval_precondition_hash
+      || '').slice(0, 14))}…</code></p>
+    <p><button onclick="verifyApproval('${esc(id)}')">Verify hashes</button>
+      <span id="approval-verify-msg"></span></p>
+    <h4>An approval can never unlock</h4>
+    <ul>${(pkg.forbidden_unlocks || []).map(f =>
+      `<li><small>${esc(f)}</small></li>`).join('')}</ul>
+    <h4>Required acknowledgements (CORE-A4.2)</h4>
+    <ul>${(pkg.required_acknowledgements || []).map(r =>
+      `<li><small>${esc(r)}</small></li>`).join('')}</ul>
+    <p><button disabled title="PART 2">Approve (CORE-A4.2)</button>
+      <button disabled title="PART 2">Reject (CORE-A4.2)</button>
+      <small>Approve/reject buttons arrive in CORE-A4.2 (PART 2).</small></p>
+    <ul>${(a.honesty_labels || []).map(l =>
+      `<li><small>${esc(l)}</small></li>`).join('')}</ul>`;
+};
+
+window.verifyApproval = async (id) => {
+  const {ok, data} = await send('POST', '/ai-approvals/' + id + '/verify', {});
+  $('approval-verify-msg').innerHTML = ok
+    ? `<b class="${data.verification_status === 'MATCHED' ? 'ok' : 'err'}">
+       ${esc(data.verification_status)}</b> <small>(challenge:
+       ${esc(data.challenge_bound_to_package)}) ${esc(data.reason)}</small>`
+    : `<span class="err">${esc(data.detail || '')}</span>`;
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -2421,6 +2506,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 {AIEMP_SECTIONS}
 {TASKS_SECTIONS}
 {RUNS_SECTIONS}
+{APPROVALS_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -2548,7 +2634,8 @@ boot();
 <script>{WORKBENCH_JS}</script>
 <script>{AIEMP_JS}</script>
 <script>{TASKS_JS}</script>
-<script>{RUNS_JS}</script></body></html>"""
+<script>{RUNS_JS}</script>
+<script>{APPROVALS_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:
