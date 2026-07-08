@@ -611,6 +611,231 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
             "SELECT * FROM call_sessions WHERE tenant_id=? "
             "ORDER BY created_at DESC", user["tid"])]
 
+    # ---- admin / RBAC wiring (RbacEngine is authoritative server-side) --------------
+    from ..admin.rbac import ROLE_PERMISSIONS, RbacEngine, ServiceAccount
+    rbac = RbacEngine(audit)
+    app.state.rbac = rbac
+
+    def rbac_user_id(user: dict) -> str:
+        """Map portal users into the RbacEngine (seeded on first touch)."""
+        uid = f"portal-{user['uid']}"
+        if uid not in rbac.users:
+            from ..admin.rbac import User as RbacUser, Membership
+            rbac.users[uid] = RbacUser(email=uid, name=user["role"], id=uid)
+            rbac.memberships.append(Membership(
+                tenant_id=user["tid"], user_id=uid, role=user["role"]))
+        return uid
+
+    @app.get("/admin/me")
+    async def admin_me(user: dict = Depends(current_user)):
+        uid = rbac_user_id(user)
+        m = rbac.membership_of(uid, user["tid"])
+        return {"tenant_id": user["tid"], "role": m.role,
+                "permissions": sorted(ROLE_PERMISSIONS[m.role])}
+
+    @app.get("/admin/users")
+    async def admin_users(user: dict = Depends(current_user)):
+        rbac_user_id(user)
+        d = rbac.access(actor_type="user", actor_id=f"portal-{user['uid']}",
+                        tenant_id=user["tid"], action="tenant.manage_users")
+        if d.decision != "ALLOW":
+            raise HTTPException(403, "; ".join(d.reasons))
+        return [{"id": r["id"], "email": r["email"], "role": r["role"]}
+                for r in db.all("SELECT * FROM users WHERE tenant_id=?",
+                                user["tid"])]
+
+    @app.post("/admin/users/invite")
+    async def admin_invite(body: dict, user: dict = Depends(current_user)):
+        uid = rbac_user_id(user)
+        try:
+            inv = rbac.invite(tenant_id=user["tid"],
+                              email=body.get("email", ""),
+                              role=body.get("role", "viewer"),
+                              actor_user_id=uid, now=datetime.utcnow())
+        except PermissionError as e:
+            raise HTTPException(403, str(e))
+        return {"invitation_id": inv.id, "status": inv.status}
+
+    @app.patch("/admin/memberships/{target_user_id}/role")
+    async def admin_change_role(target_user_id: str, body: dict,
+                                user: dict = Depends(current_user)):
+        uid = rbac_user_id(user)
+        target = rbac.membership_of(f"portal-{target_user_id}", user["tid"])
+        if target is None:
+            # Materialize the target portal user into rbac first.
+            row = db.one("SELECT * FROM users WHERE id=? AND tenant_id=?",
+                         target_user_id, user["tid"])
+            if row is None:
+                raise HTTPException(404, "user not found")
+            fake = {"uid": target_user_id, "tid": user["tid"],
+                    "role": row["role"]}
+            rbac_user_id(fake)
+            target = rbac.membership_of(f"portal-{target_user_id}",
+                                        user["tid"])
+        try:
+            rbac.change_role(target.id, body["role"], actor_user_id=uid)
+        except PermissionError as e:
+            raise HTTPException(403, str(e))
+        db.update("users", target_user_id, {"role": body["role"]})
+        return {"role": body["role"]}
+
+    @app.get("/admin/access-logs")
+    async def admin_access_logs(user: dict = Depends(current_user)):
+        rbac_user_id(user)
+        d = rbac.access(actor_type="user", actor_id=f"portal-{user['uid']}",
+                        tenant_id=user["tid"], action="access_log.view")
+        if d.decision != "ALLOW":
+            raise HTTPException(403, "not permitted")
+        return [{"event_type": e.event_type, "actor": e.actor,
+                 "payload": e.payload, "created_at": e.created_at}
+                for e in audit.events(event_type="ACCESS_DECISION")[-50:]]
+
+    # ---- governance visibility (redacted traces from audit) --------------------------
+    @app.get("/governance/traces")
+    async def governance_traces(user: dict = Depends(current_user)):
+        rows = [e for e in audit.events(event_type="AGENT_TRACE")[-50:]]
+        return [{"payload": e.payload, "created_at": e.created_at}
+                for e in rows]
+
+    @app.get("/governance/blocked")
+    async def governance_blocked(user: dict = Depends(current_user)):
+        out = []
+        for e in audit.events():
+            if e.event_type in ("AGENT_TRACE", "CALL_PERMISSION_CHECKED",
+                                "FOLLOW_UP_RATE_LIMITED",
+                                "CALL_BLOCKED_ANTI_HARASSMENT",
+                                "WORKFLOW_STOPPED_WASTE"):
+                p = e.payload or {}
+                status = p.get("status") or p.get("result") or ""
+                if "BLOCK" in str(status) or e.event_type in (
+                        "FOLLOW_UP_RATE_LIMITED",
+                        "CALL_BLOCKED_ANTI_HARASSMENT",
+                        "WORKFLOW_STOPPED_WASTE"):
+                    out.append({"event": e.event_type, "detail": p,
+                                "explanation": _explain_block(e)})
+        return out[-30:]
+
+    def _explain_block(e) -> str:
+        p = e.payload or {}
+        if e.event_type == "FOLLOW_UP_RATE_LIMITED":
+            return ("Follow-up was not sent because the contact limit or "
+                    "cooldown for this case was reached.")
+        if e.event_type == "CALL_BLOCKED_ANTI_HARASSMENT":
+            return ("Outbound call blocked to protect the client "
+                    f"relationship ({p.get('reason', 'limit')}).")
+        if e.event_type == "WORKFLOW_STOPPED_WASTE":
+            return ("AI stopped this workflow because it was repeating "
+                    "actions without new information.")
+        reasons = p.get("reasons") or [p.get("reason", "policy")]
+        return "Action blocked: " + ", ".join(str(r) for r in reasons)
+
+    # ---- scheduling wiring ---------------------------------------------------------------
+    from ..scheduling.engine import APPOINTMENT_TYPES, SchedulingEngine
+    sched = SchedulingEngine(audit)
+    app.state.scheduling = sched
+
+    @app.get("/scheduling/availability")
+    async def sched_availability(appointment_type: str = "VIDEO_CALL",
+                                 day: Optional[str] = None,
+                                 resource_id: Optional[str] = None,
+                                 user_: dict = Depends(current_user)):
+        d = datetime.fromisoformat(day) if day else \
+            datetime.utcnow() + timedelta(days=1)
+        slots = sched.available_slots(day=d,
+                                      appointment_type=appointment_type,
+                                      resource_id=resource_id)
+        return json.loads(json.dumps(slots, default=str))
+
+    @app.post("/scheduling/appointments")
+    async def sched_book(body: dict, user: dict = Depends(current_user)):
+        require_role(user, "owner", "manager", "operator")
+        case = load_case_or_404(body["case_id"], user)
+        vector = load_vector(case.id)
+        try:
+            appt, token = sched.book(
+                tenant_id=user["tid"], case_id=case.id,
+                appointment_type=body.get("appointment_type", "CALLBACK"),
+                start_at=datetime.fromisoformat(body["start_at"]),
+                user_id=body.get("user_id"),
+                resource_id=body.get("resource_id"), vector=vector)
+        except ValueError as e:
+            raise HTTPException(409, str(e))
+        save_vector(case.id, vector)
+        return {"appointment_id": appt.id, "status": appt.status,
+                "video_meeting_url": appt.video_meeting_url,
+                "confirmation_url": f"/confirm/{token}" if token else None,
+                "provider_is_mock": True}
+
+    @app.get("/scheduling/appointments")
+    async def sched_list(user: dict = Depends(current_user)):
+        return [{"id": a.id, "case_id": a.case_id,
+                 "type": a.appointment_type, "status": a.status,
+                 "start_at": str(a.start_at)}
+                for a in sched.appointments.values()
+                if a.tenant_id == user["tid"]]
+
+    @app.post("/scheduling/appointments/{appt_id}/{op}")
+    async def sched_op(appt_id: str, op: str, body: dict,
+                       user: dict = Depends(current_user)):
+        require_role(user, "owner", "manager", "operator")
+        appt = sched.appointments.get(appt_id)
+        if appt is None or appt.tenant_id != user["tid"]:
+            raise HTTPException(404, "appointment not found")
+        vector = load_vector(appt.case_id)
+        try:
+            if op == "reschedule":
+                sched.reschedule(appt_id, new_start=datetime.fromisoformat(
+                    body["new_start"]), actor=user["uid"])
+            elif op == "cancel":
+                sched.cancel(appt_id, reason=body.get("reason", ""),
+                             by=body.get("by", "company"))
+            elif op == "complete":
+                sched.complete(appt_id, vector=vector)
+                save_vector(appt.case_id, vector)
+                # Completion Loop runs after appointment events.
+                case = store.load_case(appt.case_id, tenant_id=user["tid"])
+                if case is not None:
+                    loop.run_case(case, now=datetime.utcnow())
+                    store.save_case(case)
+            elif op == "no-show":
+                sched.no_show(appt_id)
+                case = store.load_case(appt.case_id, tenant_id=user["tid"])
+                if case is not None:
+                    loop.run_case(case, now=datetime.utcnow())
+                    store.save_case(case)
+            else:
+                raise HTTPException(404, "unknown operation")
+        except ValueError as e:
+            raise HTTPException(409, str(e))
+        return {"status": appt.status,
+                "lifecycle_view": load_vector(appt.case_id)
+                .derived_outcome_view()}
+
+    @app.get("/confirm/{token}", response_class=__import__(
+        "fastapi.responses", fromlist=["HTMLResponse"]).HTMLResponse)
+    async def confirm_page(token: str):
+        from .ui import STYLE
+        return (f"<!doctype html><html><head><meta charset='utf-8'>"
+                f"<title>Confirm appointment</title><style>{STYLE}</style>"
+                f"</head><body><h1>Confirm your appointment</h1>"
+                f"<button id='confirm-btn'>Confirm</button>"
+                f"<p id='done' class='ok' hidden>Confirmed — see you then!"
+                f"</p><p id='fail' class='err' hidden>Link invalid or "
+                f"expired.</p><script>"
+                f"document.getElementById('confirm-btn').onclick=async()=>"
+                f"{{const r=await fetch('/scheduling/confirm/{token}',"
+                f"{{method:'POST'}});"
+                f"document.getElementById(r.ok?'done':'fail').hidden=false;"
+                f"if(r.ok)document.getElementById('confirm-btn').hidden"
+                f"=true;}};</script></body></html>")
+
+    @app.post("/scheduling/confirm/{token}")
+    async def sched_confirm(token: str):
+        appt = sched.confirm(token, now=datetime.utcnow())
+        if appt is None:
+            raise HTTPException(404, "invalid or expired")
+        return {"status": appt.status}
+
     # ---- audit --------------------------------------------------------------------------------------
     @app.get("/audit/verify/{case_id}")
     async def audit_verify(case_id: str,
