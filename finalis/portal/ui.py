@@ -151,6 +151,7 @@ window.loadSections = async () => {
   if (window.loadApprovalsSection) jobs.push(loadApprovalsSection(me));
   if (window.loadLifecycleSection) jobs.push(loadLifecycleSection(me));
   if (window.loadArtifactsSection) jobs.push(loadArtifactsSection(me));
+  if (window.loadToolsSection) jobs.push(loadToolsSection(me));
   await Promise.allSettled(jobs);
 };
 
@@ -2756,6 +2757,105 @@ window.materializeArtifact = async (id) => {
 };
 """
 
+TOOLS_SECTIONS = """
+<section id="tools-section"><h2>Zero-Trust Tool Capability Registry</h2>
+<ul class="labels"><small>
+<li>This is a tool capability registry, not a Tool Broker.</li>
+<li>Registering a tool descriptor does not execute the tool.</li>
+<li>There is no execute endpoint and no dry-run execution in this mission.</li>
+<li>The registry calls no external provider, no LLM and no MCP server.</li>
+<li>The registry sends no customer message, moves no payment and writes no CRM.</li>
+<li>The registry rewrites no evidence and exports no document.</li>
+<li>Admission means a FUTURE broker may consider the tool; nothing runs it here.</li>
+<li>Tool descriptor content is untrusted and can carry tool-poisoning; it never changes server policy.</li>
+<li>Admission is fail-closed: any hard-fail signal blocks admission.</li>
+<li>A forbidden capability can never be admitted, only recorded and blocked.</li>
+<li>Consent requirements declared as non-overridable can never be downgraded.</li>
+<li>Server-side tool-governance truth is authoritative over declared claims.</li>
+<li>This is not production autonomous tool execution.</li>
+</small></ul>
+<div id="tools-list"><i>Loading tool registry…</i></div>
+<div id="tool-detail"></div>
+</section>
+"""
+
+TOOLS_JS = """
+window.loadToolsSection = async (me) => { await loadTools(); };
+
+window.loadTools = async () => {
+  let rows; try { rows = await get('/ai-tools'); }
+  catch (e) { $('tools-list').innerHTML =
+    '<i>Tool registry is not available for your role.</i>'; return; }
+  $('tools-list').innerHTML = rows.length ?
+    '<table><tr><th>Tool</th><th>Category</th><th>Side effect</th>' +
+    '<th>Risk</th><th>Status</th><th>Quarantine</th><th></th></tr>' +
+    rows.map(t =>
+      `<tr><td>${esc(t.tool_name)} <small>(${esc(t.tool_key)})</small></td>
+       <td>${esc(t.category)}</td>
+       <td>${esc(t.side_effect_class)}</td>
+       <td>${esc(t.risk_class)}</td>
+       <td><b>${esc(t.status)}</b></td>
+       <td>${esc(t.quarantine_status)}</td>
+       <td><button onclick="openTool('${esc(t.tool_id)}')">Open</button></td>
+       </tr>`).join('') + '</table>'
+    : '<i>No tools registered yet.</i>';
+};
+
+window.openTool = async (id) => {
+  const t = await get('/ai-tools/' + id);
+  const pol = await get('/ai-tools/' + id + '/policy');
+  const neg = await get('/ai-tools/' + id + '/negative-capabilities');
+  const inv = pol.invariant_matrix;
+  $('tool-detail').innerHTML = `
+    <h3>${esc(t.tool_name)}
+      <span class="badge">${esc(t.status)}</span></h3>
+    <p><b>category</b> ${esc(t.category)} · <b>side effect</b>
+      ${esc(t.side_effect_class)} · <b>risk</b> ${esc(t.risk_class)} ·
+      <b>trust</b> ${esc(t.trust_tier)} · <b>admitted</b>
+      ${esc(String(t.admitted))}</p>
+    <p><b>state_hash</b> <code>${esc((t.tool_state_hash
+      || '').slice(0, 14))}…</code> · <b>descriptor_hash</b>
+      <code>${esc((t.descriptor_hash || '').slice(0, 14))}…</code></p>
+    <p><b>hard-fail signals</b>
+      ${(t.hard_fail_signals || []).map(s =>
+        `<span class="err">${esc(s)}</span>`).join(' ') || '<i>none</i>'}</p>
+    <p><button onclick="admitTool('${esc(id)}')">Admit</button>
+      <button onclick="verifyTool('${esc(id)}')">Verify</button>
+      <button onclick="driftTool('${esc(id)}')">Drift-check</button>
+      <span id="tool-msg"></span></p>
+    <h4>Security invariants</h4>
+    <table><tr><th>Invariant</th><th>Holds</th></tr>
+      ${Object.entries(inv.results).map(([k, v]) => `<tr><td>${esc(k)}</td>
+        <td class="${v ? 'ok' : 'err'}">${esc(String(v))}</td></tr>`).join('')}
+    </table>
+    <h4>Negative capabilities</h4>
+    <p>${neg.negative_capabilities.all_hold ?
+      '<b class="ok">all hold</b>' :
+      '<b class="err">violated: ' +
+      esc(neg.negative_capabilities.violated.join(', ')) + '</b>'}</p>
+    <ul>${(t.honesty_labels || []).map(l =>
+      `<li><small>${esc(l)}</small></li>`).join('')}</ul>`;
+};
+
+window.admitTool = async (id) => {
+  const {data} = await send('POST', '/ai-tools/' + id + '/admit', {});
+  $('tool-msg').innerHTML = `admission <b class="${data.admitted ? 'ok'
+    : 'err'}">${esc(data.admission_status)}</b>`;
+  await loadTools();
+};
+window.verifyTool = async (id) => {
+  const {data} = await send('POST', '/ai-tools/' + id + '/verify', {});
+  $('tool-msg').innerHTML = `verify <b class="${data.verification_status
+    === 'MATCHED' ? 'ok' : 'err'}">${esc(data.verification_status)}</b>
+    (tamper: ${data.tamper_detected})`;
+};
+window.driftTool = async (id) => {
+  const {data} = await send('POST', '/ai-tools/' + id + '/drift-check', {});
+  $('tool-msg').innerHTML =
+    `drift <b>${esc(data.supply_chain.verdict)}</b>`;
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -2782,6 +2882,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 {APPROVALS_SECTIONS}
 {LIFECYCLE_SECTIONS}
 {ARTIFACTS_SECTIONS}
+{TOOLS_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -2912,7 +3013,8 @@ boot();
 <script>{RUNS_JS}</script>
 <script>{APPROVALS_JS}</script>
 <script>{LIFECYCLE_JS}</script>
-<script>{ARTIFACTS_JS}</script></body></html>"""
+<script>{ARTIFACTS_JS}</script>
+<script>{TOOLS_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:

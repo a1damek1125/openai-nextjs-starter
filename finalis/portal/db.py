@@ -795,6 +795,68 @@ CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_artifact_versions_num
 CREATE INDEX IF NOT EXISTS ix_ai_artifact_versions
   ON ai_artifact_versions(tenant_id, artifact_id, version_number);
 """),
+    (16, """
+-- v16: ViktorAI Zero-Trust Tool Capability Governance Registry (TOOL-B1). A
+-- security-first internal registry of tool CAPABILITY DESCRIPTORS for a FUTURE
+-- Tool Broker. This is NOT a Tool Broker and executes nothing: no tool call, no
+-- MCP, no LLM, no external provider, no customer message, no payment, no CRM
+-- write, no evidence rewrite, no export. There is NO execute endpoint. Admission
+-- means only that a future broker MAY consider the tool. Server-side governance
+-- truth is authoritative over untrusted declared descriptor content.
+CREATE TABLE IF NOT EXISTS ai_tools (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  tool_key TEXT NOT NULL, tool_name TEXT NOT NULL,
+  created_by_actor_id TEXT NOT NULL, created_by_actor_type TEXT NOT NULL,
+  category TEXT NOT NULL, side_effect_class TEXT NOT NULL,
+  risk_class TEXT NOT NULL DEFAULT 'MEDIUM',
+  trust_tier TEXT NOT NULL DEFAULT 'AI_PROPOSED_UNVERIFIED',
+  status TEXT NOT NULL DEFAULT 'DRAFT',
+  tool_version INTEGER NOT NULL DEFAULT 1,
+  latest_version_id TEXT NOT NULL,
+  tool_state_hash TEXT NOT NULL, descriptor_hash TEXT NOT NULL,
+  tbom_hash TEXT NOT NULL DEFAULT '',
+  policy_capsule_hash TEXT NOT NULL DEFAULT '',
+  risk_capsule_hash TEXT NOT NULL DEFAULT '',
+  admission_package_hash TEXT NOT NULL DEFAULT '',
+  quarantine_status TEXT NOT NULL DEFAULT 'CLEAN',
+  admitted INTEGER NOT NULL DEFAULT 0,
+  supersedes_tool_id TEXT,
+  payload_json TEXT NOT NULL,
+  created_by TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_tools
+  ON ai_tools(tenant_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_ai_tools_key
+  ON ai_tools(tenant_id, tool_key);
+CREATE INDEX IF NOT EXISTS ix_ai_tools_status
+  ON ai_tools(tenant_id, status);
+
+CREATE TABLE IF NOT EXISTS ai_tool_versions (
+  id TEXT PRIMARY KEY, tool_id TEXT NOT NULL, tenant_id TEXT NOT NULL,
+  version_number INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'DRAFT',
+  descriptor_hash TEXT NOT NULL, tbom_hash TEXT NOT NULL DEFAULT '',
+  policy_capsule_hash TEXT NOT NULL DEFAULT '',
+  admission_package_hash TEXT NOT NULL DEFAULT '',
+  version_hash TEXT NOT NULL, previous_version_hash TEXT,
+  version_chain_hash TEXT NOT NULL,
+  created_by_actor_id TEXT NOT NULL,
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_tool_versions_num
+  ON ai_tool_versions(tenant_id, tool_id, version_number);
+CREATE INDEX IF NOT EXISTS ix_ai_tool_versions
+  ON ai_tool_versions(tenant_id, tool_id, version_number);
+
+CREATE TABLE IF NOT EXISTS ai_tool_registry_events (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, tool_id TEXT,
+  event_type TEXT NOT NULL, sequence INTEGER NOT NULL,
+  actor_id TEXT NOT NULL, actor_type TEXT NOT NULL,
+  event_hash TEXT NOT NULL, previous_event_hash TEXT NOT NULL,
+  tool_state_hash TEXT NOT NULL DEFAULT '',
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_tool_registry_events_seq
+  ON ai_tool_registry_events(tenant_id, sequence);
+CREATE INDEX IF NOT EXISTS ix_ai_tool_registry_events_tool
+  ON ai_tool_registry_events(tenant_id, tool_id, sequence);
+"""),
 ]
 
 

@@ -198,6 +198,61 @@ class Gate:
                     headers=self.h(OWNER2))
         return tk["task_id"], ap["approval_request_id"]
 
+    # -- TOOL-B1 tool registry helpers ----------------------------------------
+    def clean_tool_body(self, **over):
+        """A minimal admissible read-only tool descriptor body."""
+        body = {"tool_name": "Search Cases", "category": "DATA_SEARCH",
+                "side_effect_class": "PURE_READ",
+                "tool_summary": "search local cases",
+                "tool_description": "read only local case search",
+                "reads_data_classes": ["INTERNAL"],
+                "allowed_purposes": ["CASE_TRIAGE"],
+                "declared_side_effects": ["PURE_READ"],
+                "consent_requirement": "NONE",
+                "prompt_context_exposure": "NAME_AND_SUMMARY"}
+        body.update(over)
+        return body
+
+    def register_tool(self, body=None, requester=MANAGER, **over):
+        b = body if body is not None else self.clean_tool_body(**over)
+        return self.c.post("/ai-tools", json=b, headers=self.h(requester))
+
+    def tool(self, tool_id, path="", actor=OWNER, method="GET", **body):
+        url = f"/ai-tools/{tool_id}{path}"
+        if method == "GET":
+            return self.c.get(url, headers=self.h(actor))
+        return self.c.post(url, json=body, headers=self.h(actor))
+
+    def admit_tool(self, tool_id, actor=OWNER):
+        return self.c.post(f"/ai-tools/{tool_id}/admit", headers=self.h(actor))
+
+    def latest_tool_version(self, tool_id, actor=OWNER):
+        vs = self.c.get(f"/ai-tools/{tool_id}/versions",
+                        headers=self.h(actor)).json()["versions"]
+        return vs[-1]
+
+    def tamper_tool_version(self, tool_id, version_number, **fields):
+        import json
+        row = self.db.one(
+            "SELECT id, payload_json FROM ai_tool_versions WHERE tool_id=? "
+            "AND version_number=?", tool_id, version_number)
+        p = json.loads(row["payload_json"])
+        for k, v in fields.items():
+            if k == "tool_description":
+                p["descriptor"]["tool_description"] = v
+            else:
+                p[k] = v
+        self.db.conn.execute(
+            "UPDATE ai_tool_versions SET payload_json=? WHERE id=?",
+            (json.dumps(p), row["id"]))
+        self.db.conn.commit()
+
+    def tamper_tool_head(self, tool_id, **cols):
+        sets = ", ".join(f"{k}=?" for k in cols)
+        self.db.conn.execute(f"UPDATE ai_tools SET {sets} WHERE id=?",
+                             (*cols.values(), tool_id))
+        self.db.conn.commit()
+
 
 @pytest.fixture()
 def gate():

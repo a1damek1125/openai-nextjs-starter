@@ -6042,6 +6042,1198 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
     app.state.artifact_completion_contribution = \
         _artifact_completion_contribution
 
+    # ---- ViktorAI Zero-Trust Tool Capability Governance Registry (TOOL-B1) ----------
+    from ..ai_employee import tool_registry as _tr
+    from ..ai_employee.tool_registry_store import ToolRegistryStore
+    tool_store = ToolRegistryStore(db)
+    app.state.tool_store = tool_store
+
+    # Admission-class mutations (admit/disable/deprecate/supersede) are
+    # high-privilege supply-chain governance actions gated to owners.
+    _TOOL_ADMIT_PERM = "tenant.manage_integrations"
+
+    def _tool_summaries(tid, exclude_id=None):
+        """Tenant-scoped descriptor summaries for collision / multi-tool
+        detection. Never leaves the tenant boundary."""
+        out = []
+        for p in tool_store.list(tenant_id=tid):
+            if exclude_id and p["tool_id"] == exclude_id:
+                continue
+            df = p.get("data_flow_contract", {})
+            out.append({
+                "tool_id": p["tool_id"], "tool_key": p["tool_key"],
+                "aliases": p.get("aliases", []),
+                "trust_tier": p["trust_tier"], "status": p["status"],
+                "risk_rank": _tr.RISK_RANK.get(p.get("risk_class", "MEDIUM"), 2),
+                "side_effect_class": p.get("side_effect_class"),
+                "reads_data_classes": df.get("reads_data_classes", []),
+                "writes_data_classes": df.get("writes_data_classes", []),
+                "egress": df.get("egress_targets", [])})
+        return out
+
+    def _tool_emit(tid, *, event_type, tool_id, actor_id, actor_type,
+                   tool_state_hash, detail):
+        seq = tool_store.next_sequence(tenant_id=tid)
+        prev = tool_store.last_event(tenant_id=tid)
+        ev = _tr.build_registry_event(
+            event_type=event_type, tool_id=tool_id, tenant_id=tid,
+            actor_id=actor_id, actor_type=actor_type,
+            tool_state_hash=tool_state_hash,
+            previous_event_hash=(prev or {}).get("event_hash"), sequence=seq,
+            detail=detail, created_at=utcnow())
+        tool_store.append_event({
+            "id": str(uuid.uuid4()), "tenant_id": tid, "tool_id": tool_id,
+            "event_type": event_type, "sequence": seq, "actor_id": actor_id,
+            "actor_type": actor_type, "event_hash": ev["event_hash"],
+            "previous_event_hash": ev["previous_event_hash"],
+            "tool_state_hash": tool_state_hash,
+            "payload_json": json.dumps(ev), "created_at": ev["created_at"]})
+        return ev
+
+    def _assemble_tool(*, tool_id, version_id, version_number, tid,
+                       prev_version, body, actor_id, actor_type, trust_tier,
+                       supply_chain, existing_summaries, created_at):
+        """Build the full governance package from a DECLARED (untrusted)
+        descriptor body. Executes nothing. Returns (version_payload, head_meta).
+        """
+        tool_name = str(body.get("tool_name", ""))
+        tool_summary = str(body.get("tool_summary", ""))
+        tool_description = str(body.get("tool_description", ""))
+        category = str(body.get("category", ""))
+        aliases = [str(a) for a in (body.get("aliases") or [])]
+        parameters = body.get("parameters") or []
+        param_texts = [str(p.get("description", "")) for p in parameters] \
+            + [str(p.get("name", "")) for p in parameters]
+        purpose_texts = [str(x) for x in (body.get("allowed_purposes") or [])] \
+            + [str(body.get("declared_intent", ""))]
+
+        scanner = _tr.scan_descriptor(
+            tool_name=tool_name, tool_summary=tool_summary,
+            tool_description=tool_description, parameter_texts=param_texts,
+            purpose_texts=purpose_texts,
+            output_texts=[str(body.get("output_note", ""))])
+
+        schema_env = _tr.build_schema_envelope(
+            input_schema=body.get("input_schema") or {},
+            output_schema=body.get("output_schema") or {},
+            parameters=parameters,
+            declared_side_effects=body.get("declared_side_effects") or [],
+            declared_data_reads=body.get("reads_data_classes") or [],
+            declared_data_writes=body.get("writes_data_classes") or [])
+        effect = _tr.build_effect_contract(
+            side_effect_class=str(body.get("side_effect_class", "PURE_READ")),
+            reversibility=str(body.get("reversibility", "REVERSIBLE")),
+            idempotent=bool(body.get("idempotent", True)),
+            blast_radius=str(body.get("blast_radius", "SELF")),
+            touches_external=bool(body.get("touches_external", False)),
+            touches_customer=bool(body.get("touches_customer", False)),
+            touches_payment=bool(body.get("touches_payment", False)),
+            touches_crm=bool(body.get("touches_crm", False)),
+            touches_evidence=bool(body.get("touches_evidence", False)),
+            declared_summary=tool_summary)
+        data_flow = _tr.build_data_flow_contract(
+            reads_data_classes=body.get("reads_data_classes") or [],
+            writes_data_classes=body.get("writes_data_classes") or [],
+            egress_targets=body.get("egress_targets") or [],
+            ingress_sources=body.get("ingress_sources") or [],
+            crosses_tenant_boundary=bool(body.get("crosses_tenant_boundary",
+                                                  False)),
+            retains_data=bool(body.get("retains_data", False)),
+            prompt_context_inputs=body.get("prompt_context_inputs") or [])
+        purpose = _tr.build_purpose_contract(
+            allowed_purposes=body.get("allowed_purposes") or [],
+            forbidden_purposes=body.get("forbidden_purposes") or [],
+            declared_intent=str(body.get("declared_intent", "")))
+        consent = _tr.build_consent_contract(
+            consent_requirement=str(body.get("consent_requirement", "NONE")),
+            non_overridable=bool(body.get("consent_non_overridable", False)),
+            lawful_basis=str(body.get("lawful_basis", "")),
+            declared_note=str(body.get("consent_note", "")))
+        prompt_policy = _tr.build_prompt_context_policy(
+            exposure_level=str(body.get("prompt_context_exposure",
+                                        "NAME_ONLY")),
+            category=category, side_effect_class=effect["side_effect_class"],
+            data_flow=data_flow)
+        neg = _tr.build_negative_capabilities(
+            category=category, effect_contract=effect, data_flow=data_flow,
+            consent_contract=consent, scanner=scanner)
+        invariants = _tr.build_invariant_matrix(
+            category=category, effect_contract=effect, data_flow=data_flow,
+            schema_envelope=schema_env, purpose_contract=purpose,
+            consent_contract=consent, prompt_context_policy=prompt_policy,
+            scanner=scanner, negative_capabilities=neg, trust_tier=trust_tier,
+            declared_tenant_id=tid, actor_tenant_id=tid, actor_type=actor_type)
+        risk_class = _tr.compute_risk_class(
+            category=category, effect_contract=effect, data_flow=data_flow,
+            scanner=scanner)
+        risk = _tr.build_risk_capsule(
+            tool_id=tool_id, tenant_id=tid, category=category,
+            effect_contract=effect, data_flow=data_flow, scanner=scanner,
+            risk_class=risk_class, invariant_matrix=invariants)
+        lattice = _tr.build_capability_lattice(
+            tool_id=tool_id, tenant_id=tid, category=category,
+            effect_contract=effect, data_flow=data_flow)
+        implicit = _tr.detect_implicit_poisoning(
+            category=category, effect_contract=effect, data_flow=data_flow,
+            schema_envelope=schema_env, purpose_contract=purpose,
+            consent_contract=consent, tool_description=tool_description)
+        tool_key = _tr.normalize_tool_key(tool_name)
+        candidate = {"tool_id": tool_id, "tool_key": tool_key,
+                     "aliases": aliases, "trust_tier": trust_tier,
+                     "risk_rank": _tr.RISK_RANK[risk_class], "status": "DRAFT"}
+        collision = _tr.detect_collisions(candidate=candidate,
+                                          existing=existing_summaries)
+        cand_multi = {"tool_id": tool_id, "tool_key": tool_key,
+                      "side_effect_class": effect["side_effect_class"],
+                      "reads_data_classes": data_flow["reads_data_classes"],
+                      "writes_data_classes": data_flow["writes_data_classes"],
+                      "egress": data_flow["egress_targets"], "status": "DRAFT"}
+        multi = _tr.detect_multi_tool_poisoning(
+            existing_summaries + [cand_multi])
+
+        policy = _tr.build_policy_capsule(
+            tool_id=tool_id, tenant_id=tid, category=category,
+            side_effect_class=effect["side_effect_class"], risk_class=risk_class,
+            trust_tier=trust_tier, consent_contract=consent,
+            purpose_contract=purpose, prompt_context_policy=prompt_policy,
+            invariant_matrix=invariants, negative_capabilities=neg,
+            created_at=created_at)
+
+        # Admission posture (fail-closed). Registration never auto-admits; a
+        # clean descriptor becomes DRAFT and awaits explicit human admission.
+        posture = _tr.evaluate_admission(
+            category=category, invariant_matrix=invariants,
+            negative_capabilities=neg, risk_capsule=risk, scanner=scanner,
+            implicit_findings=implicit, lattice=lattice, collision=collision,
+            multi_tool=multi, supply_chain=supply_chain, declared_tenant_id=tid,
+            actor_tenant_id=tid, requested_by_human=True)
+        status = "DRAFT" if posture["admitted"] else posture["admission_status"]
+
+        descriptor = {
+            "tool_descriptor_version": _tr.TOOL_MODEL_VERSION,
+            "tool_id": tool_id, "tenant_id": tid, "tool_key": tool_key,
+            "tool_name": tool_name, "tool_summary": tool_summary,
+            "tool_description": tool_description, "category": category,
+            "aliases": sorted(set(aliases)),
+            "schema_envelope": schema_env, "effect_contract": effect,
+            "data_flow_contract": data_flow, "purpose_contract": purpose,
+            "consent_contract": consent,
+            "prompt_context_policy": prompt_policy,
+            "declared_provider": str(body.get("declared_provider", "")),
+            "declared_version": str(body.get("declared_version", "")),
+            "declared_dependencies": sorted(set(
+                str(d) for d in (body.get("declared_dependencies") or []))),
+            "created_by_actor_id": actor_id,
+            "created_by_actor_type": actor_type,
+        }
+        d_hash = _tr.descriptor_hash(descriptor)
+        tbom = _tr.build_tbom(
+            tool_id=tool_id, tool_version_id=version_id, tenant_id=tid,
+            tool_key=tool_key, category=category,
+            side_effect_class=effect["side_effect_class"], risk_class=risk_class,
+            trust_tier=trust_tier,
+            schema_envelope_hash=schema_env["schema_envelope_hash"],
+            effect_contract_hash=effect["effect_contract_hash"],
+            data_flow_contract_hash=data_flow["data_flow_contract_hash"],
+            purpose_contract_hash=purpose["purpose_contract_hash"],
+            consent_contract_hash=consent["consent_contract_hash"],
+            prompt_context_policy_hash=prompt_policy[
+                "prompt_context_policy_hash"],
+            declared_dependencies=descriptor["declared_dependencies"],
+            declared_provider=descriptor["declared_provider"],
+            declared_version=descriptor["declared_version"],
+            scanner_hash=scanner["scanner_hash"])
+        admission_pkg = _tr.build_admission_package(
+            tool_id=tool_id, tool_version_id=version_id, tenant_id=tid,
+            descriptor_hash=d_hash, tbom_hash=tbom["tbom_hash"],
+            invariant_matrix=invariants, negative_capabilities=neg,
+            risk_capsule=risk, policy_capsule=policy,
+            security_case_hash="",              # filled after security case
+            admission_decision=posture,
+            requested_by_actor_id=actor_id, requested_by_actor_type=actor_type,
+            created_at=created_at)
+        security_case = _tr.build_security_case(
+            tool_id=tool_id, tenant_id=tid, invariant_matrix=invariants,
+            negative_capabilities=neg, risk_capsule=risk, scanner=scanner,
+            implicit_findings=implicit, admission_decision=posture)
+
+        v_hash = _tr.version_hash(
+            tool_id=tool_id, version_number=version_number, descriptor_hash=d_hash,
+            tbom_hash=tbom["tbom_hash"],
+            policy_capsule_hash=policy["policy_capsule_hash"],
+            admission_package_hash=admission_pkg["admission_package_hash"],
+            previous_version_hash=(prev_version or {}).get("version_hash"),
+            created_by_actor_id=actor_id)
+        chain_hash = _tr.version_chain_hash(
+            (prev_version or {}).get("version_chain_hash"), v_hash)
+        state_hash = _tr.tool_state_hash(
+            tool_id=tool_id, tenant_id=tid, tool_key=tool_key, category=category,
+            side_effect_class=effect["side_effect_class"], risk_class=risk_class,
+            trust_tier=trust_tier, status=status, latest_version_id=version_id,
+            version_number=version_number, descriptor_hash=d_hash,
+            tbom_hash=tbom["tbom_hash"],
+            policy_capsule_hash=policy["policy_capsule_hash"],
+            risk_capsule_hash=risk["risk_capsule_hash"],
+            invariant_matrix_hash=invariants["invariant_matrix_hash"],
+            negative_capability_hash=neg["negative_capability_hash"],
+            admission_package_hash=admission_pkg["admission_package_hash"],
+            capability_lattice_hash=lattice["capability_lattice_hash"],
+            version_chain_hash=chain_hash)
+
+        version_payload = {
+            "tool_version_id": version_id, "tool_id": tool_id, "tenant_id": tid,
+            "version_number": version_number, "status": status,
+            "descriptor": descriptor, "descriptor_hash": d_hash,
+            "schema_envelope": schema_env, "effect_contract": effect,
+            "data_flow_contract": data_flow, "purpose_contract": purpose,
+            "consent_contract": consent, "prompt_context_policy": prompt_policy,
+            "scanner": scanner, "scanner_hash": scanner["scanner_hash"],
+            "negative_capabilities": neg, "invariant_matrix": invariants,
+            "risk_capsule": risk, "risk_class": risk_class,
+            "capability_lattice": lattice, "implicit_findings": implicit,
+            "collision": collision, "multi_tool": multi,
+            "supply_chain": supply_chain, "policy_capsule": policy,
+            "tbom": tbom, "admission_package": admission_pkg,
+            "security_case": security_case,
+            "admission_posture": posture, "version_hash": v_hash,
+            "previous_version_hash": (prev_version or {}).get("version_hash"),
+            "version_chain_hash": chain_hash, "tool_state_hash": state_hash,
+            "created_by_actor_id": actor_id, "created_at": created_at,
+            "honesty_labels": _tr.HONESTY_LABELS,
+        }
+        head_meta = {
+            "tool_key": tool_key, "category": category,
+            "side_effect_class": effect["side_effect_class"],
+            "risk_class": risk_class, "trust_tier": trust_tier, "status": status,
+            "quarantine_status": scanner["quarantine_status"],
+            "descriptor_hash": d_hash, "tbom_hash": tbom["tbom_hash"],
+            "policy_capsule_hash": policy["policy_capsule_hash"],
+            "risk_capsule_hash": risk["risk_capsule_hash"],
+            "admission_package_hash": admission_pkg["admission_package_hash"],
+            "state_hash": state_hash, "version_hash": v_hash,
+            "admitted": posture["admitted"] and status
+            == "AVAILABLE_FOR_FUTURE_BROKER",
+            "aliases": sorted(set(aliases)), "data_flow_contract": data_flow,
+        }
+        return version_payload, head_meta
+
+    def _tool_head_payload(*, tool_id, tid, actor_id, actor_type, body,
+                           version_id, head_meta, vpayload, supersedes,
+                           created_at):
+        return {
+            "tool_id": tool_id, "tenant_id": tid, "tool_key": head_meta[
+                "tool_key"], "tool_name": str(body.get("tool_name", "")),
+            "tool_summary": str(body.get("tool_summary", "")),
+            "aliases": head_meta["aliases"],
+            "created_by_actor_id": actor_id,
+            "created_by_actor_type": actor_type, "category": head_meta[
+                "category"], "side_effect_class": head_meta["side_effect_class"],
+            "risk_class": head_meta["risk_class"],
+            "trust_tier": head_meta["trust_tier"], "status": head_meta["status"],
+            "tool_version": vpayload["version_number"],
+            "latest_version_id": version_id,
+            "tool_state_hash": head_meta["state_hash"],
+            "descriptor_hash": head_meta["descriptor_hash"],
+            "tbom_hash": head_meta["tbom_hash"],
+            "policy_capsule_hash": head_meta["policy_capsule_hash"],
+            "risk_capsule_hash": head_meta["risk_capsule_hash"],
+            "admission_package_hash": head_meta["admission_package_hash"],
+            "version_hash": head_meta["version_hash"],
+            "quarantine_status": head_meta["quarantine_status"],
+            "quarantine_reason": vpayload["scanner"].get("quarantine_reason"),
+            "admitted": head_meta["admitted"],
+            "data_flow_contract": head_meta["data_flow_contract"],
+            "supersedes_tool_id": supersedes,
+            "hard_fail_signals": vpayload["admission_posture"][
+                "hard_fail_signals"],
+            "admission_reasons": vpayload["admission_posture"]["reasons"],
+            "created_at": created_at, "updated_at": created_at,
+            "honesty_labels": _tr.HONESTY_LABELS,
+        }
+
+    def _save_tool_head(payload, *, version_id, created_by):
+        tool_store.save({
+            "id": payload["tool_id"], "tenant_id": payload["tenant_id"],
+            "tool_key": payload["tool_key"], "tool_name": payload["tool_name"],
+            "created_by_actor_id": payload["created_by_actor_id"],
+            "created_by_actor_type": payload["created_by_actor_type"],
+            "category": payload["category"], "side_effect_class": payload[
+                "side_effect_class"], "risk_class": payload["risk_class"],
+            "trust_tier": payload["trust_tier"], "status": payload["status"],
+            "tool_version": payload["tool_version"],
+            "latest_version_id": version_id,
+            "tool_state_hash": payload["tool_state_hash"],
+            "descriptor_hash": payload["descriptor_hash"],
+            "tbom_hash": payload["tbom_hash"],
+            "policy_capsule_hash": payload["policy_capsule_hash"],
+            "risk_capsule_hash": payload["risk_capsule_hash"],
+            "admission_package_hash": payload["admission_package_hash"],
+            "quarantine_status": payload["quarantine_status"],
+            "admitted": 1 if payload["admitted"] else 0,
+            "supersedes_tool_id": payload["supersedes_tool_id"],
+            "payload_json": json.dumps(payload), "created_by": created_by,
+            "created_at": payload["created_at"],
+            "updated_at": payload["updated_at"]})
+
+    def _save_tool_version(vpayload, *, created_by):
+        tool_store.save_version({
+            "id": vpayload["tool_version_id"], "tool_id": vpayload["tool_id"],
+            "tenant_id": vpayload["tenant_id"], "version_number": vpayload[
+                "version_number"], "status": vpayload["status"],
+            "descriptor_hash": vpayload["descriptor_hash"],
+            "tbom_hash": vpayload["tbom"]["tbom_hash"],
+            "policy_capsule_hash": vpayload["policy_capsule"][
+                "policy_capsule_hash"],
+            "admission_package_hash": vpayload["admission_package"][
+                "admission_package_hash"],
+            "version_hash": vpayload["version_hash"],
+            "previous_version_hash": vpayload["previous_version_hash"],
+            "version_chain_hash": vpayload["version_chain_hash"],
+            "created_by_actor_id": vpayload["created_by_actor_id"],
+            "payload_json": json.dumps(vpayload),
+            "created_at": vpayload["created_at"]})
+
+    def _load_tool_or_404(tool_id, user):
+        p = tool_store.payload(tool_id, tenant_id=user["tid"])
+        if p is None:                              # incl. cross-tenant
+            raise HTTPException(404, "tool not found")
+        return p
+
+    def _redact_version_for(v, user, head):
+        """Restricted roles (and any viewer of a quarantined tool) must not see
+        raw untrusted descriptor text through the version reads — the same
+        text the /safe view redacts. `v` is a fresh json.loads copy, safe to
+        mutate."""
+        restricted = user["role"] in ("viewer", "technician", "accountant")
+        quarantined = head.get("quarantine_status") == "QUARANTINED"
+        if not (restricted or quarantined):
+            return v
+        marker = ("[REDACTED — descriptor text withheld from restricted role / "
+                  "quarantined tool]")
+        d = v.get("descriptor")
+        if isinstance(d, dict):
+            d["tool_description"] = marker
+            d["tool_summary"] = marker
+            for p in d.get("schema_envelope", {}).get("parameters", []):
+                p["description"] = marker
+        se = v.get("schema_envelope")
+        if isinstance(se, dict):
+            for p in se.get("parameters", []):
+                p["description"] = marker
+        v["restricted_view"] = True
+        return v
+
+    def _validate_tool_taxonomy(body):
+        category = str(body.get("category", ""))
+        if category not in _tr.TOOL_CATEGORIES:
+            raise HTTPException(400, f"unknown tool category {category}")
+        se_class = str(body.get("side_effect_class", "PURE_READ"))
+        if se_class not in _tr.SIDE_EFFECT_CLASSES:
+            raise HTTPException(400, f"unknown side_effect_class {se_class}")
+
+    def _state_hash_for(vpayload, head_meta, status):
+        """Recompute a tool state hash for `status` from the version's stored
+        sub-hashes — used whenever a status is overridden after assembly so the
+        persisted/ledgered state hash always binds the ACTUAL status."""
+        return _tr.tool_state_hash(
+            tool_id=vpayload["tool_id"], tenant_id=vpayload["tenant_id"],
+            tool_key=head_meta["tool_key"], category=head_meta["category"],
+            side_effect_class=head_meta["side_effect_class"],
+            risk_class=head_meta["risk_class"],
+            trust_tier=head_meta["trust_tier"], status=status,
+            latest_version_id=vpayload["tool_version_id"],
+            version_number=vpayload["version_number"],
+            descriptor_hash=vpayload["descriptor_hash"],
+            tbom_hash=vpayload["tbom"]["tbom_hash"],
+            policy_capsule_hash=vpayload["policy_capsule"][
+                "policy_capsule_hash"],
+            risk_capsule_hash=vpayload["risk_capsule"]["risk_capsule_hash"],
+            invariant_matrix_hash=vpayload["invariant_matrix"][
+                "invariant_matrix_hash"],
+            negative_capability_hash=vpayload["negative_capabilities"][
+                "negative_capability_hash"],
+            admission_package_hash=vpayload["admission_package"][
+                "admission_package_hash"],
+            capability_lattice_hash=vpayload["capability_lattice"][
+                "capability_lattice_hash"],
+            version_chain_hash=vpayload["version_chain_hash"])
+
+    def _apply_cross_tenant_override(head_meta, vpayload, declared_tid, tid):
+        """A descriptor that declares a foreign tenant is a hard cross-tenant
+        rejection recorded on the tool (never silently accepted). Recomputes the
+        state hash so it binds the rejected status, not the pre-override one."""
+        if declared_tid == tid:
+            return
+        dominant = _tr.dominant_status(
+            set(head_meta["status"].split()) | {"CROSS_TENANT_REJECTED"})
+        head_meta["status"] = dominant
+        head_meta["admitted"] = False
+        vpayload["status"] = dominant
+        vpayload["admission_posture"]["hard_fail_signals"] = sorted(
+            set(vpayload["admission_posture"]["hard_fail_signals"])
+            | {"CROSS_TENANT_REJECTED"})
+        vpayload["admission_posture"]["reasons"].append(
+            "declared tenant does not match actor tenant")
+        new_sh = _state_hash_for(vpayload, head_meta, dominant)
+        head_meta["state_hash"] = new_sh
+        vpayload["tool_state_hash"] = new_sh
+
+    # -- registry-level routes (registered before /{tool_id} to avoid shadow) --
+    @app.get("/ai-tools/types")
+    async def tool_types(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {"categories": sorted(_tr.TOOL_CATEGORIES),
+                "forbidden_categories": sorted(_tr.FORBIDDEN_CATEGORIES),
+                "side_effect_classes": sorted(_tr.SIDE_EFFECT_CLASSES),
+                "forbidden_side_effects": sorted(_tr.FORBIDDEN_SIDE_EFFECTS),
+                "risk_classes": sorted(_tr.RISK_CLASSES),
+                "statuses": sorted(_tr.TOOL_STATUSES),
+                "status_dominance": _tr.STATUS_DOMINANCE,
+                "trust_tiers": sorted(_tr.TRUST_TIERS),
+                "data_classes": sorted(_tr.DATA_CLASSES),
+                "consent_requirements": sorted(_tr.CONSENT_REQUIREMENTS),
+                "prompt_context_exposure": sorted(_tr.PROMPT_CONTEXT_EXPOSURE),
+                "negative_capabilities": _tr.NEGATIVE_CAPABILITIES,
+                "security_invariants": _tr.SECURITY_INVARIANTS,
+                "honesty_labels": _tr.HONESTY_LABELS}
+
+    @app.get("/ai-tools/registry/policy")
+    async def tool_registry_policy(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {"registry_kind": "capability-descriptor-registry",
+                "is_tool_broker": False, "has_execute_endpoint": False,
+                "has_dry_run_execution": False, "calls_external_providers": False,
+                "calls_llm": False, "is_mcp_server": False,
+                "admission_is_fail_closed": True,
+                "forbidden_categories": sorted(_tr.FORBIDDEN_CATEGORIES),
+                "forbidden_side_effects": sorted(_tr.FORBIDDEN_SIDE_EFFECTS),
+                "status_dominance": _tr.STATUS_DOMINANCE,
+                "honesty_labels": _tr.HONESTY_LABELS}
+
+    @app.get("/ai-tools/registry/snapshot")
+    async def tool_registry_snapshot(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        tid = user["tid"]
+        heads = tool_store.list(tenant_id=tid)
+        by_status, by_category = {}, {}
+        for h in heads:
+            by_status[h["status"]] = by_status.get(h["status"], 0) + 1
+            by_category[h["category"]] = by_category.get(h["category"], 0) + 1
+        snap = _tr.registry_snapshot_hash([h["tool_state_hash"] for h in heads])
+        return {"tenant_id": tid, "tool_count": len(heads),
+                "tools_by_status": by_status, "tools_by_category": by_category,
+                "admitted_count": sum(1 for h in heads if h["admitted"]),
+                "quarantined_count": sum(1 for h in heads
+                                         if h["quarantine_status"]
+                                         == "QUARANTINED"),
+                "registry_snapshot_hash": snap,
+                "honesty_labels": _tr.HONESTY_LABELS}
+
+    @app.post("/ai-tools/registry/scan")
+    async def tool_registry_scan(body: dict,
+                                 user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        # Ad-hoc descriptor scan (never persists). Detects poisoning in
+        # arbitrary declared text before a caller even registers it.
+        scanner = _tr.scan_descriptor(
+            tool_name=str(body.get("tool_name", "")),
+            tool_summary=str(body.get("tool_summary", "")),
+            tool_description=str(body.get("tool_description", "")),
+            parameter_texts=[str(p.get("description", ""))
+                             for p in (body.get("parameters") or [])],
+            purpose_texts=[str(x) for x in (body.get("allowed_purposes")
+                                            or [])])
+        return {"scanner": scanner, "honesty_labels": _tr.HONESTY_LABELS}
+
+    @app.get("/ai-tools/registry/events")
+    async def tool_registry_events(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        evs = tool_store.events(tenant_id=user["tid"])
+        # Verify the tenant-scoped event chain.
+        chain_ok, prev = True, None
+        for e in evs:
+            if e["previous_event_hash"] != (prev or _tr.GENESIS):
+                chain_ok = False
+            prev = e["event_hash"]
+        return {"events": evs, "event_count": len(evs),
+                "event_chain_valid": chain_ok,
+                "honesty_labels": _tr.HONESTY_LABELS}
+
+    @app.post("/ai-tools")
+    async def register_tool(body: dict, user: dict = Depends(current_user)):
+        # Registering a descriptor records a capability declaration. It executes
+        # nothing: no tool call, no MCP, no LLM, no external provider, no send,
+        # no payment, no CRM write, no evidence rewrite, no export.
+        require_permission(user, "case.update")
+        tid = user["tid"]
+        _validate_tool_taxonomy(body)
+        category = str(body.get("category", ""))
+        # A descriptor may declare its own tenant_id; a mismatch is a hard
+        # cross-tenant rejection recorded on the tool (never silently accepted).
+        declared_tid = str(body.get("tenant_id", tid)) or tid
+        actor_type = "ai_employee" if user["role"] == "ai_worker" else "human"
+        tool_id = str(uuid.uuid4())
+        version_id = tool_id + "-v1"
+        now = utcnow()
+        trust_tier = _tr.default_trust_tier(actor_type)
+        existing = _tool_summaries(tid)
+
+        vpayload, head_meta = _assemble_tool(
+            tool_id=tool_id, version_id=version_id, version_number=1, tid=tid,
+            prev_version=None, body=body, actor_id=user["uid"],
+            actor_type=actor_type, trust_tier=trust_tier, supply_chain=None,
+            existing_summaries=existing, created_at=now)
+
+        _apply_cross_tenant_override(head_meta, vpayload, declared_tid, tid)
+
+        payload = _tool_head_payload(
+            tool_id=tool_id, tid=tid, actor_id=user["uid"],
+            actor_type=actor_type, body=body, version_id=version_id,
+            head_meta=head_meta, vpayload=vpayload, supersedes=None,
+            created_at=now)
+        _save_tool_head(payload, version_id=version_id, created_by=user["uid"])
+        _save_tool_version(vpayload, created_by=user["uid"])
+        _tool_emit(tid, event_type="TOOL_REGISTERED", tool_id=tool_id,
+                   actor_id=user["uid"], actor_type=actor_type,
+                   tool_state_hash=head_meta["state_hash"],
+                   detail={"category": category, "status": head_meta["status"]})
+        if head_meta["quarantine_status"] == "QUARANTINED":
+            _tool_emit(tid, event_type="TOOL_QUARANTINED", tool_id=tool_id,
+                       actor_id=user["uid"], actor_type=actor_type,
+                       tool_state_hash=head_meta["state_hash"],
+                       detail={"reason": payload["quarantine_reason"]})
+        audit.append(event_type="AI_TOOL_REGISTERED", actor=user["uid"],
+                     payload={"tool_id": tool_id, "category": category,
+                              "status": head_meta["status"]})
+        return payload
+
+    @app.get("/ai-tools")
+    async def list_tools(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return tool_store.list(tenant_id=user["tid"])
+
+    @app.get("/ai-tools/{tool_id}")
+    async def get_tool(tool_id: str, user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _load_tool_or_404(tool_id, user)
+
+    @app.get("/ai-tools/{tool_id}/safe")
+    async def get_tool_safe(tool_id: str, user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        p = _load_tool_or_404(tool_id, user)
+        lv = tool_store.latest_version(tool_id, tenant_id=user["tid"])
+        restricted = user["role"] in ("viewer", "technician", "accountant")
+        policy = lv["prompt_context_policy"]
+        # A quarantined descriptor never surfaces its raw text; the safe view
+        # exposes governance metadata only.
+        quarantined = p["quarantine_status"] == "QUARANTINED"
+        expose_desc = (policy["expose_full_descriptor_to_model"]
+                       and not restricted and not quarantined)
+        view = {
+            "tool_id": tool_id, "tool_key": p["tool_key"],
+            "tool_name": p["tool_name"], "category": p["category"],
+            "status": p["status"], "risk_class": p["risk_class"],
+            "trust_tier": p["trust_tier"], "side_effect_class": p[
+                "side_effect_class"], "quarantine_status": p["quarantine_status"],
+            "effective_prompt_exposure": policy["effective_exposure"],
+            "tool_description": (lv["descriptor"]["tool_description"]
+                                 if expose_desc else
+                                 "[REDACTED — descriptor not exposable to "
+                                 "model context under policy]"),
+            "hard_fail_signals": p["hard_fail_signals"],
+            "may_execute_now": False,
+            "honesty_labels": _tr.HONESTY_LABELS,
+        }
+        view["tool_safe_view_hash"] = _tr._sha(
+            {k: v for k, v in view.items()
+             if k not in ("tool_safe_view_hash", "honesty_labels")})
+        return view
+
+    @app.get("/ai-tools/{tool_id}/versions")
+    async def list_tool_versions(tool_id: str,
+                                 user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        head = _load_tool_or_404(tool_id, user)
+        versions = [_redact_version_for(v, user, head) for v in
+                    tool_store.versions(tool_id, tenant_id=user["tid"])]
+        return {"tool_id": tool_id, "versions": versions,
+                "honesty_labels": _tr.HONESTY_LABELS}
+
+    @app.get("/ai-tools/{tool_id}/versions/{version_id}")
+    async def get_tool_version(tool_id: str, version_id: str,
+                               user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        head = _load_tool_or_404(tool_id, user)
+        v = tool_store.version(tool_id, version_id, tenant_id=user["tid"])
+        if v is None:
+            raise HTTPException(404, "tool version not found")
+        return _redact_version_for(v, user, head)
+
+    @app.post("/ai-tools/{tool_id}/versions")
+    async def add_tool_version(tool_id: str, body: dict,
+                               user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        tid = user["tid"]
+        p = _load_tool_or_404(tool_id, user)
+        _validate_tool_taxonomy(body)
+        # A governance-stopped (disabled/deprecated) or terminal tool cannot be
+        # silently re-versioned back to DRAFT by a case.update holder.
+        if p["status"] in ("DISABLED", "DEPRECATED"):
+            raise HTTPException(409, f"tool is {p['status']}; re-enable via "
+                                "governance before adding a version")
+        if p["status"] in _tr.TERMINAL_STATUSES:
+            raise HTTPException(409, f"tool is {p['status']}; no new versions")
+        prev = tool_store.latest_version(tool_id, tenant_id=tid)
+        vnum = tool_store.next_version_number(tool_id, tenant_id=tid)
+        actor_type = "ai_employee" if user["role"] == "ai_worker" else "human"
+        trust_tier = _tr.default_trust_tier(actor_type)
+        version_id = f"{tool_id}-v{vnum}"
+        now = utcnow()
+        existing = _tool_summaries(tid, exclude_id=tool_id)
+        # Supply-chain guard: compare the proposed descriptor to the prior
+        # admitted/latest snapshot to detect drift / rug-pull.
+        supply = None
+        if prev is not None:
+            tmp_v, tmp_head = _assemble_tool(
+                tool_id=tool_id, version_id=version_id, version_number=vnum,
+                tid=tid, prev_version=prev, body=body, actor_id=user["uid"],
+                actor_type=actor_type, trust_tier=trust_tier, supply_chain=None,
+                existing_summaries=existing, created_at=now)
+            supply = _tr.supply_chain_guard(
+                admitted_snapshot={
+                    "descriptor_hash": prev["descriptor_hash"],
+                    "effect_contract_hash": prev["effect_contract"][
+                        "effect_contract_hash"],
+                    "data_flow_contract_hash": prev["data_flow_contract"][
+                        "data_flow_contract_hash"],
+                    "side_effect_rank": prev["effect_contract"][
+                        "side_effect_rank"],
+                    "risk_rank": _tr.RISK_RANK[prev["risk_class"]],
+                    "category": prev["descriptor"]["category"],
+                    "scanner_clean": prev["scanner"]["quarantine_status"]
+                    == "CLEAN",
+                    "forbidden_capability": bool(
+                        prev["admission_posture"]["hard_fail_signals"])},
+                new_snapshot={
+                    "descriptor_hash": tmp_v["descriptor_hash"],
+                    "effect_contract_hash": tmp_v["effect_contract"][
+                        "effect_contract_hash"],
+                    "data_flow_contract_hash": tmp_v["data_flow_contract"][
+                        "data_flow_contract_hash"],
+                    "side_effect_rank": tmp_v["effect_contract"][
+                        "side_effect_rank"],
+                    "risk_rank": _tr.RISK_RANK[tmp_v["risk_class"]],
+                    "category": tmp_v["descriptor"]["category"],
+                    "scanner_clean": tmp_v["scanner"]["quarantine_status"]
+                    == "CLEAN",
+                    "forbidden_capability": bool(
+                        tmp_v["admission_posture"]["hard_fail_signals"])})
+
+        vpayload, head_meta = _assemble_tool(
+            tool_id=tool_id, version_id=version_id, version_number=vnum, tid=tid,
+            prev_version=prev, body=body, actor_id=user["uid"],
+            actor_type=actor_type, trust_tier=trust_tier, supply_chain=supply,
+            existing_summaries=existing, created_at=now)
+        # A v2 that declares a foreign tenant is rejected exactly like a v1.
+        declared_tid = str(body.get("tenant_id", tid)) or tid
+        _apply_cross_tenant_override(head_meta, vpayload, declared_tid, tid)
+        payload = _tool_head_payload(
+            tool_id=tool_id, tid=tid, actor_id=p["created_by_actor_id"],
+            actor_type=p["created_by_actor_type"], body=body,
+            version_id=version_id, head_meta=head_meta, vpayload=vpayload,
+            supersedes=p.get("supersedes_tool_id"), created_at=now)
+        payload["created_at"] = p["created_at"]
+        _save_tool_version(vpayload, created_by=user["uid"])
+        tool_store.update_head(
+            tool_id, tenant_id=tid, payload=payload, tool_key=head_meta[
+                "tool_key"], category=head_meta["category"],
+            side_effect_class=head_meta["side_effect_class"],
+            risk_class=head_meta["risk_class"],
+            trust_tier=head_meta["trust_tier"], status=head_meta["status"],
+            tool_version=vnum, latest_version_id=version_id,
+            tool_state_hash=head_meta["state_hash"],
+            descriptor_hash=head_meta["descriptor_hash"],
+            tbom_hash=head_meta["tbom_hash"],
+            policy_capsule_hash=head_meta["policy_capsule_hash"],
+            risk_capsule_hash=head_meta["risk_capsule_hash"],
+            admission_package_hash=head_meta["admission_package_hash"],
+            quarantine_status=head_meta["quarantine_status"],
+            admitted=1 if head_meta["admitted"] else 0,
+            updated_at=now)
+        _tool_emit(tid, event_type="TOOL_VERSION_ADDED", tool_id=tool_id,
+                   actor_id=user["uid"], actor_type=actor_type,
+                   tool_state_hash=head_meta["state_hash"],
+                   detail={"version_number": vnum,
+                           "status": head_meta["status"]})
+        if supply and supply["verdict"] == "RUG_PULL_DETECTED":
+            _tool_emit(tid, event_type="TOOL_RUG_PULL_DETECTED", tool_id=tool_id,
+                       actor_id=user["uid"], actor_type=actor_type,
+                       tool_state_hash=head_meta["state_hash"],
+                       detail={"reasons": supply["reasons"]})
+        elif supply and supply["verdict"] == "DRIFT_DETECTED":
+            _tool_emit(tid, event_type="TOOL_DRIFT_DETECTED", tool_id=tool_id,
+                       actor_id=user["uid"], actor_type=actor_type,
+                       tool_state_hash=head_meta["state_hash"],
+                       detail={"reasons": supply["reasons"]})
+        return {"tool_id": tool_id, "version_number": vnum,
+                "tool_version": vpayload, "supply_chain": supply,
+                "honesty_labels": _tr.HONESTY_LABELS}
+
+    @app.post("/ai-tools/{tool_id}/admit")
+    async def admit_tool(tool_id: str, user: dict = Depends(current_user)):
+        # Admission = a human governor records that a FUTURE broker MAY consider
+        # this tool. It executes nothing and is fail-closed on every hard-fail.
+        require_permission(user, _TOOL_ADMIT_PERM)
+        tid = user["tid"]
+        p = _load_tool_or_404(tool_id, user)
+        if p["status"] in _tr.TERMINAL_STATUSES:
+            raise HTTPException(409, f"tool is {p['status']}; cannot admit")
+        # A governance-stopped tool cannot be admitted; the stop must be
+        # explicitly lifted (new clean version) first.
+        if p["status"] in ("DISABLED", "DEPRECATED"):
+            raise HTTPException(409, f"tool is {p['status']}; cannot admit")
+        lv = tool_store.latest_version(tool_id, tenant_id=tid)
+        # Admission must be requested by a HUMAN governor: derive the actor type
+        # instead of assuming it, so the kernel's human-in-the-loop guard is
+        # real and the ledger attribution is truthful.
+        actor_type = "ai_employee" if user["role"] == "ai_worker" else "human"
+        # Re-check collisions / multi-tool hazards against the LIVE registry —
+        # a tool clean at registration may since have been shadowed.
+        existing = _tool_summaries(tid, exclude_id=tool_id)
+        candidate = {"tool_id": tool_id, "tool_key": p["tool_key"],
+                     "aliases": p.get("aliases", []),
+                     "trust_tier": p["trust_tier"],
+                     "risk_rank": _tr.RISK_RANK.get(p["risk_class"], 2),
+                     "status": p["status"]}
+        collision = _tr.detect_collisions(candidate=candidate, existing=existing)
+        df = lv["data_flow_contract"]
+        cand_multi = {"tool_id": tool_id, "tool_key": p["tool_key"],
+                      "side_effect_class": p["side_effect_class"],
+                      "reads_data_classes": df["reads_data_classes"],
+                      "writes_data_classes": df["writes_data_classes"],
+                      "egress": df["egress_targets"], "status": p["status"]}
+        multi = _tr.detect_multi_tool_poisoning(existing + [cand_multi])
+        decision = _tr.evaluate_admission(
+            category=lv["descriptor"]["category"],
+            invariant_matrix=lv["invariant_matrix"],
+            negative_capabilities=lv["negative_capabilities"],
+            risk_capsule=lv["risk_capsule"], scanner=lv["scanner"],
+            implicit_findings=lv["implicit_findings"],
+            lattice=lv["capability_lattice"], collision=collision,
+            multi_tool=multi, supply_chain=lv["supply_chain"],
+            declared_tenant_id=tid, actor_tenant_id=tid,
+            requested_by_human=(actor_type == "human"))
+        # Fold every previously-recorded hard-fail (e.g. an app-level
+        # CROSS_TENANT_REJECTED from registration, which the kernel cannot see)
+        # into the decision so admission can never clear a prior hard-fail.
+        prior = set(p.get("hard_fail_signals", []))
+        signals = set(decision["hard_fail_signals"]) | prior
+        if signals:
+            status = _tr.dominant_status(signals)
+            admitted = False
+        else:
+            status = decision["admission_status"]
+            admitted = decision["admitted"]
+        decision = {**decision, "admission_status": status,
+                    "admitted": admitted,
+                    "hard_fail_signals": sorted(signals),
+                    "reasons": decision["reasons"] + (
+                        ["blocked by prior recorded hard-fail signals"]
+                        if prior - set(decision["hard_fail_signals"]) else [])}
+        new_state = _tr.tool_state_hash(
+            tool_id=tool_id, tenant_id=tid, tool_key=p["tool_key"],
+            category=p["category"], side_effect_class=p["side_effect_class"],
+            risk_class=p["risk_class"], trust_tier=p["trust_tier"],
+            status=status, latest_version_id=p["latest_version_id"],
+            version_number=p["tool_version"],
+            descriptor_hash=p["descriptor_hash"], tbom_hash=p["tbom_hash"],
+            policy_capsule_hash=p["policy_capsule_hash"],
+            risk_capsule_hash=p["risk_capsule_hash"],
+            invariant_matrix_hash=lv["invariant_matrix"][
+                "invariant_matrix_hash"],
+            negative_capability_hash=lv["negative_capabilities"][
+                "negative_capability_hash"],
+            admission_package_hash=p["admission_package_hash"],
+            capability_lattice_hash=lv["capability_lattice"][
+                "capability_lattice_hash"],
+            version_chain_hash=lv["version_chain_hash"])
+        p["status"] = status
+        p["admitted"] = admitted
+        p["tool_state_hash"] = new_state
+        p["admission_reasons"] = decision["reasons"]
+        p["hard_fail_signals"] = decision["hard_fail_signals"]
+        p["updated_at"] = utcnow()
+        tool_store.update_head(tool_id, tenant_id=tid, payload=p, status=status,
+                               admitted=1 if admitted else 0,
+                               tool_state_hash=new_state, updated_at=p[
+                                   "updated_at"])
+        _tool_emit(tid, event_type=("TOOL_ADMITTED" if admitted else
+                                    "TOOL_ADMISSION_REJECTED"), tool_id=tool_id,
+                   actor_id=user["uid"], actor_type=actor_type,
+                   tool_state_hash=new_state,
+                   detail={"status": status, "signals": decision[
+                       "hard_fail_signals"]})
+        return {"tool_id": tool_id, "admission_status": status,
+                "admitted": admitted, "hard_fail_signals": decision[
+                    "hard_fail_signals"], "reasons": decision["reasons"],
+                "may_execute_now": False, "honesty_labels": _tr.HONESTY_LABELS}
+
+    def _tool_lifecycle_transition(tool_id, user, *, target, event_type,
+                                   allow_from=None):
+        tid = user["tid"]
+        p = _load_tool_or_404(tool_id, user)
+        if p["status"] in _tr.TERMINAL_STATUSES:
+            raise HTTPException(409, f"tool is {p['status']}; cannot {target}")
+        if allow_from is not None and p["status"] not in allow_from:
+            raise HTTPException(409, f"cannot {target} from {p['status']}")
+        lv = tool_store.latest_version(tool_id, tenant_id=tid)
+        new_state = _tr.tool_state_hash(
+            tool_id=tool_id, tenant_id=tid, tool_key=p["tool_key"],
+            category=p["category"], side_effect_class=p["side_effect_class"],
+            risk_class=p["risk_class"], trust_tier=p["trust_tier"],
+            status=target, latest_version_id=p["latest_version_id"],
+            version_number=p["tool_version"],
+            descriptor_hash=p["descriptor_hash"], tbom_hash=p["tbom_hash"],
+            policy_capsule_hash=p["policy_capsule_hash"],
+            risk_capsule_hash=p["risk_capsule_hash"],
+            invariant_matrix_hash=lv["invariant_matrix"][
+                "invariant_matrix_hash"],
+            negative_capability_hash=lv["negative_capabilities"][
+                "negative_capability_hash"],
+            admission_package_hash=p["admission_package_hash"],
+            capability_lattice_hash=lv["capability_lattice"][
+                "capability_lattice_hash"],
+            version_chain_hash=lv["version_chain_hash"])
+        p["status"] = target
+        p["admitted"] = False
+        p["tool_state_hash"] = new_state
+        p["updated_at"] = utcnow()
+        tool_store.update_head(tool_id, tenant_id=tid, payload=p, status=target,
+                               admitted=0, tool_state_hash=new_state,
+                               updated_at=p["updated_at"])
+        _tool_emit(tid, event_type=event_type, tool_id=tool_id,
+                   actor_id=user["uid"], actor_type="human",
+                   tool_state_hash=new_state, detail={"status": target})
+        return {"tool_id": tool_id, "status": target,
+                "honesty_labels": _tr.HONESTY_LABELS}
+
+    @app.post("/ai-tools/{tool_id}/disable")
+    async def disable_tool(tool_id: str, user: dict = Depends(current_user)):
+        require_permission(user, _TOOL_ADMIT_PERM)
+        return _tool_lifecycle_transition(
+            tool_id, user, target="DISABLED", event_type="TOOL_DISABLED")
+
+    @app.post("/ai-tools/{tool_id}/deprecate")
+    async def deprecate_tool(tool_id: str, user: dict = Depends(current_user)):
+        require_permission(user, _TOOL_ADMIT_PERM)
+        return _tool_lifecycle_transition(
+            tool_id, user, target="DEPRECATED", event_type="TOOL_DEPRECATED")
+
+    @app.post("/ai-tools/{tool_id}/supersede")
+    async def supersede_tool(tool_id: str, body: dict,
+                             user: dict = Depends(current_user)):
+        require_permission(user, _TOOL_ADMIT_PERM)
+        tid = user["tid"]
+        successor = str(body.get("successor_tool_id", ""))
+        if successor:
+            if tool_store.payload(successor, tenant_id=tid) is None:
+                raise HTTPException(400, "successor tool not found")
+        res = _tool_lifecycle_transition(
+            tool_id, user, target="SUPERSEDED", event_type="TOOL_SUPERSEDED")
+        if successor:
+            p = tool_store.payload(tool_id, tenant_id=tid)
+            p["superseded_by_tool_id"] = successor
+            tool_store.update_head(tool_id, tenant_id=tid, payload=p)
+        res["superseded_by_tool_id"] = successor or None
+        return res
+
+    @app.get("/ai-tools/{tool_id}/policy")
+    async def get_tool_policy(tool_id: str,
+                              user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_tool_or_404(tool_id, user)
+        lv = tool_store.latest_version(tool_id, tenant_id=user["tid"])
+        return {"tool_id": tool_id, "policy_capsule": lv["policy_capsule"],
+                "prompt_context_policy": lv["prompt_context_policy"],
+                "invariant_matrix": lv["invariant_matrix"],
+                "honesty_labels": _tr.HONESTY_LABELS}
+
+    @app.get("/ai-tools/{tool_id}/risk")
+    async def get_tool_risk(tool_id: str, user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_tool_or_404(tool_id, user)
+        lv = tool_store.latest_version(tool_id, tenant_id=user["tid"])
+        return {"tool_id": tool_id, "risk_capsule": lv["risk_capsule"],
+                "risk_class": lv["risk_class"],
+                "honesty_labels": _tr.HONESTY_LABELS}
+
+    @app.get("/ai-tools/{tool_id}/tbom")
+    async def get_tool_tbom(tool_id: str, user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_tool_or_404(tool_id, user)
+        lv = tool_store.latest_version(tool_id, tenant_id=user["tid"])
+        return {"tool_id": tool_id, "tbom": lv["tbom"],
+                "honesty_labels": _tr.HONESTY_LABELS}
+
+    @app.get("/ai-tools/{tool_id}/security-case")
+    async def get_tool_security_case(tool_id: str,
+                                     user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_tool_or_404(tool_id, user)
+        lv = tool_store.latest_version(tool_id, tenant_id=user["tid"])
+        return {"tool_id": tool_id, "security_case": lv["security_case"],
+                "honesty_labels": _tr.HONESTY_LABELS}
+
+    @app.get("/ai-tools/{tool_id}/negative-capabilities")
+    async def get_tool_negative_caps(tool_id: str,
+                                     user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_tool_or_404(tool_id, user)
+        lv = tool_store.latest_version(tool_id, tenant_id=user["tid"])
+        return {"tool_id": tool_id,
+                "negative_capabilities": lv["negative_capabilities"],
+                "capability_lattice": lv["capability_lattice"],
+                "honesty_labels": _tr.HONESTY_LABELS}
+
+    @app.get("/ai-tools/{tool_id}/lineage")
+    async def get_tool_lineage(tool_id: str,
+                               user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        p = _load_tool_or_404(tool_id, user)
+        versions = tool_store.versions(tool_id, tenant_id=user["tid"])
+        lineage = [{"version_number": v["version_number"], "status": v[
+            "status"], "descriptor_hash": v["descriptor_hash"],
+            "version_hash": v["version_hash"],
+            "previous_version_hash": v["previous_version_hash"],
+            "version_chain_hash": v["version_chain_hash"]} for v in versions]
+        return {"tool_id": tool_id, "tool_key": p["tool_key"],
+                "supersedes_tool_id": p.get("supersedes_tool_id"),
+                "superseded_by_tool_id": p.get("superseded_by_tool_id"),
+                "lineage": lineage, "honesty_labels": _tr.HONESTY_LABELS}
+
+    @app.post("/ai-tools/{tool_id}/verify")
+    async def verify_tool(tool_id: str, user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        p = _load_tool_or_404(tool_id, user)
+        tid = user["tid"]
+        actor_type = "ai_employee" if user["role"] == "ai_worker" else "human"
+        versions = tool_store.versions(tool_id, tenant_id=tid)
+        reasons, chain_prev, chain_ok = [], None, True
+        # (payload key, self-hash field, *extra excluded fields). Every stored
+        # sub-object that carries its own *_hash is recomputed, so tampering ANY
+        # governance object — not just the descriptor — is caught.
+        _SUBHASHES = [
+            ("scanner", "scanner_hash"),
+            ("schema_envelope", "schema_envelope_hash"),
+            ("effect_contract", "effect_contract_hash"),
+            ("data_flow_contract", "data_flow_contract_hash"),
+            ("purpose_contract", "purpose_contract_hash"),
+            ("consent_contract", "consent_contract_hash"),
+            ("prompt_context_policy", "prompt_context_policy_hash"),
+            ("invariant_matrix", "invariant_matrix_hash"),
+            ("negative_capabilities", "negative_capability_hash"),
+            ("risk_capsule", "risk_capsule_hash"),
+            ("capability_lattice", "capability_lattice_hash"),
+            ("tbom", "tbom_hash"),
+            ("admission_package", "admission_package_hash"),
+            ("security_case", "security_case_hash"),
+            ("policy_capsule", "policy_capsule_hash", "policy_input_hash",
+             "policy_output_hash"),
+        ]
+        # Top-level contract copies (what the supply-chain guard + endpoints
+        # read) must be byte-identical to the descriptor-embedded copies.
+        _EMBEDDED = ["schema_envelope", "effect_contract", "data_flow_contract",
+                     "purpose_contract", "consent_contract",
+                     "prompt_context_policy"]
+        for v in versions:
+            n = v["version_number"]
+            if _tr.descriptor_hash(v["descriptor"]) != v["descriptor_hash"]:
+                reasons.append(f"v{n}: descriptor hash mismatch")
+            for key in _EMBEDDED:
+                if v.get(key) != v["descriptor"].get(key):
+                    reasons.append(f"v{n}: {key} diverges from descriptor copy")
+            for spec in _SUBHASHES:
+                key, hfield, extra = spec[0], spec[1], spec[2:]
+                obj = v.get(key) or {}
+                if _tr._core_hash(obj, hfield, *extra) != obj.get(hfield):
+                    reasons.append(f"v{n}: {key} hash mismatch")
+            recomputed_v = _tr.version_hash(
+                tool_id=tool_id, version_number=n,
+                descriptor_hash=v["descriptor_hash"],
+                tbom_hash=v["tbom"]["tbom_hash"],
+                policy_capsule_hash=v["policy_capsule"]["policy_capsule_hash"],
+                admission_package_hash=v["admission_package"][
+                    "admission_package_hash"],
+                previous_version_hash=v.get("previous_version_hash"),
+                created_by_actor_id=v["created_by_actor_id"])
+            if recomputed_v != v["version_hash"]:
+                reasons.append(f"v{n}: version hash mismatch")
+            if _tr.version_chain_hash(chain_prev, v["version_hash"]) != v[
+                    "version_chain_hash"]:
+                chain_ok = False
+                reasons.append(f"v{n}: version chain mismatch")
+            chain_prev = v["version_chain_hash"]
+        lv = versions[-1] if versions else None
+        if lv is not None:
+            if p.get("descriptor_hash") != lv["descriptor_hash"]:
+                reasons.append("head descriptor hash diverges from latest "
+                               "version")
+            if p.get("version_hash") != lv["version_hash"]:
+                reasons.append("head version hash diverges from latest version")
+            # The mutable head carries the GOVERNANCE state (status, admitted,
+            # trust) a future broker consumes. Recompute its state hash from the
+            # head fields + latest-version sub-hashes: a status/admitted/trust
+            # tamper that isn't matched by a recomputed state hash is caught.
+            recomputed_head_state = _tr.tool_state_hash(
+                tool_id=tool_id, tenant_id=tid, tool_key=p["tool_key"],
+                category=p["category"], side_effect_class=p["side_effect_class"],
+                risk_class=p["risk_class"], trust_tier=p["trust_tier"],
+                status=p["status"], latest_version_id=p["latest_version_id"],
+                version_number=p["tool_version"],
+                descriptor_hash=p["descriptor_hash"], tbom_hash=p["tbom_hash"],
+                policy_capsule_hash=p["policy_capsule_hash"],
+                risk_capsule_hash=p["risk_capsule_hash"],
+                invariant_matrix_hash=lv["invariant_matrix"][
+                    "invariant_matrix_hash"],
+                negative_capability_hash=lv["negative_capabilities"][
+                    "negative_capability_hash"],
+                admission_package_hash=p["admission_package_hash"],
+                capability_lattice_hash=lv["capability_lattice"][
+                    "capability_lattice_hash"],
+                version_chain_hash=lv["version_chain_hash"])
+            if recomputed_head_state != p.get("tool_state_hash"):
+                reasons.append("head governance state hash is inconsistent with "
+                               "head fields (status/admitted/trust tamper)")
+            # And the head's governance hashes must equal the latest version's.
+            if p.get("policy_capsule_hash") != lv["policy_capsule"][
+                    "policy_capsule_hash"]:
+                reasons.append("head policy capsule hash diverges from latest "
+                               "version")
+            if p.get("admitted") and p.get("status") != \
+                    "AVAILABLE_FOR_FUTURE_BROKER":
+                reasons.append("head marked admitted without an "
+                               "AVAILABLE_FOR_FUTURE_BROKER status")
+        # Cross-check the head state hash against the tamper-evident ledger:
+        # the latest registry event for this tool recorded the state hash at the
+        # last legitimate mutation, so a head-state tamper with no matching
+        # event is caught.
+        tool_events = tool_store.events(tenant_id=tid, tool_id=tool_id)
+        last_ev = tool_events[-1] if tool_events else None
+        if last_ev is not None and last_ev.get("tool_state_hash") and \
+                last_ev["tool_state_hash"] != p.get("tool_state_hash"):
+            reasons.append("head state hash diverges from the latest registry "
+                           "ledger event (untracked mutation)")
+        # Denormalized head COLUMNS drive list/snapshot/admission reads, so a
+        # column-only DB tamper (flipping status/admitted/*_hash without
+        # touching payload_json) must also be caught. Cross-check the row
+        # columns against the authoritative payload.
+        row = tool_store.get(tool_id, tenant_id=tid)
+        if row is not None:
+            for col in ("status", "descriptor_hash", "tool_state_hash",
+                        "policy_capsule_hash", "risk_capsule_hash", "risk_class",
+                        "category", "side_effect_class", "quarantine_status"):
+                if row[col] != p.get(col):
+                    reasons.append(f"head column '{col}' diverges from payload")
+            if int(row["admitted"]) != (1 if p.get("admitted") else 0):
+                reasons.append("head column 'admitted' diverges from payload")
+        status = "MATCHED" if not reasons else "MISMATCHED"
+        # Only emit on tamper: a clean verification must not let a read-only
+        # role append to the governance ledger (a genuine tamper requires DB
+        # write access the caller does not have through this surface).
+        if reasons:
+            _tool_emit(tid, event_type="TOOL_TAMPER_DETECTED", tool_id=tool_id,
+                       actor_id=user["uid"], actor_type=actor_type,
+                       tool_state_hash=p["tool_state_hash"],
+                       detail={"reasons": reasons})
+        return {"tool_id": tool_id, "verification_status": status,
+                "tamper_detected": bool(reasons), "tamper_reasons": reasons,
+                "dominant_status_if_tampered": "TAMPERED" if reasons else None,
+                "version_chain_status": "VALID" if chain_ok else "MISMATCHED",
+                "versions_checked": len(versions),
+                "honesty_labels": _tr.HONESTY_LABELS}
+
+    @app.post("/ai-tools/{tool_id}/diff")
+    async def diff_tool(tool_id: str, body: dict,
+                        user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_tool_or_404(tool_id, user)
+        tid = user["tid"]
+        va = tool_store.version(tool_id, str(body.get("from_version_id", "")),
+                                tenant_id=tid)
+        vb = tool_store.version(tool_id, str(body.get("to_version_id", "")),
+                                tenant_id=tid)
+        if va is None or vb is None:
+            raise HTTPException(404, "version not found for diff")
+        fields = ["descriptor_hash", "risk_class", "status"]
+        changed = {f: {"from": va.get(f), "to": vb.get(f)}
+                   for f in fields if va.get(f) != vb.get(f)}
+        hash_fields = {
+            "effect_contract_hash": ("effect_contract", "effect_contract_hash"),
+            "data_flow_contract_hash": ("data_flow_contract",
+                                        "data_flow_contract_hash"),
+            "tbom_hash": ("tbom", "tbom_hash"),
+            "policy_capsule_hash": ("policy_capsule", "policy_capsule_hash")}
+        for label, (obj, key) in hash_fields.items():
+            if va[obj][key] != vb[obj][key]:
+                changed[label] = {"from": va[obj][key], "to": vb[obj][key]}
+        return {"tool_id": tool_id,
+                "from_version": va["version_number"],
+                "to_version": vb["version_number"], "changed_fields": changed,
+                "identical": not changed, "honesty_labels": _tr.HONESTY_LABELS}
+
+    @app.post("/ai-tools/{tool_id}/drift-check")
+    async def drift_check_tool(tool_id: str, body: dict,
+                               user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        tid = user["tid"]
+        p = _load_tool_or_404(tool_id, user)
+        lv = tool_store.latest_version(tool_id, tenant_id=tid)
+        # Compare the current admitted/latest snapshot to a proposed descriptor
+        # body (or to itself, which must be STABLE). Detection only; no mutation.
+        actor_type = "ai_employee" if user["role"] == "ai_worker" else "human"
+        proposed = body.get("proposed_descriptor")
+        if proposed:
+            _validate_tool_taxonomy(proposed)
+            tmp_v, _ = _assemble_tool(
+                tool_id=tool_id, version_id=f"{tool_id}-drift", version_number=lv[
+                    "version_number"], tid=tid, prev_version=lv, body=proposed,
+                actor_id=user["uid"], actor_type=actor_type,
+                trust_tier=_tr.default_trust_tier(actor_type), supply_chain=None,
+                existing_summaries=_tool_summaries(tid, exclude_id=tool_id),
+                created_at=utcnow())
+            new_snap = tmp_v
+        else:
+            new_snap = lv
+        supply = _tr.supply_chain_guard(
+            admitted_snapshot={
+                "descriptor_hash": lv["descriptor_hash"],
+                "effect_contract_hash": lv["effect_contract"][
+                    "effect_contract_hash"],
+                "data_flow_contract_hash": lv["data_flow_contract"][
+                    "data_flow_contract_hash"],
+                "side_effect_rank": lv["effect_contract"]["side_effect_rank"],
+                "risk_rank": _tr.RISK_RANK[lv["risk_class"]],
+                "category": lv["descriptor"]["category"],
+                "scanner_clean": lv["scanner"]["quarantine_status"] == "CLEAN",
+                "forbidden_capability": bool(lv["admission_posture"][
+                    "hard_fail_signals"])},
+            new_snapshot={
+                "descriptor_hash": new_snap["descriptor_hash"],
+                "effect_contract_hash": new_snap["effect_contract"][
+                    "effect_contract_hash"],
+                "data_flow_contract_hash": new_snap["data_flow_contract"][
+                    "data_flow_contract_hash"],
+                "side_effect_rank": new_snap["effect_contract"][
+                    "side_effect_rank"],
+                "risk_rank": _tr.RISK_RANK[new_snap["risk_class"]],
+                "category": new_snap["descriptor"]["category"],
+                "scanner_clean": new_snap["scanner"]["quarantine_status"]
+                == "CLEAN",
+                "forbidden_capability": bool(new_snap["admission_posture"][
+                    "hard_fail_signals"])})
+        return {"tool_id": tool_id, "current_status": p["status"],
+                "supply_chain": supply, "honesty_labels": _tr.HONESTY_LABELS}
+
     # ---- UI pages -------------------------------------------------------------------------------------
     ui.mount(app)
     return app
