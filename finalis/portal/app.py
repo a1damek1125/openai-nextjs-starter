@@ -7627,6 +7627,573 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
 
     app.state.run_quality_check = _run_quality_check
 
+    # ---- ViktorAI Formal Protocol Contract Proof Kernel (TOOL-B3) ------------------
+    from ..ai_employee import tool_contracts as _tc
+    from ..ai_employee.tool_contracts_store import ToolContractStore
+    contract_store = ToolContractStore(db)
+    app.state.contract_store = contract_store
+
+    def _contract_emit(tid, *, event_type, contract_id, tool_id, actor_id,
+                       actor_type, state_hash, detail):
+        seq = contract_store.next_sequence(tenant_id=tid)
+        prev = contract_store.last_event(tenant_id=tid)
+        ev = _tc.build_contract_event(
+            event_type=event_type, tool_id=tool_id, contract_id=contract_id,
+            tenant_id=tid, actor_id=actor_id, actor_type=actor_type,
+            contract_state_hash=state_hash,
+            previous_event_hash=(prev or {}).get("event_hash"), sequence=seq,
+            detail=detail, created_at=utcnow())
+        contract_store.append_event({
+            "id": str(uuid.uuid4()), "tenant_id": tid, "contract_id":
+            contract_id, "tool_id": tool_id, "event_type": event_type,
+            "sequence": seq, "actor_id": actor_id, "actor_type": actor_type,
+            "event_hash": ev["event_hash"], "previous_event_hash": ev[
+                "previous_event_hash"], "contract_state_hash": state_hash,
+            "payload_json": json.dumps(ev), "created_at": ev["created_at"]})
+        return ev
+
+    def _tool_and_quality(tool_id, user):
+        tid = user["tid"]
+        head = _load_tool_or_404(tool_id, user)
+        version = tool_store.latest_version(tool_id, tenant_id=tid)
+        if version is None:
+            raise HTTPException(404, "tool has no version")
+        quality = quality_store.latest(tool_id, tenant_id=tid)
+        return tid, head, version, quality
+
+    def _load_contract_or_404(tool_id, contract_id, user):
+        _load_tool_or_404(tool_id, user)
+        c = contract_store.payload(contract_id, tenant_id=user["tid"])
+        if c is None or c["tool_id"] != tool_id:
+            raise HTTPException(404, "contract not found")
+        return c
+
+    def _store_projection(tid, contract, env, actor_id):
+        contract_store.save_projection({
+            "id": env["projection_envelope_id"], "contract_id": contract[
+                "contract_id"], "tenant_id": tid, "tool_id": contract["tool_id"],
+            "projection_target": env["projection_target"],
+            "projection_status": env["projection_status"],
+            "projection_hash": env["projection_hash"],
+            "projection_envelope_hash": env["projection_envelope_hash"],
+            "broker_readiness_status": env["broker_readiness_certificate"][
+                "certificate_status"],
+            "payload_json": json.dumps(env), "created_by": actor_id,
+            "created_at": env["created_at"]})
+
+    def _latest_projection(contract, user):
+        projs = contract_store.projections_for(contract["contract_id"],
+                                               tenant_id=user["tid"])
+        return projs[-1] if projs else None
+
+    # -- registry-level contract routes (before /{contract_id}) ---------------
+    @app.get("/ai-tools/registry/contracts")
+    async def registry_contracts(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        cs = contract_store.list(tenant_id=user["tid"])
+        by_status = {}
+        for c in cs:
+            by_status[c["contract_status"]] = by_status.get(
+                c["contract_status"], 0) + 1
+        return {"tenant_id": user["tid"], "contract_count": len(cs),
+                "contracts_by_status": by_status,
+                "summaries": [{"contract_id": c["contract_id"], "tool_id": c[
+                    "tool_id"], "contract_status": c["contract_status"],
+                    "contract_hash": c["contract_hash"]} for c in cs],
+                "honesty_labels": _tc.HONESTY_LABELS}
+
+    @app.get("/ai-tools/registry/contracts/policy")
+    async def registry_contracts_policy(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {"contract_model_version": _tc.CONTRACT_MODEL_VERSION,
+                "executes_tools": False, "is_mcp_server": False,
+                "is_mcp_client": False, "calls_tool_broker": False,
+                "calls_llm": False, "calls_external_provider": False,
+                "issues_tokens": False, "performs_sampling": False,
+                "performs_elicitation": False, "serves_resources": False,
+                "serves_prompts": False,
+                "runtime_capabilities_denied": list(_tc.RUNTIME_CAPABILITIES),
+                "projection_targets": sorted(_tc.PROJECTION_TARGETS),
+                "protocol_dialects": sorted(_tc.DIALECTS),
+                "failure_dominance": _tc.FAILURE_DOMINANCE,
+                "projection_is_validation_only": True,
+                "certificate_can_override_blockers": False,
+                "honesty_labels": _tc.HONESTY_LABELS}
+
+    @app.post("/ai-tools/{tool_id}/contracts")
+    async def create_contract(tool_id: str, body: dict = None,
+                              user: dict = Depends(current_user)):
+        # Normalizing a tool into an internal contract records a protocol-aware
+        # contract. It executes nothing: no MCP, no broker, no LLM, no provider,
+        # no token, no sampling/elicitation, no network side effect.
+        require_permission(user, "case.update")
+        tid, head, version, quality = _tool_and_quality(tool_id, user)
+        actor_type = "ai_employee" if user["role"] == "ai_worker" else "human"
+        now = utcnow()
+        runtime_requested = bool((body or {}).get("runtime_requested", False))
+        # Deterministic, source-derived contract id → idempotent creation: an
+        # unchanged source returns the existing contract instead of a duplicate.
+        epoch = _tc.source_freshness_epoch(head, quality)
+        contract_id = _tc.deterministic_contract_id(
+            tenant_id=tid, tool_id=tool_id,
+            tool_version_id=head["latest_version_id"],
+            source_freshness_epoch=epoch)
+        existing = contract_store.payload(contract_id, tenant_id=tid)
+        if existing is not None:
+            return existing
+        contract = _tc.build_contract(
+            head=head, version=version, quality_report=quality,
+            contract_id=contract_id, actor_id=user["uid"], actor_type=actor_type,
+            tenant_id=tid, created_at=now, runtime_requested=runtime_requested)
+        contract_store.save({
+            "id": contract_id, "tenant_id": tid, "tool_id": tool_id,
+            "tool_version_id": contract["tool_version_id"], "contract_version":
+            1, "contract_status": contract["contract_status"],
+            "contract_target": contract["contract_target"],
+            "contract_risk_class": contract["contract_risk_class"],
+            "contract_side_effect_class": contract["contract_side_effect_class"],
+            "source_descriptor_hash": contract["source_descriptor_hash"],
+            "source_quality_report_hash": contract[
+                "source_quality_report_hash"],
+            "source_freshness_epoch": contract["source_freshness_epoch"],
+            "revocation_epoch": contract["revocation_epoch"],
+            "contract_hash": contract["contract_hash"],
+            "contract_abi_hash": contract["contract_abi"]["abi_hash"],
+            "contract_normal_form_hash": contract["contract_normal_form"][
+                "contract_normal_form_hash"],
+            "contract_state_hash": contract["contract_state_hash"],
+            "payload_json": json.dumps(contract), "created_by": user["uid"],
+            "created_at": now, "updated_at": now})
+        vhash = _tc.contract_version_hash(
+            contract_id=contract_id, version_number=1,
+            contract_hash=contract["contract_hash"],
+            abi_hash=contract["contract_abi"]["abi_hash"],
+            previous_contract_version_hash=None)
+        contract_store.save_version({
+            "id": contract_id + "-cv1", "contract_id": contract_id,
+            "tenant_id": tid, "tool_id": tool_id, "tool_version_id": contract[
+                "tool_version_id"], "version_number": 1,
+            "contract_hash": contract["contract_hash"], "contract_abi_hash":
+            contract["contract_abi"]["abi_hash"], "contract_version_hash": vhash,
+            "previous_contract_version_hash": None,
+            "contract_chain_hash": _tc.contract_chain_hash(None, vhash),
+            "payload_json": json.dumps(contract), "created_at": now})
+        # Build + store a default internal-broker projection so contract-level
+        # proof/obligation/certificate reads have a concrete artifact.
+        env = _tc.build_projection(
+            contract=contract, head=head, quality_report=quality,
+            target="INTERNAL_TOOL_BROKER_CONTRACT",
+            projection_id=contract_id + "-proj-default", tenant_id=tid,
+            created_at=now, runtime_requested=runtime_requested)
+        _store_projection(tid, contract, env, user["uid"])
+        _contract_emit(tid, event_type="CONTRACT_CREATED",
+                       contract_id=contract_id, tool_id=tool_id,
+                       actor_id=user["uid"], actor_type=actor_type,
+                       state_hash=contract["contract_state_hash"],
+                       detail={"status": contract["contract_status"]})
+        audit.append(event_type="AI_TOOL_CONTRACT_CREATED", actor=user["uid"],
+                     payload={"contract_id": contract_id, "tool_id": tool_id,
+                              "status": contract["contract_status"]})
+        return contract
+
+    @app.get("/ai-tools/{tool_id}/contracts")
+    async def list_contracts(tool_id: str,
+                             user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_tool_or_404(tool_id, user)
+        return contract_store.for_tool(tool_id, tenant_id=user["tid"])
+
+    @app.get("/ai-tools/{tool_id}/contracts/{contract_id}")
+    async def get_contract(tool_id: str, contract_id: str,
+                           user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _load_contract_or_404(tool_id, contract_id, user)
+
+    @app.get("/ai-tools/{tool_id}/contracts/{contract_id}/safe")
+    async def get_contract_safe(tool_id: str, contract_id: str,
+                                user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        c = _load_contract_or_404(tool_id, contract_id, user)
+        restricted = user["role"] in ("viewer", "technician", "accountant")
+        never_expose = c["contract_prompt_context_boundary"][
+            "prompt_context_exposure_status"] == "NEVER_EXPOSE"
+        view = {
+            "contract_id": contract_id, "tool_id": tool_id,
+            "contract_status": c["contract_status"],
+            "contract_risk_class": c["contract_risk_class"],
+            "contract_side_effect_class": c["contract_side_effect_class"],
+            "requires_future_tool_broker": True,
+            "contract_blockers": c["contract_blockers"],
+            "description_safe": ("[REDACTED]" if (restricted or never_expose)
+                                 else c["contract_description_safe"]),
+            "contract_hash": c["contract_hash"],
+            "honesty_labels": _tc.HONESTY_LABELS,
+        }
+        view["contract_safe_view_hash"] = _tc._sha(
+            {k: v for k, v in view.items()
+             if k not in ("contract_safe_view_hash", "honesty_labels")})
+        return view
+
+    @app.get("/ai-tools/{tool_id}/contracts/{contract_id}/versions")
+    async def contract_versions(tool_id: str, contract_id: str,
+                                user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_contract_or_404(tool_id, contract_id, user)
+        vs = contract_store.versions(contract_id, tenant_id=user["tid"])
+        return {"contract_id": contract_id, "count": len(vs),
+                "versions": [{"version_number": i + 1, "contract_hash": v[
+                    "contract_hash"], "contract_abi": {"abi_hash": v[
+                    "contract_abi"]["abi_hash"]}} for i, v in enumerate(vs)],
+                "honesty_labels": _tc.HONESTY_LABELS}
+
+    def _sub(name):
+        async def getter(tool_id: str, contract_id: str,
+                         user: dict = Depends(current_user)):
+            require_permission(user, "case.read")
+            c = _load_contract_or_404(tool_id, contract_id, user)
+            return {"contract_id": contract_id, name: c[name],
+                    "honesty_labels": _tc.HONESTY_LABELS}
+        return getter
+
+    app.add_api_route(
+        "/ai-tools/{tool_id}/contracts/{contract_id}/normal-form",
+        _sub("contract_normal_form"), methods=["GET"])
+    app.add_api_route("/ai-tools/{tool_id}/contracts/{contract_id}/abi",
+                      _sub("contract_abi"), methods=["GET"])
+    app.add_api_route(
+        "/ai-tools/{tool_id}/contracts/{contract_id}/effect-trace",
+        _sub("effect_trace_semantics"), methods=["GET"])
+    app.add_api_route(
+        "/ai-tools/{tool_id}/contracts/{contract_id}/method-firewall",
+        _sub("protocol_method_firewall"), methods=["GET"])
+    app.add_api_route(
+        "/ai-tools/{tool_id}/contracts/{contract_id}/runtime-deny-graph",
+        _sub("runtime_capability_deny_graph"), methods=["GET"])
+    app.add_api_route(
+        "/ai-tools/{tool_id}/contracts/{contract_id}/separation",
+        _sub("separation_guard"), methods=["GET"])
+    app.add_api_route("/ai-tools/{tool_id}/contracts/{contract_id}/scope",
+                      _sub("contract_scope_binding"), methods=["GET"])
+    app.add_api_route("/ai-tools/{tool_id}/contracts/{contract_id}/auth",
+                      _sub("auth_context_envelope"), methods=["GET"])
+    app.add_api_route(
+        "/ai-tools/{tool_id}/contracts/{contract_id}/traceability",
+        _sub("contract_traceability_envelope"), methods=["GET"])
+
+    @app.get("/ai-tools/{tool_id}/contracts/{contract_id}/protocol")
+    async def get_contract_protocol(tool_id: str, contract_id: str,
+                                    user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        c = _load_contract_or_404(tool_id, contract_id, user)
+        return {"contract_id": contract_id,
+                "protocol_dialect_matrix": c["protocol_dialect_matrix"],
+                "capability_negotiation_boundary": c[
+                    "capability_negotiation_boundary"],
+                "honesty_labels": _tc.HONESTY_LABELS}
+
+    @app.get("/ai-tools/{tool_id}/contracts/{contract_id}/boundaries")
+    async def get_contract_boundaries(tool_id: str, contract_id: str,
+                                      user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        c = _load_contract_or_404(tool_id, contract_id, user)
+        return {"contract_id": contract_id,
+                "data_boundary": c["contract_data_boundary"],
+                "effect_boundary": c["contract_effect_boundary"],
+                "prompt_context_boundary": c["contract_prompt_context_boundary"],
+                "honesty_labels": _tc.HONESTY_LABELS}
+
+    def _proj_sub(name):
+        async def getter(tool_id: str, contract_id: str,
+                         user: dict = Depends(current_user)):
+            require_permission(user, "case.read")
+            c = _load_contract_or_404(tool_id, contract_id, user)
+            proj = _latest_projection(c, user)
+            if proj is None:
+                raise HTTPException(404, "no projection; project first")
+            return {"contract_id": contract_id, name: proj[name],
+                    "projection_id": proj["projection_envelope_id"],
+                    "honesty_labels": _tc.HONESTY_LABELS}
+        return getter
+
+    app.add_api_route(
+        "/ai-tools/{tool_id}/contracts/{contract_id}/obligations",
+        _proj_sub("deontic_obligation_ledger"), methods=["GET"])
+    app.add_api_route(
+        "/ai-tools/{tool_id}/contracts/{contract_id}/proof-bundle",
+        _proj_sub("contract_proof_bundle"), methods=["GET"])
+    app.add_api_route(
+        "/ai-tools/{tool_id}/contracts/{contract_id}/broker-readiness",
+        _proj_sub("broker_readiness_certificate"), methods=["GET"])
+    app.add_api_route(
+        "/ai-tools/{tool_id}/contracts/{contract_id}/proof-obligations",
+        _proj_sub("proof_obligations"), methods=["GET"])
+    app.add_api_route(
+        "/ai-tools/{tool_id}/contracts/{contract_id}/non-interference",
+        _proj_sub("non_interference_matrix"), methods=["GET"])
+    app.add_api_route(
+        "/ai-tools/{tool_id}/contracts/{contract_id}/provenance",
+        _proj_sub("field_provenance"), methods=["GET"])
+
+    @app.post("/ai-tools/{tool_id}/contracts/{contract_id}/project")
+    async def project_contract(tool_id: str, contract_id: str, body: dict,
+                               user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        tid = user["tid"]
+        c = _load_contract_or_404(tool_id, contract_id, user)
+        head = _load_tool_or_404(tool_id, user)
+        quality = quality_store.latest(tool_id, tenant_id=tid)
+        target = str(body.get("target", "INTERNAL_TOOL_BROKER_CONTRACT"))
+        if target not in _tc.PROJECTION_TARGETS:
+            raise HTTPException(400, f"unknown projection target {target}")
+        # Staleness gate: a drifted source cannot be projected.
+        inv = _tc.invalidation_check(contract=c, head=head,
+                                     quality_report=quality)
+        actor_type = "ai_employee" if user["role"] == "ai_worker" else "human"
+        now = utcnow()
+        projection_id = f"{contract_id}-proj-{uuid.uuid4().hex[:8]}"
+        if inv["stale"]:
+            env = {"projection_envelope_id": projection_id, "tenant_id": tid,
+                   "contract_id": contract_id, "tool_id": tool_id,
+                   "projection_target": target, "projection_status": "STALE",
+                   "projection_blockers": ["STALE_SOURCE"],
+                   "invalidation_reasons": inv["invalidation_reasons"],
+                   "broker_readiness_certificate": {"certificate_status":
+                                                    "STALE"},
+                   "projection_hash": _tc._sha({"stale": True, "id":
+                                                projection_id}),
+                   "created_at": now, "honesty_labels": _tc.HONESTY_LABELS}
+            env["projection_envelope_hash"] = _tc._core_hash(
+                env, "projection_envelope_hash")
+            _store_projection(tid, c, env, user["uid"])
+            _contract_emit(tid, event_type="PROJECTION_STALE",
+                           contract_id=contract_id, tool_id=tool_id,
+                           actor_id=user["uid"], actor_type=actor_type,
+                           state_hash=c["contract_state_hash"],
+                           detail={"target": target})
+            return env
+        runtime_requested = bool(body.get("runtime_requested", False))
+        env = _tc.build_projection(
+            contract=c, head=head, quality_report=quality, target=target,
+            projection_id=projection_id, tenant_id=tid, created_at=now,
+            runtime_requested=runtime_requested)
+        _store_projection(tid, c, env, user["uid"])
+        etype = ("PROJECTION_BLOCKED" if env["projection_status"] in (
+            "BLOCKED", "QUARANTINED", "REVOKED", "TAMPERED")
+            else "CONTRACT_PROJECTED")
+        _contract_emit(tid, event_type=etype, contract_id=contract_id,
+                       tool_id=tool_id, actor_id=user["uid"],
+                       actor_type=actor_type, state_hash=c["contract_state_hash"],
+                       detail={"target": target, "status": env[
+                           "projection_status"]})
+        if env["violation_witnesses"]:
+            _contract_emit(tid, event_type="FINITE_VIOLATION_WITNESS_RECORDED",
+                           contract_id=contract_id, tool_id=tool_id,
+                           actor_id=user["uid"], actor_type=actor_type,
+                           state_hash=c["contract_state_hash"],
+                           detail={"count": len(env["violation_witnesses"])})
+        return env
+
+    @app.get(
+        "/ai-tools/{tool_id}/contracts/{contract_id}/projection/{projection_id}")
+    async def get_projection(tool_id: str, contract_id: str, projection_id: str,
+                             user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_contract_or_404(tool_id, contract_id, user)
+        p = contract_store.projection(projection_id, tenant_id=user["tid"])
+        if p is None or p["contract_id"] != contract_id:
+            raise HTTPException(404, "projection not found")
+        return p
+
+    def _shape_route(target, shape_key):
+        async def getter(tool_id: str, contract_id: str,
+                         user: dict = Depends(current_user)):
+            require_permission(user, "case.read")
+            tid = user["tid"]
+            c = _load_contract_or_404(tool_id, contract_id, user)
+            head = _load_tool_or_404(tool_id, user)
+            quality = quality_store.latest(tool_id, tenant_id=tid)
+            env = _tc.build_projection(
+                contract=c, head=head, quality_report=quality, target=target,
+                projection_id=f"{contract_id}-{shape_key}-view", tenant_id=tid,
+                created_at=utcnow())
+            # Serve a shape ONLY for a genuinely-projectable status. Any
+            # non-positive status (BLOCKED / STALE / REVOKED / TAMPERED /
+            # QUARANTINED / NEEDS_REVIEW for a not-yet-admitted tool) withholds
+            # the shape — a non-admitted or drifted tool is never served.
+            if env["projection_status"] not in ("PROJECTABLE_FOR_FUTURE",
+                                                "PROJECTED_SAFE_SUMMARY_ONLY"):
+                return {"contract_id": contract_id, "projectable": False,
+                        "projection_status": env["projection_status"],
+                        "projection_blockers": env["projection_blockers"],
+                        "shape": None, "honesty_labels": _tc.HONESTY_LABELS}
+            return {"contract_id": contract_id, "projectable": True,
+                    "projection_status": env["projection_status"],
+                    "shape": env["projected_shape"],
+                    "projection_note": "internal shape only; not a runtime "
+                    "server response; future Tool Broker required",
+                    "honesty_labels": _tc.HONESTY_LABELS}
+        return getter
+
+    app.add_api_route("/ai-tools/{tool_id}/contracts/{contract_id}/mcp-like",
+                      _shape_route("MCP_LIKE_TOOL_DESCRIPTOR", "mcp"),
+                      methods=["GET"])
+    app.add_api_route(
+        "/ai-tools/{tool_id}/contracts/{contract_id}/apps-sdk-like",
+        _shape_route("OPENAI_APPS_SDK_LIKE_DESCRIPTOR", "apps"),
+        methods=["GET"])
+    app.add_api_route(
+        "/ai-tools/{tool_id}/contracts/{contract_id}/openapi-like",
+        _shape_route("OPENAPI_LIKE_SCHEMA_CONTRACT", "openapi"), methods=["GET"])
+
+    @app.get("/ai-tools/{tool_id}/contracts/{contract_id}/compatibility")
+    async def get_compatibility(tool_id: str, contract_id: str,
+                                user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        tid = user["tid"]
+        c = _load_contract_or_404(tool_id, contract_id, user)
+        head = _load_tool_or_404(tool_id, user)
+        quality = quality_store.latest(tool_id, tenant_id=tid)
+        projections = []
+        for tgt in ("MCP_LIKE_TOOL_DESCRIPTOR",
+                    "OPENAI_APPS_SDK_LIKE_DESCRIPTOR",
+                    "OPENAPI_LIKE_SCHEMA_CONTRACT",
+                    "INTERNAL_TOOL_BROKER_CONTRACT"):
+            env = _tc.build_projection(
+                contract=c, head=head, quality_report=quality, target=tgt,
+                projection_id=f"{contract_id}-compat-{tgt}", tenant_id=tid,
+                created_at=utcnow())
+            projections.append((tgt, env))
+        report = _tc.build_compatibility_report(
+            tenant_id=tid, contract_id=contract_id, tool_id=tool_id,
+            tool_version_id=c["tool_version_id"], projections=projections)
+        return {"contract_id": contract_id, "compatibility_report": report,
+                "honesty_labels": _tc.HONESTY_LABELS}
+
+    @app.post("/ai-tools/{tool_id}/contracts/{contract_id}/invalidate-check")
+    async def invalidate_check(tool_id: str, contract_id: str,
+                               user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        tid = user["tid"]
+        c = _load_contract_or_404(tool_id, contract_id, user)
+        head = _load_tool_or_404(tool_id, user)
+        quality = quality_store.latest(tool_id, tenant_id=tid)
+        result = _tc.invalidation_check(contract=c, head=head,
+                                        quality_report=quality)
+        if result["stale"]:
+            c["contract_status"] = "STALE"
+            contract_store.update(contract_id, tenant_id=tid, payload=c,
+                                  contract_status="STALE")
+            _contract_emit(tid, event_type="CONTRACT_INVALIDATED",
+                           contract_id=contract_id, tool_id=tool_id,
+                           actor_id=user["uid"], actor_type="human",
+                           state_hash=c["contract_state_hash"],
+                           detail={"reasons": result["invalidation_reasons"]})
+        return result
+
+    @app.post("/ai-tools/{tool_id}/contracts/{contract_id}/verify")
+    async def verify_contract(tool_id: str, contract_id: str,
+                              user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        tid = user["tid"]
+        c = _load_contract_or_404(tool_id, contract_id, user)
+        reasons = []
+        subs = [
+            ("contract_normal_form", "contract_normal_form_hash"),
+            ("effect_trace_semantics", "effect_trace_semantics_hash"),
+            ("runtime_capability_deny_graph", "deny_graph_hash"),
+            ("protocol_method_firewall", "method_firewall_hash"),
+            ("protocol_dialect_matrix", "protocol_dialect_matrix_hash"),
+            ("capability_negotiation_boundary",
+             "capability_negotiation_boundary_hash"),
+            ("separation_guard", "separation_guard_hash"),
+            ("contract_scope_binding", "scope_binding_hash"),
+            ("auth_context_envelope", "auth_context_envelope_hash"),
+            ("contract_data_boundary", "data_boundary_hash"),
+            ("contract_effect_boundary", "effect_boundary_hash"),
+            ("contract_prompt_context_boundary", "prompt_context_boundary_hash"),
+            ("schema_closure", "schema_closure_hash"),
+            ("contract_non_execution_proof",
+             "contract_non_execution_proof_hash"),
+            ("contract_traceability_envelope", "traceability_envelope_hash"),
+        ]
+        for key, hfield in subs:
+            obj = c.get(key)
+            if isinstance(obj, dict) and _tc._core_hash(obj, hfield) != obj.get(
+                    hfield):
+                reasons.append(f"{key} hash mismatch")
+        if _tc._core_hash(c["contract_abi"], "abi_hash",
+                          "abi_breaking_change_flags") != c["contract_abi"][
+                "abi_hash"]:
+            reasons.append("contract ABI hash mismatch")
+        # contract_hash excludes the mutable lifecycle fields (status/blockers,
+        # which invalidate-check may flip to STALE) and the derived/actor fields,
+        # so a legitimate source-drift → STALE transition is reported as STALE,
+        # never as false tamper.
+        if _tc._core_hash(c, "contract_hash", "contract_state_hash",
+                          "contract_traceability_envelope",
+                          "created_by_actor_id", "created_by_actor_type",
+                          "contract_status", "contract_blockers") != c[
+                "contract_hash"]:
+            reasons.append("contract hash mismatch")
+        # Source drift → STALE (not tamper).
+        head = _load_tool_or_404(tool_id, user)
+        quality = quality_store.latest(tool_id, tenant_id=tid)
+        inv = _tc.invalidation_check(contract=c, head=head,
+                                     quality_report=quality)
+        status = ("MISMATCHED" if reasons else ("STALE" if inv["stale"]
+                                                else "MATCHED"))
+        _contract_emit(tid, event_type="CONTRACT_VERIFIED",
+                       contract_id=contract_id, tool_id=tool_id,
+                       actor_id=user["uid"], actor_type="human",
+                       state_hash=c["contract_state_hash"],
+                       detail={"status": status})
+        return {"contract_id": contract_id, "verification_status": status,
+                "tamper_detected": bool(reasons), "tamper_reasons": reasons,
+                "stale": inv["stale"],
+                "invalidation_reasons": inv["invalidation_reasons"],
+                "honesty_labels": _tc.HONESTY_LABELS}
+
+    @app.post("/ai-tools/{tool_id}/contracts/{contract_id}/diff")
+    async def diff_contract(tool_id: str, contract_id: str, body: dict,
+                            user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_contract_or_404(tool_id, contract_id, user)
+        vs = contract_store.versions(contract_id, tenant_id=user["tid"])
+        if len(vs) < 2:
+            return {"contract_id": contract_id, "comparable": False,
+                    "note": "need two contract versions to diff",
+                    "honesty_labels": _tc.HONESTY_LABELS}
+        a, b = vs[-2], vs[-1]
+        changed = {}
+        for f in ("contract_hash",):
+            if a.get(f) != b.get(f):
+                changed[f] = {"from": a.get(f), "to": b.get(f)}
+        if a["contract_abi"]["abi_hash"] != b["contract_abi"]["abi_hash"]:
+            changed["abi_hash"] = {"from": a["contract_abi"]["abi_hash"],
+                                   "to": b["contract_abi"]["abi_hash"]}
+        return {"contract_id": contract_id, "comparable": True,
+                "changed_fields": changed, "honesty_labels": _tc.HONESTY_LABELS}
+
+    @app.get(
+        "/ai-tools/{tool_id}/contracts/{contract_id}/revocation-ledger")
+    async def contract_revocation_ledger(tool_id: str, contract_id: str,
+                                         user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_contract_or_404(tool_id, contract_id, user)
+        evs = contract_store.events(tenant_id=user["tid"],
+                                    contract_id=contract_id)
+        chain_ok, prev = True, None
+        for e in contract_store.events(tenant_id=user["tid"]):
+            if e["previous_event_hash"] != (prev or _tc.GENESIS):
+                chain_ok = False
+            prev = e["event_hash"]
+        return {"contract_id": contract_id, "events": evs,
+                "event_count": len(evs), "event_chain_valid": chain_ok,
+                "ledger_note": "local revocation/invalidation ledger; not a "
+                "production immutable log", "honesty_labels": _tc.HONESTY_LABELS}
+
+    app.state.build_contract = _tc.build_contract
+
     # ---- UI pages -------------------------------------------------------------------------------------
     ui.mount(app)
     return app

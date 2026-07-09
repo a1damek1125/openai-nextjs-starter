@@ -895,6 +895,70 @@ CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_tool_quality_events_seq
 CREATE INDEX IF NOT EXISTS ix_ai_tool_quality_events_tool
   ON ai_tool_quality_events(tenant_id, tool_id, sequence);
 """),
+    (18, """
+-- v18: ViktorAI Formal Protocol Contract Proof Kernel (TOOL-B3). Internal
+-- protocol-aware contracts + validation-only projections (MCP-like /
+-- Apps-SDK-like / OpenAPI-like / safe planner / trace-only) over the TOOL-B1
+-- registry + TOOL-B2 quality gate. Executes nothing: no MCP server/client, no
+-- tool execution, no Tool Broker/LLM/external-provider call, no OAuth/token
+-- issuance, no sampling/elicitation/resource/prompt serving, no network side
+-- effect. All runtime capabilities are denied. A projection is a derived view
+-- and can never override any TOOL-B1/TOOL-B2 security state. Registry truth is
+-- authoritative.
+CREATE TABLE IF NOT EXISTS ai_tool_contracts (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, tool_id TEXT NOT NULL,
+  tool_version_id TEXT NOT NULL, contract_version INTEGER NOT NULL DEFAULT 1,
+  contract_status TEXT NOT NULL, contract_target TEXT NOT NULL,
+  contract_risk_class TEXT NOT NULL DEFAULT 'MEDIUM',
+  contract_side_effect_class TEXT NOT NULL DEFAULT 'PURE_READ',
+  source_descriptor_hash TEXT NOT NULL,
+  source_quality_report_hash TEXT,
+  source_freshness_epoch TEXT NOT NULL, revocation_epoch TEXT NOT NULL,
+  contract_hash TEXT NOT NULL, contract_abi_hash TEXT NOT NULL,
+  contract_normal_form_hash TEXT NOT NULL DEFAULT '',
+  contract_state_hash TEXT NOT NULL,
+  payload_json TEXT NOT NULL,
+  created_by TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_tool_contracts
+  ON ai_tool_contracts(tenant_id, tool_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_ai_tool_contracts_status
+  ON ai_tool_contracts(tenant_id, contract_status);
+
+CREATE TABLE IF NOT EXISTS ai_tool_contract_versions (
+  id TEXT PRIMARY KEY, contract_id TEXT NOT NULL, tenant_id TEXT NOT NULL,
+  tool_id TEXT NOT NULL, tool_version_id TEXT NOT NULL,
+  version_number INTEGER NOT NULL,
+  contract_hash TEXT NOT NULL, contract_abi_hash TEXT NOT NULL,
+  contract_version_hash TEXT NOT NULL, previous_contract_version_hash TEXT,
+  contract_chain_hash TEXT NOT NULL,
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_tool_contract_versions_num
+  ON ai_tool_contract_versions(tenant_id, contract_id, version_number);
+
+CREATE TABLE IF NOT EXISTS ai_tool_contract_projections (
+  id TEXT PRIMARY KEY, contract_id TEXT NOT NULL, tenant_id TEXT NOT NULL,
+  tool_id TEXT NOT NULL, projection_target TEXT NOT NULL,
+  projection_status TEXT NOT NULL,
+  projection_hash TEXT NOT NULL, projection_envelope_hash TEXT NOT NULL,
+  broker_readiness_status TEXT NOT NULL DEFAULT 'NOT_READY',
+  payload_json TEXT NOT NULL, created_by TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_tool_contract_projections
+  ON ai_tool_contract_projections(tenant_id, contract_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_ai_tool_contract_projections_target
+  ON ai_tool_contract_projections(tenant_id, contract_id, projection_target);
+
+CREATE TABLE IF NOT EXISTS ai_tool_contract_events (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, contract_id TEXT,
+  tool_id TEXT, event_type TEXT NOT NULL, sequence INTEGER NOT NULL,
+  actor_id TEXT NOT NULL, actor_type TEXT NOT NULL,
+  event_hash TEXT NOT NULL, previous_event_hash TEXT NOT NULL,
+  contract_state_hash TEXT NOT NULL DEFAULT '',
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_tool_contract_events_seq
+  ON ai_tool_contract_events(tenant_id, sequence);
+CREATE INDEX IF NOT EXISTS ix_ai_tool_contract_events_contract
+  ON ai_tool_contract_events(tenant_id, contract_id, sequence);
+"""),
 ]
 
 

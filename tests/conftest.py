@@ -299,6 +299,42 @@ class Gate:
         rep = self.quality_check(tid, actor=requester).json()
         return tid, rep
 
+    # -- TOOL-B3 contract helpers ---------------------------------------------
+    def contract_tool(self, requester=OWNER, admit=True, **over):
+        """Register a clean tool, run its quality check, and admit it so it is
+        eligible for a PROJECTABLE_FOR_FUTURE contract."""
+        tid = self.register_quality_tool(requester=requester,
+                                         **over).json()["tool_id"]
+        self.quality_check(tid, actor=requester)
+        if admit:
+            self.admit_tool(tid, actor=OWNER)
+        return tid
+
+    def create_contract(self, tool_id, actor=OWNER, **body):
+        return self.c.post(f"/ai-tools/{tool_id}/contracts", json=body,
+                           headers=self.h(actor))
+
+    def contracted_tool(self, requester=OWNER, admit=True, **over):
+        """Register+check+admit a tool and create its contract. Returns
+        (tool_id, contract_dict)."""
+        tid = self.contract_tool(requester=requester, admit=admit, **over)
+        c = self.create_contract(tid, actor=requester).json()
+        return tid, c
+
+    def ct(self, tool_id, contract_id, path="", actor=OWNER, method="GET",
+           **body):
+        url = f"/ai-tools/{tool_id}/contracts/{contract_id}{path}"
+        if method == "GET":
+            return self.c.get(url, headers=self.h(actor))
+        return self.c.post(url, json=body, headers=self.h(actor))
+
+    def project(self, tool_id, contract_id, target="MCP_LIKE_TOOL_DESCRIPTOR",
+                actor=OWNER, **body):
+        body["target"] = target
+        return self.c.post(
+            f"/ai-tools/{tool_id}/contracts/{contract_id}/project", json=body,
+            headers=self.h(actor))
+
 
 @pytest.fixture()
 def gate():

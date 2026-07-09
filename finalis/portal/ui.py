@@ -153,6 +153,7 @@ window.loadSections = async () => {
   if (window.loadArtifactsSection) jobs.push(loadArtifactsSection(me));
   if (window.loadToolsSection) jobs.push(loadToolsSection(me));
   if (window.loadQualitySection) jobs.push(loadQualitySection(me));
+  if (window.loadContractsSection) jobs.push(loadContractsSection(me));
   await Promise.allSettled(jobs);
 };
 
@@ -2961,6 +2962,112 @@ window.verifyQuality = async (id) => {
 };
 """
 
+CONTRACTS_SECTIONS = """
+<section id="tool-contracts-section"><h2>Protocol Contract Proof Kernel</h2>
+<ul class="labels"><small>
+<li>This is an internal contract only.</li>
+<li>This is not an MCP server or client.</li>
+<li>This contract does not execute tools.</li>
+<li>Projection does not mean runtime compliance.</li>
+<li>Broker-readiness certificate does not execute or approve tools.</li>
+<li>Future Tool Broker is still required before any tool call.</li>
+<li>No external provider is called.</li>
+<li>No token is issued.</li>
+<li>Sampling, elicitation, resources and prompts are not implemented in this mission.</li>
+<li>Runtime capabilities are denied in TOOL-B3.</li>
+<li>Effect-trace semantics are future-readiness metadata only; no runtime effects are observed in B3.</li>
+<li>Contract compatibility does not mean production protocol compliance.</li>
+<li>Server-side registry truth is authoritative.</li>
+</small></ul>
+<div id="tool-contracts-list"><i>Loading contracts…</i></div>
+<div id="tool-contract-detail"></div>
+</section>
+"""
+
+CONTRACTS_JS = """
+window.loadContractsSection = async (me) => { await loadContracts(); };
+
+window.loadContracts = async () => {
+  let data; try { data = await get('/ai-tools/registry/contracts'); }
+  catch (e) { $('tool-contracts-list').innerHTML =
+    '<i>Tool contracts are not available for your role.</i>'; return; }
+  const rows = data.summaries || [];
+  $('tool-contracts-list').innerHTML = rows.length ?
+    '<table><tr><th>Contract</th><th>Tool</th><th>Status</th><th></th></tr>' +
+    rows.map(r => `<tr><td><small>${esc(r.contract_id.slice(0,8))}</small></td>
+       <td><small>${esc(r.tool_id.slice(0,8))}</small></td>
+       <td><b>${esc(r.contract_status)}</b></td>
+       <td><button onclick="openContract('${esc(r.tool_id)}','${esc(
+         r.contract_id)}')">Open</button></td></tr>`).join('') + '</table>'
+    : '<i>No contracts yet — create one from an admitted, quality-passed tool.</i>';
+};
+
+window.openContract = async (toolId, cid) => {
+  const base = '/ai-tools/' + toolId + '/contracts/' + cid;
+  const c = await get(base);
+  let proj = null;
+  try { proj = await get(base + '/proof-bundle'); } catch (e) {}
+  let cert = null;
+  try { cert = await get(base + '/broker-readiness'); } catch (e) {}
+  const et = c.effect_trace_semantics, dg = c.runtime_capability_deny_graph;
+  const sb = c.contract_scope_binding, eb = c.contract_effect_boundary;
+  $('tool-contract-detail').innerHTML = `
+    <h3>Contract ${esc(cid.slice(0,8))}
+      <span class="badge">${esc(c.contract_status)}</span></h3>
+    <p><b>risk</b> ${esc(c.contract_risk_class)} · <b>side effect</b>
+      ${esc(c.contract_side_effect_class)} · <b>future broker required</b>
+      ${esc(String(c.requires_future_tool_broker))}
+      <button onclick="verifyContract('${esc(toolId)}','${esc(cid)}')">Verify
+      </button>
+      <button onclick="projectContract('${esc(toolId)}','${esc(cid)}')">
+      Project MCP-like</button> <span id="tool-contract-msg"></span></p>
+    <p><b>contract_hash</b> <code>${esc((c.contract_hash||'').slice(0,14))}…
+      </code> · <b>ABI</b> <code>${esc((c.contract_abi.abi_hash||'').slice(
+        0,14))}…</code></p>
+    <p><b>blockers</b> ${(c.contract_blockers||[]).map(b =>
+      `<span class="err">${esc(b)}</span>`).join(' ') || '<i>none</i>'}</p>
+    <h4>Effect-trace semantics</h4>
+    <p><b>allowed</b> ${esc((et.allowed_effects||[]).join(', ') || 'none')} ·
+      <b>forbidden</b> ${esc(String((et.forbidden_effects||[]).length))} ·
+      <b>status</b> ${esc(et.effect_trace_status)}</p>
+    <h4>Runtime capability deny graph</h4>
+    <p><b>denied</b> ${esc(String((dg.denied_capabilities||[]).length))}
+      capabilities · <b>status</b> ${esc(dg.deny_graph_status)}</p>
+    <h4>Effect boundary</h4>
+    <p><b>read-only mislabel</b> <b class="${eb.read_only_mislabel_detected
+      ? 'err' : 'ok'}">${esc(String(eb.read_only_mislabel_detected))}</b> ·
+      <b>future broker required</b>
+      ${esc(String(eb.future_tool_broker_required))}</p>
+    <h4>Scope binding</h4>
+    <p><b>cross-tenant allowed</b>
+      <b class="${sb.cross_tenant_allowed ? 'err' : 'ok'}">${esc(String(
+        sb.cross_tenant_allowed))}</b> · <b>scope expansion</b>
+      ${esc(String(sb.scope_expansion_detected))}</p>
+    <h4>Proof bundle / broker-readiness</h4>
+    <p><b>proof bundle</b> ${proj ? esc(
+      proj.contract_proof_bundle.proof_bundle_status) : 'n/a'} ·
+      <b>certificate</b> ${cert ? esc(
+        cert.broker_readiness_certificate.certificate_status) : 'n/a'}</p>
+    <ul>${(c.honesty_labels||[]).map(l =>
+      `<li><small>${esc(l)}</small></li>`).join('')}</ul>`;
+};
+
+window.verifyContract = async (toolId, cid) => {
+  const {data} = await send('POST',
+    '/ai-tools/' + toolId + '/contracts/' + cid + '/verify', {});
+  $('tool-contract-msg').innerHTML = `verify <b class="${
+    data.verification_status === 'MATCHED' ? 'ok' : 'err'}">${
+    esc(data.verification_status)}</b>`;
+};
+window.projectContract = async (toolId, cid) => {
+  const {data} = await send('POST',
+    '/ai-tools/' + toolId + '/contracts/' + cid + '/project',
+    {target: 'MCP_LIKE_TOOL_DESCRIPTOR'});
+  $('tool-contract-msg').innerHTML = `projection <b>${esc(
+    data.projection_status)}</b>`;
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -2989,6 +3096,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 {ARTIFACTS_SECTIONS}
 {TOOLS_SECTIONS}
 {QUALITY_SECTIONS}
+{CONTRACTS_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -3121,7 +3229,8 @@ boot();
 <script>{LIFECYCLE_JS}</script>
 <script>{ARTIFACTS_JS}</script>
 <script>{TOOLS_JS}</script>
-<script>{QUALITY_JS}</script></body></html>"""
+<script>{QUALITY_JS}</script>
+<script>{CONTRACTS_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:
