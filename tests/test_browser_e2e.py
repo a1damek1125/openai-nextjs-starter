@@ -6,6 +6,7 @@ client upload link → upload → missing item resolves → close WON → audit
 chain shows VALID. Skips cleanly if Playwright/Chromium are unavailable.
 """
 import os
+import re
 import socket
 import subprocess
 import sys
@@ -297,13 +298,50 @@ def test_governance_ui_in_browser(server, page):
 
     # Produce a REAL rate-limit block through the UI: the second photo
     # request within the cooldown is refused by the ACE spam guard.
+    #
+    # Determinism note: the ACE consent gate DEFERS (rather than sends)
+    # non-urgent client contact when the server's wall-clock hour is outside
+    # the recipient's business-hours window (ChannelPreference
+    # .preferred_time_window, default 08:00-21:00). A *deferred* request still
+    # returns an upload_url, but it is NOT recorded by the spam guard — so no
+    # cooldown is ever armed, and a second request is *also* merely deferred
+    # (a fresh "Upload link"), never rate-limited. That made this assertion
+    # pass or fail purely on the clock hour the suite happened to run at.
+    # Send both requests as `urgent` so they actually go out at any hour: the
+    # first arms the spam-guard cooldown, the second is then genuinely refused
+    # by it — the real ACE rate-limit block this test exists to prove (still
+    # surfaced in governance below), now independent of time of day.
     page.locator("#cases table tr", has_text="Boiler service") \
         .locator("button").click()
     page.wait_for_selector("#case-title")
-    page.click("text=Request photos")
+    case_id = re.search(
+        r"requestPhoto\('([^']+)'\)",
+        page.get_attribute("text=Request photos", "onclick")).group(1)
+
+    def _request_photos_urgent():
+        # Mirrors window.requestPhoto (same endpoint + #case-msg rendering),
+        # adding urgent:true so the send is not deferred by business hours.
+        return page.evaluate(
+            """async (id) => {
+              const resp = await fetch('/actions/request', {
+                method: 'POST',
+                headers: {'Authorization':
+                            'Bearer ' + localStorage.getItem('finalis_token'),
+                          'Content-Type': 'application/json'},
+                body: JSON.stringify({case_id: id,
+                  action_type: 'send_photo_request', reason: 'ui',
+                  payload: {urgent: true}})});
+              const r = await resp.json();
+              document.getElementById('case-msg').innerHTML = r.upload_url ?
+                ('Upload link sent (mock): ' + r.upload_url)
+                : ('Status: ' + r.status + ' (' + r.reason + ')');
+              return r;
+            }""", case_id)
+
+    _request_photos_urgent()
     page.wait_for_selector("#case-msg:has-text('Upload link')",
                            timeout=10000)
-    page.click("text=Request photos")
+    _request_photos_urgent()
     page.wait_for_selector("#case-msg:has-text('rate_limited')",
                            timeout=10000)
 

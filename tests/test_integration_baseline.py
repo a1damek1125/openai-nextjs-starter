@@ -15,7 +15,7 @@ from finalis.portal.app import create_app
 from finalis.portal.db import MIGRATIONS, Database
 from finalis.portal.seed import seed
 
-EXPECTED_DB_VERSION = 14
+EXPECTED_DB_VERSION = 15
 
 
 @pytest.fixture()
@@ -87,6 +87,8 @@ class TestMigrations:
                 "ai_approval_grants"} <= tables
         # ViktorAI Lifecycle Kernel transition ledger (v14).
         assert {"ai_task_transitions"} <= tables
+        # ViktorAI Artifact System (v15).
+        assert {"ai_artifacts", "ai_artifact_versions"} <= tables
 
     def test_evidence_ve_columns_survived_renumber(self, tmp_path):
         db = Database(str(tmp_path / "c.db"))

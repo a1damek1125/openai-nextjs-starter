@@ -5202,6 +5202,846 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
             "completion_criteria_hash"], "completion_result_hash": comp[
             "completion_result_hash"], "honesty_labels": _lc.HONESTY_LABELS}
 
+    # ---- ViktorAI Evidence-Grade Artifact System (CORE-A6) --------------------------
+    from ..ai_employee import artifacts as _art
+    from ..ai_employee.artifact_store import AIArtifactStore
+    artifact_store = AIArtifactStore(db)
+    app.state.artifact_store = artifact_store
+
+    def _art_task_context(task_id, tid):
+        """(task_payload, contract_hash, envelope_hash, task_state, run) for a
+        linked task. Tenant-scoped; returns Nones when no task is linked."""
+        if not task_id:
+            return None, None, None, None, None
+        row = task_store.get(task_id, tenant_id=tid)
+        if row is None:
+            raise HTTPException(404, "linked task not found")
+        tp = json.loads(row["payload_json"])
+        state = _lc_current_state(task_id, tid, tp)
+        run = _lc_run_for_task(task_id, tid)
+        return (tp, tp.get("canonical_task_contract_hash"),
+                tp.get("canonical_task_envelope_hash"), state, run)
+
+    def _art_approval_valid(task_id, tid):
+        if not task_id:
+            return False, None
+        status, grant = _lc_grant_validation(
+            json.loads(task_store.get(task_id, tenant_id=tid)["payload_json"]),
+            tid) if task_store.get(task_id, tenant_id=tid) else ("NONE", None)
+        return status == "VALID", grant
+
+    def _art_dependencies(dep_ids, tid, artifact_id):
+        """Validate + snapshot dependencies (same tenant, exist, no self-cycle).
+        Returns the dependency snapshot list."""
+        if _art.detect_cycle(artifact_id, dep_ids):
+            raise HTTPException(400, "artifact cannot depend on itself")
+        deps = []
+        for did in dep_ids or []:
+            drow = artifact_store.get(did, tenant_id=tid)
+            if drow is None:                       # incl. cross-tenant
+                raise HTTPException(400, f"dependency artifact {did} not found")
+            lv = artifact_store.latest_version(did, tenant_id=tid)
+            deps.append({"artifact_id": did,
+                         "version_number": drow["artifact_version"],
+                         "version_hash": (lv or {}).get("version_hash")})
+        return deps
+
+    def _assemble_artifact(*, artifact_id, version_id, version_number, tid,
+                           prev_version, artifact_type, trust_tier,
+                           content_format, content_body, artifact_title,
+                           purpose, task_id, run, approval_request_id,
+                           approval_grant, created_by_actor_id,
+                           created_by_actor_type, assigned_ai_employee_id,
+                           contract_hash, envelope_hash, task_state,
+                           evidence_refs, report_refs, subject_type, subject_id,
+                           dep_ids, dep_snaps, supersedes_artifact_id,
+                           claims_input, requires_approval, approval_valid,
+                           creator_role, created_at):
+        scanner = _art.scan_content(content_body)
+        quarantined = scanner["quarantine_status"] == "QUARANTINED"
+        envelope = _art.build_content_envelope(
+            content_format=content_format, content_role=purpose or "draft",
+            content_trust_level=("QUARANTINED_CONTENT" if quarantined
+                                 else ("AI_DRAFT" if created_by_actor_type
+                                       in ("ai_employee", "ai_worker")
+                                       else "USER_PROVIDED")),
+            content_body=content_body, scanner=scanner)
+        c_hash = _art.content_hash(envelope)
+        claim_graph = _art.build_claim_graph(
+            artifact_id=artifact_id, artifact_version_id=version_id,
+            tenant_id=tid, claims_input=claims_input, source_text=content_body)
+        cg_hash = claim_graph["claim_graph_hash"]
+        claims_supported = _art.claims_all_supported(claim_graph)
+        run_id = (run or {}).get("run_id")
+        approval_grant_hash = (approval_grant or {}).get("approval_grant_hash")
+        provenance = _art.build_provenance(
+            artifact_id=artifact_id, artifact_version_id=version_id,
+            tenant_id=tid, task_id=task_id, run_id=run_id,
+            approval_request_id=approval_request_id,
+            created_by_actor_id=created_by_actor_id,
+            created_by_actor_type=created_by_actor_type,
+            assigned_ai_employee_id=assigned_ai_employee_id,
+            dependency_artifact_ids=dep_ids, evidence_refs=evidence_refs,
+            report_refs=report_refs,
+            supersedes_artifact_id=supersedes_artifact_id, has_claim=True,
+            has_abom=True)
+        capsule = _art.build_policy_capsule(
+            artifact_id=artifact_id, tenant_id=tid, task_id=task_id,
+            run_id=run_id, approval_request_id=approval_request_id,
+            approval_grant_id=(approval_grant or {}).get("approval_grant_id"),
+            artifact_type=artifact_type, artifact_status="DRAFT",
+            artifact_trust_tier=trust_tier,
+            creator_actor_type=created_by_actor_type, creator_role=creator_role,
+            task_state=task_state, task_contract_hash=contract_hash,
+            task_envelope_hash=envelope_hash,
+            run_state_hash=(run or {}).get("run_state_hash"),
+            approval_grant_hash=approval_grant_hash,
+            requires_approval=requires_approval,
+            requires_human_review=trust_tier in ("AI_DRAFT_UNVERIFIED",
+                                                 "HUMAN_REVIEW_REQUIRED"),
+            requires_safe_view=quarantined,
+            allowed_for_completion=not quarantined,
+            allowed_for_tool_input=artifact_type in _art.TOOL_INPUT_TYPES
+            and not quarantined,
+            claims_required=artifact_type in ("PROOF_SUMMARY",
+                                              "RISK_ASSESSMENT"),
+            blocked_reasons=[], quarantine_reasons=(
+                [scanner["quarantine_reason"]] if quarantined else []),
+            required_reviews=[], required_redactions=[], created_at=created_at)
+        capsule_hash = _art.policy_capsule_hash(capsule)
+        abom = _art.build_abom(
+            artifact_id=artifact_id, artifact_version_id=version_id,
+            tenant_id=tid, artifact_type=artifact_type,
+            content_format=content_format, input_sources=[],
+            source_channels=["WEB"], dependency_artifact_versions=dep_snaps,
+            evidence_refs=evidence_refs, report_refs=report_refs,
+            task_refs=[task_id] if task_id else [],
+            run_refs=[run_id] if run_id else [],
+            approval_refs=[approval_request_id] if approval_request_id else [],
+            policy_capsule_hash=capsule_hash, scanner_hash=scanner[
+                "scanner_hash"], trust_tier=trust_tier)
+        dep_graph = _art.build_dependency_graph(
+            artifact_id=artifact_id, tenant_id=tid, dependencies=dep_snaps)
+        lineage = _art.build_lineage(
+            artifact_id=artifact_id, tenant_id=tid, task_id=task_id,
+            run_id=run_id, approval_request_id=approval_request_id,
+            evidence_refs=evidence_refs, report_refs=report_refs,
+            dependency_artifact_ids=dep_ids,
+            supersedes_artifact_id=supersedes_artifact_id,
+            is_tool_input=artifact_type in _art.TOOL_INPUT_TYPES,
+            is_safe_view_of=None, quarantined_from=None,
+            decontaminated_from=None)
+
+        # status derivation (fail-closed): quarantine/approval gate readiness.
+        blocked_reasons = []
+        if quarantined:
+            status = "QUARANTINED"
+            trust_tier = "QUARANTINED"
+        elif requires_approval and not approval_valid:
+            status = "NEEDS_REVIEW"
+            blocked_reasons.append("valid human approval grant required before "
+                                   "validation")
+        else:
+            status = "DRAFT"
+        capsule["artifact_status"] = status
+        subject_refs = [subject_id] if subject_id else []
+
+        manifest = _art.build_manifest(
+            artifact_id=artifact_id, tenant_id=tid, artifact_type=artifact_type,
+            artifact_status=status, artifact_trust_tier=trust_tier,
+            task_id=task_id, run_id=run_id,
+            approval_request_id=approval_request_id,
+            approval_grant_id=(approval_grant or {}).get("approval_grant_id"),
+            created_by_actor_id=created_by_actor_id,
+            created_by_actor_type=created_by_actor_type,
+            task_contract_hash=contract_hash, task_envelope_hash=envelope_hash,
+            task_state_hash=None, run_state_hash=(run or {}).get(
+                "run_state_hash"), run_chain_hash=(run or {}).get(
+                "run_chain_hash"), approval_grant_hash=approval_grant_hash,
+            content_hash=c_hash, version_hash=None, claim_graph_hash=cg_hash,
+            dependency_hashes=[d["version_hash"] for d in dep_snaps],
+            provenance_hash=provenance["provenance_hash"],
+            abom_hash=abom["abom_hash"], evidence_refs=evidence_refs,
+            report_refs=report_refs, subject_refs=subject_refs,
+            redaction_profile="FULL_VIEW", safe_view_available=True,
+            quarantine_status=scanner["quarantine_status"],
+            materialization_status="PENDING", retention_hint="DEFAULT_30D",
+            legal_hold_hint=None)
+        m_hash = manifest["manifest_hash"]
+        v_hash = _art.version_hash(
+            artifact_id=artifact_id, version_number=version_number,
+            content_hash=c_hash, manifest_hash=m_hash, claim_graph_hash=cg_hash,
+            provenance_hash=provenance["provenance_hash"],
+            abom_hash=abom["abom_hash"],
+            previous_version_hash=(prev_version or {}).get("version_hash"),
+            created_by_actor_id=created_by_actor_id)
+        manifest["version_hash"] = v_hash
+        prev_chain = (prev_version or {}).get("version_chain_hash")
+        chain_hash = _art.version_chain_hash(prev_chain, v_hash)
+
+        art_head = {"artifact_id": artifact_id, "artifact_type": artifact_type,
+                    "artifact_status": status,
+                    "quarantine_status": scanner["quarantine_status"],
+                    "claims_required": capsule["artifact_claims_required"],
+                    "artifact_trust_tier": trust_tier,
+                    "artifact_title": artifact_title}
+        mat = _art.materialization_check(art_head,
+                                         claims_supported=claims_supported,
+                                         approval_valid=approval_valid)
+        state_hash = _art.artifact_state_hash(
+            artifact_id=artifact_id, tenant_id=tid, artifact_type=artifact_type,
+            artifact_status=status, artifact_trust_tier=trust_tier,
+            latest_version_id=version_id, version_number=version_number,
+            task_id=task_id, run_id=run_id,
+            approval_request_id=approval_request_id,
+            approval_grant_hash=approval_grant_hash,
+            task_contract_hash=contract_hash, content_hash=c_hash,
+            manifest_hash=m_hash, claim_graph_hash=cg_hash,
+            provenance_hash=provenance["provenance_hash"],
+            abom_hash=abom["abom_hash"],
+            dependency_graph_hash=dep_graph["dependency_graph_hash"],
+            lineage_hash=lineage["artifact_lineage_hash"],
+            quarantine_status=scanner["quarantine_status"],
+            materialization_status=mat["materialization_status"],
+            version_chain_hash=chain_hash)
+
+        version_payload = {
+            "artifact_version_id": version_id, "artifact_id": artifact_id,
+            "tenant_id": tid, "version_number": version_number,
+            "version_status": status, "content_envelope": envelope,
+            "content_format": content_format, "content_hash": c_hash,
+            "manifest": manifest, "manifest_hash": m_hash,
+            "claim_graph": claim_graph, "claim_graph_hash": cg_hash,
+            "provenance": provenance,
+            "provenance_hash": provenance["provenance_hash"],
+            "abom": abom, "abom_hash": abom["abom_hash"],
+            "dependency_graph": dep_graph, "lineage": lineage,
+            "policy_capsule": capsule, "policy_capsule_hash": capsule_hash,
+            "scanner": scanner, "scanner_hash": scanner["scanner_hash"],
+            "version_hash": v_hash,
+            "previous_version_hash": (prev_version or {}).get("version_hash"),
+            "version_chain_hash": chain_hash,
+            "created_by_actor_id": created_by_actor_id,
+            "created_at": created_at, "honesty_labels": _art.HONESTY_LABELS,
+        }
+        head_meta = {
+            "artifact_status": status, "artifact_trust_tier": trust_tier,
+            "quarantine_status": scanner["quarantine_status"],
+            "materialization_status": mat["materialization_status"],
+            "content_hash": c_hash, "manifest_hash": m_hash,
+            "state_hash": state_hash, "version_hash": v_hash,
+            "claims_supported": claims_supported,
+            "unsupported_claim_count": claim_graph["unsupported_count"]
+            + claim_graph["needs_review_count"],
+            "blocked_reasons": blocked_reasons, "approval_grant": approval_grant,
+        }
+        return version_payload, head_meta, mat
+
+    def _art_deny_forbidden_type(atype):
+        if atype in _art.FORBIDDEN_TYPES:
+            raise HTTPException(400, f"artifact type {atype} is not implemented "
+                                "and cannot be created (future-only type)")
+        if atype not in _art.ARTIFACT_TYPES:
+            raise HTTPException(400, f"unknown artifact type {atype}")
+
+    def _load_artifact_or_404(artifact_id, user):
+        p = artifact_store.payload(artifact_id, tenant_id=user["tid"])
+        if p is None:                              # incl. cross-tenant
+            raise HTTPException(404, "artifact not found")
+        return p
+
+    @app.get("/ai-artifacts/types")
+    async def artifact_types(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {"artifact_types": sorted(_art.ARTIFACT_TYPES),
+                "forbidden_types": sorted(_art.FORBIDDEN_TYPES),
+                "statuses": sorted(_art.ARTIFACT_STATUSES),
+                "trust_tiers": sorted(_art.TRUST_TIERS),
+                "content_formats": sorted(_art.CONTENT_FORMATS),
+                "honesty_labels": _art.HONESTY_LABELS}
+
+    @app.get("/ai-artifacts/lifecycle-dashboard")
+    async def artifact_dashboard(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        by_type, by_status = {}, {}
+        quarantined = blocked = 0
+        for a in artifact_store.list(tenant_id=user["tid"]):
+            by_type[a["artifact_type"]] = by_type.get(a["artifact_type"], 0) + 1
+            by_status[a["artifact_status"]] = by_status.get(
+                a["artifact_status"], 0) + 1
+            if a["artifact_status"] == "QUARANTINED":
+                quarantined += 1
+            if a["artifact_status"] in ("BLOCKED", "NEEDS_REVIEW"):
+                blocked += 1
+        return {"artifacts_by_type": by_type, "artifacts_by_status": by_status,
+                "quarantined_count": quarantined, "blocked_count": blocked,
+                "honesty_labels": _art.HONESTY_LABELS}
+
+    @app.post("/ai-artifacts")
+    async def create_artifact(body: dict, user: dict = Depends(current_user)):
+        # Creating an artifact records a work product. It executes nothing: no
+        # send, tool, LLM, payment, CRM write, evidence rewrite or export.
+        require_permission(user, "case.update")
+        tid = user["tid"]
+        atype = str(body.get("artifact_type", ""))
+        _art_deny_forbidden_type(atype)
+        task_id = body.get("task_id")
+        tp, contract_hash, envelope_hash, task_state, run = _art_task_context(
+            task_id, tid)
+        approval_request_id = body.get("approval_request_id")
+        requires_approval = atype in _art.APPROVAL_REQUIRED_TYPES
+        approval_valid, approval_grant = (_art_approval_valid(task_id, tid)
+                                          if requires_approval
+                                          else (False, None))
+        dep_ids = [str(d) for d in (body.get("dependency_artifact_ids") or [])]
+        artifact_id = str(uuid.uuid4())
+        version_id = artifact_id + "-v1"
+        dep_snaps = _art_dependencies(dep_ids, tid, artifact_id)
+        now = utcnow()
+        actor_type = "ai_employee" if user["role"] == "ai_worker" else "human"
+        trust_tier = _art.default_trust_tier(atype, actor_type)
+        assigned = (tp or {}).get("assigned_ai_employee_id", "") if tp else ""
+
+        version_payload, head, mat = _assemble_artifact(
+            artifact_id=artifact_id, version_id=version_id, version_number=1,
+            tid=tid, prev_version=None, artifact_type=atype,
+            trust_tier=trust_tier,
+            content_format=str(body.get("content_format", "TEXT")),
+            content_body=str(body.get("content_body", body.get("content", ""))),
+            artifact_title=str(body.get("artifact_title", "")),
+            purpose=body.get("artifact_purpose"), task_id=task_id, run=run,
+            approval_request_id=approval_request_id,
+            approval_grant=approval_grant, created_by_actor_id=user["uid"],
+            created_by_actor_type=actor_type, assigned_ai_employee_id=assigned,
+            contract_hash=contract_hash, envelope_hash=envelope_hash,
+            task_state=task_state, evidence_refs=[str(e) for e in (
+                body.get("evidence_refs") or [])],
+            report_refs=[str(r) for r in (body.get("report_refs") or [])],
+            subject_type=body.get("subject_type"),
+            subject_id=body.get("subject_id"), dep_ids=dep_ids,
+            dep_snaps=dep_snaps, supersedes_artifact_id=None,
+            claims_input=body.get("claims") or [],
+            requires_approval=requires_approval, approval_valid=approval_valid,
+            creator_role=user["role"], created_at=now)
+
+        payload = {
+            "artifact_id": artifact_id, "tenant_id": tid, "task_id": task_id,
+            "run_id": (run or {}).get("run_id"),
+            "approval_request_id": approval_request_id,
+            "approval_grant_id": (approval_grant or {}).get(
+                "approval_grant_id"),
+            "created_by_actor_id": user["uid"], "created_by_actor_type":
+            actor_type, "created_by_role": user["role"],
+            "assigned_ai_employee_id": assigned, "artifact_type": atype,
+            "artifact_status": head["artifact_status"],
+            "artifact_trust_tier": head["artifact_trust_tier"],
+            "artifact_title": str(body.get("artifact_title", "")),
+            "artifact_purpose": body.get("artifact_purpose"),
+            "artifact_version": 1, "latest_version_id": version_id,
+            "artifact_manifest_hash": head["manifest_hash"],
+            "artifact_content_hash": head["content_hash"],
+            "artifact_state_hash": head["state_hash"],
+            "artifact_version_hash": head["version_hash"],
+            "artifact_claim_graph_hash": version_payload["claim_graph_hash"],
+            "artifact_provenance_hash": version_payload["provenance_hash"],
+            "artifact_abom_hash": version_payload["abom_hash"],
+            "artifact_dependency_graph_hash": version_payload[
+                "dependency_graph"]["dependency_graph_hash"],
+            "artifact_lineage_hash": version_payload["lineage"][
+                "artifact_lineage_hash"],
+            "artifact_policy_capsule_hash": version_payload[
+                "policy_capsule_hash"],
+            "task_contract_hash": contract_hash or "",
+            "task_envelope_hash": envelope_hash,
+            "run_state_hash": (run or {}).get("run_state_hash"),
+            "subject_type": body.get("subject_type"),
+            "subject_id": body.get("subject_id"),
+            "case_id": body.get("subject_id") if body.get("subject_type")
+            == "case" else None, "supersedes_artifact_id": None,
+            "dependency_artifact_ids": dep_ids,
+            "evidence_refs": [str(e) for e in (body.get("evidence_refs")
+                                               or [])],
+            "report_refs": [str(r) for r in (body.get("report_refs") or [])],
+            "safe_view_available": True, "redaction_profile": "FULL_VIEW",
+            "quarantine_status": head["quarantine_status"],
+            "quarantine_reason": version_payload["scanner"].get(
+                "quarantine_reason"),
+            "materialization_status": head["materialization_status"],
+            "claims_required": version_payload["policy_capsule"][
+                "artifact_claims_required"],
+            "unsupported_claim_count": head["unsupported_claim_count"],
+            "retention_hint": "DEFAULT_30D", "legal_hold_hint": None,
+            "blocked_reason": (head["blocked_reasons"][0]
+                               if head["blocked_reasons"] else None),
+            "created_at": now, "updated_at": now, "expires_at": None,
+            "honesty_labels": _art.HONESTY_LABELS,
+        }
+        artifact_store.save({
+            "id": artifact_id, "tenant_id": tid, "task_id": task_id,
+            "run_id": (run or {}).get("run_id"),
+            "approval_request_id": approval_request_id,
+            "approval_grant_id": (approval_grant or {}).get(
+                "approval_grant_id"),
+            "created_by_actor_id": user["uid"], "created_by_actor_type":
+            actor_type, "assigned_ai_employee_id": assigned,
+            "artifact_type": atype, "artifact_status": head["artifact_status"],
+            "artifact_trust_tier": head["artifact_trust_tier"],
+            "artifact_version": 1, "latest_version_id": version_id,
+            "artifact_state_hash": head["state_hash"],
+            "artifact_manifest_hash": head["manifest_hash"],
+            "artifact_content_hash": head["content_hash"],
+            "quarantine_status": head["quarantine_status"],
+            "materialization_status": head["materialization_status"],
+            "supersedes_artifact_id": None,
+            "task_contract_hash": contract_hash or "",
+            "subject_type": body.get("subject_type"),
+            "subject_id": body.get("subject_id"),
+            "case_id": payload["case_id"], "payload_json": json.dumps(payload),
+            "created_by": user["uid"], "created_at": now, "updated_at": now,
+            "expires_at": None})
+        artifact_store.save_version({
+            "id": version_id, "artifact_id": artifact_id, "tenant_id": tid,
+            "version_number": 1, "version_status": head["artifact_status"],
+            "content_format": str(body.get("content_format", "TEXT")),
+            "content_hash": head["content_hash"], "manifest_hash": head[
+                "manifest_hash"], "claim_graph_hash": version_payload[
+                "claim_graph_hash"], "provenance_hash": version_payload[
+                "provenance_hash"], "abom_hash": version_payload["abom_hash"],
+            "version_hash": head["version_hash"], "previous_version_hash": None,
+            "version_chain_hash": version_payload["version_chain_hash"],
+            "created_by_actor_id": user["uid"],
+            "payload_json": json.dumps(version_payload), "created_at": now})
+        audit.append(event_type="AI_ARTIFACT_CREATED", actor=user["uid"],
+                     payload={"artifact_id": artifact_id, "type": atype,
+                              "status": head["artifact_status"]})
+        return payload
+
+    @app.get("/ai-artifacts")
+    async def list_artifacts(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return artifact_store.list(tenant_id=user["tid"])
+
+    @app.get("/ai-artifacts/{artifact_id}")
+    async def get_artifact(artifact_id: str,
+                           user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _load_artifact_or_404(artifact_id, user)
+
+    @app.get("/ai-artifacts/{artifact_id}/safe")
+    async def get_artifact_safe(artifact_id: str,
+                                user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        p = _load_artifact_or_404(artifact_id, user)
+        lv = artifact_store.latest_version(artifact_id, tenant_id=user["tid"])
+        restricted = user["role"] in ("viewer", "technician", "accountant")
+        return _art.build_safe_view(p, lv, restricted=restricted)
+
+    @app.get("/ai-artifacts/{artifact_id}/versions")
+    async def list_artifact_versions(artifact_id: str,
+                                     user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_artifact_or_404(artifact_id, user)
+        return {"artifact_id": artifact_id,
+                "versions": artifact_store.versions(artifact_id,
+                                                    tenant_id=user["tid"]),
+                "honesty_labels": _art.HONESTY_LABELS}
+
+    @app.get("/ai-artifacts/{artifact_id}/versions/{version_id}")
+    async def get_artifact_version(artifact_id: str, version_id: str,
+                                   user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_artifact_or_404(artifact_id, user)
+        v = artifact_store.version(artifact_id, version_id,
+                                   tenant_id=user["tid"])
+        if v is None:
+            raise HTTPException(404, "artifact version not found")
+        return v
+
+    @app.post("/ai-artifacts/{artifact_id}/versions")
+    async def create_artifact_version(artifact_id: str, body: dict,
+                                      user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        tid = user["tid"]
+        p = _load_artifact_or_404(artifact_id, user)
+        if p["artifact_status"] in _art.TERMINAL_STATUSES:
+            raise HTTPException(409, f"artifact is {p['artifact_status']} and "
+                                "cannot be versioned")
+        # A quarantined artifact can NEVER be un-quarantined by editing it in
+        # place — that would silently clear the quarantine gate and re-admit it
+        # to completion/materialization/tool-input. Quarantine preserves the
+        # artifact and blocks future use; a safe successor must go through the
+        # decontamination lane (a NEW derivative artifact), which is
+        # MISSING/NEXT in this mission.
+        if p["artifact_status"] == "QUARANTINED" \
+                or p.get("quarantine_status") == "QUARANTINED":
+            raise HTTPException(409, "quarantined artifact cannot be versioned "
+                                "in place; use the decontamination lane to "
+                                "create a safe derivative")
+        prev = artifact_store.latest_version(artifact_id, tenant_id=tid)
+        vnum = artifact_store.next_version_number(artifact_id, tenant_id=tid)
+        version_id = f"{artifact_id}-v{vnum}"
+        task_id = p.get("task_id")
+        tp, contract_hash, envelope_hash, task_state, run = _art_task_context(
+            task_id, tid)
+        requires_approval = p["artifact_type"] in _art.APPROVAL_REQUIRED_TYPES
+        approval_valid, approval_grant = (_art_approval_valid(task_id, tid)
+                                          if requires_approval
+                                          else (False, None))
+        dep_ids = p.get("dependency_artifact_ids") or []
+        dep_snaps = _art_dependencies(dep_ids, tid, artifact_id)
+        now = utcnow()
+        version_payload, head, mat = _assemble_artifact(
+            artifact_id=artifact_id, version_id=version_id, version_number=vnum,
+            tid=tid, prev_version=prev, artifact_type=p["artifact_type"],
+            trust_tier=p["artifact_trust_tier"],
+            content_format=str(body.get("content_format",
+                                        p.get("content_format", "TEXT"))),
+            content_body=str(body.get("content_body", body.get("content", ""))),
+            artifact_title=p.get("artifact_title"),
+            purpose=p.get("artifact_purpose"), task_id=task_id, run=run,
+            approval_request_id=p.get("approval_request_id"),
+            approval_grant=approval_grant,
+            created_by_actor_id=user["uid"],
+            created_by_actor_type=("ai_employee" if user["role"] == "ai_worker"
+                                   else "human"),
+            assigned_ai_employee_id=p.get("assigned_ai_employee_id", ""),
+            contract_hash=contract_hash, envelope_hash=envelope_hash,
+            task_state=task_state, evidence_refs=p.get("evidence_refs") or [],
+            report_refs=p.get("report_refs") or [],
+            subject_type=p.get("subject_type"), subject_id=p.get("subject_id"),
+            dep_ids=dep_ids, dep_snaps=dep_snaps, supersedes_artifact_id=None,
+            claims_input=body.get("claims") or [],
+            requires_approval=requires_approval, approval_valid=approval_valid,
+            creator_role=user["role"], created_at=now)
+        p.update({
+            "artifact_version": vnum, "latest_version_id": version_id,
+            "artifact_status": head["artifact_status"],
+            "artifact_trust_tier": head["artifact_trust_tier"],
+            "artifact_manifest_hash": head["manifest_hash"],
+            "artifact_content_hash": head["content_hash"],
+            "artifact_state_hash": head["state_hash"],
+            "artifact_version_hash": head["version_hash"],
+            "artifact_claim_graph_hash": version_payload["claim_graph_hash"],
+            "artifact_provenance_hash": version_payload["provenance_hash"],
+            "artifact_abom_hash": version_payload["abom_hash"],
+            "quarantine_status": head["quarantine_status"],
+            "materialization_status": head["materialization_status"],
+            "unsupported_claim_count": head["unsupported_claim_count"],
+            "updated_at": now,
+            "change_reason": str(body.get("change_reason", "")),
+        })
+        artifact_store.save_version({
+            "id": version_id, "artifact_id": artifact_id, "tenant_id": tid,
+            "version_number": vnum, "version_status": head["artifact_status"],
+            "content_format": version_payload["content_format"],
+            "content_hash": head["content_hash"], "manifest_hash": head[
+                "manifest_hash"], "claim_graph_hash": version_payload[
+                "claim_graph_hash"], "provenance_hash": version_payload[
+                "provenance_hash"], "abom_hash": version_payload["abom_hash"],
+            "version_hash": head["version_hash"], "previous_version_hash": (
+                prev or {}).get("version_hash"), "version_chain_hash":
+            version_payload["version_chain_hash"],
+            "created_by_actor_id": user["uid"],
+            "payload_json": json.dumps(version_payload), "created_at": now})
+        artifact_store.update_head(
+            artifact_id, tenant_id=tid, payload=p,
+            artifact_version=vnum, latest_version_id=version_id,
+            artifact_status=head["artifact_status"],
+            artifact_trust_tier=head["artifact_trust_tier"],
+            artifact_state_hash=head["state_hash"],
+            artifact_manifest_hash=head["manifest_hash"],
+            artifact_content_hash=head["content_hash"],
+            quarantine_status=head["quarantine_status"],
+            materialization_status=head["materialization_status"],
+            updated_at=now)
+        audit.append(event_type="AI_ARTIFACT_VERSION_CREATED",
+                     actor=user["uid"], payload={"artifact_id": artifact_id,
+                                                 "version": vnum})
+        return {"artifact_id": artifact_id, "version_number": vnum,
+                "artifact_version": version_payload,
+                "honesty_labels": _art.HONESTY_LABELS}
+
+    @app.post("/ai-artifacts/{artifact_id}/verify")
+    async def verify_artifact(artifact_id: str,
+                              user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        p = _load_artifact_or_404(artifact_id, user)
+        tid = user["tid"]
+        versions = artifact_store.versions(artifact_id, tenant_id=tid)
+        reasons, chain_prev, chain_ok = [], None, True
+        for v in versions:
+            env = v["content_envelope"]
+            if _art.content_hash(env) != v["content_hash"]:
+                reasons.append(f"v{v['version_number']}: content hash mismatch")
+            if _art.manifest_hash(v["manifest"]) != v["manifest_hash"]:
+                reasons.append(f"v{v['version_number']}: manifest hash "
+                               "mismatch")
+            if _art.claim_graph_hash(v["claim_graph"]) != v["claim_graph_hash"]:
+                reasons.append(f"v{v['version_number']}: claim graph mismatch")
+            if _art.provenance_hash(v["provenance"]) != v["provenance_hash"]:
+                reasons.append(f"v{v['version_number']}: provenance mismatch")
+            if _art.abom_hash(v["abom"]) != v["abom_hash"]:
+                reasons.append(f"v{v['version_number']}: ABOM mismatch")
+            recomputed_v = _art.version_hash(
+                artifact_id=artifact_id, version_number=v["version_number"],
+                content_hash=v["content_hash"], manifest_hash=v["manifest_hash"],
+                claim_graph_hash=v["claim_graph_hash"],
+                provenance_hash=v["provenance_hash"], abom_hash=v["abom_hash"],
+                previous_version_hash=v.get("previous_version_hash"),
+                created_by_actor_id=v["created_by_actor_id"])
+            if recomputed_v != v["version_hash"]:
+                reasons.append(f"v{v['version_number']}: version hash mismatch")
+            if _art.version_chain_hash(
+                    (None if chain_prev is None else chain_prev),
+                    v["version_hash"]) != v["version_chain_hash"]:
+                chain_ok = False
+                reasons.append(f"v{v['version_number']}: version chain "
+                               "mismatch")
+            chain_prev = v["version_chain_hash"]
+            # dependency drift
+            for d in v["dependency_graph"]["dependencies"]:
+                lv = artifact_store.latest_version(d["artifact_id"],
+                                                   tenant_id=tid)
+                if lv and d["version_hash"] and lv["version_hash"] != d[
+                        "version_hash"]:
+                    reasons.append(f"v{v['version_number']}: dependency "
+                                   f"{d['artifact_id'][:8]} drifted")
+        # Head integrity: the mutable head row (which materialization and
+        # completion consume) must agree with the latest version's hashes, so a
+        # direct head-column tamper is also caught.
+        lv = versions[-1] if versions else None
+        if lv is not None:
+            if p.get("artifact_content_hash") != lv["content_hash"]:
+                reasons.append("head content hash diverges from latest version")
+            if p.get("artifact_manifest_hash") != lv["manifest_hash"]:
+                reasons.append("head manifest hash diverges from latest "
+                               "version")
+            if p.get("artifact_version_hash") != lv["version_hash"]:
+                reasons.append("head version hash diverges from latest version")
+        status = "MATCHED" if not reasons else "MISMATCHED"
+        return {"artifact_id": artifact_id, "verification_status": status,
+                "tamper_detected": bool(reasons), "tamper_reasons": reasons,
+                "version_chain_status": "VALID" if chain_ok else "MISMATCHED",
+                "versions_checked": len(versions),
+                "honesty_labels": _art.HONESTY_LABELS}
+
+    @app.get("/ai-artifacts/{artifact_id}/manifest")
+    async def get_artifact_manifest(artifact_id: str,
+                                    user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_artifact_or_404(artifact_id, user)
+        lv = artifact_store.latest_version(artifact_id, tenant_id=user["tid"])
+        return {"artifact_id": artifact_id, "manifest": lv["manifest"],
+                "manifest_hash": lv["manifest_hash"],
+                "honesty_labels": _art.HONESTY_LABELS}
+
+    @app.get("/ai-artifacts/{artifact_id}/lineage")
+    async def get_artifact_lineage(artifact_id: str,
+                                   user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_artifact_or_404(artifact_id, user)
+        lv = artifact_store.latest_version(artifact_id, tenant_id=user["tid"])
+        return {"artifact_id": artifact_id, "lineage": lv["lineage"],
+                "honesty_labels": _art.HONESTY_LABELS}
+
+    @app.get("/ai-artifacts/{artifact_id}/provenance")
+    async def get_artifact_provenance(artifact_id: str,
+                                      user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_artifact_or_404(artifact_id, user)
+        lv = artifact_store.latest_version(artifact_id, tenant_id=user["tid"])
+        return {"artifact_id": artifact_id, "provenance": lv["provenance"],
+                "provenance_hash": lv["provenance_hash"],
+                "honesty_labels": _art.HONESTY_LABELS}
+
+    @app.get("/ai-artifacts/{artifact_id}/claims")
+    async def get_artifact_claims(artifact_id: str,
+                                  user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_artifact_or_404(artifact_id, user)
+        lv = artifact_store.latest_version(artifact_id, tenant_id=user["tid"])
+        return {"artifact_id": artifact_id, "claim_graph": lv["claim_graph"],
+                "claim_graph_hash": lv["claim_graph_hash"],
+                "honesty_labels": _art.HONESTY_LABELS}
+
+    @app.get("/ai-artifacts/{artifact_id}/abom")
+    async def get_artifact_abom(artifact_id: str,
+                                user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_artifact_or_404(artifact_id, user)
+        lv = artifact_store.latest_version(artifact_id, tenant_id=user["tid"])
+        return {"artifact_id": artifact_id, "abom": lv["abom"],
+                "abom_hash": lv["abom_hash"],
+                "honesty_labels": _art.HONESTY_LABELS}
+
+    @app.get("/ai-artifacts/{artifact_id}/dependencies")
+    async def get_artifact_dependencies(artifact_id: str,
+                                        user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_artifact_or_404(artifact_id, user)
+        lv = artifact_store.latest_version(artifact_id, tenant_id=user["tid"])
+        return {"artifact_id": artifact_id,
+                "dependency_graph": lv["dependency_graph"],
+                "honesty_labels": _art.HONESTY_LABELS}
+
+    @app.post("/ai-artifacts/{artifact_id}/diff")
+    async def diff_artifact(artifact_id: str, body: dict,
+                            user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_artifact_or_404(artifact_id, user)
+        tid = user["tid"]
+        va = artifact_store.version(artifact_id, str(body.get("from_version_id",
+                                                              "")), tenant_id=tid)
+        vb = artifact_store.version(artifact_id, str(body.get("to_version_id",
+                                                              "")), tenant_id=tid)
+        if va is None or vb is None:
+            raise HTTPException(404, "version not found for diff")
+        changed = []
+        for field in ("content_hash", "manifest_hash", "claim_graph_hash",
+                      "provenance_hash", "abom_hash", "version_status"):
+            if va.get(field) != vb.get(field):
+                changed.append(field)
+        return {"artifact_id": artifact_id,
+                "from_version": va["version_number"],
+                "to_version": vb["version_number"], "changed_fields": changed,
+                "content_changed": va["content_hash"] != vb["content_hash"],
+                "honesty_labels": _art.HONESTY_LABELS}
+
+    @app.post("/ai-artifacts/{artifact_id}/supersede")
+    async def supersede_artifact(artifact_id: str, body: dict,
+                                 user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        tid = user["tid"]
+        p = _load_artifact_or_404(artifact_id, user)
+        if p["artifact_status"] in _art.TERMINAL_STATUSES:
+            raise HTTPException(409, f"artifact is {p['artifact_status']}")
+        now = utcnow()
+        p["artifact_status"] = "SUPERSEDED"
+        p["updated_at"] = now
+        artifact_store.update_head(artifact_id, tenant_id=tid, payload=p,
+                                   artifact_status="SUPERSEDED", updated_at=now)
+        return {"artifact_id": artifact_id, "artifact_status": "SUPERSEDED",
+                "honesty_labels": _art.HONESTY_LABELS}
+
+    @app.post("/ai-artifacts/{artifact_id}/archive")
+    async def archive_artifact(artifact_id: str,
+                               user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        tid = user["tid"]
+        p = _load_artifact_or_404(artifact_id, user)
+        now = utcnow()
+        p["artifact_status"] = "ARCHIVED"
+        p["updated_at"] = now
+        artifact_store.update_head(artifact_id, tenant_id=tid, payload=p,
+                                   artifact_status="ARCHIVED", updated_at=now)
+        return {"artifact_id": artifact_id, "artifact_status": "ARCHIVED",
+                "honesty_labels": _art.HONESTY_LABELS}
+
+    @app.post("/ai-artifacts/{artifact_id}/quarantine")
+    async def quarantine_artifact(artifact_id: str, body: dict,
+                                  user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        tid = user["tid"]
+        p = _load_artifact_or_404(artifact_id, user)
+        now = utcnow()
+        # Quarantine PRESERVES the artifact; it never deletes it.
+        p["artifact_status"] = "QUARANTINED"
+        p["artifact_trust_tier"] = "QUARANTINED"
+        p["quarantine_status"] = "QUARANTINED"
+        p["quarantine_reason"] = str(body.get("reason", "manual quarantine"))
+        p["materialization_status"] = "MATERIALIZATION_BLOCKED"
+        p["updated_at"] = now
+        artifact_store.update_head(
+            artifact_id, tenant_id=tid, payload=p,
+            artifact_status="QUARANTINED", artifact_trust_tier="QUARANTINED",
+            quarantine_status="QUARANTINED",
+            materialization_status="MATERIALIZATION_BLOCKED", updated_at=now)
+        audit.append(event_type="AI_ARTIFACT_QUARANTINED", actor=user["uid"],
+                     payload={"artifact_id": artifact_id})
+        return {"artifact_id": artifact_id, "artifact_status": "QUARANTINED",
+                "quarantine_label": "Artifact quarantine preserves the "
+                "artifact but blocks readiness and future use.",
+                "honesty_labels": _art.HONESTY_LABELS}
+
+    @app.post("/ai-artifacts/{artifact_id}/decontamination-check")
+    async def decontamination_check(artifact_id: str,
+                                    user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        p = _load_artifact_or_404(artifact_id, user)
+        # Validation-only. Never modifies the original quarantined artifact.
+        eligible = p["artifact_status"] == "QUARANTINED"
+        return {"artifact_id": artifact_id,
+                "decontamination_status": ("ELIGIBLE_FOR_DERIVATIVE"
+                                           if eligible
+                                           else "NOT_APPLICABLE"),
+                "original_modified": False,
+                "full_decontamination_lane": "NOT_IMPLEMENTED",
+                "note": "decontamination-check validates readiness only; the "
+                "original artifact is never modified. The full decontamination "
+                "lane is MISSING/NEXT.",
+                "honesty_labels": _art.HONESTY_LABELS}
+
+    @app.post("/ai-artifacts/{artifact_id}/materialization-check")
+    async def artifact_materialization_check(artifact_id: str,
+                                             user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        p = _load_artifact_or_404(artifact_id, user)
+        tid = user["tid"]
+        lv = artifact_store.latest_version(artifact_id, tenant_id=tid)
+        claims_supported = _art.claims_all_supported(lv["claim_graph"])
+        requires_approval = p["artifact_type"] in _art.APPROVAL_REQUIRED_TYPES
+        approval_valid, _g = (_art_approval_valid(p.get("task_id"), tid)
+                              if requires_approval else (False, None))
+        res = _art.materialization_check(p, claims_supported=claims_supported,
+                                         approval_valid=approval_valid)
+        return {"artifact_id": artifact_id, **res}
+
+    @app.get("/ai-tasks/{task_id}/artifacts")
+    async def task_artifacts(task_id: str,
+                             user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_task_or_404(task_id, user)
+        return {"task_id": task_id,
+                "artifacts": artifact_store.list_for_task(task_id,
+                                                          tenant_id=user["tid"]),
+                "honesty_labels": _art.HONESTY_LABELS}
+
+    @app.get("/ai-runs/{run_id}/artifacts")
+    async def run_artifacts(run_id: str, user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        if run_store.get_run(run_id, tenant_id=user["tid"]) is None:
+            raise HTTPException(404, "run not found")
+        return {"run_id": run_id,
+                "artifacts": artifact_store.list_for_run(run_id,
+                                                        tenant_id=user["tid"]),
+                "honesty_labels": _art.HONESTY_LABELS}
+
+    def _artifact_completion_contribution(task_id, tid):
+        """ArtifactCompletionContribution: which required artifacts are ready
+        and which are blockers. Pure derivation from stored artifact truth."""
+        arts = artifact_store.list_for_task(task_id, tenant_id=tid)
+        blockers = []
+        ready = []
+        for a in arts:
+            if a["artifact_status"] == "QUARANTINED":
+                blockers.append({"artifact_id": a["artifact_id"],
+                                 "blocker": "ARTIFACT_QUARANTINED"})
+            elif a["artifact_status"] in ("BLOCKED", "TAMPERED"):
+                blockers.append({"artifact_id": a["artifact_id"],
+                                 "blocker": "ARTIFACT_BLOCKED"})
+            elif a["artifact_status"] == "NEEDS_REVIEW":
+                blockers.append({"artifact_id": a["artifact_id"],
+                                 "blocker": "ARTIFACT_NEEDS_REVIEW"})
+            elif a.get("unsupported_claim_count", 0) > 0:
+                blockers.append({"artifact_id": a["artifact_id"],
+                                 "blocker": "ARTIFACT_CLAIM_UNSUPPORTED"})
+            else:
+                ready.append(a["artifact_id"])
+        return {"ready_artifacts": ready, "artifact_blockers": blockers}
+
+    app.state.artifact_completion_contribution = \
+        _artifact_completion_contribution
+
     # ---- UI pages -------------------------------------------------------------------------------------
     ui.mount(app)
     return app

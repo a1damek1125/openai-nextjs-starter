@@ -150,6 +150,7 @@ window.loadSections = async () => {
   if (window.loadRunsSection) jobs.push(loadRunsSection(me));
   if (window.loadApprovalsSection) jobs.push(loadApprovalsSection(me));
   if (window.loadLifecycleSection) jobs.push(loadLifecycleSection(me));
+  if (window.loadArtifactsSection) jobs.push(loadArtifactsSection(me));
   await Promise.allSettled(jobs);
 };
 
@@ -2665,6 +2666,96 @@ window.reconcileLifecycle = async (id) => {
 };
 """
 
+ARTIFACTS_SECTIONS = """
+<section id="artifacts-section"><h2>Artifact System</h2>
+<ul class="labels"><small>
+<li>Artifact creation does not execute the action.</li>
+<li>Artifact creation does not send customer messages.</li>
+<li>Artifact creation does not call external providers.</li>
+<li>AI draft content is not human-verified truth.</li>
+<li>Claim graph records local support status; it does not create legal truth.</li>
+<li>Artifact quarantine preserves the artifact but blocks readiness and future use.</li>
+<li>Server-side artifact truth is authoritative.</li>
+<li>Document export is not implemented in this mission.</li>
+<li>C2PA/Sigstore/DSSE/SLSA/in-toto are not implemented in this mission.</li>
+</small></ul>
+<div id="artifacts-list"><i>Loading artifacts…</i></div>
+<div id="artifact-detail"></div>
+</section>
+"""
+
+ARTIFACTS_JS = """
+window.loadArtifactsSection = async (me) => { await loadArtifacts(); };
+
+window.loadArtifacts = async () => {
+  let rows; try { rows = await get('/ai-artifacts'); }
+  catch (e) { $('artifacts-list').innerHTML =
+    '<i>Artifacts are not available for your role.</i>'; return; }
+  $('artifacts-list').innerHTML = rows.length ?
+    '<table><tr><th>Artifact</th><th>Type</th><th>Status</th><th>Trust</th>' +
+    '<th>Quarantine</th><th></th></tr>' + rows.map(a =>
+      `<tr><td><small>${esc(a.artifact_id.slice(0, 8))}</small></td>
+       <td>${esc(a.artifact_type)}</td>
+       <td><b>${esc(a.artifact_status)}</b></td>
+       <td>${esc(a.artifact_trust_tier)}</td>
+       <td>${esc(a.quarantine_status)}</td>
+       <td><button onclick="openArtifact('${esc(a.artifact_id)}')">Open
+       </button></td></tr>`).join('') + '</table>'
+    : '<i>No artifacts yet.</i>';
+};
+
+window.openArtifact = async (id) => {
+  const a = await get('/ai-artifacts/' + id);
+  const claims = await get('/ai-artifacts/' + id + '/claims');
+  const vs = await get('/ai-artifacts/' + id + '/versions');
+  $('artifact-detail').innerHTML = `
+    <h3>Artifact ${esc(id.slice(0, 8))}
+      <span class="badge">${esc(a.artifact_status)}</span></h3>
+    <p><b>type</b> ${esc(a.artifact_type)} · <b>trust</b>
+      ${esc(a.artifact_trust_tier)} · <b>version</b>
+      ${esc(String(a.artifact_version))} · <b>quarantine</b>
+      ${esc(a.quarantine_status)}</p>
+    <p><b>state_hash</b> <code>${esc((a.artifact_state_hash
+      || '').slice(0, 14))}…</code> · <b>content_hash</b>
+      <code>${esc((a.artifact_content_hash || '').slice(0, 14))}…</code></p>
+    <p><b>manifest_hash</b> <code>${esc((a.artifact_manifest_hash
+      || '').slice(0, 14))}…</code> · <b>claim_graph_hash</b>
+      <code>${esc((a.artifact_claim_graph_hash || '').slice(0, 14))}…</code></p>
+    <p><button onclick="verifyArtifact('${esc(id)}')">Verify</button>
+      <button onclick="materializeArtifact('${esc(id)}')">Materialization-check
+      </button> <span id="artifact-msg"></span></p>
+    <h4>Claims (${claims.claim_graph.claims.length})</h4>
+    <table><tr><th>Predicate</th><th>Subject</th><th>Support</th></tr>
+      ${claims.claim_graph.claims.map(cl => `<tr>
+        <td>${esc(String(cl.claim_predicate))}</td>
+        <td>${esc(String(cl.claim_subject_id))}</td>
+        <td>${esc(cl.claim_support_status)}</td></tr>`).join('')}</table>
+    <h4>Versions (${vs.versions.length})</h4>
+    <table><tr><th>#</th><th>Status</th><th>Content hash</th></tr>
+      ${vs.versions.map(v => `<tr><td>${esc(String(v.version_number))}</td>
+        <td>${esc(v.version_status)}</td>
+        <td><code>${esc((v.content_hash || '').slice(0, 12))}…</code></td>
+        </tr>`).join('')}</table>
+    <ul>${(a.honesty_labels || []).map(l =>
+      `<li><small>${esc(l)}</small></li>`).join('')}</ul>`;
+};
+
+window.verifyArtifact = async (id) => {
+  const {data} = await send('POST', '/ai-artifacts/' + id + '/verify', {});
+  $('artifact-msg').innerHTML =
+    `verify <b class="${data.verification_status === 'MATCHED' ? 'ok'
+      : 'err'}">${esc(data.verification_status)}</b> (tamper:
+     ${data.tamper_detected})`;
+};
+window.materializeArtifact = async (id) => {
+  const {data} = await send('POST',
+    '/ai-artifacts/' + id + '/materialization-check', {});
+  $('artifact-msg').innerHTML = `materialization
+    <b>${esc(data.materialization_status)}</b> (can_execute_now:
+    ${data.can_execute_now})`;
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -2690,6 +2781,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 {RUNS_SECTIONS}
 {APPROVALS_SECTIONS}
 {LIFECYCLE_SECTIONS}
+{ARTIFACTS_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -2819,7 +2911,8 @@ boot();
 <script>{TASKS_JS}</script>
 <script>{RUNS_JS}</script>
 <script>{APPROVALS_JS}</script>
-<script>{LIFECYCLE_JS}</script></body></html>"""
+<script>{LIFECYCLE_JS}</script>
+<script>{ARTIFACTS_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:

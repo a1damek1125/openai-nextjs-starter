@@ -142,6 +142,41 @@ class Gate:
                              (json.dumps(p), task_id))
         self.db.conn.commit()
 
+    # -- CORE-A6 artifact helpers --------------------------------------------
+    def make_artifact(self, artifact_type="CASE_SUMMARY_DRAFT",
+                      content_body="a normal case summary", requester=MANAGER,
+                      **body):
+        body.update(artifact_type=artifact_type, content_body=content_body)
+        return self.c.post("/ai-artifacts", json=body,
+                           headers=self.h(requester))
+
+    def art(self, artifact_id, path="", actor=OWNER, method="GET", **body):
+        url = f"/ai-artifacts/{artifact_id}{path}"
+        if method == "GET":
+            return self.c.get(url, headers=self.h(actor))
+        return self.c.post(url, json=body, headers=self.h(actor))
+
+    def latest_version_json(self, artifact_id, actor=OWNER):
+        vs = self.c.get(f"/ai-artifacts/{artifact_id}/versions",
+                        headers=self.h(actor)).json()["versions"]
+        return vs[-1]
+
+    def tamper_version(self, artifact_id, version_number, **envelope_fields):
+        import json
+        row = self.db.one(
+            "SELECT id, payload_json FROM ai_artifact_versions WHERE "
+            "artifact_id=? AND version_number=?", artifact_id, version_number)
+        p = json.loads(row["payload_json"])
+        for k, v in envelope_fields.items():
+            if k == "content_body":
+                p["content_envelope"]["content_body"] = v
+            else:
+                p[k] = v
+        self.db.conn.execute(
+            "UPDATE ai_artifact_versions SET payload_json=? WHERE id=?",
+            (json.dumps(p), row["id"]))
+        self.db.conn.commit()
+
     def approved_grant_task(self, task_type="merge_proposal"):
         """Create a task with a VALID approval grant (walked to APPROVAL_PENDING
         and approved by a second owner)."""

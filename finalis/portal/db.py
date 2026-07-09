@@ -747,6 +747,54 @@ CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_task_transitions_idx
 CREATE INDEX IF NOT EXISTS ix_ai_task_transitions_idem
   ON ai_task_transitions(tenant_id, task_id, transition_idempotency_key);
 """),
+    (15, """
+-- v15: ViktorAI Evidence-Grade Artifact System (CORE-A6). Formal, versioned,
+-- hash-verifiable work products. The Artifact System records and versions
+-- work products; it executes nothing (no send, tool, LLM, payment, CRM,
+-- evidence rewrite, export or signing). Server-side artifact truth is
+-- authoritative.
+CREATE TABLE IF NOT EXISTS ai_artifacts (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  task_id TEXT, run_id TEXT, approval_request_id TEXT, approval_grant_id TEXT,
+  created_by_actor_id TEXT NOT NULL, created_by_actor_type TEXT NOT NULL,
+  assigned_ai_employee_id TEXT NOT NULL DEFAULT '',
+  artifact_type TEXT NOT NULL, artifact_status TEXT NOT NULL DEFAULT 'DRAFT',
+  artifact_trust_tier TEXT NOT NULL DEFAULT 'AI_DRAFT_UNVERIFIED',
+  artifact_version INTEGER NOT NULL DEFAULT 1,
+  latest_version_id TEXT NOT NULL,
+  artifact_state_hash TEXT NOT NULL, artifact_manifest_hash TEXT NOT NULL,
+  artifact_content_hash TEXT NOT NULL,
+  quarantine_status TEXT NOT NULL DEFAULT 'CLEAN',
+  materialization_status TEXT NOT NULL DEFAULT 'MATERIALIZATION_BLOCKED',
+  supersedes_artifact_id TEXT,
+  task_contract_hash TEXT NOT NULL DEFAULT '',
+  subject_type TEXT, subject_id TEXT, case_id TEXT,
+  payload_json TEXT NOT NULL,
+  created_by TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+  expires_at TEXT);
+CREATE INDEX IF NOT EXISTS ix_ai_artifacts
+  ON ai_artifacts(tenant_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_ai_artifacts_task
+  ON ai_artifacts(tenant_id, task_id);
+CREATE INDEX IF NOT EXISTS ix_ai_artifacts_run
+  ON ai_artifacts(tenant_id, run_id);
+
+CREATE TABLE IF NOT EXISTS ai_artifact_versions (
+  id TEXT PRIMARY KEY, artifact_id TEXT NOT NULL, tenant_id TEXT NOT NULL,
+  version_number INTEGER NOT NULL, version_status TEXT NOT NULL DEFAULT 'DRAFT',
+  content_format TEXT NOT NULL DEFAULT 'TEXT',
+  content_hash TEXT NOT NULL, manifest_hash TEXT NOT NULL,
+  claim_graph_hash TEXT NOT NULL DEFAULT '',
+  provenance_hash TEXT NOT NULL DEFAULT '', abom_hash TEXT NOT NULL DEFAULT '',
+  version_hash TEXT NOT NULL, previous_version_hash TEXT,
+  version_chain_hash TEXT NOT NULL,
+  created_by_actor_id TEXT NOT NULL,
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_artifact_versions_num
+  ON ai_artifact_versions(tenant_id, artifact_id, version_number);
+CREATE INDEX IF NOT EXISTS ix_ai_artifact_versions
+  ON ai_artifact_versions(tenant_id, artifact_id, version_number);
+"""),
 ]
 
 
