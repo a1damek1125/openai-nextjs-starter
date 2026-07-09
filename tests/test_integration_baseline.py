@@ -15,7 +15,7 @@ from finalis.portal.app import create_app
 from finalis.portal.db import MIGRATIONS, Database
 from finalis.portal.seed import seed
 
-EXPECTED_DB_VERSION = 20
+EXPECTED_DB_VERSION = 21
 
 
 @pytest.fixture()
@@ -105,6 +105,9 @@ class TestMigrations:
         # ViktorAI Four-Plane Proof-Carrying Null Broker (v20).
         assert {"ai_broker_requests", "ai_broker_outcomes",
                 "ai_broker_events"} <= tables
+        # ViktorAI Verifiable Read-Path Runtime Microkernel (v21).
+        assert {"ai_runtime_snapshots", "ai_runtime_requests",
+                "ai_runtime_outcomes", "ai_runtime_events"} <= tables
 
     def test_evidence_ve_columns_survived_renumber(self, tmp_path):
         db = Database(str(tmp_path / "c.db"))

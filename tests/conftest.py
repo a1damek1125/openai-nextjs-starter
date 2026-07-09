@@ -409,6 +409,60 @@ class Gate:
             return self.c.get(url, headers=self.h(actor))
         return self.c.post(url, json=body, headers=self.h(actor))
 
+    # -- TOOL-B6 read-path runtime helpers ------------------------------------
+    def b5_broker_request(self, requester=OWNER, **over):
+        """Full pipeline to a clean B5 broker outcome. Returns (b5_broker_
+        request_id, b5_outcome_dict)."""
+        _, _, d = self.b4_decision(requester=requester, **over)
+        o = self.broker_request(d["decision_id"], actor=requester).json()
+        return o["broker_request_id"], o
+
+    def runtime_snapshot(self, actor=OWNER, epoch="1", scope="case",
+                         fields=None):
+        """Freeze a local snapshot. Default fields: 2 PUBLIC + 1 CUSTOMER_
+        SENSITIVE (which must never leak)."""
+        if fields is None:
+            fields = {"case_id": {"value": "C-1", "data_class": "PUBLIC"},
+                      "status": {"value": "open", "data_class": "PUBLIC"},
+                      "ssn": {"value": "999-99-9999",
+                              "data_class": "CUSTOMER_SENSITIVE"}}
+        return self.c.post("/ai-tools/runtime/snapshots", json={
+            "epoch": epoch, "scope": scope, "fields": fields},
+            headers=self.h(actor)).json()
+
+    def runtime_request(self, b5_broker_request_id, snapshot_id, actor=OWNER,
+                        body=None, **over):
+        """Create a read-only runtime request. Defaults to a clean field-
+        projection over the two PUBLIC fields. Returns Response."""
+        if body is None:
+            body = {"b5_broker_request_id": b5_broker_request_id,
+                    "snapshot_id": snapshot_id, "adapter_kind":
+                    "field_projection",
+                    "allowed_sources": ["case_id", "status"],
+                    "allowed_projection": ["case_id", "status"],
+                    "requested_sources": ["case_id", "status"],
+                    "requested_projection": ["case_id", "status"],
+                    "requested_epoch": "1"}
+            body.update(over)
+        return self.c.post("/ai-tools/runtime/requests", json=body,
+                           headers=self.h(actor))
+
+    def prepared_runtime(self, requester=OWNER, snapshot_fields=None, **over):
+        """Full pipeline: B4 -> B5 -> frozen snapshot -> read-only runtime
+        outcome. Returns (runtime_request_id, outcome_dict)."""
+        b5rid, _ = self.b5_broker_request(requester=requester)
+        snap = self.runtime_snapshot(actor=requester, fields=snapshot_fields)
+        o = self.runtime_request(b5rid, snap["snapshot_id"], actor=requester,
+                                 **over).json()
+        return o["runtime_request_id"], o
+
+    def rt(self, runtime_request_id, path="", actor=OWNER, method="GET",
+           **body):
+        url = f"/ai-tools/runtime/requests/{runtime_request_id}{path}"
+        if method == "GET":
+            return self.c.get(url, headers=self.h(actor))
+        return self.c.post(url, json=body, headers=self.h(actor))
+
 
 @pytest.fixture()
 def gate():

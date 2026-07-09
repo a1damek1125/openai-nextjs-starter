@@ -8974,15 +8974,413 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                                     broker_request_id=broker_request_id),
                 "honesty_labels": _tb.HONESTY_LABELS}
 
-    # Hoist the literal /ai-tools/actions/* and /ai-tools/broker/* routes ahead
-    # of the earlier-registered parameterised /ai-tools/{tool_id}/* routes so
-    # first-match-wins routing does not capture them (e.g. /ai-tools/actions/
-    # policy as /ai-tools/{tool_id}/policy with tool_id="actions" -> 404).
+    # ---- ViktorAI Verifiable Read-Path Runtime Microkernel (TOOL-B6) ----------------
+    from ..ai_employee import tool_runtime as _rt
+    from ..ai_employee.tool_runtime_store import ToolRuntimeStore
+    runtime_store = ToolRuntimeStore(db)
+    app.state.runtime_store = runtime_store
+
+    def _runtime_emit(tid, *, event_type, runtime_request_id, actor_id,
+                      actor_type, state_hash, detail):
+        seq = runtime_store.next_sequence(tenant_id=tid)
+        prev = runtime_store.last_event(tenant_id=tid)
+        ev = _rt.build_runtime_event(
+            event_type=event_type, tenant_id=tid,
+            runtime_request_id=runtime_request_id, actor_id=actor_id,
+            actor_type=actor_type, runtime_state_hash=state_hash,
+            previous_event_hash=(prev or {}).get("event_hash"), sequence=seq,
+            detail=detail, created_at=utcnow())
+        runtime_store.append_event({
+            "id": str(uuid.uuid4()), "tenant_id": tid, "runtime_request_id":
+            runtime_request_id, "event_type": event_type, "sequence": seq,
+            "actor_id": actor_id, "actor_type": actor_type,
+            "event_hash": ev["event_hash"], "previous_event_hash": ev[
+                "previous_event_hash"], "runtime_state_hash": state_hash,
+            "payload_json": json.dumps(ev), "created_at": ev["created_at"]})
+        return ev
+
+    def _runtime_policy(raw):
+        pol = dict(_rt.DEFAULT_POLICY)
+        raw = raw or {}
+        for k, default in _rt.DEFAULT_POLICY.items():
+            if k in raw:
+                try:
+                    pol[k] = max(0, min(int(default), int(raw[k])))
+                except (TypeError, ValueError):
+                    pol[k] = default
+        return pol
+
+    def _load_runtime_request_or_404(runtime_request_id, user):
+        r = runtime_store.request(runtime_request_id, tenant_id=user["tid"])
+        if r is None:
+            raise HTTPException(404, "runtime request not found")
+        return r
+
+    def _load_runtime_outcome_or_404(runtime_request_id, user):
+        _load_runtime_request_or_404(runtime_request_id, user)
+        o = runtime_store.outcome(runtime_request_id, tenant_id=user["tid"])
+        if o is None:
+            raise HTTPException(404, "no runtime outcome")
+        return o
+
+    _RUNTIME_SUBFIELDS = {
+        "adapter": "adapter",
+        "capability-calculus": "adapter_capability_calculus",
+        "adapter-firewall": "adapter_capability_firewall",
+        "snapshot-epoch-vector": "snapshot_epoch_vector",
+        "temporal-snapshot-isolation": "temporal_snapshot_isolation",
+        "snapshot-seal": "snapshot_seal_check",
+        "snapshot-twin": "runtime_snapshot_twin",
+        "snapshot-provenance": "snapshot_provenance_dag",
+        "query-plan-normal-form": "query_plan_normal_form",
+        "semantic-read-firewall": "semantic_read_firewall",
+        "microkernel": "runtime_microkernel_contract",
+        "operation-ledger": "runtime_operation_ledger",
+        "path-policy": "runtime_path_policy_automaton",
+        "authority-freeze": "runtime_authority_freeze",
+        "read-set-ledger": "read_set_ledger",
+        "read-set-completeness": "read_set_completeness_proof",
+        "read-set-attestation": "read_set_attestation_capsule",
+        "read-output-provenance": "read_output_provenance_map",
+        "output-provenance-bisimulation": "output_provenance_bisimulation",
+        "semantic-non-interference": "semantic_non_interference_matrix",
+        "synthetic-canary-harness": "synthetic_canary_harness",
+        "canary-non-leakage": "canary_non_leakage_proof",
+        "information-budget": "information_budget_envelope",
+        "information-usage-proof": "information_usage_proof",
+        "read-amplification": "read_amplification_guard",
+        "side-channel-budget": "side_channel_budget_seal",
+        "resource-budget": "runtime_resource_budget_envelope",
+        "resource-usage-proof": "runtime_resource_usage_proof",
+        "entropy-seal": "determinism_entropy_seal",
+        "replay-twin": "deterministic_replay_twin",
+        "output-taint": "output_taint_lattice",
+        "output-non-exfiltration": "output_non_exfiltration_gate",
+        "safe-output-projection": "safe_output_projection",
+        "data-diode": "data_diode_output_gate",
+        "effect-ledger": "runtime_effect_ledger",
+        "surface-diff": "runtime_surface_diff",
+        "no-effect-proofs": "no_effect_proofs",
+        "escape-sentinel": "runtime_escape_sentinel",
+        "non-escalation": "runtime_non_escalation_proof",
+        "output-provenance-certificate": "output_provenance_certificate",
+        "fault-injection": "runtime_fault_injection_harness",
+        "release-gate": "runtime_release_gate_report",
+        "conformance-vector": "runtime_conformance_vector",
+        "proof-bundle": "runtime_proof_bundle",
+    }
+
+    @app.get("/ai-tools/runtime/policy")
+    async def runtime_policy(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {"runtime_model_version": _rt.RUNTIME_MODEL_VERSION,
+                "read_only": True, "local_only": True, "snapshot_bound": True,
+                "reads_mutable_production": False, "writes": False,
+                "calls_network": False, "calls_provider": False,
+                "is_mcp_runtime": False, "is_llm_runtime": False,
+                "reads_secrets": False, "reads_credentials": False,
+                "issues_tokens": False, "derives_tokens": False,
+                "exports_data": False, "mutates_crm": False,
+                "mutates_evidence": False, "executes_payment": False,
+                "has_write_endpoint": False, "has_external_endpoint": False,
+                "claims_os_level_sandbox": False,
+                "claims_differential_privacy": False,
+                "most_permissive_outcome": "RUNTIME_READ_ONLY_COMPLETED",
+                "accepts_b5_statuses": sorted(_rt.B5_ACCEPTABLE_STATUSES),
+                "runtime_statuses": sorted(_rt.RUNTIME_STATUSES),
+                "decision_statuses": sorted(_rt.DECISION_STATUSES),
+                "allowed_read_classes": sorted(_rt.ALLOWED_READ_CLASSES),
+                "forbidden_source_classes": sorted(
+                    _rt.FORBIDDEN_SOURCE_CLASSES),
+                "read_only_capabilities": sorted(_rt.READ_ONLY_CAPABILITIES),
+                "known_adapter_kinds": sorted(_rt.KNOWN_ADAPTER_KINDS),
+                "failure_dominance": _rt.FAILURE_DOMINANCE,
+                "reason_codes": _rt.REASON_CODES,
+                "fault_cases": _rt.FAULT_CASES,
+                "default_policy": _rt.DEFAULT_POLICY,
+                "honesty_labels": _rt.HONESTY_LABELS}
+
+    @app.get("/ai-tools/runtime/adapters")
+    async def runtime_adapters(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {"tenant_id": user["tid"],
+                "known_adapter_kinds": sorted(_rt.KNOWN_ADAPTER_KINDS),
+                "read_only_capabilities": sorted(_rt.READ_ONLY_CAPABILITIES),
+                "forbidden_adapter_capabilities": sorted(
+                    _rt.FORBIDDEN_ADAPTER_CAPS),
+                "honesty_labels": _rt.HONESTY_LABELS}
+
+    @app.get("/ai-tools/runtime/registry")
+    async def runtime_registry(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        outs = runtime_store.list_outcomes(tenant_id=user["tid"])
+        by_status = {}
+        for o in outs:
+            by_status[o["runtime_status"]] = by_status.get(
+                o["runtime_status"], 0) + 1
+        return {"tenant_id": user["tid"],
+                "runtime_request_count": len(runtime_store.list_requests(
+                    tenant_id=user["tid"])),
+                "runtime_outcome_count": len(outs),
+                "snapshot_count": len(runtime_store.list_snapshots(
+                    tenant_id=user["tid"])),
+                "outcomes_by_status": by_status,
+                "honesty_labels": _rt.HONESTY_LABELS}
+
+    @app.get("/ai-tools/runtime/events")
+    async def runtime_events(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        evs = runtime_store.events(tenant_id=user["tid"])
+        chain_ok, prev = True, None
+        for e in evs:
+            if e["previous_event_hash"] != (prev or _rt.GENESIS):
+                chain_ok = False
+            prev = e["event_hash"]
+        return {"tenant_id": user["tid"], "events": evs,
+                "event_count": len(evs), "event_chain_valid": chain_ok,
+                "ledger_note": "local runtime ledger; not a production immutable "
+                "log", "honesty_labels": _rt.HONESTY_LABELS}
+
+    @app.post("/ai-tools/runtime/snapshots")
+    async def create_runtime_snapshot(body: dict,
+                                      user: dict = Depends(current_user)):
+        # A frozen LOCAL snapshot. Fields are declared local data with a data
+        # class; no mutable production read occurs. Immutable evidence.
+        require_permission(user, "case.update")
+        tid, now = user["tid"], utcnow()
+        sid = str(uuid.uuid4())
+        snap = _rt.build_snapshot(
+            snapshot_id=sid, tenant_id=tid, epoch=str(body.get("epoch", "1")),
+            scope=body.get("scope", "case"), fields=body.get("fields") or {},
+            provenance=body.get("provenance"), created_at=now)
+        runtime_store.save_snapshot({
+            "id": sid, "tenant_id": tid, "epoch": snap["epoch"],
+            "scope": snap["scope"], "field_count": snap["field_count"],
+            "snapshot_hash": snap["snapshot_hash"], "created_by": user["uid"],
+            "payload_json": json.dumps(snap), "created_at": now})
+        audit.append(event_type="AI_RUNTIME_SNAPSHOT_FROZEN", actor=user["uid"],
+                     payload={"snapshot_id": sid, "epoch": snap["epoch"]})
+        return snap
+
+    @app.get("/ai-tools/runtime/snapshots")
+    async def list_runtime_snapshots(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return runtime_store.list_snapshots(tenant_id=user["tid"])
+
+    @app.get("/ai-tools/runtime/snapshots/{snapshot_id}")
+    async def get_runtime_snapshot(snapshot_id: str,
+                                   user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        snap = runtime_store.snapshot(snapshot_id, tenant_id=user["tid"])
+        if snap is None:
+            raise HTTPException(404, "snapshot not found")
+        return snap
+
+    @app.get("/ai-tools/runtime/requests")
+    async def list_runtime_requests(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return runtime_store.list_requests(tenant_id=user["tid"])
+
+    def _prepare_runtime(tid, user, body):
+        # A read-only runtime request. It runs a LOCAL deterministic read-only
+        # adapter over a FROZEN snapshot and produces provenance-verifiable safe
+        # output. No write, no network, no provider/MCP/LLM, no secret/credential
+        # read, no token. The most permissive outcome is READ_ONLY_COMPLETED.
+        b5rid = str(body.get("b5_broker_request_id", "") or "")
+        b5o = broker_store.outcome(b5rid, tenant_id=tid) if b5rid else None
+        if b5o is None:
+            raise HTTPException(404, "b5 broker outcome not found")
+        b5r = broker_store.request(b5rid, tenant_id=tid)
+        snapshot_id = str(body.get("snapshot_id", "") or "")
+        snapshot = runtime_store.snapshot(snapshot_id, tenant_id=tid) if \
+            snapshot_id else None
+        if snapshot is None:
+            raise HTTPException(404, "snapshot not found")
+        actor_type = "ai_employee" if user["role"] == "ai_worker" else "human"
+        now = utcnow()
+        rid = str(uuid.uuid4())
+        env = _rt.build_runtime_request_envelope(
+            runtime_request_id=rid, tenant_id=tid, actor_id=user["uid"],
+            actor_type=actor_type, b5_outcome=b5o,
+            adapter_id=body.get("adapter_id", "adp"), snapshot=snapshot,
+            requested_sources=body.get("requested_sources"),
+            requested_projection=body.get("requested_projection"),
+            requested_epoch=body.get("requested_epoch"), created_at=now)
+        # Read amplification correlation from prior outcomes on this snapshot.
+        related = []
+        for po in runtime_store.outcomes_for_snapshot(snapshot_id,
+                                                      tenant_id=tid):
+            rl = (po.get("read_set_ledger") or {})
+            related.append({
+                "runtime_request_id": po.get("runtime_request_id"),
+                "read_paths": [e.get("field_path") for e in rl.get(
+                    "read_entries", [])], "snapshot_id": snapshot_id,
+                "customer_id": "", "case_id": ""})
+        outcome = _rt.prepare_runtime_outcome(
+            runtime_request_id=rid, tenant_id=tid, actor_id=user["uid"],
+            actor_type=actor_type, envelope=env, b5_outcome=b5o, b5_request=b5r,
+            snapshot=snapshot, adapter_id=body.get("adapter_id", "adp"),
+            adapter_kind=body.get("adapter_kind", "count"),
+            allowed_sources=body.get("allowed_sources"),
+            allowed_projection=body.get("allowed_projection"),
+            requested_sources=body.get("requested_sources"),
+            requested_projection=body.get("requested_projection"),
+            requested_epoch=body.get("requested_epoch"),
+            allowed_scopes=body.get("allowed_scopes"),
+            related_requests=related,
+            repeated_query_count=len(related),
+            declared_entropy=body.get("declared_entropy"),
+            observed_surface=body.get("observed_surface"),
+            adapter_caps=body.get("adapter_caps"),
+            policy=_runtime_policy(body.get("policy")), created_at=now)
+        runtime_store.save_request({
+            "id": rid, "tenant_id": tid,
+            "b5_broker_request_id": b5rid, "adapter_id": env["adapter_id"],
+            "snapshot_id": snapshot_id or "",
+            "requested_epoch": env["requested_epoch"],
+            "runtime_request_hash": env["runtime_request_hash"],
+            "requested_by": user["uid"], "requested_by_actor_type": actor_type,
+            "payload_json": json.dumps(env), "created_at": now})
+        runtime_store.save_outcome({
+            "id": str(uuid.uuid4()), "tenant_id": tid, "runtime_request_id": rid,
+            "b5_broker_request_id": b5rid, "adapter_id": outcome["adapter_id"],
+            "snapshot_id": snapshot_id or "",
+            "runtime_status": outcome["runtime_status"],
+            "runtime_decision_status": outcome["runtime_decision_status"],
+            "runtime_outcome_kind": outcome["runtime_outcome_kind"],
+            "dominant_signal": outcome["dominant_signal"],
+            "safe_output_hash": outcome["safe_output_hash"],
+            "runtime_request_hash": outcome.get("runtime_request_hash") or "",
+            "runtime_decision_hash": outcome["runtime_decision_hash"],
+            "runtime_state_hash": outcome["runtime_state_hash"],
+            "runtime_proof_bundle_hash": outcome["runtime_proof_bundle"][
+                "runtime_proof_bundle_hash"],
+            "release_gate_status": outcome["runtime_release_gate_report"][
+                "release_gate_status"],
+            "decided_by": user["uid"], "decided_by_actor_type": actor_type,
+            "payload_json": json.dumps(outcome), "created_at": now,
+            "updated_at": now})
+        _runtime_emit(tid, event_type="RUNTIME_REQUEST_OPENED",
+                      runtime_request_id=rid, actor_id=user["uid"],
+                      actor_type=actor_type,
+                      state_hash=env["runtime_request_hash"],
+                      detail={"snapshot_id": snapshot_id})
+        _runtime_emit(tid, event_type="RUNTIME_OUTCOME_PREPARED",
+                      runtime_request_id=rid, actor_id=user["uid"],
+                      actor_type=actor_type,
+                      state_hash=outcome["runtime_state_hash"],
+                      detail={"status": outcome["runtime_status"]})
+        audit.append(event_type="AI_RUNTIME_READ_ONLY_PREPARED",
+                     actor=user["uid"], payload={"runtime_request_id": rid,
+                     "status": outcome["runtime_status"]})
+        return outcome
+
+    @app.post("/ai-tools/runtime/requests")
+    async def create_runtime_request(body: dict,
+                                     user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        return _prepare_runtime(user["tid"], user, body or {})
+
+    @app.get("/ai-tools/runtime/requests/{runtime_request_id}")
+    async def get_runtime_request(runtime_request_id: str,
+                                  user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _load_runtime_request_or_404(runtime_request_id, user)
+
+    @app.get("/ai-tools/runtime/requests/{runtime_request_id}/outcome")
+    async def get_runtime_outcome(runtime_request_id: str,
+                                  user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _load_runtime_outcome_or_404(runtime_request_id, user)
+
+    @app.get("/ai-tools/runtime/requests/{runtime_request_id}/safe")
+    async def get_runtime_safe(runtime_request_id: str,
+                               user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        o = _load_runtime_outcome_or_404(runtime_request_id, user)
+        restricted = user["role"] in ("viewer", "technician", "accountant")
+        return {"runtime_request_id": runtime_request_id, "tenant_id": o[
+            "tenant_id"], "runtime_status": o["runtime_status"],
+            "runtime_decision_status": o["runtime_decision_status"],
+            "runtime_outcome_kind": o["runtime_outcome_kind"],
+            "dominant_reason_code": o["dominant_reason_code"],
+            "read_only": True, "local_only": True, "is_external": False,
+            "produced_external_effect": False,
+            "safe_output": ({} if restricted else o["safe_output"]),
+            "safe_output_hash": o["safe_output_hash"],
+            "all_signals": ([] if restricted else o["all_signals"]),
+            "runtime_decision_hash": o["runtime_decision_hash"],
+            "runtime_proof_bundle_hash": o["runtime_proof_bundle"][
+                "runtime_proof_bundle_hash"],
+            "honesty_labels": _rt.HONESTY_LABELS}
+
+    def _rsub(field):
+        async def getter(runtime_request_id: str,
+                         user: dict = Depends(current_user)):
+            require_permission(user, "case.read")
+            o = _load_runtime_outcome_or_404(runtime_request_id, user)
+            return {"runtime_request_id": runtime_request_id, field: o.get(
+                field), "honesty_labels": _rt.HONESTY_LABELS}
+        return getter
+
+    for _slug, _field in _RUNTIME_SUBFIELDS.items():
+        app.add_api_route(
+            f"/ai-tools/runtime/requests/{{runtime_request_id}}/{_slug}",
+            _rsub(_field), methods=["GET"])
+
+    @app.post("/ai-tools/runtime/requests/{runtime_request_id}/"
+              "fault-injection-check")
+    async def runtime_fault_injection_check(runtime_request_id: str,
+                                            user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        o = _load_runtime_outcome_or_404(runtime_request_id, user)
+        h = o["runtime_fault_injection_harness"]
+        _runtime_emit(user["tid"], event_type="RUNTIME_FAULT_INJECTED",
+                      runtime_request_id=runtime_request_id,
+                      actor_id=user["uid"],
+                      actor_type=("ai_employee" if user["role"] == "ai_worker"
+                                  else "human"),
+                      state_hash=h["runtime_fault_injection_harness_hash"],
+                      detail={"status": h["harness_status"]})
+        return h
+
+    @app.post("/ai-tools/runtime/requests/{runtime_request_id}/verify")
+    async def verify_runtime_outcome(runtime_request_id: str,
+                                     user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        o = _load_runtime_outcome_or_404(runtime_request_id, user)
+        recomputed = _rt._core_hash(
+            o, "runtime_decision_hash", "runtime_request_id",
+            "decided_by_actor_id", "decided_by_actor_type", "runtime_state_hash")
+        ok = recomputed == o["runtime_decision_hash"]
+        return {"runtime_request_id": runtime_request_id,
+                "stored_runtime_decision_hash": o["runtime_decision_hash"],
+                "recomputed_runtime_decision_hash": recomputed,
+                "runtime_decision_hash_valid": ok,
+                "verification_status": "VALID" if ok else "TAMPERED",
+                "honesty_labels": _rt.HONESTY_LABELS}
+
+    @app.get("/ai-tools/runtime/requests/{runtime_request_id}/events")
+    async def runtime_request_events(runtime_request_id: str,
+                                     user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_runtime_request_or_404(runtime_request_id, user)
+        return {"runtime_request_id": runtime_request_id, "events":
+                runtime_store.events(tenant_id=user["tid"],
+                                     runtime_request_id=runtime_request_id),
+                "honesty_labels": _rt.HONESTY_LABELS}
+
+    # Hoist the literal /ai-tools/actions/*, /ai-tools/broker/* and
+    # /ai-tools/runtime/* routes ahead of the earlier-registered parameterised
+    # /ai-tools/{tool_id}/* routes so first-match-wins routing does not capture
+    # them (e.g. /ai-tools/runtime/policy as /ai-tools/{tool_id}/policy -> 404).
     _param_ix = next((i for i, r in enumerate(app.router.routes)
                       if getattr(r, "path", "") == "/ai-tools/{tool_id}"), 0)
     _literal_routes = [r for r in app.router.routes
                        if getattr(r, "path", "").startswith("/ai-tools/actions")
-                       or getattr(r, "path", "").startswith("/ai-tools/broker")]
+                       or getattr(r, "path", "").startswith("/ai-tools/broker")
+                       or getattr(r, "path", "").startswith(
+                           "/ai-tools/runtime")]
     for _r in _literal_routes:
         app.router.routes.remove(_r)
     for _off, _r in enumerate(_literal_routes):

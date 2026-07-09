@@ -156,6 +156,7 @@ window.loadSections = async () => {
   if (window.loadContractsSection) jobs.push(loadContractsSection(me));
   if (window.loadActionsSection) jobs.push(loadActionsSection(me));
   if (window.loadBrokerSection) jobs.push(loadBrokerSection(me));
+  if (window.loadRuntimeSection) jobs.push(loadRuntimeSection(me));
   await Promise.allSettled(jobs);
 };
 
@@ -3218,6 +3219,89 @@ window.openBrokerOutcome = async (rid) => {
 };
 """
 
+RUNTIME_SECTIONS = """
+<section id="tool-runtime-section"><h2>Verifiable Read-Path Runtime Microkernel</h2>
+<ul class="labels"><small>
+<li>READ_ONLY_INTERNAL_RUNTIME_ONLY — local, deterministic, read-only.</li>
+<li>SNAPSHOT_BOUND_ONLY / TEMPORAL_SNAPSHOT_ISOLATED — reads only frozen local snapshots.</li>
+<li>SEMANTIC_READ_FIREWALL_PASSED / READ_SET_ATTESTED.</li>
+<li>OUTPUT_PROVENANCE_BISIMULATED — every safe output field traces to an attested read.</li>
+<li>CANARY_NON_LEAKAGE_PROVED — no synthetic canary leaks to output.</li>
+<li>INFORMATION_BUDGET_ENFORCED / READ_AMPLIFICATION_GUARDED / SIDE_CHANNEL_BUDGET_SEALED.</li>
+<li>DATA_DIODE_OUTPUT_ONLY / DETERMINISM_ENTROPY_SEALED / DETERMINISTIC_REPLAY_REQUIRED.</li>
+<li>NO_NETWORK / NO_PROVIDER / NO_TOKEN / NO_CREDENTIAL / NO_SECRET_READ / NO_WRITE_EFFECT.</li>
+<li>NO_MUTABLE_PRODUCTION_READ / NOT_PRODUCTION_AUTONOMOUS_EXECUTION.</li>
+<li>No OS-level sandbox or differential privacy is claimed.</li>
+</small></ul>
+<div id="tool-runtime-summary"><i>Loading read-path runtime…</i></div>
+<div id="tool-runtime-list"></div>
+</section>
+"""
+
+RUNTIME_JS = """
+window.loadRuntimeSection = async (me) => { await loadRuntime(); };
+
+window.loadRuntime = async () => {
+  let reg; try { reg = await get('/ai-tools/runtime/registry'); }
+  catch (e) { $('tool-runtime-summary').innerHTML =
+    '<i>The read-path runtime is not available for your role.</i>'; return; }
+  $('tool-runtime-summary').innerHTML =
+    `<p><b>requests</b> ${esc(String(reg.runtime_request_count))} ·
+      <b>outcomes</b> ${esc(String(reg.runtime_outcome_count))} ·
+      <b>snapshots</b> ${esc(String(reg.snapshot_count))}</p>` +
+    '<p><small>' + Object.entries(reg.outcomes_by_status || {}).map(
+      ([k, v]) => `${esc(k)}: <b>${esc(String(v))}</b>`).join(' · ') + '</small></p>';
+  let reqs = []; try { reqs = await get('/ai-tools/runtime/requests'); }
+  catch (e) {}
+  $('tool-runtime-list').innerHTML = (reqs.length ?
+    '<table><tr><th>Request</th><th>Snapshot</th><th></th></tr>' +
+    reqs.map(r => `<tr><td><small>${esc((r.runtime_request_id||'').slice(0,8))}
+       </small></td><td><small>${esc((r.snapshot_id||'').slice(0,8))}</small></td>
+       <td><button onclick="openRuntimeOutcome('${esc(r.runtime_request_id)}')">
+       Outcome</button></td></tr>`).join('') + '</table>'
+    : '<i>No runtime requests yet.</i>');
+};
+
+window.openRuntimeOutcome = async (rid) => {
+  const base = '/ai-tools/runtime/requests/' + rid;
+  const o = await get(base + '/outcome');
+  let vr = null; try { vr = (await send('POST', base + '/verify', {})).data; }
+  catch (e) {}
+  const gate = o.runtime_release_gate_report || {};
+  const bis = o.output_provenance_bisimulation || {};
+  const can = o.canary_non_leakage_proof || {};
+  const ni = o.semantic_non_interference_matrix || {};
+  $('tool-runtime-list').innerHTML = `
+    <h3>Runtime outcome ${esc(rid.slice(0,8))}
+      <span class="badge">${esc(o.runtime_status)}</span></h3>
+    <p><b>decision</b> ${esc(o.runtime_decision_status)} ·
+      <b>kind</b> ${esc(o.runtime_outcome_kind)} ·
+      <b>reason</b> <small>${esc(o.dominant_reason_code)}</small></p>
+    <p><b>read-only</b> <b class="ok">${esc(String(o.read_only))}</b> ·
+      <b>external effect</b> <b class="ok">${esc(String(
+        o.produced_external_effect))}</b> ·
+      <b>data diode</b> ${esc(o.data_diode_status)}</p>
+    <p><b>bisimulation</b> <b class="${bis.bisimulation_status ===
+      'BISIMULATION_MATCHED' ? 'ok' : 'err'}">${esc(bis.bisimulation_status)}</b>
+      · <b>non-interference</b> ${esc(ni.matrix_status)}
+      · <b>canary</b> <b class="${can.leak_detected ? 'err' : 'ok'}">${esc(
+        can.proof_status)}</b></p>
+    <p><b>release gate</b> <b class="${gate.release_gate_status ===
+      'RELEASE_GATE_PASSED' ? 'ok' : 'err'}">${esc(gate.release_gate_status)}</b>
+      · <b>safe output</b> <code>${esc(JSON.stringify(
+        o.safe_output || {}).slice(0,60))}</code></p>
+    <p><b>decision hash</b> <code>${esc((o.runtime_decision_hash||'').slice(
+      0,14))}…</code> · <b>verify</b> ${vr ? `<b class="${
+        vr.runtime_decision_hash_valid ? 'ok' : 'err'}">${esc(
+        vr.verification_status)}</b>` : 'n/a'}</p>
+    <p><b>signals</b> ${(o.all_signals||[]).map(s =>
+      `<span class="err">${esc(s)}</span>`).join(' ') || '<i>none</i>'}</p>
+    <ul>${(o.honesty_labels||[]).map(l =>
+      `<li><small>${esc(l)}</small></li>`).join('')}</ul>
+    <button onclick="loadRuntime()">← back</button>`;
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -3249,6 +3333,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 {CONTRACTS_SECTIONS}
 {ACTIONS_SECTIONS}
 {BROKER_SECTIONS}
+{RUNTIME_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -3384,7 +3469,8 @@ boot();
 <script>{QUALITY_JS}</script>
 <script>{CONTRACTS_JS}</script>
 <script>{ACTIONS_JS}</script>
-<script>{BROKER_JS}</script></body></html>"""
+<script>{BROKER_JS}</script>
+<script>{RUNTIME_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:

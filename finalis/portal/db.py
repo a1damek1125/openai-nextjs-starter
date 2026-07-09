@@ -1087,6 +1087,71 @@ CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_broker_events_seq
 CREATE INDEX IF NOT EXISTS ix_ai_broker_events_request
   ON ai_broker_events(tenant_id, broker_request_id, sequence);
 """),
+    (21, """
+-- v21: ViktorAI Verifiable Read-Path Runtime Microkernel (TOOL-B6). The first
+-- controlled runtime layer, but strictly LOCAL, DETERMINISTIC and READ-ONLY. It
+-- runs local deterministic read-only adapters over FROZEN local snapshots and
+-- produces provenance-verifiable safe output. It is snapshot-bound, temporally
+-- isolated, semantically read-filtered, read-set-attested, output-provenance-
+-- verifiable, replay-verifiable, data-diode-output-filtered, resource-budgeted
+-- and information-budgeted. It NEVER reads mutable production state, mutates a
+-- source artifact, calls the network/provider/MCP/LLM, reads a secret/
+-- credential, or issues/derives a token. There is NO write/external/execute
+-- endpoint. The most permissive outcome is RUNTIME_READ_ONLY_COMPLETED, a local
+-- read-only result — never an external effect.
+CREATE TABLE IF NOT EXISTS ai_runtime_snapshots (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, epoch TEXT NOT NULL DEFAULT '0',
+  scope TEXT NOT NULL DEFAULT '', field_count INTEGER NOT NULL DEFAULT 0,
+  snapshot_hash TEXT NOT NULL,
+  created_by TEXT NOT NULL DEFAULT '',
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_runtime_snapshots
+  ON ai_runtime_snapshots(tenant_id, epoch, created_at);
+
+CREATE TABLE IF NOT EXISTS ai_runtime_requests (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  b5_broker_request_id TEXT NOT NULL DEFAULT '',
+  adapter_id TEXT NOT NULL DEFAULT '', snapshot_id TEXT NOT NULL DEFAULT '',
+  requested_epoch TEXT NOT NULL DEFAULT '',
+  runtime_request_hash TEXT NOT NULL,
+  requested_by TEXT NOT NULL, requested_by_actor_type TEXT NOT NULL,
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_runtime_requests
+  ON ai_runtime_requests(tenant_id, snapshot_id, created_at);
+
+CREATE TABLE IF NOT EXISTS ai_runtime_outcomes (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, runtime_request_id TEXT NOT NULL,
+  b5_broker_request_id TEXT NOT NULL DEFAULT '',
+  adapter_id TEXT NOT NULL DEFAULT '', snapshot_id TEXT NOT NULL DEFAULT '',
+  runtime_status TEXT NOT NULL, runtime_decision_status TEXT NOT NULL,
+  runtime_outcome_kind TEXT NOT NULL DEFAULT '',
+  dominant_signal TEXT NOT NULL,
+  safe_output_hash TEXT NOT NULL DEFAULT '',
+  runtime_request_hash TEXT NOT NULL DEFAULT '',
+  runtime_decision_hash TEXT NOT NULL, runtime_state_hash TEXT NOT NULL,
+  runtime_proof_bundle_hash TEXT NOT NULL DEFAULT '',
+  release_gate_status TEXT NOT NULL DEFAULT '',
+  decided_by TEXT NOT NULL, decided_by_actor_type TEXT NOT NULL,
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_runtime_outcomes
+  ON ai_runtime_outcomes(tenant_id, runtime_request_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_ai_runtime_outcomes_snapshot
+  ON ai_runtime_outcomes(tenant_id, snapshot_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_ai_runtime_outcomes_status
+  ON ai_runtime_outcomes(tenant_id, runtime_status);
+
+CREATE TABLE IF NOT EXISTS ai_runtime_events (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, runtime_request_id TEXT,
+  event_type TEXT NOT NULL, sequence INTEGER NOT NULL,
+  actor_id TEXT NOT NULL, actor_type TEXT NOT NULL,
+  event_hash TEXT NOT NULL, previous_event_hash TEXT NOT NULL,
+  runtime_state_hash TEXT NOT NULL DEFAULT '',
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_runtime_events_seq
+  ON ai_runtime_events(tenant_id, sequence);
+CREATE INDEX IF NOT EXISTS ix_ai_runtime_events_request
+  ON ai_runtime_events(tenant_id, runtime_request_id, sequence);
+"""),
 ]
 
 
