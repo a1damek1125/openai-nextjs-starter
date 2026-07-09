@@ -1028,6 +1028,65 @@ CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_action_decision_events_seq
 CREATE INDEX IF NOT EXISTS ix_ai_action_decision_events_proposal
   ON ai_action_decision_events(tenant_id, proposal_id, sequence);
 """),
+    (20, """
+-- v20: ViktorAI Adversarially Verified Four-Plane Proof-Carrying Null Broker
+-- (TOOL-B5). A deterministic internal broker SKELETON with proof-carrying NULL
+-- execution only, sitting between the TOOL-B4 pre-action monitor and a
+-- hypothetical FUTURE real runtime. It consumes only B4-approved proposals and
+-- produces only validation / NULL_EFFECT_ONLY outcomes. It executes NOTHING:
+-- no tool run, no external provider, no MCP runtime/server/client, no LLM, no
+-- OAuth/token issuance, no credential handling, no payment/message/CRM/evidence/
+-- export. There is NO execute endpoint. The most permissive outcome is
+-- BROKER_PREPARED_FOR_FUTURE_ONLY, which still runs nothing. No null output may
+-- leak sensitive payload, secrets, credentials, approval/consent artifacts,
+-- customer data or hidden execution authority. The whole skeleton fails closed
+-- under deterministic fault injection.
+CREATE TABLE IF NOT EXISTS ai_broker_requests (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, tool_id TEXT NOT NULL,
+  contract_id TEXT NOT NULL DEFAULT '', b4_proposal_id TEXT NOT NULL DEFAULT '',
+  b4_decision_id TEXT NOT NULL DEFAULT '',
+  action_path TEXT NOT NULL DEFAULT '', idempotency_key TEXT NOT NULL DEFAULT '',
+  batch_id TEXT NOT NULL DEFAULT '', task_id TEXT NOT NULL DEFAULT '',
+  case_id TEXT NOT NULL DEFAULT '', customer_id TEXT NOT NULL DEFAULT '',
+  broker_request_hash TEXT NOT NULL,
+  requested_by TEXT NOT NULL, requested_by_actor_type TEXT NOT NULL,
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_broker_requests
+  ON ai_broker_requests(tenant_id, tool_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_ai_broker_requests_batch
+  ON ai_broker_requests(tenant_id, batch_id);
+CREATE INDEX IF NOT EXISTS ix_ai_broker_requests_key
+  ON ai_broker_requests(tenant_id, idempotency_key);
+
+CREATE TABLE IF NOT EXISTS ai_broker_outcomes (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, broker_request_id TEXT NOT NULL,
+  tool_id TEXT NOT NULL DEFAULT '', contract_id TEXT NOT NULL DEFAULT '',
+  b4_decision_id TEXT NOT NULL DEFAULT '',
+  broker_status TEXT NOT NULL, dominant_signal TEXT NOT NULL,
+  effect_outcome TEXT NOT NULL DEFAULT 'NO_EFFECT_OUTCOME',
+  broker_request_hash TEXT NOT NULL DEFAULT '',
+  broker_decision_hash TEXT NOT NULL, broker_state_hash TEXT NOT NULL,
+  broker_proof_bundle_hash TEXT NOT NULL DEFAULT '',
+  release_gate_status TEXT NOT NULL DEFAULT '',
+  decided_by TEXT NOT NULL, decided_by_actor_type TEXT NOT NULL,
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_broker_outcomes
+  ON ai_broker_outcomes(tenant_id, broker_request_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_ai_broker_outcomes_status
+  ON ai_broker_outcomes(tenant_id, broker_status);
+
+CREATE TABLE IF NOT EXISTS ai_broker_events (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, broker_request_id TEXT,
+  event_type TEXT NOT NULL, sequence INTEGER NOT NULL,
+  actor_id TEXT NOT NULL, actor_type TEXT NOT NULL,
+  event_hash TEXT NOT NULL, previous_event_hash TEXT NOT NULL,
+  broker_state_hash TEXT NOT NULL DEFAULT '',
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_broker_events_seq
+  ON ai_broker_events(tenant_id, sequence);
+CREATE INDEX IF NOT EXISTS ix_ai_broker_events_request
+  ON ai_broker_events(tenant_id, broker_request_id, sequence);
+"""),
 ]
 
 

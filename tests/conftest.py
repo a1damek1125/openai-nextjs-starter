@@ -377,6 +377,38 @@ class Gate:
             "tool_id": tool_id, "breaker_state": state, "reason": reason},
             headers=self.h(actor))
 
+    # -- TOOL-B5 null broker helpers ------------------------------------------
+    def b4_decision(self, requester=OWNER, **over):
+        """Register+check+admit a tool, create its contract, submit a clean B4
+        proposal, and return (tool_id, contract, decision_dict)."""
+        tid, contract = self.preaction_tool(requester=requester, **over)
+        body = self.clean_proposal_body(tid, contract)
+        d = self.c.post("/ai-tools/actions/proposals", json=body,
+                        headers=self.h(requester)).json()
+        return tid, contract, d
+
+    def broker_request(self, b4_decision_id=None, actor=OWNER, body=None,
+                       **over):
+        """Create a null broker request from a B4 decision. Returns Response."""
+        if body is None:
+            body = {"b4_decision_id": b4_decision_id}
+            body.update(over)
+        return self.c.post("/ai-tools/broker/requests", json=body,
+                           headers=self.h(actor))
+
+    def prepared_broker(self, requester=OWNER, **over):
+        """Full pipeline: admitted tool -> B4 ALLOWED decision -> null broker
+        outcome. Returns (broker_request_id, outcome_dict)."""
+        _, _, d = self.b4_decision(requester=requester, **over)
+        o = self.broker_request(d["decision_id"], actor=requester).json()
+        return o["broker_request_id"], o
+
+    def br(self, broker_request_id, path="", actor=OWNER, method="GET", **body):
+        url = f"/ai-tools/broker/requests/{broker_request_id}{path}"
+        if method == "GET":
+            return self.c.get(url, headers=self.h(actor))
+        return self.c.post(url, json=body, headers=self.h(actor))
+
 
 @pytest.fixture()
 def gate():

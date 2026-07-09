@@ -155,6 +155,7 @@ window.loadSections = async () => {
   if (window.loadQualitySection) jobs.push(loadQualitySection(me));
   if (window.loadContractsSection) jobs.push(loadContractsSection(me));
   if (window.loadActionsSection) jobs.push(loadActionsSection(me));
+  if (window.loadBrokerSection) jobs.push(loadBrokerSection(me));
   await Promise.allSettled(jobs);
 };
 
@@ -3141,6 +3142,82 @@ window.openDecision = async (pid) => {
 };
 """
 
+BROKER_SECTIONS = """
+<section id="tool-broker-section"><h2>Four-Plane Proof-Carrying Null Broker</h2>
+<ul class="labels"><small>
+<li>NULL_EFFECT_ONLY — this broker executes nothing.</li>
+<li>NO_REAL_EXECUTION — no tool run, no external provider, no MCP runtime.</li>
+<li>VALIDATION_ONLY / FUTURE_RUNTIME_PLACEHOLDER.</li>
+<li>PROOF_CARRYING_NULL_BROKER_ONLY / FOUR_PLANE_BROKER_INTEGRITY_ONLY.</li>
+<li>CREDENTIAL_FREE_CORRIDOR_ONLY — no credential, no token, no secret.</li>
+<li>ADVERSARIALLY_VERIFIED_NULL_ONLY — fails closed under fault injection.</li>
+<li>An Action Passport, Governance Receipt, Proof-Carrying Certificate and Negative Execution Certificate are evidence only, never execution authority or tokens.</li>
+<li>The only effector is a null effector; its outcome is NO_EFFECT_OUTCOME.</li>
+<li>No null output leaks payload, secrets, credentials, approval/consent artifacts or customer data.</li>
+<li>Server-side B1/B2/B3/B4 truth is authoritative and only narrows authority.</li>
+</small></ul>
+<div id="tool-broker-summary"><i>Loading null broker…</i></div>
+<div id="tool-broker-list"></div>
+</section>
+"""
+
+BROKER_JS = """
+window.loadBrokerSection = async (me) => { await loadBroker(); };
+
+window.loadBroker = async () => {
+  let reg; try { reg = await get('/ai-tools/broker/registry'); }
+  catch (e) { $('tool-broker-summary').innerHTML =
+    '<i>The null broker is not available for your role.</i>'; return; }
+  $('tool-broker-summary').innerHTML =
+    `<p><b>requests</b> ${esc(String(reg.broker_request_count))} ·
+      <b>outcomes</b> ${esc(String(reg.broker_outcome_count))}</p>` +
+    '<p><small>' + Object.entries(reg.outcomes_by_status || {}).map(
+      ([k, v]) => `${esc(k)}: <b>${esc(String(v))}</b>`).join(' · ') + '</small></p>';
+  let reqs = []; try { reqs = await get('/ai-tools/broker/requests'); }
+  catch (e) {}
+  $('tool-broker-list').innerHTML = (reqs.length ?
+    '<table><tr><th>Request</th><th>Tool</th><th></th></tr>' +
+    reqs.map(r => `<tr><td><small>${esc((r.broker_request_envelope_id||'').slice(0,8))}
+       </small></td><td><small>${esc((r.tool_id||'').slice(0,8))}</small></td>
+       <td><button onclick="openBrokerOutcome('${esc(r.broker_request_envelope_id)}')">
+       Outcome</button></td></tr>`).join('') + '</table>'
+    : '<i>No broker requests yet.</i>');
+};
+
+window.openBrokerOutcome = async (rid) => {
+  const base = '/ai-tools/broker/requests/' + rid;
+  const o = await get(base + '/outcome');
+  let vr = null; try { vr = (await send('POST', base + '/verify', {})).data; }
+  catch (e) {}
+  const gate = o.broker_release_gate_report || {};
+  const har = o.fault_injection_harness || {};
+  const nx = o.null_output_non_exfiltration || {};
+  $('tool-broker-list').innerHTML = `
+    <h3>Broker outcome ${esc(rid.slice(0,8))}
+      <span class="badge">${esc(o.broker_status)}</span></h3>
+    <p><b>dominant</b> ${esc(o.dominant_signal)} ·
+      <b>reason</b> <small>${esc(o.dominant_reason_code)}</small></p>
+    <p><b>effect</b> <b class="ok">${esc(o.effect_outcome)}</b> ·
+      <b>executes nothing</b> <b class="ok">${esc(String(o.executes_nothing))}</b>
+      · <b>future runtime required</b> ${esc(String(o.requires_future_runtime))}</p>
+    <p><b>release gate</b> <b class="${gate.release_gate_status ===
+      'RELEASE_GATE_PASSED' ? 'ok' : 'err'}">${esc(gate.release_gate_status)}</b>
+      · <b>fault injection</b> ${esc(har.harness_status)}
+      (${esc(String((har.fault_cases||[]).length))} cases,
+      ${esc(String((har.unexpected_positive_results||[]).length))} unexpected)</p>
+    <p><b>null-output non-exfiltration</b> <b class="${nx.leak_detected ?
+      'err' : 'ok'}">${esc(nx.non_exfiltration_status)}</b></p>
+    <p><b>decision hash</b> <code>${esc((o.broker_decision_hash||'').slice(0,14))}…
+      </code> · <b>verify</b> ${vr ? `<b class="${vr.broker_decision_hash_valid ?
+        'ok' : 'err'}">${esc(vr.verification_status)}</b>` : 'n/a'}</p>
+    <p><b>signals</b> ${(o.all_signals||[]).map(s =>
+      `<span class="err">${esc(s)}</span>`).join(' ') || '<i>none</i>'}</p>
+    <ul>${(o.honesty_labels||[]).map(l =>
+      `<li><small>${esc(l)}</small></li>`).join('')}</ul>
+    <button onclick="loadBroker()">← back</button>`;
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -3171,6 +3248,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 {QUALITY_SECTIONS}
 {CONTRACTS_SECTIONS}
 {ACTIONS_SECTIONS}
+{BROKER_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -3305,7 +3383,8 @@ boot();
 <script>{TOOLS_JS}</script>
 <script>{QUALITY_JS}</script>
 <script>{CONTRACTS_JS}</script>
-<script>{ACTIONS_JS}</script></body></html>"""
+<script>{ACTIONS_JS}</script>
+<script>{BROKER_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:

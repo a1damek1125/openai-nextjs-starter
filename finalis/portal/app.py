@@ -8618,18 +8618,374 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         return _render_decision(user["tid"], user, raw,
                                 event_type="DECISION_RENDERED")
 
-    # The literal /ai-tools/actions/* routes are registered AFTER the earlier
-    # parameterised /ai-tools/{tool_id}/* routes, so Starlette (first-match-wins)
-    # would otherwise capture e.g. /ai-tools/actions/policy as
-    # /ai-tools/{tool_id}/policy with tool_id="actions" and 404. Hoist the
-    # literal action routes ahead of the parameterised ones so they match first.
+    # ---- ViktorAI Four-Plane Proof-Carrying Null Broker (TOOL-B5) ------------------
+    from ..ai_employee import tool_broker as _tb
+    from ..ai_employee.tool_broker_store import ToolBrokerStore
+    broker_store = ToolBrokerStore(db)
+    app.state.broker_store = broker_store
+
+    def _broker_emit(tid, *, event_type, broker_request_id, actor_id,
+                     actor_type, state_hash, detail):
+        seq = broker_store.next_sequence(tenant_id=tid)
+        prev = broker_store.last_event(tenant_id=tid)
+        ev = _tb.build_broker_event(
+            event_type=event_type, tenant_id=tid,
+            broker_request_id=broker_request_id, actor_id=actor_id,
+            actor_type=actor_type, broker_state_hash=state_hash,
+            previous_event_hash=(prev or {}).get("event_hash"), sequence=seq,
+            detail=detail, created_at=utcnow())
+        broker_store.append_event({
+            "id": str(uuid.uuid4()), "tenant_id": tid, "broker_request_id":
+            broker_request_id, "event_type": event_type, "sequence": seq,
+            "actor_id": actor_id, "actor_type": actor_type,
+            "event_hash": ev["event_hash"], "previous_event_hash": ev[
+                "previous_event_hash"], "broker_state_hash": state_hash,
+            "payload_json": json.dumps(ev), "created_at": ev["created_at"]})
+        return ev
+
+    def _broker_policy(raw):
+        pol = dict(_tb.DEFAULT_POLICY)
+        raw = raw or {}
+        for k, default in _tb.DEFAULT_POLICY.items():
+            if k in raw:
+                try:
+                    pol[k] = max(0, min(int(default), int(raw[k])))
+                except (TypeError, ValueError):
+                    pol[k] = default
+        return pol
+
+    def _load_broker_request_or_404(broker_request_id, user):
+        r = broker_store.request(broker_request_id, tenant_id=user["tid"])
+        if r is None:
+            raise HTTPException(404, "broker request not found")
+        return r
+
+    def _load_broker_outcome_or_404(broker_request_id, user):
+        _load_broker_request_or_404(broker_request_id, user)
+        o = broker_store.outcome(broker_request_id, tenant_id=user["tid"])
+        if o is None:
+            raise HTTPException(404, "no broker outcome")
+        return o
+
+    def _gather_b5_inputs(tid, b4_decision, b4_proposal):
+        tool_id = b4_decision.get("tool_id") or b4_proposal.get("tool_id")
+        contract_id = b4_decision.get("contract_id") or b4_proposal.get(
+            "contract_id")
+        head = tool_store.payload(tool_id, tenant_id=tid)
+        quality = quality_store.latest(tool_id, tenant_id=tid)
+        contract = contract_store.payload(contract_id, tenant_id=tid) if \
+            contract_id else None
+        cert = None
+        if contract is not None:
+            projs = contract_store.projections_for(contract_id, tenant_id=tid)
+            if projs:
+                cert = projs[-1].get("broker_readiness_certificate")
+        return head, quality, contract, cert
+
+    def _batch_related(tid, env, exclude_request_id):
+        """Related broker requests correlated by ANY server-derived key (batch /
+        customer / task / case), summarised for the multi-request safety ledger.
+        Correlating on more than the client-supplied batch_id means an adversary
+        cannot defeat cross-request conservation just by omitting or varying it.
+        Tenant-scoped."""
+        out = []
+        for o in broker_store.related_outcomes(
+                tenant_id=tid, batch_id=str(env.get("batch_id", "") or ""),
+                customer_id=str(env.get("customer_id", "") or ""),
+                task_id=str(env.get("task_id", "") or ""),
+                case_id=str(env.get("case_id", "") or ""),
+                exclude_request_id=exclude_request_id):
+            se = (o.get("multi_request_safety_ledger") or {})
+            out.append({
+                "broker_request_id": o.get("broker_request_id"),
+                "aggregate_effects": se.get("aggregate_effects", []),
+                "risk_score": (o.get("cumulative_risk_conservation") or {}).get(
+                    "risk_sum", 0),
+                "payload_hash": o.get("broker_request_hash")})
+        return out
+
+    _BROKER_SUBFIELDS = {
+        "four-plane": "four_plane_model",
+        "plane-non-interference": "plane_non_interference",
+        "open-checkpoint": "broker_open_checkpoint",
+        "assumption-ledger": "assumption_capture_ledger",
+        "safety-lattice": "broker_safety_lattice",
+        "multi-request-ledger": "multi_request_safety_ledger",
+        "cross-request-effect-conservation": "cross_request_effect_conservation",
+        "cumulative-risk-conservation": "cumulative_risk_conservation",
+        "null-output-non-exfiltration": "null_output_non_exfiltration",
+        "safe-output-projection": "safe_output_projection",
+        "credential-free-corridor": "credential_free_corridor",
+        "token-non-derivation": "token_non_derivation",
+        "adapter-manifest-freeze": "adapter_manifest_freeze",
+        "adapter-non-resolution": "adapter_non_resolution",
+        "runtime-surface-diff": "runtime_surface_diff",
+        "capability-identity-seal": "capability_identity_seal",
+        "certificate-chain-closure": "certificate_chain_closure",
+        "null-effector": "null_effector",
+        "side-effect-zero": "side_effect_zero",
+        "absence-proofs": "absence_proofs",
+        "bypass-sentinel": "broker_bypass_sentinel",
+        "broker-non-execution": "broker_non_execution_proof",
+        "negative-execution-certificate": "negative_execution_certificate",
+        "proof-carrying-certificate":
+        "proof_carrying_broker_action_certificate",
+        "outcome-closure": "outcome_closure_checkpoint",
+        "fault-injection": "fault_injection_harness",
+        "release-gate": "broker_release_gate_report",
+        "conformance-vector": "broker_conformance_vector",
+        "proof-bundle": "broker_proof_bundle",
+    }
+
+    @app.get("/ai-tools/broker/policy")
+    async def broker_policy(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {"broker_model_version": _tb.BROKER_MODEL_VERSION,
+                "executes_tools": False, "is_tool_broker_runtime": False,
+                "is_mcp_runtime": False, "is_mcp_server": False,
+                "is_mcp_client": False, "is_llm_runtime": False,
+                "issues_tokens": False, "derives_tokens": False,
+                "reads_credentials": False, "reads_secrets": False,
+                "calls_external_provider": False, "sends_customer_message": False,
+                "executes_payment": False, "mutates_crm": False,
+                "mutates_evidence": False, "exports_data": False,
+                "resolves_real_adapter": False, "has_execute_endpoint": False,
+                "only_effector": "NULL_EFFECTOR",
+                "most_permissive_outcome": "BROKER_PREPARED_FOR_FUTURE_ONLY",
+                "accepts_b4_statuses": sorted(_tb.B4_ACCEPTABLE_STATUSES),
+                "broker_statuses": sorted(_tb.BROKER_STATUSES),
+                "failure_dominance": _tb.FAILURE_DOMINANCE,
+                "reason_codes": _tb.REASON_CODES,
+                "forbidden_leak_patterns": _tb.FORBIDDEN_LEAK_PATTERNS,
+                "fault_cases": _tb.FAULT_CASES,
+                "default_policy": _tb.DEFAULT_POLICY,
+                "honesty_labels": _tb.HONESTY_LABELS}
+
+    @app.get("/ai-tools/broker/registry")
+    async def broker_registry(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        outs = broker_store.list_outcomes(tenant_id=user["tid"])
+        by_status = {}
+        for o in outs:
+            by_status[o["broker_status"]] = by_status.get(
+                o["broker_status"], 0) + 1
+        reqs = broker_store.list_requests(tenant_id=user["tid"])
+        return {"tenant_id": user["tid"], "broker_request_count": len(reqs),
+                "broker_outcome_count": len(outs),
+                "outcomes_by_status": by_status,
+                "honesty_labels": _tb.HONESTY_LABELS}
+
+    @app.get("/ai-tools/broker/events")
+    async def broker_events(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        evs = broker_store.events(tenant_id=user["tid"])
+        chain_ok, prev = True, None
+        for e in evs:
+            if e["previous_event_hash"] != (prev or _tb.GENESIS):
+                chain_ok = False
+            prev = e["event_hash"]
+        return {"tenant_id": user["tid"], "events": evs,
+                "event_count": len(evs), "event_chain_valid": chain_ok,
+                "ledger_note": "local broker ledger; not a production immutable "
+                "log", "honesty_labels": _tb.HONESTY_LABELS}
+
+    @app.get("/ai-tools/broker/requests")
+    async def list_broker_requests(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return broker_store.list_requests(tenant_id=user["tid"])
+
+    def _prepare_and_store(tid, user, body):
+        # Preparing a broker request runs NULL evaluation only: no tool run, no
+        # provider, no token, no credential, no side effect. The most permissive
+        # outcome is BROKER_PREPARED_FOR_FUTURE_ONLY (still runs nothing).
+        b4 = None
+        did = str(body.get("b4_decision_id", "") or "")
+        pid = str(body.get("proposal_id", "") or "")
+        if did:
+            b4 = guardrail_store.decision(did, tenant_id=tid)
+        elif pid:
+            b4 = guardrail_store.decision_for_proposal(pid, tenant_id=tid)
+        if b4 is None:
+            raise HTTPException(404, "b4 decision not found")
+        pobj = guardrail_store.proposal(b4["proposal_id"], tenant_id=tid)
+        if pobj is None:
+            raise HTTPException(404, "b4 proposal not found")
+        head, quality, contract, cert = _gather_b5_inputs(tid, b4, pobj)
+        actor_type = "ai_employee" if user["role"] == "ai_worker" else "human"
+        now = utcnow()
+        rid = str(uuid.uuid4())
+        env = _tb.build_broker_request_envelope(
+            broker_request_id=rid, tenant_id=tid, actor_id=user["uid"],
+            actor_type=actor_type, b4_decision=b4, b4_proposal=pobj,
+            batch_id=body.get("batch_id"), task_id=body.get("task_id"),
+            case_id=body.get("case_id"), customer_id=body.get("customer_id"),
+            created_at=now)
+        related = _batch_related(tid, env, rid)
+        prior_outcome = broker_store.prior_outcome_for_key(
+            env.get("idempotency_key", ""), tenant_id=tid,
+            exclude_request_id=rid)
+        outcome = _tb.prepare_broker_outcome(
+            broker_request_id=rid, tenant_id=tid, actor_id=user["uid"],
+            actor_type=actor_type, envelope=env, b4_decision=b4,
+            b4_proposal=pobj, head=head, quality_report=quality,
+            contract=contract, broker_readiness=cert,
+            related_requests=related, prior_outcome=prior_outcome,
+            adapter_manifest=body.get("adapter_manifest"),
+            observed_surface=body.get("observed_surface"),
+            policy=_broker_policy(body.get("policy")), created_at=now)
+        broker_store.save_request({
+            "id": rid, "tenant_id": tid, "tool_id": env.get("tool_id") or "",
+            "contract_id": env.get("contract_id") or "",
+            "b4_proposal_id": env.get("b4_proposal_id") or "",
+            "b4_decision_id": b4.get("decision_id") or "",
+            "action_path": env.get("action_path") or "",
+            "idempotency_key": env.get("idempotency_key") or "",
+            "batch_id": env.get("batch_id") or "",
+            "task_id": env.get("task_id") or "",
+            "case_id": env.get("case_id") or "",
+            "customer_id": env.get("customer_id") or "",
+            "broker_request_hash": env["broker_request_hash"],
+            "requested_by": user["uid"], "requested_by_actor_type": actor_type,
+            "payload_json": json.dumps(env), "created_at": now})
+        broker_store.save_outcome({
+            "id": str(uuid.uuid4()), "tenant_id": tid, "broker_request_id": rid,
+            "tool_id": outcome.get("tool_id") or "",
+            "contract_id": outcome.get("contract_id") or "",
+            "b4_decision_id": outcome.get("b4_decision_id") or "",
+            "broker_status": outcome["broker_status"],
+            "dominant_signal": outcome["dominant_signal"],
+            "effect_outcome": outcome["effect_outcome"],
+            "broker_request_hash": outcome.get("broker_request_hash") or "",
+            "broker_decision_hash": outcome["broker_decision_hash"],
+            "broker_state_hash": outcome["broker_state_hash"],
+            "broker_proof_bundle_hash": outcome["broker_proof_bundle"][
+                "broker_proof_bundle_hash"],
+            "release_gate_status": outcome["broker_release_gate_report"][
+                "release_gate_status"],
+            "decided_by": user["uid"], "decided_by_actor_type": actor_type,
+            "payload_json": json.dumps(outcome), "created_at": now,
+            "updated_at": now})
+        _broker_emit(tid, event_type="BROKER_REQUEST_OPENED",
+                     broker_request_id=rid, actor_id=user["uid"],
+                     actor_type=actor_type,
+                     state_hash=env["broker_request_hash"],
+                     detail={"tool_id": env.get("tool_id")})
+        _broker_emit(tid, event_type="BROKER_OUTCOME_PREPARED",
+                     broker_request_id=rid, actor_id=user["uid"],
+                     actor_type=actor_type,
+                     state_hash=outcome["broker_state_hash"],
+                     detail={"status": outcome["broker_status"]})
+        audit.append(event_type="AI_BROKER_NULL_OUTCOME_PREPARED",
+                     actor=user["uid"], payload={"broker_request_id": rid,
+                     "status": outcome["broker_status"]})
+        return outcome
+
+    @app.post("/ai-tools/broker/requests")
+    async def create_broker_request(body: dict,
+                                    user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        return _prepare_and_store(user["tid"], user, body or {})
+
+    @app.get("/ai-tools/broker/requests/{broker_request_id}")
+    async def get_broker_request(broker_request_id: str,
+                                 user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _load_broker_request_or_404(broker_request_id, user)
+
+    @app.get("/ai-tools/broker/requests/{broker_request_id}/outcome")
+    async def get_broker_outcome(broker_request_id: str,
+                                 user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _load_broker_outcome_or_404(broker_request_id, user)
+
+    @app.get("/ai-tools/broker/requests/{broker_request_id}/safe")
+    async def get_broker_safe(broker_request_id: str,
+                              user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        o = _load_broker_outcome_or_404(broker_request_id, user)
+        restricted = user["role"] in ("viewer", "technician", "accountant")
+        # The safe view is deterministically redacted: ids, status, hashes,
+        # labels only — never payload/secret/customer/approval/consent fields.
+        return {"broker_request_id": broker_request_id, "tenant_id": o[
+            "tenant_id"], "broker_status": o["broker_status"],
+            "dominant_reason_code": o["dominant_reason_code"],
+            "effect_outcome": "NO_EFFECT_OUTCOME", "null_effect_only": True,
+            "executes_nothing": True, "requires_future_runtime": True,
+            "all_signals": ([] if restricted else o["all_signals"]),
+            "broker_decision_hash": o["broker_decision_hash"],
+            "broker_proof_bundle_hash": o["broker_proof_bundle"][
+                "broker_proof_bundle_hash"],
+            "safe_output_projection": o["safe_output_projection"][
+                "safe_outcome"], "honesty_labels": _tb.HONESTY_LABELS}
+
+    def _bsub(field):
+        async def getter(broker_request_id: str,
+                         user: dict = Depends(current_user)):
+            require_permission(user, "case.read")
+            o = _load_broker_outcome_or_404(broker_request_id, user)
+            return {"broker_request_id": broker_request_id, field: o[field],
+                    "honesty_labels": _tb.HONESTY_LABELS}
+        return getter
+
+    for _slug, _field in _BROKER_SUBFIELDS.items():
+        app.add_api_route(
+            f"/ai-tools/broker/requests/{{broker_request_id}}/{_slug}",
+            _bsub(_field), methods=["GET"])
+
+    @app.post("/ai-tools/broker/requests/{broker_request_id}/fault-injection-check")
+    async def broker_fault_injection_check(broker_request_id: str,
+                                           user: dict = Depends(current_user)):
+        # Deterministically re-run the adversarial fault-injection harness over
+        # the sealed evidence. Executes nothing; every fault must fail closed.
+        require_permission(user, "case.read")
+        o = _load_broker_outcome_or_404(broker_request_id, user)
+        h = o["fault_injection_harness"]
+        _broker_emit(user["tid"], event_type="BROKER_FAULT_INJECTED",
+                     broker_request_id=broker_request_id, actor_id=user["uid"],
+                     actor_type=("ai_employee" if user["role"] == "ai_worker"
+                                 else "human"),
+                     state_hash=h["fault_injection_harness_hash"],
+                     detail={"status": h["harness_status"]})
+        return h
+
+    @app.post("/ai-tools/broker/requests/{broker_request_id}/verify")
+    async def verify_broker_outcome(broker_request_id: str,
+                                    user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        o = _load_broker_outcome_or_404(broker_request_id, user)
+        recomputed = _tb._core_hash(
+            o, "broker_decision_hash", "broker_request_id", "decided_by_actor_id",
+            "decided_by_actor_type", "broker_state_hash")
+        ok = recomputed == o["broker_decision_hash"]
+        return {"broker_request_id": broker_request_id,
+                "stored_broker_decision_hash": o["broker_decision_hash"],
+                "recomputed_broker_decision_hash": recomputed,
+                "broker_decision_hash_valid": ok,
+                "verification_status": "VALID" if ok else "TAMPERED",
+                "honesty_labels": _tb.HONESTY_LABELS}
+
+    @app.get("/ai-tools/broker/requests/{broker_request_id}/events")
+    async def broker_request_events(broker_request_id: str,
+                                    user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_broker_request_or_404(broker_request_id, user)
+        return {"broker_request_id": broker_request_id, "events":
+                broker_store.events(tenant_id=user["tid"],
+                                    broker_request_id=broker_request_id),
+                "honesty_labels": _tb.HONESTY_LABELS}
+
+    # Hoist the literal /ai-tools/actions/* and /ai-tools/broker/* routes ahead
+    # of the earlier-registered parameterised /ai-tools/{tool_id}/* routes so
+    # first-match-wins routing does not capture them (e.g. /ai-tools/actions/
+    # policy as /ai-tools/{tool_id}/policy with tool_id="actions" -> 404).
     _param_ix = next((i for i, r in enumerate(app.router.routes)
                       if getattr(r, "path", "") == "/ai-tools/{tool_id}"), 0)
-    _action_routes = [r for r in app.router.routes
-                      if getattr(r, "path", "").startswith("/ai-tools/actions")]
-    for _r in _action_routes:
+    _literal_routes = [r for r in app.router.routes
+                       if getattr(r, "path", "").startswith("/ai-tools/actions")
+                       or getattr(r, "path", "").startswith("/ai-tools/broker")]
+    for _r in _literal_routes:
         app.router.routes.remove(_r)
-    for _off, _r in enumerate(_action_routes):
+    for _off, _r in enumerate(_literal_routes):
         app.router.routes.insert(_param_ix + _off, _r)
 
     # ---- UI pages -------------------------------------------------------------------------------------
