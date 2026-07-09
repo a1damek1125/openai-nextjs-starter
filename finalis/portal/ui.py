@@ -154,6 +154,7 @@ window.loadSections = async () => {
   if (window.loadToolsSection) jobs.push(loadToolsSection(me));
   if (window.loadQualitySection) jobs.push(loadQualitySection(me));
   if (window.loadContractsSection) jobs.push(loadContractsSection(me));
+  if (window.loadActionsSection) jobs.push(loadActionsSection(me));
   await Promise.allSettled(jobs);
 };
 
@@ -3068,6 +3069,78 @@ window.projectContract = async (toolId, cid) => {
 };
 """
 
+ACTIONS_SECTIONS = """
+<section id="tool-actions-section"><h2>Causal Pre-Action Reference Monitor</h2>
+<ul class="labels"><small>
+<li>The pre-action monitor executes nothing.</li>
+<li>A pre-action decision is not an execution.</li>
+<li>ALLOWED_FOR_FUTURE_BROKER_ONLY does not run any tool.</li>
+<li>A future Tool Broker is required and does not exist yet.</li>
+<li>An Action Passport is not a token and confers no authority.</li>
+<li>A Governance Receipt is not authority.</li>
+<li>A Future Execution Lease is a NOT_IMPLEMENTED placeholder.</li>
+<li>The AI cannot approve its own action or self-validate as human truth.</li>
+<li>Consent is non-overridable; nondelegable decisions are human-only.</li>
+<li>No token is issued; no external provider is called; no payment moves.</li>
+<li>Registry, quality and contract truth are authoritative and only narrow authority.</li>
+</small></ul>
+<div id="tool-actions-summary"><i>Loading pre-action monitor…</i></div>
+<div id="tool-actions-list"></div>
+</section>
+"""
+
+ACTIONS_JS = """
+window.loadActionsSection = async (me) => { await loadActions(); };
+
+window.loadActions = async () => {
+  let reg; try { reg = await get('/ai-tools/actions/registry'); }
+  catch (e) { $('tool-actions-summary').innerHTML =
+    '<i>The pre-action monitor is not available for your role.</i>'; return; }
+  $('tool-actions-summary').innerHTML =
+    `<p><b>proposals</b> ${esc(String(reg.proposal_count))} ·
+      <b>decisions</b> ${esc(String(reg.decision_count))}</p>` +
+    '<p><small>' + Object.entries(reg.decisions_by_status || {}).map(
+      ([k, v]) => `${esc(k)}: <b>${esc(String(v))}</b>`).join(' · ') + '</small></p>';
+  let props = []; try { props = await get('/ai-tools/actions/proposals'); }
+  catch (e) {}
+  $('tool-actions-list').innerHTML = (props.length ?
+    '<table><tr><th>Proposal</th><th>Tool</th><th>Action</th><th></th></tr>' +
+    props.map(p => `<tr><td><small>${esc(p.proposal_envelope_id.slice(0,8))}
+       </small></td><td><small>${esc((p.tool_id||'').slice(0,8))}</small></td>
+       <td><small>${esc(p.action_path||'')}</small></td>
+       <td><button onclick="openDecision('${esc(p.proposal_envelope_id)}')">
+       Decision</button></td></tr>`).join('') + '</table>'
+    : '<i>No action proposals yet.</i>');
+};
+
+window.openDecision = async (pid) => {
+  const base = '/ai-tools/actions/proposals/' + pid;
+  const d = await get(base + '/decision');
+  let vr = null; try { vr = (await send('POST', base + '/verify', {})).data; }
+  catch (e) {}
+  const passport = d.action_passport || {}, lease = d.future_execution_lease || {};
+  $('tool-actions-list').innerHTML = `
+    <h3>Decision for ${esc(pid.slice(0,8))}
+      <span class="badge">${esc(d.decision_status)}</span></h3>
+    <p><b>dominant signal</b> ${esc(d.dominant_signal)} ·
+      <b>reason</b> <small>${esc(d.dominant_reason_code)}</small></p>
+    <p><b>executes nothing</b> <b class="ok">${esc(String(d.executes_nothing))}
+      </b> · <b>future broker required</b>
+      ${esc(String(d.requires_future_tool_broker))}</p>
+    <p><b>passport is token</b> <b class="ok">${esc(String(
+      passport.is_token))}</b> · <b>lease</b> ${esc(lease.lease_status)}</p>
+    <p><b>signals</b> ${(d.all_signals||[]).map(s =>
+      `<span class="err">${esc(s)}</span>`).join(' ') || '<i>none</i>'}</p>
+    <p><b>decision hash</b> <code>${esc((d.decision_hash||'').slice(0,14))}…
+      </code> · <b>verify</b> ${vr ? `<b class="${
+        vr.decision_hash_valid ? 'ok' : 'err'}">${esc(vr.verification_status)}
+      </b>` : 'n/a'}</p>
+    <ul>${(d.honesty_labels||[]).map(l =>
+      `<li><small>${esc(l)}</small></li>`).join('')}</ul>
+    <button onclick="loadActions()">← back</button>`;
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -3097,6 +3170,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 {TOOLS_SECTIONS}
 {QUALITY_SECTIONS}
 {CONTRACTS_SECTIONS}
+{ACTIONS_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -3230,7 +3304,8 @@ boot();
 <script>{ARTIFACTS_JS}</script>
 <script>{TOOLS_JS}</script>
 <script>{QUALITY_JS}</script>
-<script>{CONTRACTS_JS}</script></body></html>"""
+<script>{CONTRACTS_JS}</script>
+<script>{ACTIONS_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:

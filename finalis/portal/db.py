@@ -959,6 +959,75 @@ CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_tool_contract_events_seq
 CREATE INDEX IF NOT EXISTS ix_ai_tool_contract_events_contract
   ON ai_tool_contract_events(tenant_id, contract_id, sequence);
 """),
+    (19, """
+-- v19: ViktorAI Causal Pre-Action Reference Monitor (TOOL-B4). A deterministic,
+-- NON-EXECUTING pre-action governance layer in front of a FUTURE Tool Broker.
+-- It receives internal Tool Action Proposals and returns deterministic
+-- pre-action decisions over the TOOL-B1 registry + TOOL-B2 quality gate +
+-- TOOL-B3 contract/broker-readiness state (which only ever NARROW authority).
+-- It executes nothing: no Tool Broker, no tool execution, no dry-run, no
+-- MCP/LLM/external-provider call, no OAuth/token issuance, no payment, no
+-- customer message, no CRM write, no evidence mutation, no export. The single
+-- most permissive outcome is ALLOWED_FOR_FUTURE_BROKER_ONLY, which still runs
+-- nothing. An Action Passport is not a token; a Governance Receipt is not
+-- authority; a Future Execution Lease is a NOT_IMPLEMENTED placeholder.
+-- Nondelegable decisions are human-only; the AI can never self-authorize.
+CREATE TABLE IF NOT EXISTS ai_action_proposals (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, tool_id TEXT NOT NULL,
+  contract_id TEXT NOT NULL, action_path TEXT NOT NULL DEFAULT '',
+  intent TEXT NOT NULL DEFAULT '', idempotency_key TEXT NOT NULL DEFAULT '',
+  logical_clock INTEGER NOT NULL DEFAULT 0,
+  proposal_hash TEXT NOT NULL,
+  proposed_by_actor_id TEXT NOT NULL, proposed_by_actor_type TEXT NOT NULL,
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_action_proposals
+  ON ai_action_proposals(tenant_id, tool_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_ai_action_proposals_key
+  ON ai_action_proposals(tenant_id, idempotency_key);
+
+CREATE TABLE IF NOT EXISTS ai_action_decisions (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, tool_id TEXT NOT NULL,
+  contract_id TEXT NOT NULL, proposal_id TEXT NOT NULL,
+  proposal_hash TEXT NOT NULL,
+  decision_status TEXT NOT NULL, dominant_signal TEXT NOT NULL,
+  idempotency_key TEXT NOT NULL DEFAULT '',
+  logical_clock INTEGER NOT NULL DEFAULT 0,
+  source_freshness_epoch TEXT NOT NULL DEFAULT '',
+  is_replay INTEGER NOT NULL DEFAULT 0,
+  decision_hash TEXT NOT NULL, decision_state_hash TEXT NOT NULL,
+  decided_by_actor_id TEXT NOT NULL, decided_by_actor_type TEXT NOT NULL,
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_action_decisions
+  ON ai_action_decisions(tenant_id, tool_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_ai_action_decisions_proposal
+  ON ai_action_decisions(tenant_id, proposal_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_ai_action_decisions_key
+  ON ai_action_decisions(tenant_id, idempotency_key, created_at);
+CREATE INDEX IF NOT EXISTS ix_ai_action_decisions_status
+  ON ai_action_decisions(tenant_id, decision_status);
+
+CREATE TABLE IF NOT EXISTS ai_action_circuit_breakers (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, tool_id TEXT NOT NULL,
+  breaker_state TEXT NOT NULL DEFAULT 'CLOSED',
+  reason_code TEXT NOT NULL DEFAULT '',
+  circuit_breaker_hash TEXT NOT NULL DEFAULT '',
+  set_by_actor_id TEXT NOT NULL DEFAULT '',
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_action_circuit_breakers
+  ON ai_action_circuit_breakers(tenant_id, tool_id);
+
+CREATE TABLE IF NOT EXISTS ai_action_decision_events (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, proposal_id TEXT,
+  decision_id TEXT, event_type TEXT NOT NULL, sequence INTEGER NOT NULL,
+  actor_id TEXT NOT NULL, actor_type TEXT NOT NULL,
+  event_hash TEXT NOT NULL, previous_event_hash TEXT NOT NULL,
+  decision_state_hash TEXT NOT NULL DEFAULT '',
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_action_decision_events_seq
+  ON ai_action_decision_events(tenant_id, sequence);
+CREATE INDEX IF NOT EXISTS ix_ai_action_decision_events_proposal
+  ON ai_action_decision_events(tenant_id, proposal_id, sequence);
+"""),
 ]
 
 

@@ -8194,6 +8194,444 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
 
     app.state.build_contract = _tc.build_contract
 
+    # ---- ViktorAI Causal Pre-Action Reference Monitor (TOOL-B4) --------------------
+    from ..ai_employee import tool_guardrails as _tg
+    from ..ai_employee.tool_guardrails_store import ToolGuardrailStore
+    guardrail_store = ToolGuardrailStore(db)
+    app.state.guardrail_store = guardrail_store
+
+    # An actor's role grants a coarse authority envelope. The pre-action monitor
+    # then INTERSECTS it with the contract frontier — authority can only narrow.
+    _ROLE_AUTHORITY = {
+        "owner": set(_tg.AUTHORITY_DIMENSIONS),
+        "manager": {"READ", "INTERNAL_WRITE", "EXTERNAL_READ", "EXTERNAL_WRITE",
+                    "CUSTOMER_MESSAGE", "CRM_WRITE", "EXPORT"},
+        "operator": {"READ", "INTERNAL_WRITE", "EXTERNAL_READ"},
+        "technician": {"READ", "INTERNAL_WRITE"},
+        "accountant": {"READ", "EXPORT"},
+        "viewer": {"READ"}, "ai_worker": {"READ"},
+    }
+
+    def _role_authority(user):
+        return sorted(_ROLE_AUTHORITY.get(user["role"], {"READ"}))
+
+    def _guardrail_emit(tid, *, event_type, proposal_id, decision_id, actor_id,
+                        actor_type, state_hash, detail):
+        seq = guardrail_store.next_sequence(tenant_id=tid)
+        prev = guardrail_store.last_event(tenant_id=tid)
+        ev = _tg.build_decision_event(
+            event_type=event_type, tenant_id=tid, proposal_id=proposal_id,
+            decision_id=decision_id, actor_id=actor_id, actor_type=actor_type,
+            decision_state_hash=state_hash,
+            previous_event_hash=(prev or {}).get("event_hash"), sequence=seq,
+            detail=detail, created_at=utcnow())
+        guardrail_store.append_event({
+            "id": str(uuid.uuid4()), "tenant_id": tid, "proposal_id":
+            proposal_id, "decision_id": decision_id, "event_type": event_type,
+            "sequence": seq, "actor_id": actor_id, "actor_type": actor_type,
+            "event_hash": ev["event_hash"], "previous_event_hash": ev[
+                "previous_event_hash"], "decision_state_hash": state_hash,
+            "payload_json": json.dumps(ev), "created_at": ev["created_at"]})
+        return ev
+
+    def _effective_policy(raw):
+        """A client may only ever make the policy STRICTER (smaller budgets /
+        limits). Any supplied value is clamped to min(default, supplied); a
+        larger, more permissive value is ignored. Fail-closed."""
+        pol = dict(_tg.DEFAULT_POLICY)
+        raw = raw or {}
+        for k, default in _tg.DEFAULT_POLICY.items():
+            if k in raw:
+                try:
+                    pol[k] = max(0, min(int(default), int(raw[k])))
+                except (TypeError, ValueError):
+                    pol[k] = default
+        return pol
+
+    def _load_proposal_or_404(proposal_id, user):
+        p = guardrail_store.proposal(proposal_id, tenant_id=user["tid"])
+        if p is None:
+            raise HTTPException(404, "proposal not found")
+        return p
+
+    def _load_decision_or_404(proposal_id, user):
+        d = guardrail_store.decision_for_proposal(proposal_id,
+                                                  tenant_id=user["tid"])
+        if d is None:
+            raise HTTPException(404, "no decision for proposal")
+        return d
+
+    def _gather_inputs(tool_id, contract_id, tid):
+        """Load every authoritative source the monitor narrows against. All are
+        server-side truth; none can be overridden by the untrusted proposal."""
+        head = tool_store.payload(tool_id, tenant_id=tid)
+        version = tool_store.latest_version(tool_id, tenant_id=tid)
+        quality = quality_store.latest(tool_id, tenant_id=tid)
+        allowed_purposes = []
+        if version:
+            allowed_purposes = (version["descriptor"].get(
+                "purpose_contract", {}) or {}).get("allowed_purposes", []) or \
+                version["descriptor"].get("allowed_purposes", []) or []
+        contract = None
+        if contract_id:
+            contract = contract_store.payload(contract_id, tenant_id=tid)
+            if contract is not None and contract["tool_id"] != tool_id:
+                contract = None
+        cert = None
+        if contract is not None:
+            projs = contract_store.projections_for(contract["contract_id"],
+                                                   tenant_id=tid)
+            if projs:
+                cert = projs[-1].get("broker_readiness_certificate")
+        breaker = guardrail_store.breaker(tool_id, tenant_id=tid)
+        return head, version, quality, allowed_purposes, contract, cert, breaker
+
+    _DECISION_SUBFIELDS = {
+        "causal-graph": "causal_action_graph",
+        "temporal": "temporal_policy_automaton",
+        "drift": "capability_drift_sentinel",
+        "counterfactual": "counterfactual_twin",
+        "bypass": "bypass_simulator",
+        "authority": "authority_composition",
+        "path-risk": "path_risk_budget",
+        "delegation": "delegation_chain_check",
+        "nondelegable": "nondelegable_guard",
+        "approval": "approval_guard", "consent": "consent_guard",
+        "state-witness": "state_witness_guard",
+        "intent": "intent_check", "schema": "schema_check",
+        "scope": "scope_check", "effect": "effect_check",
+        "attempts": "attempt_detector", "rate-quota": "rate_quota_check",
+        "replay": "replay_verifier",
+        "passport": "action_passport", "receipt": "governance_receipt",
+        "lease": "future_execution_lease",
+        "no-execution": "no_execution_proof",
+        "proof-bundle": "preaction_proof_bundle",
+    }
+
+    # -- registry / policy (static routes registered before /{proposal_id}) ---
+    @app.get("/ai-tools/actions/policy")
+    async def actions_policy(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {"guardrail_model_version": _tg.GUARDRAIL_MODEL_VERSION,
+                "executes_tools": False, "is_tool_broker": False,
+                "is_dry_run": False, "calls_llm": False,
+                "calls_external_provider": False, "issues_tokens": False,
+                "moves_payment": False, "sends_customer_message": False,
+                "writes_crm": False, "mutates_evidence": False,
+                "decision_statuses": sorted(_tg.DECISION_STATUSES),
+                "failure_dominance": _tg.FAILURE_DOMINANCE,
+                "reason_codes": _tg.REASON_CODES,
+                "authority_dimensions": _tg.AUTHORITY_DIMENSIONS,
+                "nondelegable_categories": sorted(
+                    _tg.NONDELEGABLE_CATEGORIES),
+                "default_policy": _tg.DEFAULT_POLICY,
+                "action_passport_is_token": False,
+                "governance_receipt_is_authority": False,
+                "future_execution_lease_status": "NOT_IMPLEMENTED",
+                "ai_can_self_authorize": False,
+                "consent_overridable": False,
+                "honesty_labels": _tg.HONESTY_LABELS}
+
+    @app.get("/ai-tools/actions/registry")
+    async def actions_registry(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        ds = guardrail_store.list_decisions(tenant_id=user["tid"])
+        by_status = {}
+        for d in ds:
+            by_status[d["decision_status"]] = by_status.get(
+                d["decision_status"], 0) + 1
+        props = guardrail_store.list_proposals(tenant_id=user["tid"])
+        return {"tenant_id": user["tid"], "proposal_count": len(props),
+                "decision_count": len(ds), "decisions_by_status": by_status,
+                "honesty_labels": _tg.HONESTY_LABELS}
+
+    @app.get("/ai-tools/actions/circuit-breakers")
+    async def list_circuit_breakers(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {"tenant_id": user["tid"], "circuit_breakers":
+                guardrail_store.list_breakers(tenant_id=user["tid"]),
+                "honesty_labels": _tg.HONESTY_LABELS}
+
+    @app.post("/ai-tools/actions/circuit-breakers")
+    async def set_circuit_breaker(body: dict,
+                                  user: dict = Depends(current_user)):
+        # A circuit breaker is a human safety control. An AI worker can never
+        # open or (especially) close one — that would let the AI clear its own
+        # stop. Only privileged human roles may mutate a breaker.
+        require_role(user, "owner", "manager")
+        require_permission(user, "case.update")
+        tid = user["tid"]
+        tool_id = str(body.get("tool_id", ""))
+        head = tool_store.payload(tool_id, tenant_id=tid)
+        if head is None:
+            raise HTTPException(404, "tool not found")
+        state = str(body.get("breaker_state", "OPEN")).upper()
+        now = utcnow()
+        cb = _tg.build_circuit_breaker(
+            tenant_id=tid, tool_id=tool_id, breaker_state=state,
+            reason=body.get("reason", ""), created_at=now, actor_id=user["uid"])
+        guardrail_store.save_breaker({
+            "id": str(uuid.uuid4()), "tenant_id": tid, "tool_id": tool_id,
+            "breaker_state": cb["breaker_state"], "reason_code": cb[
+                "reason_code"], "circuit_breaker_hash": cb[
+                "circuit_breaker_hash"], "set_by_actor_id": user["uid"],
+            "payload_json": json.dumps(cb), "created_at": now,
+            "updated_at": now})
+        _guardrail_emit(
+            tid, event_type=("CIRCUIT_BREAKER_OPENED" if cb["breaker_state"]
+                             == "OPEN" else "CIRCUIT_BREAKER_CLOSED"),
+            proposal_id=None, decision_id=None, actor_id=user["uid"],
+            actor_type="human", state_hash=cb["circuit_breaker_hash"],
+            detail={"tool_id": tool_id, "state": cb["breaker_state"]})
+        audit.append(event_type="AI_ACTION_CIRCUIT_BREAKER_SET",
+                     actor=user["uid"], payload={"tool_id": tool_id,
+                                                 "state": cb["breaker_state"]})
+        return cb
+
+    @app.get("/ai-tools/actions/circuit-breakers/{tool_id}")
+    async def get_circuit_breaker(tool_id: str,
+                                  user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        cb = guardrail_store.breaker(tool_id, tenant_id=user["tid"])
+        if cb is None:
+            return {"tool_id": tool_id, "breaker_state": "CLOSED",
+                    "circuit_breaker_active": False,
+                    "honesty_labels": _tg.HONESTY_LABELS}
+        return cb
+
+    @app.get("/ai-tools/actions/events")
+    async def actions_events(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        evs = guardrail_store.events(tenant_id=user["tid"])
+        chain_ok, prev = True, None
+        for e in evs:
+            if e["previous_event_hash"] != (prev or _tg.GENESIS):
+                chain_ok = False
+            prev = e["event_hash"]
+        return {"tenant_id": user["tid"], "events": evs,
+                "event_count": len(evs), "event_chain_valid": chain_ok,
+                "ledger_note": "local decision ledger; not a production "
+                "immutable log", "honesty_labels": _tg.HONESTY_LABELS}
+
+    @app.get("/ai-tools/actions/proposals")
+    async def list_proposals(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return guardrail_store.list_proposals(tenant_id=user["tid"])
+
+    def _render_decision(tid, user, raw_body, *, event_type):
+        tool_id = str(raw_body.get("tool_id", ""))
+        head, version, quality, purposes, contract, cert, breaker = \
+            _gather_inputs(tool_id, str(raw_body.get("contract_id", "")
+                                        or ""), tid)
+        if head is None:
+            raise HTTPException(404, "tool not found")
+        # Auto-bind the tool's latest contract when the caller did not name one.
+        contract_id = str(raw_body.get("contract_id", "") or "")
+        if not contract_id:
+            cs = contract_store.for_tool(tool_id, tenant_id=tid)
+            if cs:
+                contract = cs[-1]
+                contract_id = contract["contract_id"]
+                projs = contract_store.projections_for(contract_id,
+                                                       tenant_id=tid)
+                cert = projs[-1].get("broker_readiness_certificate") if projs \
+                    else None
+        actor_type = "ai_employee" if user["role"] == "ai_worker" else "human"
+        now = utcnow()
+        # SERVER-side verification of approval/consent. The proposal's
+        # approval_ref/consent_ref are UNTRUSTED claims and never satisfy the
+        # gate on their own — a proposer could otherwise self-authorize by
+        # fabricating them. Approval is verified only against a real, live
+        # approval GRANT in this tenant (created through the genuine CORE-A4
+        # separation-of-duties flow, which a proposal cannot forge). There is no
+        # consent-grant store in this mission, so consent can never be
+        # server-verified here and always escalates (fail-closed).
+        approval_verified = False
+        aref = (raw_body.get("approval_ref") or {})
+        aid = aref.get("approval_request_id")
+        if aid:
+            g = grant_store.get_for_request(aid, tenant_id=tid)
+            approval_verified = bool(
+                g and not g.get("revoked_at") and not g.get("superseded_at")
+                and str(g.get("grant_status", "")).upper() in (
+                    "GRANTED", "VALID", "ACTIVE", "VALIDATED"))
+        consent_verified = False
+        proposal_id = str(uuid.uuid4())
+        proposal = _tg.build_action_proposal(
+            proposal_id=proposal_id, tenant_id=tid, tool_id=tool_id,
+            contract_id=contract_id, raw=raw_body, actor_id=user["uid"],
+            actor_type=actor_type, created_at=now)
+        idem = proposal["idempotency_key"]
+        prior = guardrail_store.latest_decision_for_key(idem, tenant_id=tid)
+        usage = {"window_count": guardrail_store.count_decisions_in_window(
+            tenant_id=tid, tool_id=tool_id),
+            "quota_used": guardrail_store.count_decisions_in_window(
+                tenant_id=tid), "authority_spent": 0, "path_risk_spent": 0}
+        policy = _effective_policy(raw_body.get("policy"))
+        decision_id = str(uuid.uuid4())
+        decision = _tg.evaluate_proposal(
+            proposal=proposal, head=head, quality_report=quality,
+            contract=contract, broker_readiness=cert, circuit_breaker=breaker,
+            prior_decision=prior, role_authority=_role_authority(user),
+            policy=policy, usage=usage, decision_id=decision_id, tenant_id=tid,
+            actor_id=user["uid"], actor_type=actor_type, created_at=now,
+            allowed_purposes=purposes, approval_verified=approval_verified,
+            consent_verified=consent_verified)
+        guardrail_store.save_proposal({
+            "id": proposal_id, "tenant_id": tid, "tool_id": tool_id,
+            "contract_id": contract_id, "action_path": proposal["action_path"],
+            "intent": proposal["intent"], "idempotency_key": idem,
+            "logical_clock": proposal["logical_clock"],
+            "proposal_hash": proposal["proposal_hash"],
+            "proposed_by_actor_id": user["uid"],
+            "proposed_by_actor_type": actor_type,
+            "payload_json": json.dumps(proposal), "created_at": now})
+        guardrail_store.save_decision({
+            "id": decision_id, "tenant_id": tid, "tool_id": tool_id,
+            "contract_id": contract_id, "proposal_id": proposal_id,
+            "proposal_hash": proposal["proposal_hash"],
+            "decision_status": decision["decision_status"],
+            "dominant_signal": decision["dominant_signal"],
+            "idempotency_key": idem,
+            "logical_clock": proposal["logical_clock"],
+            "source_freshness_epoch": decision["source_freshness_epoch"],
+            "is_replay": 1 if decision["is_replay"] else 0,
+            "decision_hash": decision["decision_hash"],
+            "decision_state_hash": decision["decision_state_hash"],
+            "decided_by_actor_id": user["uid"],
+            "decided_by_actor_type": actor_type,
+            "payload_json": json.dumps(decision), "created_at": now,
+            "updated_at": now})
+        emit = "DECISION_REPLAYED" if decision["is_replay"] else event_type
+        _guardrail_emit(
+            tid, event_type=emit, proposal_id=proposal_id,
+            decision_id=decision_id, actor_id=user["uid"],
+            actor_type=actor_type,
+            state_hash=decision["decision_state_hash"],
+            detail={"status": decision["decision_status"],
+                    "dominant_signal": decision["dominant_signal"]})
+        audit.append(event_type="AI_ACTION_PREACTION_DECISION",
+                     actor=user["uid"], payload={
+                         "proposal_id": proposal_id, "tool_id": tool_id,
+                         "status": decision["decision_status"]})
+        return decision
+
+    @app.post("/ai-tools/actions/proposals")
+    async def submit_proposal(body: dict, user: dict = Depends(current_user)):
+        # Submitting a proposal renders a deterministic PRE-ACTION decision. It
+        # executes nothing: no broker, no tool, no LLM, no provider, no token,
+        # no payment/message/CRM/evidence/export. The most permissive outcome is
+        # ALLOWED_FOR_FUTURE_BROKER_ONLY, which still runs nothing.
+        require_permission(user, "case.update")
+        return _render_decision(user["tid"], user, body or {},
+                                event_type="DECISION_RENDERED")
+
+    @app.get("/ai-tools/actions/proposals/{proposal_id}")
+    async def get_proposal(proposal_id: str,
+                           user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _load_proposal_or_404(proposal_id, user)
+
+    @app.get("/ai-tools/actions/proposals/{proposal_id}/decision")
+    async def get_decision(proposal_id: str,
+                           user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_proposal_or_404(proposal_id, user)
+        return _load_decision_or_404(proposal_id, user)
+
+    @app.get("/ai-tools/actions/proposals/{proposal_id}/safe")
+    async def get_decision_safe(proposal_id: str,
+                                user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_proposal_or_404(proposal_id, user)
+        d = _load_decision_or_404(proposal_id, user)
+        restricted = user["role"] in ("viewer", "technician", "accountant")
+        return {"proposal_id": proposal_id, "tool_id": d["tool_id"],
+                "decision_status": d["decision_status"],
+                "dominant_signal": d["dominant_signal"],
+                "dominant_reason_code": d["dominant_reason_code"],
+                "requires_future_tool_broker": True, "executes_nothing": True,
+                "all_signals": ([] if restricted else d["all_signals"]),
+                "decision_hash": d["decision_hash"],
+                "honesty_labels": _tg.HONESTY_LABELS}
+
+    def _dsub(field):
+        async def getter(proposal_id: str,
+                         user: dict = Depends(current_user)):
+            require_permission(user, "case.read")
+            _load_proposal_or_404(proposal_id, user)
+            d = _load_decision_or_404(proposal_id, user)
+            return {"proposal_id": proposal_id, field: d[field],
+                    "honesty_labels": _tg.HONESTY_LABELS}
+        return getter
+
+    for _slug, _field in _DECISION_SUBFIELDS.items():
+        app.add_api_route(
+            f"/ai-tools/actions/proposals/{{proposal_id}}/{_slug}",
+            _dsub(_field), methods=["GET"])
+
+    @app.get("/ai-tools/actions/proposals/{proposal_id}/events")
+    async def proposal_events(proposal_id: str,
+                              user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_proposal_or_404(proposal_id, user)
+        return {"proposal_id": proposal_id, "events": guardrail_store.events(
+            tenant_id=user["tid"], proposal_id=proposal_id),
+            "honesty_labels": _tg.HONESTY_LABELS}
+
+    @app.post("/ai-tools/actions/proposals/{proposal_id}/verify")
+    async def verify_decision(proposal_id: str,
+                              user: dict = Depends(current_user)):
+        # Recompute the stored decision's content hash and confirm the persisted
+        # record has not been tampered with. Executes nothing.
+        require_permission(user, "case.read")
+        _load_proposal_or_404(proposal_id, user)
+        d = _load_decision_or_404(proposal_id, user)
+        recomputed = _tg._core_hash(
+            d, "decision_hash", "decision_id", "proposal_id",
+            "decided_by_actor_id", "decided_by_actor_type",
+            "decision_state_hash")
+        ok = recomputed == d["decision_hash"]
+        return {"proposal_id": proposal_id, "decision_id": d["decision_id"],
+                "stored_decision_hash": d["decision_hash"],
+                "recomputed_decision_hash": recomputed,
+                "decision_hash_valid": ok,
+                "verification_status": "VALID" if ok else "TAMPERED",
+                "honesty_labels": _tg.HONESTY_LABELS}
+
+    @app.post("/ai-tools/actions/proposals/{proposal_id}/reevaluate")
+    async def reevaluate_proposal(proposal_id: str,
+                                  user: dict = Depends(current_user)):
+        # Re-render the SAME proposal content against the CURRENT authoritative
+        # state (registry/quality/contract/breaker). This is how capability
+        # drift, temporal transitions, and revocation surface over time. It
+        # executes nothing.
+        require_permission(user, "case.update")
+        prev = _load_proposal_or_404(proposal_id, user)
+        raw = {k: prev[k] for k in (
+            "action_path", "intent", "declared_effects", "requested_scope",
+            "payload", "delegation_chain", "requested_authority",
+            "state_witness", "approval_ref", "consent_ref", "idempotency_key",
+            "logical_clock", "baseline_contract_hash", "baseline_abi_hash")}
+        raw["tool_id"] = prev["tool_id"]
+        raw["contract_id"] = prev["contract_id"]
+        return _render_decision(user["tid"], user, raw,
+                                event_type="DECISION_RENDERED")
+
+    # The literal /ai-tools/actions/* routes are registered AFTER the earlier
+    # parameterised /ai-tools/{tool_id}/* routes, so Starlette (first-match-wins)
+    # would otherwise capture e.g. /ai-tools/actions/policy as
+    # /ai-tools/{tool_id}/policy with tool_id="actions" and 404. Hoist the
+    # literal action routes ahead of the parameterised ones so they match first.
+    _param_ix = next((i for i, r in enumerate(app.router.routes)
+                      if getattr(r, "path", "") == "/ai-tools/{tool_id}"), 0)
+    _action_routes = [r for r in app.router.routes
+                      if getattr(r, "path", "").startswith("/ai-tools/actions")]
+    for _r in _action_routes:
+        app.router.routes.remove(_r)
+    for _off, _r in enumerate(_action_routes):
+        app.router.routes.insert(_param_ix + _off, _r)
+
     # ---- UI pages -------------------------------------------------------------------------------------
     ui.mount(app)
     return app

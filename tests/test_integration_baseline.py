@@ -15,7 +15,7 @@ from finalis.portal.app import create_app
 from finalis.portal.db import MIGRATIONS, Database
 from finalis.portal.seed import seed
 
-EXPECTED_DB_VERSION = 18
+EXPECTED_DB_VERSION = 19
 
 
 @pytest.fixture()
@@ -98,6 +98,10 @@ class TestMigrations:
         assert {"ai_tool_contracts", "ai_tool_contract_versions",
                 "ai_tool_contract_projections",
                 "ai_tool_contract_events"} <= tables
+        # ViktorAI Causal Pre-Action Reference Monitor (v19).
+        assert {"ai_action_proposals", "ai_action_decisions",
+                "ai_action_circuit_breakers",
+                "ai_action_decision_events"} <= tables
 
     def test_evidence_ve_columns_survived_renumber(self, tmp_path):
         db = Database(str(tmp_path / "c.db"))

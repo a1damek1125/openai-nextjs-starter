@@ -335,6 +335,48 @@ class Gate:
             f"/ai-tools/{tool_id}/contracts/{contract_id}/project", json=body,
             headers=self.h(actor))
 
+    # -- TOOL-B4 pre-action reference monitor helpers -------------------------
+    def preaction_tool(self, requester=OWNER, admit=True, **over):
+        """Register+check+admit a tool and create its contract. Returns
+        (tool_id, contract_dict) ready for action proposals."""
+        return self.contracted_tool(requester=requester, admit=admit, **over)
+
+    def clean_proposal_body(self, tool_id, contract, **over):
+        """A minimal proposal that ALLOWS (for a future broker) against a clean
+        pure-read tool: correct intent, in-scope, fresh state witness."""
+        body = {"tool_id": tool_id, "contract_id": contract["contract_id"],
+                "action_path": "search", "intent": "CASE_TRIAGE",
+                "payload": {"query": "hi"},
+                "requested_scope": {"category": "DATA_SEARCH"},
+                "state_witness": {"epoch": contract["source_freshness_epoch"]},
+                "idempotency_key": "idem-1", "logical_clock": 1}
+        body.update(over)
+        return body
+
+    def propose(self, tool_id=None, contract=None, actor=OWNER, body=None,
+                **over):
+        """Submit an action proposal and return the raw Response."""
+        if body is None:
+            body = self.clean_proposal_body(tool_id, contract, **over)
+        return self.c.post("/ai-tools/actions/proposals", json=body,
+                           headers=self.h(actor))
+
+    def decide(self, tool_id, contract, actor=OWNER, **over):
+        """Submit a clean-ish proposal (with overrides) and return the decision
+        dict."""
+        return self.propose(tool_id, contract, actor=actor, **over).json()
+
+    def pa(self, proposal_id, path="", actor=OWNER, method="GET", **body):
+        url = f"/ai-tools/actions/proposals/{proposal_id}{path}"
+        if method == "GET":
+            return self.c.get(url, headers=self.h(actor))
+        return self.c.post(url, json=body, headers=self.h(actor))
+
+    def open_breaker(self, tool_id, actor=OWNER, state="OPEN", reason="test"):
+        return self.c.post("/ai-tools/actions/circuit-breakers", json={
+            "tool_id": tool_id, "breaker_state": state, "reason": reason},
+            headers=self.h(actor))
+
 
 @pytest.fixture()
 def gate():
