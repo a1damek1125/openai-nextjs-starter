@@ -15,7 +15,7 @@ from finalis.portal.app import create_app
 from finalis.portal.db import MIGRATIONS, Database
 from finalis.portal.seed import seed
 
-EXPECTED_DB_VERSION = 16
+EXPECTED_DB_VERSION = 17
 
 
 @pytest.fixture()
@@ -92,6 +92,8 @@ class TestMigrations:
         # ViktorAI Zero-Trust Tool Capability Governance Registry (v16).
         assert {"ai_tools", "ai_tool_versions",
                 "ai_tool_registry_events"} <= tables
+        # ViktorAI Formal Tool Descriptor Assurance Graph (v17).
+        assert {"ai_tool_quality_reports", "ai_tool_quality_events"} <= tables
 
     def test_evidence_ve_columns_survived_renumber(self, tmp_path):
         db = Database(str(tmp_path / "c.db"))

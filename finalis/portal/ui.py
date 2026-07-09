@@ -152,6 +152,7 @@ window.loadSections = async () => {
   if (window.loadLifecycleSection) jobs.push(loadLifecycleSection(me));
   if (window.loadArtifactsSection) jobs.push(loadArtifactsSection(me));
   if (window.loadToolsSection) jobs.push(loadToolsSection(me));
+  if (window.loadQualitySection) jobs.push(loadQualitySection(me));
   await Promise.allSettled(jobs);
 };
 
@@ -2856,6 +2857,110 @@ window.driftTool = async (id) => {
 };
 """
 
+QUALITY_SECTIONS = """
+<section id="tool-quality-section"><h2>Tool Descriptor Quality Gate</h2>
+<ul class="labels"><small>
+<li>Tool Description Quality Gate does not execute tools.</li>
+<li>Quality pass does not mean executable.</li>
+<li>Future Tool Broker is still required.</li>
+<li>Quality scoring is deterministic and local; it does not use LLM.</li>
+<li>Formal descriptor IR is deterministic and limited; it is not full semantic understanding.</li>
+<li>Assurance graph is local evidence, not production certification.</li>
+<li>Mutation harness is deterministic and limited; it does not prove full paraphrase robustness.</li>
+<li>Metamorphic tests are deterministic and limited; they do not prove complete semantic safety.</li>
+<li>Prompt-context recommendation is future-readiness metadata only.</li>
+<li>Quality pass cannot override TOOL-B1 security blockers.</li>
+<li>Server-side registry truth is authoritative.</li>
+</small></ul>
+<div id="tool-quality-list"><i>Loading tool quality…</i></div>
+<div id="tool-quality-detail"></div>
+</section>
+"""
+
+QUALITY_JS = """
+window.loadQualitySection = async (me) => { await loadQuality(); };
+
+window.loadQuality = async () => {
+  let data; try { data = await get('/ai-tools/registry/quality'); }
+  catch (e) { $('tool-quality-list').innerHTML =
+    '<i>Tool quality is not available for your role.</i>'; return; }
+  const rows = data.summaries || [];
+  $('tool-quality-list').innerHTML = rows.length ?
+    '<table><tr><th>Tool</th><th>Quality status</th><th>Score</th><th></th></tr>'
+    + rows.map(r => `<tr><td><small>${esc(r.tool_id.slice(0,8))}</small></td>
+       <td><b>${esc(r.quality_status)}</b></td>
+       <td>${esc(String(r.quality_score_total))}</td>
+       <td><button onclick="openQuality('${esc(r.tool_id)}')">Open</button>
+       </td></tr>`).join('') + '</table>'
+    : '<i>No quality reports yet — run a quality check on a tool.</i>';
+};
+
+window.runQualityCheck = async (id) => {
+  const {data} = await send('POST', '/ai-tools/' + id + '/quality/check', {});
+  await loadQuality();
+  await openQuality(id);
+};
+
+window.openQuality = async (id) => {
+  let rep; try { rep = await get('/ai-tools/' + id + '/quality'); }
+  catch (e) {
+    $('tool-quality-detail').innerHTML =
+      `<p><button onclick="runQualityCheck('${esc(id)}')">Run quality check
+       </button> <i>no report yet</i></p>`; return; }
+  const ir = rep.formal_descriptor_ir, g = rep.descriptor_assurance_graph;
+  const b = rep.planner_selection_boundary, c = rep.planner_confusion_matrix;
+  $('tool-quality-detail').innerHTML = `
+    <h3>Quality ${esc(id.slice(0,8))}
+      <span class="badge">${esc(rep.quality_status)}</span></h3>
+    <p><b>score</b> ${esc(String(rep.quality_score_total))} · <b>safety</b>
+      ${esc(String(rep.descriptor_safety_score))} · <b>dominant blocker</b>
+      ${esc(String(rep.dominant_blocker_category))}
+      <button onclick="runQualityCheck('${esc(id)}')">Re-check</button>
+      <button onclick="verifyQuality('${esc(id)}')">Verify</button>
+      <span id="tool-quality-msg"></span></p>
+    <h4>Blockers (${rep.quality_blockers.length})</h4>
+    <ul>${rep.quality_blockers.map(x =>
+      `<li class="err">${esc(x.code)} — <small>${esc(x.detail)}</small></li>`)
+      .join('') || '<li><i>none</i></li>'}</ul>
+    <h4>Warnings (${rep.quality_warnings.length})</h4>
+    <ul>${rep.quality_warnings.map(x =>
+      `<li>${esc(x.code)}</li>`).join('') || '<li><i>none</i></li>'}</ul>
+    <h4>Formal descriptor IR</h4>
+    <p><b>category guess</b> ${esc(ir.ir_category_guess)} · <b>side-effect</b>
+      ${esc(ir.ir_side_effect_guess)} · <b>risk</b> ${esc(ir.ir_risk_guess)} ·
+      <b>matches registry</b>
+      <span class="${ir.ir_matches_tool_b1_truth ? 'ok' : 'err'}">
+      ${esc(String(ir.ir_matches_tool_b1_truth))}</span></p>
+    <h4>Assurance graph</h4>
+    <p><b>status</b> ${esc(g.assurance_graph_status)} · <b>acyclic</b>
+      ${esc(String(g.acyclic))} · <b>unsupported claims</b>
+      ${esc(String(g.unsupported_claims.length))}</p>
+    <h4>Planner selection boundary</h4>
+    <p><b>minimal context</b> <b class="${b.minimal_context_status
+      === 'NEVER_EXPOSE' ? 'err' : 'ok'}">${esc(b.minimal_context_status)}</b>
+      · <b>budget</b> ${esc(String(b.context_exposure_budget))}</p>
+    <h4>Planner confusion / misrouting</h4>
+    <p><b>misrouting risk</b> ${esc(String(c.misrouting_risk))} ·
+      <b>counterfactual misrouting</b>
+      ${esc(String(rep.counterfactual_planner.misrouting_detected))}</p>
+    <h4>Robustness</h4>
+    <p><b>mutation</b> ${esc(rep.mutation_test_summary.status)} ·
+      <b>metamorphic</b> ${esc(rep.metamorphic_test_summary.status)} ·
+      <b>monotonic risk</b> ${esc(rep.monotonic_risk_summary.monotonicity_status)}
+      · <b>non-regression</b>
+      ${esc(rep.non_regression_summary.non_regression_status)}</p>
+    <ul>${(rep.honesty_labels || []).map(l =>
+      `<li><small>${esc(l)}</small></li>`).join('')}</ul>`;
+};
+
+window.verifyQuality = async (id) => {
+  const {data} = await send('POST', '/ai-tools/' + id + '/quality/verify', {});
+  $('tool-quality-msg').innerHTML = `verify <b class="${
+    data.verification_status === 'MATCHED' ? 'ok' : 'err'}">${
+    esc(data.verification_status)}</b>`;
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -2883,6 +2988,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 {LIFECYCLE_SECTIONS}
 {ARTIFACTS_SECTIONS}
 {TOOLS_SECTIONS}
+{QUALITY_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -3014,7 +3120,8 @@ boot();
 <script>{APPROVALS_JS}</script>
 <script>{LIFECYCLE_JS}</script>
 <script>{ARTIFACTS_JS}</script>
-<script>{TOOLS_JS}</script></body></html>"""
+<script>{TOOLS_JS}</script>
+<script>{QUALITY_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:

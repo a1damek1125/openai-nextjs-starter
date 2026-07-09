@@ -45,7 +45,7 @@ class TestParameterNormalization:
         p = e["parameters"][0]
         assert p == {"name": "p", "type": "string", "required": False,
                      "description": "", "data_class": "INTERNAL",
-                     "sensitive": False}
+                     "sensitive": False, "default": None, "example": None}
 
     def test_sensitive_flag_preserved(self):
         e = tr.build_schema_envelope(input_schema={}, output_schema={},

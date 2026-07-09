@@ -857,6 +857,44 @@ CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_tool_registry_events_seq
 CREATE INDEX IF NOT EXISTS ix_ai_tool_registry_events_tool
   ON ai_tool_registry_events(tenant_id, tool_id, sequence);
 """),
+    (17, """
+-- v17: ViktorAI Formal Tool Descriptor Assurance Graph (TOOL-B2). A
+-- security-first, formal-quality, planner-safety and descriptor-assurance
+-- module over the TOOL-B1 registry. It executes nothing: no tool call, no MCP,
+-- no LLM, no external provider, no descriptor rewriting. Quality is deterministic
+-- and local; a quality PASS does not mean executable and cannot override any
+-- TOOL-B1 security/admission state. Server-side registry truth is authoritative.
+CREATE TABLE IF NOT EXISTS ai_tool_quality_reports (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, tool_id TEXT NOT NULL,
+  tool_version_id TEXT NOT NULL, seq INTEGER NOT NULL,
+  quality_status TEXT NOT NULL, quality_score_total INTEGER NOT NULL DEFAULT 0,
+  tool_descriptor_hash TEXT NOT NULL,
+  quality_report_hash TEXT NOT NULL, quality_gate_state_hash TEXT NOT NULL,
+  quality_decision_hash TEXT NOT NULL,
+  formal_descriptor_ir_hash TEXT NOT NULL DEFAULT '',
+  assurance_graph_hash TEXT NOT NULL DEFAULT '',
+  score_vector_hash TEXT NOT NULL DEFAULT '',
+  quality_evidence_package_hash TEXT NOT NULL DEFAULT '',
+  quality_assurance_case_hash TEXT NOT NULL DEFAULT '',
+  payload_json TEXT NOT NULL,
+  created_by TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_tool_quality_reports
+  ON ai_tool_quality_reports(tenant_id, tool_id, seq);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_tool_quality_reports_seq
+  ON ai_tool_quality_reports(tenant_id, tool_id, seq);
+
+CREATE TABLE IF NOT EXISTS ai_tool_quality_events (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, tool_id TEXT,
+  event_type TEXT NOT NULL, sequence INTEGER NOT NULL,
+  actor_id TEXT NOT NULL, actor_type TEXT NOT NULL,
+  event_hash TEXT NOT NULL, previous_event_hash TEXT NOT NULL,
+  quality_gate_state_hash TEXT NOT NULL DEFAULT '',
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_tool_quality_events_seq
+  ON ai_tool_quality_events(tenant_id, sequence);
+CREATE INDEX IF NOT EXISTS ix_ai_tool_quality_events_tool
+  ON ai_tool_quality_events(tenant_id, tool_id, sequence);
+"""),
 ]
 
 

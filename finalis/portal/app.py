@@ -7234,6 +7234,399 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         return {"tool_id": tool_id, "current_status": p["status"],
                 "supply_chain": supply, "honesty_labels": _tr.HONESTY_LABELS}
 
+    # ---- ViktorAI Formal Tool Descriptor Assurance Graph (TOOL-B2) -----------------
+    from ..ai_employee import tool_quality as _tq
+    from ..ai_employee.tool_quality_store import ToolQualityStore
+    quality_store = ToolQualityStore(db)
+    app.state.quality_store = quality_store
+
+    def _quality_peer_summaries(tid, exclude_id=None):
+        """Tenant-scoped peer descriptor summaries for the planner confusion
+        matrix. Never leaves the tenant boundary."""
+        out = []
+        for p in tool_store.list(tenant_id=tid):
+            if exclude_id and p["tool_id"] == exclude_id:
+                continue
+            lv = tool_store.latest_version(p["tool_id"], tenant_id=tid)
+            purpose = []
+            if lv:
+                purpose = lv["descriptor"].get("purpose_contract", {}).get(
+                    "allowed_purposes", [])
+            out.append({
+                "tool_id": p["tool_id"], "tool_key": p["tool_key"],
+                "tool_name": p["tool_name"], "aliases": p.get("aliases", []),
+                "category": p["category"], "purpose": purpose,
+                "risk_rank": _tr.RISK_RANK.get(p["risk_class"], 0),
+                "side_effect_rank": _tr.SIDE_EFFECT_RANK.get(
+                    p["side_effect_class"], 0)})
+        return out
+
+    def _quality_emit(tid, *, event_type, tool_id, actor_id, actor_type,
+                      state_hash, detail):
+        seq = quality_store.next_sequence(tenant_id=tid)
+        prev = quality_store.last_event(tenant_id=tid)
+        ev = _tq.build_quality_event(
+            event_type=event_type, tool_id=tool_id, tenant_id=tid,
+            actor_id=actor_id, actor_type=actor_type,
+            quality_gate_state_hash=state_hash,
+            previous_event_hash=(prev or {}).get("event_hash"), sequence=seq,
+            detail=detail, created_at=utcnow())
+        quality_store.append_event({
+            "id": str(uuid.uuid4()), "tenant_id": tid, "tool_id": tool_id,
+            "event_type": event_type, "sequence": seq, "actor_id": actor_id,
+            "actor_type": actor_type, "event_hash": ev["event_hash"],
+            "previous_event_hash": ev["previous_event_hash"],
+            "quality_gate_state_hash": state_hash,
+            "payload_json": json.dumps(ev), "created_at": ev["created_at"]})
+        return ev
+
+    def _run_quality_check(tool_id, user):
+        tid = user["tid"]
+        head = _load_tool_or_404(tool_id, user)
+        lv = tool_store.latest_version(tool_id, tenant_id=tid)
+        if lv is None:
+            raise HTTPException(404, "tool has no version")
+        actor_type = "ai_employee" if user["role"] == "ai_worker" else "human"
+        _quality_emit(tid, event_type="QUALITY_CHECK_STARTED", tool_id=tool_id,
+                      actor_id=user["uid"], actor_type=actor_type,
+                      state_hash="", detail={"tool_version_id": lv[
+                          "tool_version_id"]})
+        prev = quality_store.latest(tool_id, tenant_id=tid)
+        now = utcnow()
+        report = _tq.build_quality_report(
+            head=head, version=lv,
+            existing_summaries=_quality_peer_summaries(tid, exclude_id=tool_id),
+            previous_report=prev, created_at=now)
+        seq = quality_store.next_seq(tool_id, tenant_id=tid)
+        quality_store.save_report({
+            "id": report["quality_report_id"] + f"-{seq}", "tenant_id": tid,
+            "tool_id": tool_id, "tool_version_id": lv["tool_version_id"],
+            "seq": seq, "quality_status": report["quality_status"],
+            "quality_score_total": report["quality_score_total"],
+            "tool_descriptor_hash": report["tool_descriptor_hash"],
+            "quality_report_hash": report["quality_report_hash"],
+            "quality_gate_state_hash": report["quality_gate_state_hash"],
+            "quality_decision_hash": report["quality_decision_hash"],
+            "formal_descriptor_ir_hash": report["formal_descriptor_ir_hash"],
+            "assurance_graph_hash": report["assurance_graph_hash"],
+            "score_vector_hash": report["score_vector_hash"],
+            "quality_evidence_package_hash": report[
+                "quality_evidence_package_hash"],
+            "quality_assurance_case_hash": report[
+                "quality_assurance_case_hash"],
+            "payload_json": json.dumps(report), "created_by": user["uid"],
+            "created_at": now})
+        _quality_emit(tid, event_type="QUALITY_CHECK_COMPLETED", tool_id=tool_id,
+                      actor_id=user["uid"], actor_type=actor_type,
+                      state_hash=report["quality_gate_state_hash"],
+                      detail={"status": report["quality_status"]})
+        result_event = {
+            "QUALITY_PASS": "QUALITY_PASS_RECORDED",
+            "QUALITY_PASS_WITH_WARNINGS": "QUALITY_PASS_RECORDED",
+            "QUALITY_MUTATION_FAILED": "QUALITY_MUTATION_FAILED",
+            "QUALITY_METAMORPHIC_FAILED": "QUALITY_METAMORPHIC_FAILED",
+            "QUALITY_IR_MISMATCH": "QUALITY_IR_MISMATCH",
+            "QUALITY_ASSURANCE_GRAPH_FAILED": "QUALITY_ASSURANCE_GRAPH_FAILED",
+        }.get(report["quality_status"], "QUALITY_FAIL_RECORDED")
+        _quality_emit(tid, event_type=result_event, tool_id=tool_id,
+                      actor_id=user["uid"], actor_type=actor_type,
+                      state_hash=report["quality_gate_state_hash"],
+                      detail={"status": report["quality_status"],
+                              "blockers": [b["code"] for b in report[
+                                  "quality_blockers"]]})
+        audit.append(event_type="AI_TOOL_QUALITY_CHECKED", actor=user["uid"],
+                     payload={"tool_id": tool_id,
+                              "status": report["quality_status"]})
+        return report
+
+    def _load_quality_or_404(tool_id, user):
+        _load_tool_or_404(tool_id, user)          # tenant-scoped 404
+        rep = quality_store.latest(tool_id, tenant_id=user["tid"])
+        if rep is None:
+            raise HTTPException(404, "no quality report; run quality/check "
+                                "first")
+        return rep
+
+    # -- registry-level quality routes (before /{tool_id}) --------------------
+    @app.get("/ai-tools/registry/quality")
+    async def registry_quality_summary(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        reps = quality_store.all_latest(tenant_id=user["tid"])
+        by_status = {}
+        for r in reps:
+            by_status[r["quality_status"]] = by_status.get(
+                r["quality_status"], 0) + 1
+        return {"tenant_id": user["tid"], "tool_count": len(reps),
+                "quality_by_status": by_status,
+                "summaries": [{"tool_id": r["tool_id"],
+                               "quality_status": r["quality_status"],
+                               "quality_score_total": r["quality_score_total"],
+                               "quality_report_hash": r["quality_report_hash"]}
+                              for r in reps],
+                "honesty_labels": _tq.HONESTY_LABELS}
+
+    @app.get("/ai-tools/registry/quality/policy")
+    async def registry_quality_policy(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {"quality_gate_version": _tq.QUALITY_GATE_VERSION,
+                "executes_tools": False, "calls_llm": False,
+                "calls_external_provider": False, "is_mcp": False,
+                "rewrites_descriptors": False,
+                "quality_pass_means_executable": False,
+                "quality_pass_overrides_security": False,
+                "no_goodhart": "a high score never overrides a critical "
+                "blocker",
+                "quality_statuses": sorted(_tq.QUALITY_STATUSES),
+                "blocker_dominance": _tq.BLOCKER_DOMINANCE,
+                "score_dimensions": _tq.SCORE_DIMENSIONS,
+                "honesty_labels": _tq.HONESTY_LABELS}
+
+    @app.post("/ai-tools/{tool_id}/quality/check")
+    async def quality_check(tool_id: str, user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        report = _run_quality_check(tool_id, user)
+        return report
+
+    @app.get("/ai-tools/{tool_id}/quality")
+    async def quality_latest(tool_id: str, user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _load_quality_or_404(tool_id, user)
+
+    @app.get("/ai-tools/{tool_id}/quality/history")
+    async def quality_history(tool_id: str,
+                              user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_tool_or_404(tool_id, user)
+        hist = quality_store.history(tool_id, tenant_id=user["tid"])
+        return {"tool_id": tool_id, "count": len(hist),
+                "history": [{"seq": i + 1, "quality_status": r[
+                    "quality_status"], "quality_score_total": r[
+                    "quality_score_total"], "quality_report_hash": r[
+                    "quality_report_hash"], "created_at": r["created_at"]}
+                    for i, r in enumerate(hist)],
+                "honesty_labels": _tq.HONESTY_LABELS}
+
+    @app.get("/ai-tools/{tool_id}/quality/safe")
+    async def quality_safe(tool_id: str, user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        rep = _load_quality_or_404(tool_id, user)
+        restricted = user["role"] in ("viewer", "technician", "accountant")
+        boundary = rep["planner_selection_boundary"]
+        # Never surface raw descriptor prose for a NEVER_EXPOSE / restricted view.
+        show_ir = not restricted and boundary[
+            "minimal_context_status"] != "NEVER_EXPOSE"
+        view = {
+            "tool_id": tool_id, "quality_status": rep["quality_status"],
+            "quality_score_total": rep["quality_score_total"],
+            "descriptor_safety_score": rep["descriptor_safety_score"],
+            "quality_blockers": [b["code"] for b in rep["quality_blockers"]],
+            "quality_warnings": [w["code"] for w in rep["quality_warnings"]],
+            "minimal_context_status": boundary["minimal_context_status"],
+            "ir_summary": ({"category_guess": rep["formal_descriptor_ir"][
+                "ir_category_guess"], "matches_registry": rep[
+                "formal_descriptor_ir"]["ir_matches_tool_b1_truth"]}
+                if show_ir else "[REDACTED — restricted / never-expose]"),
+            "quality_report_hash": rep["quality_report_hash"],
+            "honesty_labels": _tq.HONESTY_LABELS,
+        }
+        view["quality_safe_view_hash"] = _tq._sha(
+            {k: v for k, v in view.items()
+             if k not in ("quality_safe_view_hash", "honesty_labels")})
+        return view
+
+    @app.post("/ai-tools/{tool_id}/quality/verify")
+    async def quality_verify(tool_id: str,
+                             user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        rep = _load_quality_or_404(tool_id, user)
+        reasons = []
+        # Recompute the self-excluding sub-hashes. Each history/peer-dependent
+        # object is excluded from the report hash but still integrity-checked
+        # here via its own self-hash. A sub-object absent from a (legacy/partial)
+        # report is skipped rather than treated as tampered.
+        checks = [
+            ("formal_descriptor_ir", "formal_descriptor_ir_hash"),
+            ("semantic_intent_fingerprint",
+             "semantic_intent_fingerprint_hash"),
+            ("descriptor_assurance_graph", "assurance_graph_hash"),
+            ("canonical_descriptor_semantic_record",
+             "canonical_semantic_record_hash"),
+            ("planner_confusion_matrix", "planner_confusion_hash"),
+            ("planner_selection_boundary", "selection_boundary_hash"),
+            ("counterfactual_planner", "counterfactual_planner_proof_hash"),
+            ("quality_evidence_package", "quality_evidence_package_hash"),
+            ("quality_assurance_case", "quality_assurance_case_hash"),
+            ("non_regression_summary", "non_regression_proof_hash"),
+        ]
+        for obj_key, hfield in checks:
+            obj = rep.get(obj_key)
+            if not isinstance(obj, dict):
+                continue
+            if _tq._core_hash(obj, hfield) != obj.get(hfield):
+                reasons.append(f"{obj_key} hash mismatch")
+        recomputed = _tq._core_hash(rep, *_tq._REPORT_HASH_EXCLUDED)
+        if recomputed != rep["quality_report_hash"]:
+            reasons.append("quality report hash mismatch")
+        status = "MATCHED" if not reasons else "MISMATCHED"
+        return {"tool_id": tool_id, "verification_status": status,
+                "tamper_detected": bool(reasons), "tamper_reasons": reasons,
+                "honesty_labels": _tq.HONESTY_LABELS}
+
+    @app.post("/ai-tools/{tool_id}/quality/diff")
+    async def quality_diff(tool_id: str, body: dict,
+                           user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_tool_or_404(tool_id, user)
+        hist = quality_store.history(tool_id, tenant_id=user["tid"])
+        if len(hist) < 2:
+            return {"tool_id": tool_id, "comparable": False,
+                    "note": "need at least two quality reports to diff",
+                    "honesty_labels": _tq.HONESTY_LABELS}
+        a, b = hist[-2], hist[-1]
+        changed = {}
+        for f in ("quality_status", "quality_score_total",
+                  "tool_descriptor_hash", "quality_report_hash"):
+            if a.get(f) != b.get(f):
+                changed[f] = {"from": a.get(f), "to": b.get(f)}
+        a_blk = {x["code"] for x in a["quality_blockers"]}
+        b_blk = {x["code"] for x in b["quality_blockers"]}
+        return {"tool_id": tool_id, "comparable": True, "changed_fields": changed,
+                "new_blockers": sorted(b_blk - a_blk),
+                "removed_blockers": sorted(a_blk - b_blk),
+                "honesty_labels": _tq.HONESTY_LABELS}
+
+    @app.get("/ai-tools/{tool_id}/quality/matrix")
+    async def quality_matrix(tool_id: str,
+                             user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        rep = _load_quality_or_404(tool_id, user)
+        return {"tool_id": tool_id,
+                "quality_score_vector": rep["quality_score_vector"],
+                "quality_score_total": rep["quality_score_total"],
+                "score_vector_hash": rep["score_vector_hash"],
+                "honesty_labels": _tq.HONESTY_LABELS}
+
+    @app.get("/ai-tools/{tool_id}/quality/evidence")
+    async def quality_evidence(tool_id: str,
+                               user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        rep = _load_quality_or_404(tool_id, user)
+        return {"tool_id": tool_id,
+                "quality_evidence_package": rep["quality_evidence_package"],
+                "honesty_labels": _tq.HONESTY_LABELS}
+
+    @app.get("/ai-tools/{tool_id}/quality/assurance")
+    async def quality_assurance(tool_id: str,
+                                user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        rep = _load_quality_or_404(tool_id, user)
+        return {"tool_id": tool_id,
+                "quality_assurance_case": rep["quality_assurance_case"],
+                "honesty_labels": _tq.HONESTY_LABELS}
+
+    @app.get("/ai-tools/{tool_id}/quality/ir")
+    async def quality_ir(tool_id: str, user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        rep = _load_quality_or_404(tool_id, user)
+        return {"tool_id": tool_id,
+                "formal_descriptor_ir": rep["formal_descriptor_ir"],
+                "canonical_descriptor_semantic_record": rep[
+                    "canonical_descriptor_semantic_record"],
+                "honesty_labels": _tq.HONESTY_LABELS}
+
+    @app.get("/ai-tools/{tool_id}/quality/graph")
+    async def quality_graph(tool_id: str, user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        rep = _load_quality_or_404(tool_id, user)
+        return {"tool_id": tool_id,
+                "descriptor_assurance_graph": rep["descriptor_assurance_graph"],
+                "honesty_labels": _tq.HONESTY_LABELS}
+
+    @app.get("/ai-tools/{tool_id}/quality/confusion")
+    async def quality_confusion(tool_id: str,
+                                user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        rep = _load_quality_or_404(tool_id, user)
+        return {"tool_id": tool_id,
+                "planner_confusion_matrix": rep["planner_confusion_matrix"],
+                "descriptor_confusion_set": rep["descriptor_confusion_set"],
+                "honesty_labels": _tq.HONESTY_LABELS}
+
+    @app.get("/ai-tools/{tool_id}/quality/selection-boundary")
+    async def quality_selection_boundary(tool_id: str,
+                                         user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        rep = _load_quality_or_404(tool_id, user)
+        return {"tool_id": tool_id,
+                "planner_selection_boundary": rep["planner_selection_boundary"],
+                "honesty_labels": _tq.HONESTY_LABELS}
+
+    @app.post("/ai-tools/{tool_id}/quality/mutation-check")
+    async def quality_mutation_check(tool_id: str,
+                                     user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_tool_or_404(tool_id, user)
+        mutation = _tq.mutation_harness(tool_id=tool_id, tenant_id=user["tid"])
+        return {"tool_id": tool_id, "mutation_harness": mutation,
+                "calls_llm": False, "calls_external_provider": False,
+                "honesty_labels": _tq.HONESTY_LABELS}
+
+    @app.post("/ai-tools/{tool_id}/quality/counterfactual-check")
+    async def quality_counterfactual_check(tool_id: str,
+                                           user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        tid = user["tid"]
+        head = _load_tool_or_404(tool_id, user)
+        lv = tool_store.latest_version(tool_id, tenant_id=tid)
+        if lv is None:
+            raise HTTPException(404, "tool has no version")
+        ir = _tq.build_formal_ir(
+            descriptor=lv["descriptor"], tenant_id=tid, tool_id=tool_id,
+            tool_version_id=lv["tool_version_id"],
+            source_descriptor_hash=lv["descriptor_hash"],
+            b1_category=lv["descriptor"]["category"],
+            b1_side_effect=lv["effect_contract"]["side_effect_class"],
+            b1_risk=lv["risk_class"],
+            b1_prompt_exposure=lv["prompt_context_policy"][
+                "effective_exposure"])
+        cf = _tq.counterfactual_planner_simulation(
+            tool_id=tool_id, tenant_id=tid,
+            category=lv["descriptor"]["category"], ir=ir,
+            b1_side_effect=lv["effect_contract"]["side_effect_class"])
+        return {"tool_id": tool_id, "counterfactual_planner": cf,
+                "calls_llm": False, "honesty_labels": _tq.HONESTY_LABELS}
+
+    @app.get("/ai-tools/{tool_id}/quality/non-regression")
+    async def quality_non_regression(tool_id: str,
+                                     user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        rep = _load_quality_or_404(tool_id, user)
+        return {"tool_id": tool_id,
+                "non_regression_summary": rep["non_regression_summary"],
+                "honesty_labels": _tq.HONESTY_LABELS}
+
+    @app.get("/ai-tools/{tool_id}/quality/binding-ledger")
+    async def quality_binding_ledger(tool_id: str,
+                                     user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_tool_or_404(tool_id, user)
+        evs = quality_store.events(tenant_id=user["tid"], tool_id=tool_id)
+        chain_ok, prev = True, None
+        all_evs = quality_store.events(tenant_id=user["tid"])
+        for e in all_evs:
+            if e["previous_event_hash"] != (prev or _tq.GENESIS):
+                chain_ok = False
+            prev = e["event_hash"]
+        return {"tool_id": tool_id, "events": evs, "event_count": len(evs),
+                "event_chain_valid": chain_ok,
+                "binding_note": "quality-to-admission binding metadata is "
+                "recorded; direct mutation of TOOL-B1 admission state is "
+                "MISSING/NEXT (a quality fail records a readiness blocker but "
+                "cannot itself flip a security state).",
+                "honesty_labels": _tq.HONESTY_LABELS}
+
+    app.state.run_quality_check = _run_quality_check
+
     # ---- UI pages -------------------------------------------------------------------------------------
     ui.mount(app)
     return app

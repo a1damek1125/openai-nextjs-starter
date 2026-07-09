@@ -253,6 +253,52 @@ class Gate:
                              (*cols.values(), tool_id))
         self.db.conn.commit()
 
+    # -- TOOL-B2 quality gate helpers -----------------------------------------
+    def quality_tool_body(self, **over):
+        """A clean, schema-complete descriptor that PASSES the quality gate."""
+        body = {
+            "tool_name": "Search Local Cases", "category": "DATA_SEARCH",
+            "side_effect_class": "PURE_READ",
+            "tool_summary": "read-only keyword search over local case records",
+            "tool_description": "Read-only search over local case records by "
+            "keyword; returns matching case ids and titles. No side effects, "
+            "no external calls, no writes.",
+            "reads_data_classes": ["INTERNAL"],
+            "allowed_purposes": ["CASE_TRIAGE"],
+            "declared_side_effects": ["PURE_READ"],
+            "consent_requirement": "NONE",
+            "prompt_context_exposure": "NAME_AND_SUMMARY",
+            "input_schema": {"type": "object",
+                             "properties": {"query": {"type": "string"}}},
+            "output_schema": {"type": "object",
+                              "properties": {"rows": {"type": "array"}}},
+            "parameters": [{"name": "query", "type": "string", "required": True,
+                            "description": "keyword to search local cases",
+                            "data_class": "INTERNAL"}]}
+        body.update(over)
+        return body
+
+    def register_quality_tool(self, body=None, requester=OWNER, **over):
+        b = body if body is not None else self.quality_tool_body(**over)
+        return self.c.post("/ai-tools", json=b, headers=self.h(requester))
+
+    def quality_check(self, tool_id, actor=OWNER):
+        return self.c.post(f"/ai-tools/{tool_id}/quality/check",
+                           headers=self.h(actor))
+
+    def q(self, tool_id, path="", actor=OWNER, method="GET", **body):
+        url = f"/ai-tools/{tool_id}/quality{path}"
+        if method == "GET":
+            return self.c.get(url, headers=self.h(actor))
+        return self.c.post(url, json=body, headers=self.h(actor))
+
+    def checked_quality_tool(self, requester=OWNER, **over):
+        """Register a clean schema-complete tool and run its quality check."""
+        tid = self.register_quality_tool(requester=requester,
+                                         **over).json()["tool_id"]
+        rep = self.quality_check(tid, actor=requester).json()
+        return tid, rep
+
 
 @pytest.fixture()
 def gate():

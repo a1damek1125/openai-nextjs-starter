@@ -315,6 +315,9 @@ def build_schema_envelope(*, input_schema, output_schema, parameters=None,
     schema is DECLARED, untrusted, and never validated by execution here."""
     params = []
     for p in parameters or []:
+        # `default` / `example` are preserved (as declared strings) so the
+        # downstream quality gate can inspect them for dangerous/poisoned
+        # content; they are DECLARED and never evaluated or executed here.
         params.append({
             "name": str(p.get("name", "")),
             "type": str(p.get("type", "string")),
@@ -322,6 +325,8 @@ def build_schema_envelope(*, input_schema, output_schema, parameters=None,
             "description": str(p.get("description", "")),
             "data_class": p.get("data_class", "INTERNAL"),
             "sensitive": bool(p.get("sensitive", False)),
+            "default": p.get("default"),
+            "example": p.get("example"),
         })
     env = {
         "schema_envelope_version": SCHEMA_ENVELOPE_VERSION,
