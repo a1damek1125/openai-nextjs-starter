@@ -560,6 +560,55 @@ class Gate:
             return self.c.get(url, headers=self.h(actor))
         return self.c.post(url, json=body, headers=self.h(actor))
 
+    # -- TOOL-B9 Finalis Transaction Twin / local-transaction helpers ---------
+    def b8_accepted_outcome(self, requester=OWNER, **over):
+        """Full pipeline to a clean B8 B8_V5_ACCEPTED outcome. Returns
+        (commit_simulation_id, b8_outcome_dict)."""
+        return self.prepared_commit_simulation(requester=requester, **over)
+
+    def clean_local_tx_body(self, b8_commit_simulation_id, **over):
+        """A minimal admissible B9 local-transaction body: a single local
+        'status' delta on a case object, authority from server RBAC, a server-
+        verified approval, WEB_PORTAL surface."""
+        body = {
+            "b8_commit_simulation_id": b8_commit_simulation_id,
+            "object_reference": "case:E-1", "requested_intent":
+            "mark local status reviewed", "source_surface": "WEB_PORTAL",
+            "planned_delta": {"status": "reviewed"},
+            "current_local_state": {"status": "new"},
+            "allowed_local_scope": ["status"],
+            "authority_basis": {"source": "SERVER_RBAC"},
+            "approval_record": {"server_verified": True, "refs": ["ap-1"]},
+            "evidence_refs": ["ev-1"], "policy_refs": ["pol-1"],
+            "idempotency_key": "idem-1",
+        }
+        body.update(over)
+        return body
+
+    def local_tx(self, b8_commit_simulation_id, op="prepare", actor=OWNER,
+                 body=None, **over):
+        """Prepare/validate/commit-local a B9 transaction. `op` in
+        prepare|validate|commit-local. Returns the raw Response."""
+        if body is None:
+            body = self.clean_local_tx_body(b8_commit_simulation_id, **over)
+        return self.c.post(f"/ai-tools/local-transactions/{op}", json=body,
+                           headers=self.h(actor))
+
+    def prepared_local_tx(self, requester=OWNER, op="commit-local", **over):
+        """Full pipeline: B4..B8 -> B8_V5_ACCEPTED -> B9 local transaction.
+        With clean defaults the outcome is B9_LOCAL_COMMIT_APPLIED (a local,
+        reversible internal commit; no external effect). Returns
+        (transaction_id, outcome_dict)."""
+        b8id, _ = self.b8_accepted_outcome(requester=requester)
+        o = self.local_tx(b8id, op=op, actor=requester, **over).json()
+        return o["transaction_id"], o
+
+    def lt(self, transaction_id, path="", actor=OWNER, method="GET", **body):
+        url = f"/ai-tools/local-transactions/{transaction_id}{path}"
+        if method == "GET":
+            return self.c.get(url, headers=self.h(actor))
+        return self.c.post(url, json=body, headers=self.h(actor))
+
 
 @pytest.fixture()
 def gate():

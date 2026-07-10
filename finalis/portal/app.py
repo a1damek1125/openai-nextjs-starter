@@ -10057,6 +10057,344 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                                         commit_simulation_id=commit_simulation_id),
                 "honesty_labels": _cs.HONESTY_LABELS}
 
+    # ==== TOOL-B9: Finalis Transaction Twin + Proof-of-Execution Runtime =====
+    # Local, reversible, governed transaction runtime. Consumes a B8 envelope as
+    # EVIDENCE ONLY. Commits only to local internal state. NO external effect,
+    # NO provider/MCP/LLM, NO message/payment/CRM/evidence mutation. There is NO
+    # external-execute / release-effects / activate-provider / send / dispatch /
+    # webhook / job-release / llm-run / mcp-run / grant-authority endpoint.
+    from ..ai_employee import tool_local_transaction as _lt
+    from ..ai_employee.tool_local_transaction_store import (
+        ToolLocalTransactionStore)
+    local_tx_store = ToolLocalTransactionStore(db)
+    app.state.local_tx_store = local_tx_store
+
+    def _lt_emit(tid, *, event_type, transaction_id, actor_id, actor_type,
+                 state_hash, detail):
+        seq = local_tx_store.next_sequence(tenant_id=tid)
+        prev = local_tx_store.last_event(tenant_id=tid)
+        ev = _lt.build_b9_event(
+            event_type=event_type, tenant_id=tid, transaction_id=transaction_id,
+            actor_id=actor_id, actor_type=actor_type, b9_state_hash=state_hash,
+            previous_event_hash=(prev or {}).get("event_hash"), sequence=seq,
+            detail=detail, created_at=utcnow())
+        local_tx_store.append_event({
+            "id": str(uuid.uuid4()), "tenant_id": tid, "transaction_id":
+            transaction_id, "event_type": event_type, "sequence": seq,
+            "actor_id": actor_id, "actor_type": actor_type,
+            "event_hash": ev["event_hash"], "previous_event_hash": ev[
+                "previous_event_hash"], "b9_state_hash": state_hash,
+            "payload_json": json.dumps(ev), "created_at": ev["created_at"]})
+        return ev
+
+    def _load_local_tx_or_404(transaction_id, user):
+        r = local_tx_store.request(transaction_id, tenant_id=user["tid"])
+        if r is None:
+            raise HTTPException(404, "local transaction not found")
+        return r
+
+    def _load_local_tx_outcome_or_404(transaction_id, user):
+        _load_local_tx_or_404(transaction_id, user)
+        o = local_tx_store.outcome(transaction_id, tenant_id=user["tid"])
+        if o is None:
+            raise HTTPException(404, "no local transaction outcome")
+        return o
+
+    _LT_SUBFIELDS = {
+        "certificate": "certificate", "path-compliance": "path_compliance",
+        "inert-outbox": "inert_outbox", "proof": "b9_proof_bundle",
+        "graph": "semantic_graph", "context-slice": "context_slice",
+        "proof-of-execution": "proof_of_execution",
+        "replay-context": "replay_context",
+        "lifecycle-checkpoints": "lifecycle_checkpoints",
+        "rollback-plan": "rollback_readiness", "envelope": "transaction_envelope",
+        "shadow-state": "shadow_state", "execution-contract": "execution_contract",
+        "b8-handoff": "b8_handoff", "effector-gate": "effector_gate",
+        "commit-attestation": "commit_attestation",
+        "no-external-effect": "no_external_effect_theorem",
+        "source-surface-isolation": "source_surface_isolation",
+        "contaminated-authority": "contaminated_authority_firewall",
+        "fault-injection": "b9_fault_injection_harness",
+        "release-gate": "b9_release_gate_report",
+        "conformance-vector": "b9_conformance_vector",
+    }
+
+    @app.get("/ai-tools/local-transactions/policy")
+    async def local_tx_policy(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {"b9_model_version": _lt.B9_MODEL_VERSION,
+                "local_reversible_commit_only": True, "external_effect": False,
+                "calls_providers": False, "sends_messages": False,
+                "executes_payment": False, "mutates_external_crm": False,
+                "mutates_external_evidence": False, "calls_mcp": False,
+                "calls_llm": False, "issues_tokens": False,
+                "b8_is_evidence_only": True, "b8_is_authority": False,
+                "commit_executable_now": False, "production_ready": False,
+                "has_external_execute_endpoint": False,
+                "has_release_effects_endpoint": False,
+                "has_provider_call_endpoint": False, "has_send_endpoint": False,
+                "has_grant_authority_endpoint": False,
+                "has_dispatch_endpoint": False, "has_webhook_endpoint": False,
+                "most_permissive_outcome": "B9_LOCAL_COMMIT_APPLIED",
+                "accepts_b8_statuses": sorted(_lt.B8_ACCEPTABLE_STATUSES),
+                "b9_statuses": sorted(_lt.B9_STATUSES),
+                "decision_statuses": sorted(_lt.DECISION_STATUSES),
+                "failure_dominance": _lt.FAILURE_DOMINANCE,
+                "reason_codes": _lt.REASON_CODES, "fault_cases": _lt.FAULT_CASES,
+                "allowed_source_surfaces": sorted(_lt.ALLOWED_SOURCE_SURFACES),
+                "allowed_authority_sources": sorted(
+                    _lt.ALLOWED_AUTHORITY_SOURCES),
+                "path_predicates": _lt.PATH_PREDICATES,
+                "poe_events": _lt.POE_EVENTS,
+                "lifecycle_checkpoints": _lt.LIFECYCLE_CHECKPOINTS,
+                "graph_node_types": _lt.GRAPH_NODE_TYPES,
+                "graph_edge_types": _lt.GRAPH_EDGE_TYPES,
+                "honesty_labels": _lt.HONESTY_LABELS}
+
+    @app.get("/ai-tools/local-transactions/registry")
+    async def local_tx_registry(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        outs = local_tx_store.list_outcomes(tenant_id=user["tid"])
+        by_status = {}
+        for o in outs:
+            by_status[o["b9_status"]] = by_status.get(o["b9_status"], 0) + 1
+        return {"tenant_id": user["tid"],
+                "local_transaction_request_count": len(
+                    local_tx_store.list_requests(tenant_id=user["tid"])),
+                "local_transaction_outcome_count": len(outs),
+                "outcomes_by_status": by_status,
+                "honesty_labels": _lt.HONESTY_LABELS}
+
+    @app.get("/ai-tools/local-transactions/events")
+    async def local_tx_events(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        evs = local_tx_store.events(tenant_id=user["tid"])
+        chain_ok, prev = True, None
+        for e in evs:
+            if e["previous_event_hash"] != (prev or _lt.GENESIS):
+                chain_ok = False
+            prev = e["event_hash"]
+        return {"tenant_id": user["tid"], "events": evs,
+                "event_count": len(evs), "event_chain_valid": chain_ok,
+                "ledger_note": "local B9 transaction ledger; not a production "
+                "immutable log", "honesty_labels": _lt.HONESTY_LABELS}
+
+    _LT_PASS_KEYS = (
+        "b8_commit_simulation_id", "role_id", "source_surface", "source_channel",
+        "object_reference", "case_id", "task_id", "run_id", "requested_intent",
+        "allowed_local_scope", "forbidden_external_scope",
+        "autonomy_level_requested", "role_autonomy_limit", "tenant_policy_limit",
+        "segment_policy_limit", "tool_risk_limit", "evidence_confidence_limit",
+        "human_approval_limit", "historical_trust_limit", "context_slice",
+        "planned_delta", "evidence_refs", "policy_refs", "authority_basis",
+        "approval_record", "idempotency_key", "conflicting_txs",
+        "replay_detected", "stale_witness", "future_effects",
+        "outbox_release_attempts", "attempt_markers", "failed_checkpoints",
+        "missing_poe_events", "poe_reorder", "poe_tamper", "path_checks",
+        "contract_valid", "surface_claims_authority", "surface_claims_approval",
+        "abort_stage", "kill_switch", "expected_before_state_hash", "policy",
+    )
+
+    def _prepare_local_tx(tid, user, body, apply_commit):
+        # A local, reversible transaction request. Consumes a B8 envelope as
+        # EVIDENCE ONLY and re-validates it. Commits (when apply_commit and the
+        # decision allows) ONLY to local internal state. NO external effect.
+        b8id = str(body.get("b8_commit_simulation_id", "") or "")
+        b8o = commit_sim_store.outcome(b8id, tenant_id=tid) if b8id else None
+        if b8o is None:
+            raise HTTPException(404, "b8 commit-simulation outcome not found")
+        actor_type = "ai_employee" if user["role"] == "ai_worker" else "human"
+        now = utcnow()
+        txid = str(uuid.uuid4())
+        obj = str(body.get("object_reference", "obj-1") or "obj-1")
+        # The reversible LOCAL state is the source of the before-state.
+        cur = local_tx_store.get_state(obj, tenant_id=tid)
+        current_local_state = cur["state"] if cur else (
+            body.get("current_local_state") or {})
+        passthrough = {k: body[k] for k in _LT_PASS_KEYS if k in body}
+        passthrough["current_local_state"] = current_local_state
+        passthrough["object_reference"] = obj
+        passthrough.setdefault("authority_basis",
+                               body.get("authority_basis") or
+                               {"source": "SERVER_RBAC"})
+        outcome = _lt.prepare_local_transaction_outcome(
+            transaction_id=txid, tenant_id=tid, actor_id=user["uid"],
+            actor_type=actor_type, b8_outcome=b8o, created_at=now,
+            **passthrough)
+        # Apply the LOCAL, REVERSIBLE commit only when allowed AND requested.
+        if apply_commit and outcome["local_commit_applied"]:
+            local_tx_store.apply_commit(
+                tenant_id=tid, object_reference=obj,
+                before_state=outcome["shadow_state"]["before_state"],
+                after_state=outcome["shadow_state"]["shadow_state"],
+                transaction_id=txid, created_at=now)
+        env = outcome["transaction_envelope"]
+        local_tx_store.save_request({
+            "id": txid, "tenant_id": tid, "b8_commit_simulation_id": b8id,
+            "object_reference": obj, "source_surface": env["source_surface"],
+            "b9_transaction_request_hash": env["canonical_hash"],
+            "requested_by": user["uid"], "requested_by_actor_type": actor_type,
+            "payload_json": json.dumps(env), "created_at": now})
+        local_tx_store.save_outcome({
+            "id": str(uuid.uuid4()), "tenant_id": tid, "transaction_id": txid,
+            "b8_commit_simulation_id": b8id, "object_reference": obj,
+            "b9_status": outcome["b9_status"],
+            "b9_decision_status": outcome["b9_decision_status"],
+            "b9_outcome_kind": outcome["b9_outcome_kind"],
+            "dominant_signal": outcome["dominant_signal"],
+            "certificate_hash": outcome["certificate"]["certificate_hash"],
+            "before_state_hash": outcome["before_state_hash"],
+            "after_state_hash": outcome["after_state_hash"],
+            "b9_transaction_request_hash": outcome.get(
+                "b9_transaction_request_hash") or "",
+            "b9_decision_hash": outcome["b9_decision_hash"],
+            "b9_state_hash": outcome["b9_state_hash"],
+            "b9_proof_bundle_hash": outcome["b9_proof_bundle"][
+                "b9_proof_bundle_hash"],
+            "release_gate_status": outcome["b9_release_gate_report"][
+                "release_gate_status"],
+            "local_commit_applied": 1 if (apply_commit and outcome[
+                "local_commit_applied"]) else 0,
+            "decided_by": user["uid"], "decided_by_actor_type": actor_type,
+            "payload_json": json.dumps(outcome), "created_at": now,
+            "updated_at": now})
+        _lt_emit(tid, event_type="B9_TX_REQUEST_OPENED", transaction_id=txid,
+                 actor_id=user["uid"], actor_type=actor_type,
+                 state_hash=env["canonical_hash"], detail={"object": obj})
+        _lt_emit(tid, event_type="B9_TX_OUTCOME_PREPARED", transaction_id=txid,
+                 actor_id=user["uid"], actor_type=actor_type,
+                 state_hash=outcome["b9_state_hash"],
+                 detail={"status": outcome["b9_status"],
+                         "committed": bool(apply_commit and outcome[
+                             "local_commit_applied"])})
+        audit.append(event_type="AI_B9_LOCAL_TRANSACTION_PREPARED",
+                     actor=user["uid"], payload={"transaction_id": txid,
+                     "status": outcome["b9_status"],
+                     "committed": bool(apply_commit and outcome[
+                         "local_commit_applied"])})
+        outcome["_committed_to_local_state"] = bool(
+            apply_commit and outcome["local_commit_applied"])
+        return outcome
+
+    @app.post("/ai-tools/local-transactions/prepare")
+    async def local_tx_prepare(body: dict, user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        return _prepare_local_tx(user["tid"], user, body or {},
+                                 apply_commit=False)
+
+    @app.post("/ai-tools/local-transactions/validate")
+    async def local_tx_validate(body: dict, user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        o = _prepare_local_tx(user["tid"], user, body or {}, apply_commit=False)
+        return {"transaction_id": o["transaction_id"],
+                "b9_status": o["b9_status"],
+                "b9_decision_status": o["b9_decision_status"],
+                "would_commit_local": o["local_commit_applied"],
+                "dominant_reason_code": o["dominant_reason_code"],
+                "path_compliance_result": o["path_compliance"][
+                    "path_compliance_result"],
+                "honesty_labels": _lt.HONESTY_LABELS}
+
+    @app.post("/ai-tools/local-transactions/commit-local")
+    async def local_tx_commit_local(body: dict,
+                                    user: dict = Depends(current_user)):
+        # Applies a LOCAL, REVERSIBLE commit to internal state — never an
+        # external effect — only if the full B9 revalidation allows it.
+        require_permission(user, "case.update")
+        return _prepare_local_tx(user["tid"], user, body or {},
+                                 apply_commit=True)
+
+    @app.get("/ai-tools/local-transactions")
+    async def list_local_txs(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return local_tx_store.list_requests(tenant_id=user["tid"])
+
+    @app.get("/ai-tools/local-transactions/{transaction_id}")
+    async def get_local_tx(transaction_id: str,
+                           user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _load_local_tx_or_404(transaction_id, user)
+
+    @app.get("/ai-tools/local-transactions/{transaction_id}/outcome")
+    async def get_local_tx_outcome(transaction_id: str,
+                                   user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _load_local_tx_outcome_or_404(transaction_id, user)
+
+    @app.get("/ai-tools/local-transactions/{transaction_id}/twin")
+    async def get_local_tx_twin(transaction_id: str,
+                                user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        o = _load_local_tx_outcome_or_404(transaction_id, user)
+        return {"transaction_id": transaction_id, "finalis_transaction_twin": {
+            "intended_action": o["transaction_envelope"]["requested_intent"],
+            "current_local_state": o["shadow_state"]["before_state"],
+            "shadow_local_state": o["shadow_state"]["shadow_state"],
+            "planned_delta": o["shadow_state"]["planned_delta"],
+            "compliance_path": o["path_compliance"]["path_compliance_result"],
+            "authority_basis": o["certificate"]["authority_basis"],
+            "evidence_basis": o["certificate"]["evidence_basis"],
+            "approval_basis": o["certificate"]["approval_basis"],
+            "rollback_plan": o["rollback_readiness"]["rollback_plan"],
+            "inert_outbox": o["inert_outbox"]["items"],
+            "certificate_hash": o["certificate"]["certificate_hash"],
+            "proof_of_execution_stream_hash": o["poe_stream"]["poe_stream_hash"],
+            "blocked_external_effects": o["certificate"]["forbidden"],
+            "local_commit_applied": o["local_commit_applied"],
+            "b9_status": o["b9_status"]},
+            "honesty_labels": _lt.HONESTY_LABELS}
+
+    @app.post("/ai-tools/local-transactions/{transaction_id}/abort")
+    async def local_tx_abort(transaction_id: str,
+                             user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        o = _load_local_tx_outcome_or_404(transaction_id, user)
+        return {"transaction_id": transaction_id, "abort_status": "ABORTED",
+                "rollback_ready": o["rollback_readiness"]["rollback_ready"],
+                "rollback_hash": o["rollback_readiness"]["rollback_hash"],
+                "no_external_effect": True,
+                "honesty_labels": _lt.HONESTY_LABELS}
+
+    def _ltsub(field):
+        async def getter(transaction_id: str,
+                         user: dict = Depends(current_user)):
+            require_permission(user, "case.read")
+            o = _load_local_tx_outcome_or_404(transaction_id, user)
+            return {"transaction_id": transaction_id, field: o.get(field),
+                    "honesty_labels": _lt.HONESTY_LABELS}
+        return getter
+
+    for _slug, _field in _LT_SUBFIELDS.items():
+        app.add_api_route(
+            "/ai-tools/local-transactions/{transaction_id}/" + _slug,
+            _ltsub(_field), methods=["GET"])
+
+    @app.post("/ai-tools/local-transactions/{transaction_id}/verify")
+    async def verify_local_tx(transaction_id: str,
+                              user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        o = _load_local_tx_outcome_or_404(transaction_id, user)
+        recomputed = _lt._core_hash(
+            o, "b9_decision_hash", "transaction_id", "actor_id",
+            "decided_by_actor_id", "decided_by_actor_type", "b9_state_hash")
+        ok = recomputed == o["b9_decision_hash"]
+        return {"transaction_id": transaction_id,
+                "stored_b9_decision_hash": o["b9_decision_hash"],
+                "recomputed_b9_decision_hash": recomputed,
+                "b9_decision_hash_valid": ok,
+                "verification_status": "VALID" if ok else "TAMPERED",
+                "honesty_labels": _lt.HONESTY_LABELS}
+
+    @app.get("/ai-tools/local-transactions/{transaction_id}/events")
+    async def local_tx_request_events(transaction_id: str,
+                                      user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_local_tx_or_404(transaction_id, user)
+        return {"transaction_id": transaction_id, "events":
+                local_tx_store.events(tenant_id=user["tid"],
+                                      transaction_id=transaction_id),
+                "honesty_labels": _lt.HONESTY_LABELS}
+
     # Hoist the literal /ai-tools/actions/*, /ai-tools/broker/*,
     # /ai-tools/runtime/* and /ai-tools/write-intents/* routes ahead of the
     # earlier-registered parameterised /ai-tools/{tool_id}/* routes so first-
@@ -10072,7 +10410,9 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                        or getattr(r, "path", "").startswith(
                            "/ai-tools/write-intents")
                        or getattr(r, "path", "").startswith(
-                           "/ai-tools/commit-simulations")]
+                           "/ai-tools/commit-simulations")
+                       or getattr(r, "path", "").startswith(
+                           "/ai-tools/local-transactions")]
     for _r in _literal_routes:
         app.router.routes.remove(_r)
     for _off, _r in enumerate(_literal_routes):

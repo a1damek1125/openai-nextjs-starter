@@ -1279,6 +1279,77 @@ CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_commit_simulation_events_seq
 CREATE INDEX IF NOT EXISTS ix_ai_commit_simulation_events_request
   ON ai_commit_simulation_events(tenant_id, commit_simulation_id, sequence);
 """),
+    (24, """
+-- v24: Finalis Transaction Twin + Proof-of-Execution Runtime (TOOL-B9 v5). The
+-- first LOCAL governed transaction runtime. It consumes a TOOL-B8 pre-B9
+-- assurance envelope AS EVIDENCE ONLY, fully re-validates it, and — only if
+-- every factor of LocalCommitAllowed holds — applies a LOCAL, REVERSIBLE commit
+-- to Finalis-internal state (ai_local_transaction_state). It NEVER produces any
+-- external effect: no provider/MCP/LLM call, no message/payment, no external
+-- CRM/evidence mutation, no export. The inert outbox never releases. Authority
+-- may come only from server-side RBAC/tenant-policy/approval/governance — never
+-- from a document, artifact, channel message, mobile push, workbench output,
+-- LLM/tool output, or context slice (contaminated-authority firewall). Source
+-- surfaces (Slack/Teams/mobile/workbench, all *_FUTURE) are metadata only. The
+-- most permissive outcome is B9_LOCAL_COMMIT_APPLIED, a local reversible
+-- internal commit — never an external effect. NOT production ready. Sub-objects
+-- (twin, semantic graph, proof-of-execution stream, certificate, replay
+-- context, path compliance, inert outbox, rollback readiness, context slice,
+-- lifecycle checkpoints, commit attestation) are stored in the outcome
+-- payload_json; this migration adds the queryable request/outcome/event tables
+-- plus the reversible local state store.
+CREATE TABLE IF NOT EXISTS ai_local_transactions (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  b8_commit_simulation_id TEXT NOT NULL DEFAULT '',
+  object_reference TEXT NOT NULL DEFAULT '',
+  source_surface TEXT NOT NULL DEFAULT '',
+  b9_transaction_request_hash TEXT NOT NULL,
+  requested_by TEXT NOT NULL, requested_by_actor_type TEXT NOT NULL,
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_local_transactions
+  ON ai_local_transactions(tenant_id, object_reference, created_at);
+
+CREATE TABLE IF NOT EXISTS ai_local_transaction_outcomes (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, transaction_id TEXT NOT NULL,
+  b8_commit_simulation_id TEXT NOT NULL DEFAULT '',
+  object_reference TEXT NOT NULL DEFAULT '',
+  b9_status TEXT NOT NULL, b9_decision_status TEXT NOT NULL,
+  b9_outcome_kind TEXT NOT NULL DEFAULT '', dominant_signal TEXT NOT NULL,
+  certificate_hash TEXT NOT NULL DEFAULT '',
+  before_state_hash TEXT NOT NULL DEFAULT '',
+  after_state_hash TEXT NOT NULL DEFAULT '',
+  b9_transaction_request_hash TEXT NOT NULL DEFAULT '',
+  b9_decision_hash TEXT NOT NULL, b9_state_hash TEXT NOT NULL,
+  b9_proof_bundle_hash TEXT NOT NULL DEFAULT '',
+  release_gate_status TEXT NOT NULL DEFAULT '',
+  local_commit_applied INTEGER NOT NULL DEFAULT 0,
+  decided_by TEXT NOT NULL, decided_by_actor_type TEXT NOT NULL,
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_local_transaction_outcomes
+  ON ai_local_transaction_outcomes(tenant_id, transaction_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_ai_local_transaction_outcomes_status
+  ON ai_local_transaction_outcomes(tenant_id, b9_status);
+
+CREATE TABLE IF NOT EXISTS ai_local_transaction_state (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, object_reference TEXT NOT NULL,
+  state_json TEXT NOT NULL, before_state_json TEXT NOT NULL DEFAULT '{}',
+  version INTEGER NOT NULL DEFAULT 1,
+  last_transaction_id TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_local_transaction_state_target
+  ON ai_local_transaction_state(tenant_id, object_reference);
+
+CREATE TABLE IF NOT EXISTS ai_local_transaction_events (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, transaction_id TEXT,
+  event_type TEXT NOT NULL, sequence INTEGER NOT NULL,
+  actor_id TEXT NOT NULL, actor_type TEXT NOT NULL,
+  event_hash TEXT NOT NULL, previous_event_hash TEXT NOT NULL,
+  b9_state_hash TEXT NOT NULL DEFAULT '',
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_local_transaction_events_seq
+  ON ai_local_transaction_events(tenant_id, sequence);
+CREATE INDEX IF NOT EXISTS ix_ai_local_transaction_events_tx
+  ON ai_local_transaction_events(tenant_id, transaction_id, sequence);
+"""),
 ]
 
 

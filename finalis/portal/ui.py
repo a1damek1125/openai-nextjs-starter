@@ -159,6 +159,7 @@ window.loadSections = async () => {
   if (window.loadRuntimeSection) jobs.push(loadRuntimeSection(me));
   if (window.loadWriteIntentSection) jobs.push(loadWriteIntentSection(me));
   if (window.loadCommitSimSection) jobs.push(loadCommitSimSection(me));
+  if (window.loadLocalTxSection) jobs.push(loadLocalTxSection(me));
   await Promise.allSettled(jobs);
 };
 
@@ -3470,6 +3471,103 @@ window.openCommitSimOutcome = async (sid) => {
 };
 """
 
+LOCAL_TX_SECTIONS = """
+<section id="tool-local-tx-section"><h2>Finalis Transaction Twin + Proof-of-Execution</h2>
+<ul class="labels"><small>
+<li>FINALIS_TRANSACTION_TWIN_ONLY / LOCAL_REVERSIBLE_COMMIT_ONLY — commits only to local, reversible internal state.</li>
+<li>NO_EXTERNAL_EFFECT / NO_PROVIDER_CALL / NO_MESSAGE / NO_PAYMENT / NO_NETWORK — never leaves the box.</li>
+<li>B8_EVIDENCE_ONLY — the B8 envelope is evidence; B9 recomputes every factor and grants no authority.</li>
+<li>PROOF_OF_EXECUTION_LOCAL_ONLY / PROOF_CARRYING_CERTIFICATE — proof of a local commit, not an external act.</li>
+<li>SOURCE_SURFACE_NON_AUTHORITATIVE / CONTEXT_SLICE_NON_AUTHORITATIVE — surfaces and context confer no authority.</li>
+<li>INERT_OUTBOX_NEVER_RELEASES / EFFECTOR_EXCLUSIVE_GATE — the outbox is inert; no effector is reachable.</li>
+<li>NOT_PRODUCTION_READY / NOT_PRODUCTION_AUTONOMOUS_EXECUTION.</li>
+</small></ul>
+<div id="tool-local-tx-summary"><i>Loading Finalis Transaction Twin…</i></div>
+<div id="tool-local-tx-list"></div>
+</section>
+"""
+
+LOCAL_TX_JS = """
+window.loadLocalTxSection = async (me) => { await loadLocalTx(); };
+
+window.loadLocalTx = async () => {
+  let reg; try { reg = await get('/ai-tools/local-transactions/registry'); }
+  catch (e) { $('tool-local-tx-summary').innerHTML =
+    '<i>The Finalis Transaction Twin is not available for your role.</i>'; return; }
+  $('tool-local-tx-summary').innerHTML =
+    `<p><b>requests</b> ${esc(String(reg.local_transaction_request_count))} ·
+      <b>outcomes</b> ${esc(String(reg.local_transaction_outcome_count))}</p>` +
+    '<p><small>' + Object.entries(reg.outcomes_by_status || {}).map(
+      ([k, v]) => `${esc(k)}: <b>${esc(String(v))}</b>`).join(' · ') + '</small></p>';
+  let reqs = []; try { reqs = await get('/ai-tools/local-transactions'); }
+  catch (e) {}
+  $('tool-local-tx-list').innerHTML = (reqs.length ?
+    '<table><tr><th>Transaction</th><th>Target</th><th>Surface</th><th></th></tr>' +
+    reqs.map(r => `<tr><td><small>${esc((r.transaction_id||'').slice(0,8))}
+       </small></td><td><small>${esc(r.object_reference||'')}</small></td>
+       <td><small>${esc(r.source_surface||'')}</small></td>
+       <td><button onclick="openLocalTxOutcome('${esc(r.transaction_id)}')">
+       Twin</button></td></tr>`).join('') + '</table>'
+    : '<i>No local transactions yet.</i>');
+};
+
+window.openLocalTxOutcome = async (tid) => {
+  const base = '/ai-tools/local-transactions/' + tid;
+  const o = await get(base + '/outcome');
+  let vr = null; try { vr = (await send('POST', base + '/verify', {})).data; }
+  catch (e) {}
+  const gate = o.b9_release_gate_report || {};
+  const cert = o.certificate || {};
+  const poe = o.poe_stream || {};
+  const shadow = o.shadow_state || {};
+  const path = o.path_compliance || {};
+  const outbox = o.inert_outbox || {};
+  const roll = o.rollback_readiness || {};
+  const nee = o.no_external_effect_theorem || {};
+  const surf = o.source_surface_isolation || {};
+  const ctx = o.context_slice || {};
+  const fw = o.contaminated_authority_firewall || {};
+  $('tool-local-tx-list').innerHTML = `
+    <h3>Transaction twin ${esc(tid.slice(0,8))}
+      <span class="badge">${esc(o.b9_status)}</span></h3>
+    <p><b>decision</b> ${esc(o.b9_decision_status)} ·
+      <b>kind</b> ${esc(o.b9_outcome_kind)} ·
+      <b>reason</b> <small>${esc(o.dominant_reason_code)}</small></p>
+    <p><b>local commit applied</b> <b class="${o.local_commit_applied ? 'ok' : ''}">${esc(
+        String(o.local_commit_applied))}</b> ·
+      <b>reversible</b> <b class="ok">${esc(String(roll.rollback_ready))}</b> ·
+      <b>no external effect</b> <b class="${nee.theorem_holds ? 'ok' : 'err'}">${esc(
+        String(nee.theorem_holds))}</b></p>
+    <p><b>B8 evidence-only</b> <b class="ok">true</b> ·
+      <b>source surface authoritative</b> <b class="${surf.grants_authority ? 'err' : 'ok'}">${esc(
+        String(!!surf.grants_authority))}</b> ·
+      <b>context slice authoritative</b> <b class="${ctx.grants_authority ? 'err' : 'ok'}">${esc(
+        String(!!ctx.grants_authority))}</b> ·
+      <b>authority firewall</b> <b class="${fw.firewall_status === 'CLEAN' ? 'ok' : 'err'}">${esc(
+        fw.firewall_status)}</b></p>
+    <p><b>path compliance</b> <b class="${path.path_compliance_result === 'PASSED'
+      ? 'ok' : 'err'}">${esc(path.path_compliance_result)}</b> ·
+      <b>shadow state hash</b> <code>${esc((shadow.shadow_state_hash||'').slice(0,14))}…</code></p>
+    <p><b>certificate</b> <code>${esc((cert.certificate_hash||'').slice(0,14))}…</code> ·
+      <b>PoE stream</b> <code>${esc((poe.poe_stream_hash||'').slice(0,14))}…</code> ·
+      <b>PoE stream</b> <b class="${poe.stream_status === 'COMPLETE' ? 'ok' : 'err'}">${esc(
+        poe.stream_status)}</b></p>
+    <p><b>inert outbox</b> <b class="${outbox.outbox_status === 'INERT' ? 'ok' : 'err'}">${esc(
+        outbox.outbox_status)}</b> ·
+      <b>rollback hash</b> <code>${esc((roll.rollback_hash||'').slice(0,14))}…</code></p>
+    <p><b>release gate</b> <b class="${gate.release_gate_status === 'PASSED'
+      ? 'ok' : 'err'}">${esc(gate.release_gate_status)}</b>
+      · <b>decision hash</b> <code>${esc((o.b9_decision_hash||'').slice(0,14))}…</code>
+      · <b>verify</b> ${vr ? `<b class="${vr.b9_decision_hash_valid ? 'ok' : 'err'}">${
+        esc(vr.verification_status)}</b>` : 'n/a'}</p>
+    <p><b>signals</b> ${(o.all_signals||[]).map(s =>
+      `<span class="err">${esc(s)}</span>`).join(' ') || '<i>none</i>'}</p>
+    <ul>${(o.honesty_labels||[]).map(l =>
+      `<li><small>${esc(l)}</small></li>`).join('')}</ul>
+    <button onclick="loadLocalTx()">← back</button>`;
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -3504,6 +3602,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 {RUNTIME_SECTIONS}
 {WRITE_INTENT_SECTIONS}
 {COMMIT_SIM_SECTIONS}
+{LOCAL_TX_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -3642,7 +3741,8 @@ boot();
 <script>{BROKER_JS}</script>
 <script>{RUNTIME_JS}</script>
 <script>{WRITE_INTENT_JS}</script>
-<script>{COMMIT_SIM_JS}</script></body></html>"""
+<script>{COMMIT_SIM_JS}</script>
+<script>{LOCAL_TX_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:
