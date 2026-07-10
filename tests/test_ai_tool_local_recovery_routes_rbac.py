@@ -202,10 +202,14 @@ def test_donotrebuild_b9_recovery_policy_ok_for_owner(gate):
 
 
 def test_donotrebuild_no_recovery_route_outside_namespace(gate):
-    # Every route mentioning "recovery" lives under the recovery namespace; no
-    # duplicate CRM/recovery runtime route was smuggled in elsewhere.
+    # Every recovery *runtime* route lives under the recovery namespace; no
+    # duplicate recovery runtime was smuggled in elsewhere. The read-only B9.2
+    # work-lineage observatory MAY expose a derived `recovery` binding VIEW under
+    # its own /observability namespace (mandated by the B9.2 spec) — that is a
+    # GET-only observation of the recovery evidence, never a recovery runtime.
+    _OBS = "/ai-tools/local-transactions/observability/"
     paths = {getattr(r, "path", "") for r in gate.app.router.routes}
     recovery_paths = {p for p in paths if "recovery" in p}
     assert recovery_paths
     for p in recovery_paths:
-        assert p.startswith(_BASE), p
+        assert p.startswith(_BASE) or p.startswith(_OBS), p
