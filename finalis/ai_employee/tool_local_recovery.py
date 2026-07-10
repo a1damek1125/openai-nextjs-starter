@@ -1591,14 +1591,9 @@ def prepare_recovery_outcome(*, recovery_id, transaction_id, tenant_id, actor_id
     dominant = dominant_signal(signals)
     new_state = _state_for_signal(dominant, ctx, action)
 
-    tamper = dominant in _TAMPER_SIGNALS or new_state == "TAMPERED"
-    any_q = any(s in _QUARANTINE_SIGNALS or s in _PARTIAL_SIGNALS
-                for s in signals)
-    reports["quarantine"] = build_quarantine(
-        tenant_id=tenant_id, transaction_id=transaction_id, ctx=ctx,
-        action=action, tamper=tamper, any_quarantine_signal=any_q)
-
     reason_code = REASON_CODES.get(dominant, dominant)
+    # Proof-of-Recovery stream may itself surface a tamper/invalid signal; fold
+    # it in BEFORE the quarantine decision so a tampered recovery quarantines.
     reports["por_stream"] = build_por_stream(
         tenant_id=tenant_id, recovery_id=recovery_id,
         transaction_id=transaction_id, actor_id=actor_id, ctx=ctx,
@@ -1611,6 +1606,13 @@ def prepare_recovery_outcome(*, recovery_id, transaction_id, tenant_id, actor_id
         dominant = dominant_signal(signals)
         new_state = _state_for_signal(dominant, ctx, action)
         reason_code = REASON_CODES.get(dominant, dominant)
+
+    tamper = dominant in _TAMPER_SIGNALS or new_state == "TAMPERED"
+    any_q = any(s in _QUARANTINE_SIGNALS or s in _PARTIAL_SIGNALS
+                for s in signals)
+    reports["quarantine"] = build_quarantine(
+        tenant_id=tenant_id, transaction_id=transaction_id, ctx=ctx,
+        action=action, tamper=tamper, any_quarantine_signal=any_q)
 
     reports["twin"] = build_recovery_twin(
         recovery_id=recovery_id, tenant_id=tenant_id,
