@@ -10759,9 +10759,9 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
             "work_run_state": outcome["work_run_state"],
             "work_run_hash": outcome["b92_state_hash"],
             "requested_by": user["uid"], "requested_by_actor_type": actor_type,
-            "payload_json": json.dumps({k: body.get(k) for k in (
-                "b9_transaction_id", "b91_recovery_id", "trigger_type",
-                "work_definition_id")}),
+            # Store the full observation input so /rebuild-local-observation can
+            # deterministically reproduce the derived evidence.
+            "payload_json": json.dumps(body),
             "created_at": now})
         work_obs_store.save_outcome({
             "id": str(uuid.uuid4()), "tenant_id": tid, "work_run_id": wrid,
