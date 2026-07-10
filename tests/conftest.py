@@ -647,6 +647,57 @@ class Gate:
             f"/ai-tools/local-transactions/recovery/{slug}"
             f"?recovery_id={recovery_id}", headers=self.h(actor))
 
+    # -- TOOL-B9.2 Governed Work Lineage Observatory helpers ------------------
+    def clean_work_body(self, b9_transaction_id=None, b91_recovery_id=None,
+                        **over):
+        """A minimal clean Governed Work Run body: a valid principal + one
+        report artifact with a source + local delivery intent. With a committed
+        B9 transaction bound, the observation certifies (WORK_OUTCOME_CERTIFIED /
+        PROVEN)."""
+        body = {"source_principal_id": "user:1",
+                "effective_principal_id": "user:1",
+                "artifacts": [{"id": "a1", "type": "REPORT",
+                               "sources": ["s1"], "content": "x"}],
+                "delivery_status": "LOCAL_INTENT_ONLY"}
+        if b9_transaction_id:
+            body["b9_transaction_id"] = b9_transaction_id
+        if b91_recovery_id:
+            body["b91_recovery_id"] = b91_recovery_id
+        body.update(over)
+        return body
+
+    def observe_work(self, action="observe-work-run", actor=OWNER, body=None,
+                     **over):
+        """POST a B9.2 derived observation action. `action` in
+        observe-work-run|verify-work-run|rebuild-local-observation|
+        run-local-canary|work-observability-drill. Returns the raw Response."""
+        payload = self.clean_work_body(**over) if body is None else body
+        return self.c.post(
+            f"/ai-tools/local-transactions/observability/{action}",
+            json=payload, headers=self.h(actor))
+
+    def observed_work(self, requester=OWNER, bind_transaction=True,
+                      bind_recovery=False, **over):
+        """Full pipeline: B4..B8 -> B9 committed local tx (-> B9.1 recovery) ->
+        B9.2 observation. Returns (work_run_id, outcome). With a bound committed
+        transaction and clean defaults the outcome is WORK_OUTCOME_CERTIFIED."""
+        b9id = b91id = None
+        if bind_transaction or bind_recovery:
+            b9id, _ = self.committed_local_tx(requester=requester)
+        if bind_recovery:
+            b91id = self.recover(b9id, action="run", actor=requester).json()[
+                "recovery_id"]
+        body = self.clean_work_body(b9_transaction_id=b9id, b91_recovery_id=b91id,
+                                    **over)
+        o = self.observe_work(actor=requester, body=body).json()
+        return o["work_run_id"], o
+
+    def wo(self, work_run_id, slug, actor=OWNER):
+        """GET a B9.2 work-lineage sub-object / view endpoint by work_run_id."""
+        return self.c.get(
+            f"/ai-tools/local-transactions/observability/{slug}/{work_run_id}",
+            headers=self.h(actor))
+
 
 @pytest.fixture()
 def gate():

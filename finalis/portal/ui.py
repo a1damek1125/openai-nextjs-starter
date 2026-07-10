@@ -161,6 +161,7 @@ window.loadSections = async () => {
   if (window.loadCommitSimSection) jobs.push(loadCommitSimSection(me));
   if (window.loadLocalTxSection) jobs.push(loadLocalTxSection(me));
   if (window.loadRecoverySection) jobs.push(loadRecoverySection(me));
+  if (window.loadWorkObsSection) jobs.push(loadWorkObsSection(me));
   await Promise.allSettled(jobs);
 };
 
@@ -3666,6 +3667,97 @@ window.openRecoveryOutcome = async (rid) => {
 };
 """
 
+WORK_OBS_SECTIONS = """
+<section id="tool-work-obs-section"><h2>Governed Work Lineage Observatory</h2>
+<ul class="labels"><small>
+<li>LOCAL_WORK_OBSERVABILITY_ONLY / DERIVED_EVIDENCE_NOT_AUTHORITY — observes B9/B9.1; grants no authority.</li>
+<li>READ_ONLY_OVER_B9_AND_B9_1 — never commits, recovers, rolls back, aborts or releases the outbox.</li>
+<li>PROOF_OF_WORK_OUTCOME_IS_EVIDENCE_ONLY — the PoWO authorizes nothing.</li>
+<li>NO_EXTERNAL_PROVIDER_RUNTIME / NO_EXTERNAL_EFFECT / NO_EXTERNAL_DELIVERY / INERT_OUTBOX_REMAINS_INERT.</li>
+<li>NO_SECRET_STORED / NO_HIDDEN_CHAIN_OF_THOUGHT_STORED / NOT_PRODUCTION_READY.</li>
+</small></ul>
+<div id="tool-work-obs-summary"><i>Loading governed work lineage…</i></div>
+<div id="tool-work-obs-list"></div>
+</section>
+"""
+
+WORK_OBS_JS = """
+window.loadWorkObsSection = async (me) => { await loadWorkObs(); };
+
+window.loadWorkObs = async () => {
+  const base = '/ai-tools/local-transactions/observability';
+  let reg; try { reg = await get(base + '/registry'); }
+  catch (e) { $('tool-work-obs-summary').innerHTML =
+    '<i>The governed work observatory is not available for your role.</i>'; return; }
+  $('tool-work-obs-summary').innerHTML =
+    `<p><b>work runs</b> ${esc(String(reg.work_run_count))}</p>` +
+    '<p><small>' + Object.entries(reg.outcomes_by_truth_state || {}).map(
+      ([k, v]) => `${esc(k)}: <b>${esc(String(v))}</b>`).join(' · ') + '</small></p>';
+  let rows = []; try { rows = await get(base + '/work-runs'); } catch (e) {}
+  $('tool-work-obs-list').innerHTML = (rows.length ?
+    '<table><tr><th>Work run</th><th>Trigger</th><th>State</th><th>Truth</th><th></th></tr>' +
+    rows.map(r => `<tr><td><small>${esc((r.work_run_id||'').slice(0,8))}</small></td>
+       <td><small>${esc(r.trigger_type||'')}</small></td>
+       <td><small>${esc(r.work_run_state||'')}</small></td>
+       <td><small>${esc(r.work_outcome_truth_state||'')}</small></td>
+       <td><button onclick="openWorkObs('${esc(r.work_run_id)}')">Lineage</button></td></tr>`
+      ).join('') + '</table>'
+    : '<i>No governed work runs observed yet.</i>');
+};
+
+window.openWorkObs = async (wid) => {
+  const base = '/ai-tools/local-transactions/observability';
+  const o = await get(base + '/work-run/' + encodeURIComponent(wid));
+  let vr = null; try { vr = (await send('POST', base + '/verify-work-run',
+    {work_run_id: wid})).data; } catch (e) {}
+  const powo = o.proof_of_work_outcome || {};
+  const twin = o.work_observation_twin || {};
+  const graph = o.causal_work_graph || {};
+  const can = o.b92_canary_harness || {};
+  const fw = o.gateway_boundary || {};
+  const neg = o.negative_space || {};
+  $('tool-work-obs-list').innerHTML = `
+    <h3>Work lineage ${esc(wid.slice(0,8))}
+      <span class="badge">${esc(o.work_run_state)}</span></h3>
+    <p><b>truth</b> <b class="${o.work_outcome_truth_state === 'PROVEN' ? 'ok' :
+      (['CONTRADICTED','TAMPERED','REVOKED'].includes(o.work_outcome_truth_state) ? 'err' : '')}">${esc(
+        o.work_outcome_truth_state)}</b> ·
+      <b>trigger</b> ${esc(o.trigger_type)} ·
+      <b>certified</b> <b class="${o.work_outcome_certified ? 'ok' : ''}">${esc(
+        String(o.work_outcome_certified))}</b></p>
+    <p><b>origin</b> ${esc((o.work_origin||{}).origin_status)} ·
+      <b>identity</b> ${esc((o.principal_continuity||{}).continuity_status)} ·
+      <b>memory</b> ${esc((o.memory_snapshot||{}).snapshot_status)} ·
+      <b>approval</b> ${esc((o.approval_continuity||{}).approval_status)}</p>
+    <p><b>gateway boundary</b> <b class="${fw.gateway_decision === 'ALLOW' ? 'ok' : 'err'}">${esc(
+        fw.gateway_decision)}</b> · <b>secret to model</b> <b class="${
+        fw.secret_exposed_to_model ? 'err' : 'ok'}">${esc(String(!!fw.secret_exposed_to_model))}</b> ·
+      <b>transaction</b> ${esc((o.transaction_binding||{}).binding_status)} ·
+      <b>recovery</b> ${esc((o.recovery_binding||{}).binding_status)}</p>
+    <p><b>artifact lineage</b> ${esc((o.artifact_lineage||{}).lineage_status)} ·
+      <b>delivery</b> ${esc((o.delivery_intent||{}).delivery_status)} ·
+      <b>revocation</b> ${esc((o.revocation||{}).revocation_status)} ·
+      <b>missing critical</b> <b class="${neg.no_critical_missing ? 'ok' : 'err'}">${esc(
+        String(!neg.no_critical_missing))}</b></p>
+    <p><b>no external effect</b> <b class="${o.no_external_effect ? 'ok' : 'err'}">${esc(
+        String(o.no_external_effect))}</b> · <b>observer</b> ${esc(o.observer_health_state)} ·
+      <b>canaries safe</b> <b class="${can.all_canaries_safe ? 'ok' : 'err'}">${esc(
+        String(can.all_canaries_safe))}</b> (${esc(String(can.canary_count))})</p>
+    <p><b>PoWO</b> <b class="${powo.verification_status === 'VALID' ? 'ok' : 'err'}">${esc(
+        powo.verification_status)}</b>
+      · <b>causal graph</b> ${esc(String(graph.node_count))} nodes / ${esc(String(graph.edge_count))} edges
+      · <b>twin</b> <code>${esc((o.work_observation_twin_hash||'').slice(0,14))}…</code>
+      · <b>verify</b> ${vr ? `<b class="${vr.b92_decision_hash_valid ? 'ok' : 'err'}">${
+        esc(vr.verification_status)}</b>` : 'n/a'}</p>
+    <p><small>${esc(o.powo_warning || '')}</small></p>
+    <p><b>signals</b> ${(o.all_signals||[]).map(s =>
+      `<span class="err">${esc(s)}</span>`).join(' ') || '<i>none</i>'}</p>
+    <ul>${(o.honesty_labels||[]).map(l =>
+      `<li><small>${esc(l)}</small></li>`).join('')}</ul>
+    <button onclick="loadWorkObs()">← back</button>`;
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -3702,6 +3794,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 {COMMIT_SIM_SECTIONS}
 {LOCAL_TX_SECTIONS}
 {LOCAL_RECOVERY_SECTIONS}
+{WORK_OBS_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -3842,7 +3935,8 @@ boot();
 <script>{WRITE_INTENT_JS}</script>
 <script>{COMMIT_SIM_JS}</script>
 <script>{LOCAL_TX_JS}</script>
-<script>{LOCAL_RECOVERY_JS}</script></body></html>"""
+<script>{LOCAL_RECOVERY_JS}</script>
+<script>{WORK_OBS_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:

@@ -10675,6 +10675,308 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                 "verification_status": "VALID" if ok else "TAMPERED",
                 "honesty_labels": _lr.HONESTY_LABELS}
 
+    # ===== TOOL-B9.2 v5: Governed Work Lineage Observatory ==================
+    # ===== (LOCAL-ONLY, READ-ONLY over B9/B9.1, DERIVED EVIDENCE ONLY) ======
+    from ..ai_employee import tool_work_observability as _wo
+    from ..ai_employee.tool_work_observability_store import (
+        ToolWorkObservabilityStore)
+    work_obs_store = ToolWorkObservabilityStore(db)
+    app.state.work_obs_store = work_obs_store
+
+    _WO_PASS_KEYS = _wo._PASS_KEYS
+    _WO_SUBFIELDS = {
+        "origin": "work_origin", "principal-continuity": "principal_continuity",
+        "context": "context_capsule", "memory": "memory_snapshot",
+        "delegation": "delegation_capsule", "approval": "approval_continuity",
+        "gateway-boundary": "gateway_boundary", "transaction":
+        "transaction_binding", "recovery": "recovery_binding",
+        "artifact-lineage": "artifact_lineage", "delivery-intent":
+        "delivery_intent", "schedule-lineage": "schedule_run_chain",
+        "revocation": "revocation", "causal-graph": "causal_work_graph",
+        "missing-evidence": "negative_space", "twin": "work_observation_twin",
+        "proof-of-work-outcome": "proof_of_work_outcome",
+        "decision-basis": "decision_basis", "otel-adapter": "otel_adapter",
+        "a2a-boundary": "a2a_boundary", "consistent-cut": "consistent_work_cut",
+        "no-external-effect": "no_external_effect",
+        "observer-health-detail": "observer_health",
+    }
+
+    def _wo_emit(tid, *, event_type, work_run_id, actor_id, actor_type,
+                 state_hash, detail):
+        seq = work_obs_store.next_sequence(tenant_id=tid)
+        prev = work_obs_store.last_event(tenant_id=tid)
+        ev = _wo.build_b92_event(
+            event_type=event_type, tenant_id=tid, work_run_id=work_run_id,
+            actor_id=actor_id, actor_type=actor_type, b92_state_hash=state_hash,
+            previous_event_hash=prev["event_hash"] if prev else None,
+            sequence=seq, detail=detail, created_at=utcnow())
+        work_obs_store.append_event({
+            "id": str(uuid.uuid4()), "tenant_id": tid, "work_run_id": work_run_id,
+            "event_type": event_type, "sequence": seq, "actor_id": actor_id,
+            "actor_type": actor_type, "event_hash": ev["event_hash"],
+            "previous_event_hash": ev["previous_event_hash"],
+            "b92_state_hash": state_hash, "payload_json": json.dumps(ev),
+            "created_at": ev["created_at"]})
+
+    def _load_work_outcome_or_404(work_run_id, user):
+        o = work_obs_store.outcome(work_run_id, tenant_id=user["tid"])
+        if o is None:
+            raise HTTPException(404, "work observation outcome not found")
+        return o
+
+    def _observe_work_run(tid, user, body, work_run_id=None):
+        # DERIVED, LOCAL, READ-ONLY observation over B9/B9.1 evidence. Produces
+        # only a work-lineage outcome + PoWO; NO external effect, NO provider
+        # call, NO commit/recovery/delivery, and never releases the inert outbox.
+        actor_type = "ai_employee" if user["role"] == "ai_worker" else "human"
+        now = utcnow()
+        wrid = work_run_id or str(uuid.uuid4())
+        b9o = None
+        b9id = str(body.get("b9_transaction_id", "") or "")
+        if b9id:
+            b9o = local_tx_store.outcome(b9id, tenant_id=tid)
+        b91o = None
+        b91id = str(body.get("b91_recovery_id", "") or "")
+        if b91id:
+            b91o = recovery_store.outcome(b91id, tenant_id=tid)
+        passthrough = {k: body[k] for k in _WO_PASS_KEYS if k in body}
+        outcome = _wo.prepare_work_observation_outcome(
+            work_run_id=wrid, tenant_id=tid, actor_id=user["uid"],
+            actor_type=actor_type, b9_outcome=b9o, b91_outcome=b91o,
+            created_at=now, **passthrough)
+        work_obs_store.save_request({
+            "id": wrid, "tenant_id": tid,
+            "work_definition_id": outcome.get("work_definition_id") or "",
+            "trigger_type": outcome["trigger_type"],
+            "source_surface": outcome["work_origin"]["source_surface"],
+            "source_principal_id": outcome["principal_continuity"][
+                "source_principal_id"] or "",
+            "schedule_occurrence_id": outcome["work_origin"][
+                "schedule_occurrence_id"] or "",
+            "logical_run_key": outcome["schedule_run_chain"]["logical_run_key"],
+            "transaction_id": outcome.get("transaction_id") or "",
+            "recovery_id": outcome.get("recovery_id") or "",
+            "work_run_state": outcome["work_run_state"],
+            "work_run_hash": outcome["b92_state_hash"],
+            "requested_by": user["uid"], "requested_by_actor_type": actor_type,
+            "payload_json": json.dumps({k: body.get(k) for k in (
+                "b9_transaction_id", "b91_recovery_id", "trigger_type",
+                "work_definition_id")}),
+            "created_at": now})
+        work_obs_store.save_outcome({
+            "id": str(uuid.uuid4()), "tenant_id": tid, "work_run_id": wrid,
+            "work_definition_id": outcome.get("work_definition_id") or "",
+            "trigger_type": outcome["trigger_type"],
+            "work_run_state": outcome["work_run_state"],
+            "work_outcome_truth_state": outcome["work_outcome_truth_state"],
+            "proof_of_work_outcome_valid": 1 if outcome[
+                "proof_of_work_outcome_valid"] else 0,
+            "proof_of_work_outcome_hash": outcome["proof_of_work_outcome_hash"],
+            "work_observation_twin_hash": outcome["work_observation_twin_hash"],
+            "causal_work_graph_hash": outcome["causal_work_graph_hash"],
+            "transaction_id": outcome.get("transaction_id") or "",
+            "recovery_id": outcome.get("recovery_id") or "",
+            "source_principal_id": outcome["principal_continuity"][
+                "source_principal_id"] or "",
+            "b92_decision_hash": outcome["b92_decision_hash"],
+            "b92_state_hash": outcome["b92_state_hash"],
+            "b92_work_proof_bundle_hash": outcome["b92_work_proof_bundle"][
+                "work_proof_bundle_hash"],
+            "observer_health_state": outcome["observer_health_state"],
+            "work_certified": 1 if outcome["work_outcome_certified"] else 0,
+            "decided_by": user["uid"], "decided_by_actor_type": actor_type,
+            "payload_json": json.dumps(outcome), "created_at": now,
+            "updated_at": now})
+        _wo_emit(tid, event_type="B92_WORK_OBSERVATION_OPENED", work_run_id=wrid,
+                 actor_id=user["uid"], actor_type=actor_type,
+                 state_hash=outcome["b92_state_hash"],
+                 detail={"trigger": outcome["trigger_type"]})
+        _wo_emit(tid, event_type="B92_WORK_OBSERVATION_PREPARED",
+                 work_run_id=wrid, actor_id=user["uid"], actor_type=actor_type,
+                 state_hash=outcome["b92_state_hash"],
+                 detail={"state": outcome["work_run_state"],
+                         "truth": outcome["work_outcome_truth_state"]})
+        return outcome
+
+    @app.get("/ai-tools/local-transactions/observability/policy")
+    async def wo_policy(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {"b92_model_version": _wo.B92_MODEL_VERSION,
+                "local_work_observability_only": True,
+                "read_only_over_b9_and_b9_1": True, "derived_evidence_only": True,
+                "external_effect": False, "external_provider_runtime": False,
+                "external_delivery": False, "execution_authority": False,
+                "recovery_authority": False, "authorizes_execution": False,
+                "authorizes_commit": False, "authorizes_recovery": False,
+                "authorizes_delivery": False, "releases_outbox": False,
+                "stores_secret": False, "stores_chain_of_thought": False,
+                "production_ready": False,
+                "has_commit_endpoint": False, "has_approve_endpoint": False,
+                "has_recover_endpoint": False, "has_rollback_endpoint": False,
+                "has_release_effects_endpoint": False,
+                "has_activate_provider_endpoint": False,
+                "has_send_endpoint": False, "has_webhook_dispatch_endpoint": False,
+                "has_enable_schedule_endpoint": False,
+                "has_revoke_integration_endpoint": False,
+                "work_run_states": _wo.WORK_RUN_STATES,
+                "trigger_types": _wo.TRIGGER_TYPES,
+                "truth_states": _wo.TRUTH_STATES,
+                "reason_codes": sorted(_wo.REASON_CODES),
+                "graph_node_types": _wo.GRAPH_NODE_TYPES,
+                "graph_edge_types": _wo.GRAPH_EDGE_TYPES,
+                "memory_trust_classes": _wo.MEMORY_TRUST_CLASSES,
+                "approval_modes": _wo.APPROVAL_MODES,
+                "artifact_types": _wo.ARTIFACT_TYPES,
+                "canary_cases": _wo.CANARY_CASES,
+                "observer_health_states": _wo.OBSERVER_HEALTH_STATES,
+                "powo_warning": _wo.POWO_WARNING,
+                "honesty_labels": _wo.HONESTY_LABELS}
+
+    @app.get("/ai-tools/local-transactions/observability/registry")
+    async def wo_registry(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        outs = work_obs_store.list_outcomes(tenant_id=user["tid"])
+        by_state, by_truth = {}, {}
+        for o in outs:
+            by_state[o["work_run_state"]] = by_state.get(
+                o["work_run_state"], 0) + 1
+            by_truth[o["work_outcome_truth_state"]] = by_truth.get(
+                o["work_outcome_truth_state"], 0) + 1
+        return {"tenant_id": user["tid"], "work_run_count": len(outs),
+                "work_request_count": len(
+                    work_obs_store.list_requests(tenant_id=user["tid"])),
+                "outcomes_by_state": by_state, "outcomes_by_truth_state": by_truth,
+                "honesty_labels": _wo.HONESTY_LABELS}
+
+    @app.get("/ai-tools/local-transactions/observability/work-runs")
+    async def wo_work_runs(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return [{"work_run_id": o["work_run_id"],
+                 "trigger_type": o["trigger_type"],
+                 "work_run_state": o["work_run_state"],
+                 "work_outcome_truth_state": o["work_outcome_truth_state"],
+                 "proof_of_work_outcome_valid": o["proof_of_work_outcome_valid"]}
+                for o in work_obs_store.list_outcomes(tenant_id=user["tid"])]
+
+    @app.get("/ai-tools/local-transactions/observability/signals")
+    async def wo_signals(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        outs = work_obs_store.list_outcomes(tenant_id=user["tid"])
+        counts = {}
+        for o in outs:
+            for s in o.get("all_signals", []):
+                counts[s] = counts.get(s, 0) + 1
+        return {"tenant_id": user["tid"], "signal_counts": counts,
+                "honesty_labels": _wo.HONESTY_LABELS}
+
+    @app.get("/ai-tools/local-transactions/observability/observer-health")
+    async def wo_observer_health(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        outs = work_obs_store.list_outcomes(tenant_id=user["tid"])
+        by_health = {}
+        for o in outs:
+            h = o.get("observer_health_state", "OBSERVER_HEALTHY")
+            by_health[h] = by_health.get(h, 0) + 1
+        return {"tenant_id": user["tid"], "observer_health_by_state": by_health,
+                "observer_health_states": _wo.OBSERVER_HEALTH_STATES,
+                "honesty_labels": _wo.HONESTY_LABELS}
+
+    @app.get("/ai-tools/local-transactions/observability/recurring-drift/"
+             "{work_definition_id}")
+    async def wo_recurring_drift(work_definition_id: str,
+                                 user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        drift = _wo.build_recurring_drift(
+            tenant_id=user["tid"], work_definition_id=work_definition_id, ctx={})
+        return {"work_definition_id": work_definition_id,
+                "recurring_drift": {k: v for k, v in drift.items()
+                                    if k != "_signals"},
+                "honesty_labels": _wo.HONESTY_LABELS}
+
+    @app.post("/ai-tools/local-transactions/observability/observe-work-run")
+    async def wo_observe(body: dict, user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _observe_work_run(user["tid"], user, body or {})
+
+    @app.post("/ai-tools/local-transactions/observability/verify-work-run")
+    async def wo_verify(body: dict, user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        wrid = str((body or {}).get("work_run_id", "") or "")
+        o = _load_work_outcome_or_404(wrid, user)
+        recomputed = _wo._core_hash(
+            o, "b92_decision_hash", "work_run_id", "actor_id",
+            "decided_by_actor_id", "decided_by_actor_type", "b92_state_hash")
+        ok = recomputed == o["b92_decision_hash"]
+        return {"work_run_id": wrid,
+                "stored_b92_decision_hash": o["b92_decision_hash"],
+                "recomputed_b92_decision_hash": recomputed,
+                "b92_decision_hash_valid": ok,
+                "verification_status": "VALID" if ok else "TAMPERED",
+                "honesty_labels": _wo.HONESTY_LABELS}
+
+    @app.post("/ai-tools/local-transactions/observability/"
+              "rebuild-local-observation")
+    async def wo_rebuild(body: dict, user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        wrid = str((body or {}).get("work_run_id", "") or "")
+        req = work_obs_store.request(wrid, tenant_id=user["tid"])
+        if req is None:
+            raise HTTPException(404, "work run not found")
+        rebuilt = _observe_work_run(user["tid"], user, dict(req), work_run_id=None)
+        return {"rebuilt_from_work_run_id": wrid, "rebuilt": rebuilt,
+                "deterministic": True, "honesty_labels": _wo.HONESTY_LABELS}
+
+    @app.post("/ai-tools/local-transactions/observability/run-local-canary")
+    async def wo_run_canary(body: dict, user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        o = _observe_work_run(user["tid"], user, body or {})
+        h = o["b92_canary_harness"]
+        return {"work_run_id": o["work_run_id"], "canary_harness": h,
+                "all_canaries_safe": h["all_canaries_safe"],
+                "honesty_labels": _wo.HONESTY_LABELS}
+
+    @app.post("/ai-tools/local-transactions/observability/"
+              "work-observability-drill")
+    async def wo_drill(body: dict, user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        o = _observe_work_run(user["tid"], user, body or {})
+        return {"work_run_id": o["work_run_id"],
+                "canary_harness": o["b92_canary_harness"],
+                "no_external_effect": o["no_external_effect"],
+                "observer_health_state": o["observer_health_state"],
+                "drill_status": "SAFE" if o["b92_canary_harness"][
+                    "all_canaries_safe"] else "UNSAFE",
+                "honesty_labels": _wo.HONESTY_LABELS}
+
+    @app.get("/ai-tools/local-transactions/observability/work-run/"
+             "{work_run_id}")
+    async def wo_get_work_run(work_run_id: str,
+                              user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _load_work_outcome_or_404(work_run_id, user)
+
+    @app.get("/ai-tools/local-transactions/observability/events/{work_run_id}")
+    async def wo_events(work_run_id: str, user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_work_outcome_or_404(work_run_id, user)
+        return {"work_run_id": work_run_id, "events": work_obs_store.events(
+            tenant_id=user["tid"], work_run_id=work_run_id),
+            "honesty_labels": _wo.HONESTY_LABELS}
+
+    def _mk_wo_subfield(field):
+        async def getter(work_run_id: str,
+                         user: dict = Depends(current_user)):
+            require_permission(user, "case.read")
+            o = _load_work_outcome_or_404(work_run_id, user)
+            return {"work_run_id": work_run_id, field: o.get(field),
+                    "honesty_labels": _wo.HONESTY_LABELS}
+        return getter
+
+    for _slug, _field in _WO_SUBFIELDS.items():
+        app.add_api_route(
+            "/ai-tools/local-transactions/observability/" + _slug +
+            "/{work_run_id}", _mk_wo_subfield(_field), methods=["GET"])
+
     # Hoist the recovery literal routes ahead of the /{transaction_id} param
     # routes so first-match-wins does not capture e.g. /recovery/certificate as
     # /ai-tools/local-transactions/{transaction_id}/certificate.
@@ -10684,7 +10986,10 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
              "/ai-tools/local-transactions/{transaction_id}")), None)
     if _tx_param_ix is not None:
         _rec_routes = [r for r in app.router.routes if getattr(
-            r, "path", "").startswith("/ai-tools/local-transactions/recovery")]
+            r, "path", "").startswith(
+                "/ai-tools/local-transactions/recovery") or getattr(
+                r, "path", "").startswith(
+                "/ai-tools/local-transactions/observability")]
         for _r in _rec_routes:
             app.router.routes.remove(_r)
         for _off, _r in enumerate(_rec_routes):

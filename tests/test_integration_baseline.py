@@ -15,7 +15,7 @@ from finalis.portal.app import create_app
 from finalis.portal.db import MIGRATIONS, Database
 from finalis.portal.seed import seed
 
-EXPECTED_DB_VERSION = 25
+EXPECTED_DB_VERSION = 26
 
 
 @pytest.fixture()

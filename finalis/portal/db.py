@@ -1410,6 +1410,85 @@ CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_local_transaction_recovery_events_seq
 CREATE INDEX IF NOT EXISTS ix_ai_local_transaction_recovery_events_rid
   ON ai_local_transaction_recovery_events(tenant_id, recovery_id, sequence);
 """),
+    (26, """
+-- TOOL-B9.2 v5: Governed Work Lineage Observatory. The principal observable
+-- unit is the GOVERNED_WORK_RUN. This layer is LOCAL_ONLY, READ_ONLY over
+-- B9/B9.1 and DERIVED_EVIDENCE_ONLY: it records work-origin, principal
+-- continuity, context/memory provenance, delegation, approval continuity, tool
+-- gateway boundary, revocation propagation, artifact lineage, delivery intent,
+-- schedule run chains, the causal work graph, the Work Observation Twin and the
+-- Proof-of-Work-Outcome. It performs NO external effect, NO provider call, NO
+-- message/payment/CRM/evidence mutation, stores NO secret and NO chain of
+-- thought, and never releases the inert outbox. The PoWO is derived evidence and
+-- authorizes nothing. NOT production ready. Lineage sub-objects are stored in the
+-- outcome payload_json; this migration adds the queryable run/outcome/event
+-- tables.
+CREATE TABLE IF NOT EXISTS ai_governed_work_runs (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  work_definition_id TEXT NOT NULL DEFAULT '',
+  trigger_type TEXT NOT NULL DEFAULT '', source_surface TEXT NOT NULL DEFAULT '',
+  source_principal_id TEXT NOT NULL DEFAULT '',
+  schedule_occurrence_id TEXT NOT NULL DEFAULT '',
+  logical_run_key TEXT NOT NULL DEFAULT '',
+  transaction_id TEXT NOT NULL DEFAULT '', recovery_id TEXT NOT NULL DEFAULT '',
+  work_run_state TEXT NOT NULL DEFAULT '', work_run_hash TEXT NOT NULL DEFAULT '',
+  requested_by TEXT NOT NULL, requested_by_actor_type TEXT NOT NULL,
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_governed_work_runs
+  ON ai_governed_work_runs(tenant_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_ai_governed_work_runs_trigger
+  ON ai_governed_work_runs(tenant_id, trigger_type);
+CREATE INDEX IF NOT EXISTS ix_ai_governed_work_runs_occ
+  ON ai_governed_work_runs(tenant_id, schedule_occurrence_id);
+CREATE INDEX IF NOT EXISTS ix_ai_governed_work_runs_lrk
+  ON ai_governed_work_runs(tenant_id, logical_run_key);
+CREATE INDEX IF NOT EXISTS ix_ai_governed_work_runs_tx
+  ON ai_governed_work_runs(tenant_id, transaction_id);
+CREATE INDEX IF NOT EXISTS ix_ai_governed_work_runs_rec
+  ON ai_governed_work_runs(tenant_id, recovery_id);
+CREATE INDEX IF NOT EXISTS ix_ai_governed_work_runs_principal
+  ON ai_governed_work_runs(tenant_id, source_principal_id);
+
+CREATE TABLE IF NOT EXISTS ai_work_outcome_proofs (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, work_run_id TEXT NOT NULL,
+  work_definition_id TEXT NOT NULL DEFAULT '',
+  trigger_type TEXT NOT NULL DEFAULT '', work_run_state TEXT NOT NULL,
+  work_outcome_truth_state TEXT NOT NULL,
+  proof_of_work_outcome_valid INTEGER NOT NULL DEFAULT 0,
+  proof_of_work_outcome_hash TEXT NOT NULL DEFAULT '',
+  work_observation_twin_hash TEXT NOT NULL DEFAULT '',
+  causal_work_graph_hash TEXT NOT NULL DEFAULT '',
+  transaction_id TEXT NOT NULL DEFAULT '', recovery_id TEXT NOT NULL DEFAULT '',
+  source_principal_id TEXT NOT NULL DEFAULT '',
+  b92_decision_hash TEXT NOT NULL, b92_state_hash TEXT NOT NULL,
+  b92_work_proof_bundle_hash TEXT NOT NULL DEFAULT '',
+  observer_health_state TEXT NOT NULL DEFAULT '',
+  work_certified INTEGER NOT NULL DEFAULT 0,
+  decided_by TEXT NOT NULL, decided_by_actor_type TEXT NOT NULL,
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_work_outcome_proofs
+  ON ai_work_outcome_proofs(tenant_id, work_run_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_ai_work_outcome_proofs_state
+  ON ai_work_outcome_proofs(tenant_id, work_run_state);
+CREATE INDEX IF NOT EXISTS ix_ai_work_outcome_proofs_powo
+  ON ai_work_outcome_proofs(tenant_id, proof_of_work_outcome_hash);
+CREATE INDEX IF NOT EXISTS ix_ai_work_outcome_proofs_tx
+  ON ai_work_outcome_proofs(tenant_id, transaction_id);
+CREATE INDEX IF NOT EXISTS ix_ai_work_outcome_proofs_rec
+  ON ai_work_outcome_proofs(tenant_id, recovery_id);
+
+CREATE TABLE IF NOT EXISTS ai_work_lineage_events (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, work_run_id TEXT,
+  event_type TEXT NOT NULL, sequence INTEGER NOT NULL,
+  actor_id TEXT NOT NULL, actor_type TEXT NOT NULL,
+  event_hash TEXT NOT NULL, previous_event_hash TEXT NOT NULL,
+  b92_state_hash TEXT NOT NULL DEFAULT '',
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_work_lineage_events_seq
+  ON ai_work_lineage_events(tenant_id, sequence);
+CREATE INDEX IF NOT EXISTS ix_ai_work_lineage_events_wr
+  ON ai_work_lineage_events(tenant_id, work_run_id, sequence);
+"""),
 ]
 
 
