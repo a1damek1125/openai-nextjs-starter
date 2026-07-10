@@ -1350,6 +1350,66 @@ CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_local_transaction_events_seq
 CREATE INDEX IF NOT EXISTS ix_ai_local_transaction_events_tx
   ON ai_local_transaction_events(tenant_id, transaction_id, sequence);
 """),
+    (25, """
+-- TOOL-B9.1 v4: Recovery Safety Case + Chaos Sentinel + Proof-of-Recovery
+-- Runtime. The resilience/rollback/quarantine/stuck-state/safety-case layer for
+-- the first local governed transaction runtime (B9). It records LOCAL recovery,
+-- rollback, abort, quarantine, stuck-state and crash-drill EVIDENCE only. It
+-- performs NO external effect, NO provider call, NO message/payment/CRM/evidence
+-- mutation, and never releases the inert outbox. B8 stays evidence only; the B9
+-- certificate, Proof-of-Execution, Proof-of-Recovery and Recovery Safety Case
+-- are proof, NOT authority. Recovery cannot increase authority/autonomy, broaden
+-- write scope, or make the inert outbox releasable. NOT production ready. The
+-- recovery twin, proof-of-recovery event stream, recovery certificate, recovery
+-- safety case, double-entry reconciliation, safety-monotonicity, chaos-drill and
+-- quarantine/stuck sub-objects are stored in the outcome payload_json; this
+-- migration adds the queryable request/outcome/event tables.
+CREATE TABLE IF NOT EXISTS ai_local_transaction_recovery_requests (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, transaction_id TEXT NOT NULL,
+  desired_recovery_action TEXT NOT NULL DEFAULT '',
+  recovery_authority_source TEXT NOT NULL DEFAULT '',
+  source_surface TEXT NOT NULL DEFAULT '',
+  requested_by TEXT NOT NULL, requested_by_actor_type TEXT NOT NULL,
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_local_transaction_recovery_requests
+  ON ai_local_transaction_recovery_requests(tenant_id, transaction_id, created_at);
+
+CREATE TABLE IF NOT EXISTS ai_local_transaction_recovery_outcomes (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, recovery_id TEXT NOT NULL,
+  transaction_id TEXT NOT NULL,
+  desired_recovery_action TEXT NOT NULL DEFAULT '',
+  final_recovery_state TEXT NOT NULL, recovery_decision_status TEXT NOT NULL,
+  dominant_signal TEXT NOT NULL,
+  recovery_certificate_hash TEXT NOT NULL DEFAULT '',
+  recovery_safety_case_hash TEXT NOT NULL DEFAULT '',
+  proof_of_recovery_hash TEXT NOT NULL DEFAULT '',
+  recovery_twin_hash TEXT NOT NULL DEFAULT '',
+  b91_decision_hash TEXT NOT NULL, b91_state_hash TEXT NOT NULL,
+  b91_recovery_proof_bundle_hash TEXT NOT NULL DEFAULT '',
+  release_gate_status TEXT NOT NULL DEFAULT '',
+  recovery_applied INTEGER NOT NULL DEFAULT 0,
+  quarantine_required INTEGER NOT NULL DEFAULT 0,
+  decided_by TEXT NOT NULL, decided_by_actor_type TEXT NOT NULL,
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_local_transaction_recovery_outcomes
+  ON ai_local_transaction_recovery_outcomes(tenant_id, transaction_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_ai_local_transaction_recovery_outcomes_state
+  ON ai_local_transaction_recovery_outcomes(tenant_id, final_recovery_state);
+CREATE INDEX IF NOT EXISTS ix_ai_local_transaction_recovery_outcomes_rid
+  ON ai_local_transaction_recovery_outcomes(tenant_id, recovery_id, created_at);
+
+CREATE TABLE IF NOT EXISTS ai_local_transaction_recovery_events (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, recovery_id TEXT,
+  transaction_id TEXT, event_type TEXT NOT NULL, sequence INTEGER NOT NULL,
+  actor_id TEXT NOT NULL, actor_type TEXT NOT NULL,
+  event_hash TEXT NOT NULL, previous_event_hash TEXT NOT NULL,
+  b91_state_hash TEXT NOT NULL DEFAULT '',
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_local_transaction_recovery_events_seq
+  ON ai_local_transaction_recovery_events(tenant_id, sequence);
+CREATE INDEX IF NOT EXISTS ix_ai_local_transaction_recovery_events_rid
+  ON ai_local_transaction_recovery_events(tenant_id, recovery_id, sequence);
+"""),
 ]
 
 

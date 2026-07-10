@@ -609,6 +609,44 @@ class Gate:
             return self.c.get(url, headers=self.h(actor))
         return self.c.post(url, json=body, headers=self.h(actor))
 
+    # -- TOOL-B9.1 Recovery / Chaos Sentinel / Proof-of-Recovery helpers ------
+    def committed_local_tx(self, requester=OWNER, **over):
+        """A B9 transaction committed to local reversible state
+        (B9_LOCAL_COMMIT_APPLIED). Returns (transaction_id, b9_outcome)."""
+        return self.prepared_local_tx(requester=requester, op="commit-local",
+                                      **over)
+
+    def recover(self, transaction_id, action="run", actor=OWNER, body=None,
+                **over):
+        """Run a B9.1 recovery action over a B9 transaction. `action` in
+        status|plan|run|rollback-local|abort|quarantine|stuck|crash-drill.
+        Returns the raw Response; `.json()` is the recovery outcome. Any kernel
+        override (kill_switch=, recovery_authority_basis=, poe_tamper=, ...) is
+        passed straight through."""
+        payload = {"transaction_id": transaction_id}
+        if body:
+            payload.update(body)
+        payload.update(over)
+        return self.c.post(
+            f"/ai-tools/local-transactions/recovery/{action}", json=payload,
+            headers=self.h(actor))
+
+    def prepared_recovery(self, requester=OWNER, action="run", **over):
+        """Full pipeline: B4..B8 -> B9 committed local tx -> B9.1 recovery.
+        With clean defaults over a committed transaction the recovery evaluation
+        is clean (no external effect, inert outbox preserved, safety
+        monotonicity + double-entry reconciliation hold). Returns
+        (recovery_id, outcome)."""
+        txid, _ = self.committed_local_tx(requester=requester)
+        o = self.recover(txid, action=action, actor=requester, **over).json()
+        return o["recovery_id"], o
+
+    def rc(self, recovery_id, slug, actor=OWNER):
+        """GET a recovery sub-object / view endpoint by recovery_id."""
+        return self.c.get(
+            f"/ai-tools/local-transactions/recovery/{slug}"
+            f"?recovery_id={recovery_id}", headers=self.h(actor))
+
 
 @pytest.fixture()
 def gate():

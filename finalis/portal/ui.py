@@ -160,6 +160,7 @@ window.loadSections = async () => {
   if (window.loadWriteIntentSection) jobs.push(loadWriteIntentSection(me));
   if (window.loadCommitSimSection) jobs.push(loadCommitSimSection(me));
   if (window.loadLocalTxSection) jobs.push(loadLocalTxSection(me));
+  if (window.loadRecoverySection) jobs.push(loadRecoverySection(me));
   await Promise.allSettled(jobs);
 };
 
@@ -3568,6 +3569,103 @@ window.openLocalTxOutcome = async (tid) => {
 };
 """
 
+LOCAL_RECOVERY_SECTIONS = """
+<section id="tool-recovery-section"><h2>Recovery Safety Case + Chaos Sentinel + Proof-of-Recovery</h2>
+<ul class="labels"><small>
+<li>LOCAL_RECOVERY_ONLY / TRANSACTION_RECOVERY_TWIN_ONLY — local recovery/rollback/abort/quarantine only; no external effect.</li>
+<li>PROOF_OF_RECOVERY_LOCAL_ONLY / RECOVERY_SAFETY_CASE_LOCAL_ONLY — proof/safety-case are evidence, never authority.</li>
+<li>DOUBLE_ENTRY_RECONCILIATION_CHECKED / SAFETY_MONOTONICITY_CHECKED — recovery never increases authority/autonomy/scope.</li>
+<li>LOCAL_ROLLBACK_ONLY / EMERGENCY_ABORT_SUPPORTED / CHAOS_SENTINEL_TESTED.</li>
+<li>RECOVERY_AUTHORITY_FIREWALL_ENABLED — recovery authority is server-side only; channel/document/LLM/context rejected.</li>
+<li>INERT_OUTBOX_REMAINS_INERT / SOURCE_SURFACE_ISOLATION_PRESERVED / NO_EXTERNAL_EFFECT / NO_PROVIDER_CALL.</li>
+<li>NOT_PRODUCTION_READY.</li>
+</small></ul>
+<div id="tool-recovery-summary"><i>Loading recovery runtime…</i></div>
+<div id="tool-recovery-list"></div>
+</section>
+"""
+
+LOCAL_RECOVERY_JS = """
+window.loadRecoverySection = async (me) => { await loadRecovery(); };
+
+window.loadRecovery = async () => {
+  let reg; try { reg = await get('/ai-tools/local-transactions/recovery/registry'); }
+  catch (e) { $('tool-recovery-summary').innerHTML =
+    '<i>The recovery runtime is not available for your role.</i>'; return; }
+  $('tool-recovery-summary').innerHTML =
+    `<p><b>recoveries</b> ${esc(String(reg.recovery_outcome_count))} ·
+      <b>requests</b> ${esc(String(reg.recovery_request_count))}</p>` +
+    '<p><small>' + Object.entries(reg.outcomes_by_state || {}).map(
+      ([k, v]) => `${esc(k)}: <b>${esc(String(v))}</b>`).join(' · ') + '</small></p>';
+  let rows = []; try { rows = await get('/ai-tools/local-transactions/recovery/list'); }
+  catch (e) {}
+  $('tool-recovery-list').innerHTML = (rows.length ?
+    '<table><tr><th>Recovery</th><th>Transaction</th><th>Action</th><th>State</th><th></th></tr>' +
+    rows.map(r => `<tr><td><small>${esc((r.recovery_id||'').slice(0,8))}</small></td>
+       <td><small>${esc((r.transaction_id||'').slice(0,8))}</small></td>
+       <td><small>${esc(r.desired_recovery_action||'')}</small></td>
+       <td><small>${esc(r.final_recovery_state||'')}</small></td>
+       <td><button onclick="openRecoveryOutcome('${esc(r.recovery_id)}')">
+       Twin</button></td></tr>`).join('') + '</table>'
+    : '<i>No recovery runs yet.</i>');
+};
+
+window.openRecoveryOutcome = async (rid) => {
+  const base = '/ai-tools/local-transactions/recovery';
+  const o = await get(base + '/outcome?recovery_id=' + encodeURIComponent(rid));
+  let vr = null; try { vr = (await send('POST', base + '/verify?recovery_id=' +
+    encodeURIComponent(rid), {})).data; } catch (e) {}
+  const gate = o.b91_release_gate_report || {};
+  const chaos = o.b91_chaos_harness || {};
+  const sc = o.recovery_safety_case || {};
+  const por = o.por_stream || {};
+  const fw = o.recovery_authority_firewall || {};
+  const rb = o.rollback_executor || {};
+  const q = o.quarantine || {};
+  $('tool-recovery-list').innerHTML = `
+    <h3>Recovery twin ${esc(rid.slice(0,8))}
+      <span class="badge">${esc(o.final_recovery_state)}</span></h3>
+    <p><b>decision</b> ${esc(o.recovery_decision_status)} ·
+      <b>action</b> ${esc(o.desired_recovery_action)} ·
+      <b>reason</b> <small>${esc(o.dominant_reason_code)}</small></p>
+    <p><b>recovery applied</b> <b class="${o.recovery_applied ? 'ok' : ''}">${esc(
+        String(o.recovery_applied))}</b> ·
+      <b>no external effect</b> <b class="${o.no_external_effect ? 'ok' : 'err'}">${esc(
+        String(o.no_external_effect))}</b> ·
+      <b>inert outbox preserved</b> <b class="${o.inert_outbox_preserved ? 'ok' : 'err'}">${esc(
+        String(o.inert_outbox_preserved))}</b></p>
+    <p><b>safety monotonicity</b> <b class="${o.safety_monotonicity_passed ? 'ok' : 'err'}">${esc(
+        String(o.safety_monotonicity_passed))}</b> ·
+      <b>double-entry reconciliation</b> <b class="${o.double_entry_reconciliation_passed ? 'ok' : 'err'}">${esc(
+        String(o.double_entry_reconciliation_passed))}</b> ·
+      <b>idempotency</b> <b class="${o.idempotency_preserved ? 'ok' : 'err'}">${esc(
+        String(o.idempotency_preserved))}</b></p>
+    <p><b>authority firewall</b> <b class="${fw.firewall_status === 'CLEAN' ? 'ok' : 'err'}">${esc(
+        fw.firewall_status)}</b> · <b>rollback</b> ${esc(rb.rollback_result)} ·
+      <b>quarantine</b> <b class="${q.quarantined ? 'err' : 'ok'}">${esc(
+        String(!!q.quarantined))}</b> · <b>stuck</b> ${esc(String(!!o.stuck))} ·
+      <b>tampered</b> ${esc(String(!!o.tampered))}</p>
+    <p><b>Proof-of-Execution recovery</b> ${esc((o.poe_stream_recovery||{}).classification)} ·
+      <b>PoR stream</b> <b class="${por.stream_status === 'COMPLETE' ? 'ok' : 'err'}">${esc(
+        por.stream_status)}</b></p>
+    <p><b>recovery twin</b> <code>${esc((o.recovery_twin_hash||'').slice(0,14))}…</code> ·
+      <b>certificate</b> <code>${esc((o.recovery_certificate_hash||'').slice(0,14))}…</code> ·
+      <b>safety case</b> <b class="${sc.verification_status === 'VALID' ? 'ok' : 'err'}">${esc(
+        sc.verification_status)}</b></p>
+    <p><b>chaos sentinel</b> <b class="${chaos.all_crashes_safe ? 'ok' : 'err'}">${esc(
+        chaos.harness_status)}</b> (${esc(String(chaos.phase_count))} phases) ·
+      <b>release gate</b> <b class="${gate.release_gate_status === 'PASSED' ? 'ok' : 'err'}">${esc(
+        gate.release_gate_status)}</b>
+      · <b>verify</b> ${vr ? `<b class="${vr.b91_decision_hash_valid ? 'ok' : 'err'}">${
+        esc(vr.verification_status)}</b>` : 'n/a'}</p>
+    <p><b>signals</b> ${(o.all_signals||[]).filter(s => s !== 'RECOVERY_CLEAN').map(s =>
+      `<span class="err">${esc(s)}</span>`).join(' ') || '<i>none</i>'}</p>
+    <ul>${(o.honesty_labels||[]).map(l =>
+      `<li><small>${esc(l)}</small></li>`).join('')}</ul>
+    <button onclick="loadRecovery()">← back</button>`;
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -3603,6 +3701,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 {WRITE_INTENT_SECTIONS}
 {COMMIT_SIM_SECTIONS}
 {LOCAL_TX_SECTIONS}
+{LOCAL_RECOVERY_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -3742,7 +3841,8 @@ boot();
 <script>{RUNTIME_JS}</script>
 <script>{WRITE_INTENT_JS}</script>
 <script>{COMMIT_SIM_JS}</script>
-<script>{LOCAL_TX_JS}</script></body></html>"""
+<script>{LOCAL_TX_JS}</script>
+<script>{LOCAL_RECOVERY_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:

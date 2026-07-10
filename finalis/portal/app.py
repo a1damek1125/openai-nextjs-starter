@@ -10395,6 +10395,301 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                                       transaction_id=transaction_id),
                 "honesty_labels": _lt.HONESTY_LABELS}
 
+    # ===== TOOL-B9.1 v4: Recovery Safety Case + Chaos Sentinel + =============
+    # ===== Proof-of-Recovery Runtime (LOCAL-ONLY, evidence only) ============
+    from ..ai_employee import tool_local_recovery as _lr
+    from ..ai_employee.tool_local_recovery_store import ToolLocalRecoveryStore
+    recovery_store = ToolLocalRecoveryStore(db)
+    app.state.recovery_store = recovery_store
+
+    _LR_PASS_KEYS = (
+        "recovery_authority_basis", "source_surface",
+        "surface_claims_recovery_authority", "surface_claims_approval",
+        "system_actor_id", "recovery_payload", "idempotency_key",
+        "prior_recovery", "poe_tamper", "poe_reorder", "poe_duplicate",
+        "poe_broken_chain", "poe_missing_events", "poe_unrecoverable",
+        "replay_context_invalid", "reconcile_mismatch", "old_authority_level",
+        "new_authority_level", "old_autonomy_level", "new_autonomy_level",
+        "old_write_scope", "new_write_scope", "old_externality_level",
+        "new_externality_level", "outbox_becomes_releasable", "attempt_markers",
+        "outbox_release_attempts", "missing_commit_record", "missing_certificate",
+        "missing_poe", "after_state_mismatch", "missing_rollback_plan",
+        "missing_audit", "graph_inconsistent", "missing_replay_context",
+        "missing_lifecycle_checkpoint", "inert_outbox_inconsistent",
+        "missing_path_compliance", "rollback_plan_missing",
+        "rollback_target_not_local", "rollback_current_state_incompatible",
+        "rollback_idempotency_invalid", "rollback_equivalence_fail",
+        "abort_scope", "abort_reason", "abort_stage", "global_abort",
+        "tenant_abort", "kill_switch", "finalize_attempt", "lock_age_seconds",
+        "recovering_age_seconds", "lock_max_age", "recovering_max_age",
+        "repeated_recovery_failures", "repeated_idempotency_conflicts",
+        "recovery_authority_ambiguous", "steal_active_lock",
+        "conflicting_recovery", "cross_tenant_lock_ambiguity",
+        "stale_lock_unsafe_release", "interrupted_lock_acquisition",
+        "stale_lock_safe_release", "replay_after_rollback", "revive_aborted",
+        "revive_quarantined", "allowed_recovery_scope",
+        "forbidden_recovery_scope", "requested_recovery_scope",
+        "recovery_contract_missing", "recovery_contract_malformed",
+        "recovery_contract_contradicted", "failed_checkpoints", "por_tamper",
+        "por_reorder", "por_missing_events", "recovery_requested_by",
+    )
+    _LR_SUBFIELDS = {
+        "twin": "twin", "certificate": "recovery_certificate",
+        "safety-case": "recovery_safety_case",
+        "proof-of-recovery": "proof_of_recovery",
+        "reconciliation": "double_entry_reconciliation",
+        "authority-firewall": "recovery_authority_firewall",
+        "lifecycle-checkpoints": "recovery_checkpoints",
+        "monotonicity": "safety_monotonicity",
+        "poe-recovery": "poe_stream_recovery", "contract": "recovery_contract",
+        "rollback": "rollback_executor", "partial-commit": "partial_commit_detector",
+        "quarantine": "quarantine", "stuck": "stuck_detector",
+        "abort": "abort_controller", "conflict": "conflict_recovery",
+        "inert-outbox": "inert_outbox_preservation",
+        "no-external-effect": "no_external_effect_theorem",
+        "por-stream": "por_stream", "chaos-drill": "b91_chaos_harness",
+        "release-gate": "b91_release_gate_report",
+        "proof-bundle": "b91_recovery_proof_bundle",
+    }
+
+    def _lr_emit(tid, *, event_type, recovery_id, transaction_id, actor_id,
+                 actor_type, state_hash, detail):
+        seq = recovery_store.next_sequence(tenant_id=tid)
+        prev = recovery_store.last_event(tenant_id=tid)
+        ev = _lr.build_b91_event(
+            event_type=event_type, tenant_id=tid, recovery_id=recovery_id,
+            transaction_id=transaction_id, actor_id=actor_id,
+            actor_type=actor_type, b91_state_hash=state_hash,
+            previous_event_hash=prev["event_hash"] if prev else None,
+            sequence=seq, detail=detail, created_at=utcnow())
+        recovery_store.append_event({
+            "id": str(uuid.uuid4()), "tenant_id": tid,
+            "recovery_id": recovery_id, "transaction_id": transaction_id,
+            "event_type": event_type, "sequence": seq, "actor_id": actor_id,
+            "actor_type": actor_type, "event_hash": ev["event_hash"],
+            "previous_event_hash": ev["previous_event_hash"],
+            "b91_state_hash": state_hash, "payload_json": json.dumps(ev),
+            "created_at": ev["created_at"]})
+
+    def _load_recovery_outcome_or_404(recovery_id, user):
+        o = recovery_store.outcome(recovery_id, tenant_id=user["tid"])
+        if o is None:
+            raise HTTPException(404, "recovery outcome not found")
+        return o
+
+    def _prepare_recovery(tid, user, body, action):
+        # A LOCAL recovery/rollback/abort/quarantine/stuck/crash-drill
+        # evaluation over a B9 transaction. Produces only local evidence
+        # (Recovery Twin, Proof-of-Recovery, certificate, safety case,
+        # reconciliation). NO external effect, NO provider call, NO
+        # message/payment/CRM/evidence mutation; the inert outbox stays inert.
+        transaction_id = str(body.get("transaction_id", "") or "")
+        actor_type = "ai_employee" if user["role"] == "ai_worker" else "human"
+        now = utcnow()
+        rid = str(uuid.uuid4())
+        # The B9 outcome is EVIDENCE ONLY. A missing transaction fails closed
+        # (RECOVERY_FAILED / B9_TRANSACTION_MISSING), never an error path that
+        # could be mistaken for success.
+        b9o = local_tx_store.outcome(transaction_id, tenant_id=tid) \
+            if transaction_id else None
+        passthrough = {k: body[k] for k in _LR_PASS_KEYS if k in body}
+        outcome = _lr.prepare_recovery_outcome(
+            recovery_id=rid, transaction_id=transaction_id, tenant_id=tid,
+            actor_id=user["uid"], actor_type=actor_type, b9_outcome=b9o,
+            desired_recovery_action=action, created_at=now, **passthrough)
+        recovery_store.save_request({
+            "id": rid, "tenant_id": tid, "transaction_id": transaction_id,
+            "desired_recovery_action": action,
+            "recovery_authority_source": (outcome["recovery_authority_firewall"]
+                                          ).get("recovery_authority_source") or "",
+            "source_surface": outcome["source_surface_safety"]["source_surface"],
+            "requested_by": user["uid"], "requested_by_actor_type": actor_type,
+            "payload_json": json.dumps({
+                "recovery_id": rid, "transaction_id": transaction_id,
+                "desired_recovery_action": action}),
+            "created_at": now})
+        recovery_store.save_outcome({
+            "id": str(uuid.uuid4()), "tenant_id": tid, "recovery_id": rid,
+            "transaction_id": transaction_id,
+            "desired_recovery_action": action,
+            "final_recovery_state": outcome["final_recovery_state"],
+            "recovery_decision_status": outcome["recovery_decision_status"],
+            "dominant_signal": outcome["dominant_signal"],
+            "recovery_certificate_hash": outcome["recovery_certificate_hash"],
+            "recovery_safety_case_hash": outcome["recovery_safety_case_hash"],
+            "proof_of_recovery_hash": outcome["proof_of_recovery_hash"],
+            "recovery_twin_hash": outcome["recovery_twin_hash"],
+            "b91_decision_hash": outcome["b91_decision_hash"],
+            "b91_state_hash": outcome["b91_state_hash"],
+            "b91_recovery_proof_bundle_hash": outcome[
+                "b91_recovery_proof_bundle"]["recovery_proof_bundle_hash"],
+            "release_gate_status": outcome["b91_release_gate_report"][
+                "release_gate_status"],
+            "recovery_applied": 1 if outcome["recovery_applied"] else 0,
+            "quarantine_required": 1 if outcome["quarantine_required"] else 0,
+            "decided_by": user["uid"], "decided_by_actor_type": actor_type,
+            "payload_json": json.dumps(outcome), "created_at": now,
+            "updated_at": now})
+        _lr_emit(tid, event_type="B91_RECOVERY_REQUEST_OPENED", recovery_id=rid,
+                 transaction_id=transaction_id, actor_id=user["uid"],
+                 actor_type=actor_type, state_hash=outcome["b91_state_hash"],
+                 detail={"action": action, "tx": transaction_id})
+        _lr_emit(tid, event_type="B91_RECOVERY_OUTCOME_PREPARED", recovery_id=rid,
+                 transaction_id=transaction_id, actor_id=user["uid"],
+                 actor_type=actor_type, state_hash=outcome["b91_state_hash"],
+                 detail={"state": outcome["final_recovery_state"]})
+        return outcome
+
+    @app.get("/ai-tools/local-transactions/recovery/policy")
+    async def recovery_policy(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {"b91_model_version": _lr.B91_MODEL_VERSION,
+                "local_recovery_only": True, "external_effect": False,
+                "calls_providers": False, "sends_messages": False,
+                "executes_payment": False, "mutates_external_crm": False,
+                "retries_providers": False, "dispatches_webhooks": False,
+                "releases_outbox": False, "external_rollback": False,
+                "b8_is_evidence_only": True,
+                "b9_certificate_is_authority": False,
+                "proof_of_recovery_is_authority": False,
+                "recovery_safety_case_is_authority": False,
+                "production_ready": False,
+                "has_external_rollback_endpoint": False,
+                "has_external_recover_endpoint": False,
+                "has_release_effects_endpoint": False,
+                "has_activate_provider_endpoint": False,
+                "has_provider_retry_endpoint": False,
+                "has_payment_refund_endpoint": False,
+                "has_webhook_dispatch_endpoint": False,
+                "has_job_release_endpoint": False,
+                "recovery_states": _lr.RECOVERY_STATES,
+                "recovery_actions": sorted(_lr.RECOVERY_ACTIONS),
+                "decision_statuses": sorted(_lr.RECOVERY_DECISION_STATUSES),
+                "failure_dominance": _lr.RECOVERY_FAILURE_DOMINANCE,
+                "reason_codes": _lr.REASON_CODES,
+                "por_events": _lr.POR_EVENTS,
+                "crash_phases": _lr.CRASH_PHASES,
+                "recovery_checkpoints": _lr.RECOVERY_CHECKPOINTS,
+                "required_safety_claims": _lr.REQUIRED_SAFETY_CLAIMS,
+                "allowed_recovery_authority_sources": sorted(
+                    _lr.ALLOWED_RECOVERY_AUTHORITY_SOURCES),
+                "abort_reasons": sorted(_lr.ABORT_REASONS),
+                "honesty_labels": _lr.HONESTY_LABELS}
+
+    @app.get("/ai-tools/local-transactions/recovery/registry")
+    async def recovery_registry(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        outs = recovery_store.list_outcomes(tenant_id=user["tid"])
+        by_state = {}
+        for o in outs:
+            by_state[o["final_recovery_state"]] = by_state.get(
+                o["final_recovery_state"], 0) + 1
+        return {"tenant_id": user["tid"], "recovery_outcome_count": len(outs),
+                "recovery_request_count": len(
+                    recovery_store.list_requests(tenant_id=user["tid"])),
+                "outcomes_by_state": by_state,
+                "honesty_labels": _lr.HONESTY_LABELS}
+
+    @app.get("/ai-tools/local-transactions/recovery/list")
+    async def recovery_list(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        outs = recovery_store.list_outcomes(tenant_id=user["tid"])
+        return [{"recovery_id": o["recovery_id"],
+                 "transaction_id": o["transaction_id"],
+                 "desired_recovery_action": o["desired_recovery_action"],
+                 "final_recovery_state": o["final_recovery_state"],
+                 "dominant_signal": o["dominant_signal"]} for o in outs]
+
+    @app.get("/ai-tools/local-transactions/recovery/events")
+    async def recovery_events(recovery_id: str = "",
+                              user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        evs = recovery_store.events(tenant_id=user["tid"],
+                                    recovery_id=recovery_id or None)
+        chain_ok, prev = True, None
+        for e in evs:
+            if e["previous_event_hash"] != (prev or _lr.GENESIS):
+                chain_ok = False
+            prev = e["event_hash"]
+        return {"tenant_id": user["tid"], "events": evs, "event_count": len(evs),
+                "event_chain_valid": chain_ok,
+                "ledger_note": "local B9.1 recovery ledger; not a production "
+                "immutable log", "honesty_labels": _lr.HONESTY_LABELS}
+
+    _RECOVERY_ACTION_ROUTES = {
+        "status": "STATUS", "plan": "PLAN", "run": "RECOVER",
+        "rollback-local": "ROLLBACK_LOCAL", "abort": "ABORT",
+        "quarantine": "QUARANTINE", "stuck": "DETECT_STUCK",
+        "crash-drill": "CRASH_DRILL",
+    }
+
+    def _mk_recovery_action(action):
+        async def handler(body: dict, user: dict = Depends(current_user)):
+            # STATUS/PLAN are read-shaped; state-changing actions need update.
+            require_permission(
+                user, "case.read" if action in ("STATUS", "PLAN")
+                else "case.update")
+            return _prepare_recovery(user["tid"], user, body or {}, action)
+        return handler
+
+    for _slug, _action in _RECOVERY_ACTION_ROUTES.items():
+        app.add_api_route(
+            "/ai-tools/local-transactions/recovery/" + _slug,
+            _mk_recovery_action(_action), methods=["POST"])
+
+    @app.get("/ai-tools/local-transactions/recovery/outcome")
+    async def recovery_outcome_get(recovery_id: str,
+                                   user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _load_recovery_outcome_or_404(recovery_id, user)
+
+    def _mk_recovery_subfield(field):
+        async def getter(recovery_id: str,
+                         user: dict = Depends(current_user)):
+            require_permission(user, "case.read")
+            o = _load_recovery_outcome_or_404(recovery_id, user)
+            return {"recovery_id": recovery_id, "transaction_id":
+                    o["transaction_id"], field: o.get(field),
+                    "honesty_labels": _lr.HONESTY_LABELS}
+        return getter
+
+    for _slug, _field in _LR_SUBFIELDS.items():
+        app.add_api_route(
+            "/ai-tools/local-transactions/recovery/" + _slug,
+            _mk_recovery_subfield(_field), methods=["GET"])
+
+    @app.post("/ai-tools/local-transactions/recovery/verify")
+    async def recovery_verify(recovery_id: str,
+                              user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        o = _load_recovery_outcome_or_404(recovery_id, user)
+        recomputed = _lr._core_hash(
+            o, "b91_decision_hash", "recovery_id", "transaction_id", "actor_id",
+            "decided_by_actor_id", "decided_by_actor_type",
+            "recovery_requested_by", "b91_state_hash")
+        ok = recomputed == o["b91_decision_hash"]
+        return {"recovery_id": recovery_id,
+                "stored_b91_decision_hash": o["b91_decision_hash"],
+                "recomputed_b91_decision_hash": recomputed,
+                "b91_decision_hash_valid": ok,
+                "verification_status": "VALID" if ok else "TAMPERED",
+                "honesty_labels": _lr.HONESTY_LABELS}
+
+    # Hoist the recovery literal routes ahead of the /{transaction_id} param
+    # routes so first-match-wins does not capture e.g. /recovery/certificate as
+    # /ai-tools/local-transactions/{transaction_id}/certificate.
+    _tx_param_ix = next(
+        (i for i, r in enumerate(app.router.routes)
+         if getattr(r, "path", "").startswith(
+             "/ai-tools/local-transactions/{transaction_id}")), None)
+    if _tx_param_ix is not None:
+        _rec_routes = [r for r in app.router.routes if getattr(
+            r, "path", "").startswith("/ai-tools/local-transactions/recovery")]
+        for _r in _rec_routes:
+            app.router.routes.remove(_r)
+        for _off, _r in enumerate(_rec_routes):
+            app.router.routes.insert(_tx_param_ix + _off, _r)
+
     # Hoist the literal /ai-tools/actions/*, /ai-tools/broker/*,
     # /ai-tools/runtime/* and /ai-tools/write-intents/* routes ahead of the
     # earlier-registered parameterised /ai-tools/{tool_id}/* routes so first-
