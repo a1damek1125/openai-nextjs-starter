@@ -663,9 +663,10 @@ def build_revocation(*, tenant_id, work_run_id, ctx):
             signals.append("REVOCATION_PROPAGATED")
     revocation_still_valid = not advanced
     # Safety invariants: revoked principal/integration/schedule cannot admit new
-    # work / gateway use / schedule run; kill switch blocks finalization.
-    propagation_safe = (not revocation_detected) or prop_state in (
-        "PROPAGATED",)
+    # work / gateway use / schedule run; kill switch blocks finalization. A stale
+    # (advanced) epoch is not propagation-safe — it invalidates the PoWO.
+    propagation_safe = revocation_still_valid and (
+        (not revocation_detected) or prop_state == "PROPAGATED")
     r = {
         "revocation_version": REVOCATION_PROP_VERSION, "tenant_id": tenant_id,
         "work_run_id": work_run_id, "bound_epochs": bound,
@@ -683,9 +684,9 @@ def build_revocation(*, tenant_id, work_run_id, ctx):
         "honesty_labels": HONESTY_LABELS,
     }
     r["revocation_status_hash"] = _h(r, "revocation_status_hash")
-    r["_signals"] = signals if any(s in (
-        "REVOCATION_PROPAGATION_MISSING", "REVOCATION_PROPAGATION_LATE")
-        for s in signals) else []
+    # A detected/stale-epoch revocation degrades the work outcome (evidence
+    # only; B9/B9.1 still control whether execution blocks).
+    r["_signals"] = signals if (revocation_detected or advanced) else []
     return r
 
 
@@ -991,7 +992,8 @@ def build_observer_health(*, tenant_id, work_run_id, reports, ctx):
         "honesty_labels": HONESTY_LABELS,
     }
     r["observer_health_hash"] = _core_hash(r, "observer_health_hash", "signal")
-    r["_signals"] = [] if healthy else []  # health is reported, not blocking
+    # Observer failure must never appear as successful (certified) work.
+    r["_signals"] = [] if healthy else ["OBSERVER_UNHEALTHY"]
     return r
 
 
@@ -1182,7 +1184,7 @@ _BASE_COMPONENTS = [
     "context_capsule", "memory_snapshot", "delegation_capsule",
     "approval_continuity", "gateway_boundary", "revocation",
     "artifact_lineage", "delivery_intent", "transaction_binding",
-    "recovery_binding", "no_external_effect", "a2a_boundary",
+    "recovery_binding", "no_external_effect_theorem", "a2a_boundary",
 ]
 
 
@@ -1214,7 +1216,7 @@ def _work_reports(ctx, b9_outcome, b91_outcome):
         tenant_id=tid, work_run_id=wid, b9_outcome=b9_outcome, ctx=ctx)
     r["recovery_binding"] = build_recovery_binding(
         tenant_id=tid, work_run_id=wid, b91_outcome=b91_outcome, ctx=ctx)
-    r["no_external_effect"] = build_no_external_effect(
+    r["no_external_effect_theorem"] = build_no_external_effect(
         tenant_id=tid, work_run_id=wid, ctx=ctx)
     r["a2a_boundary"] = build_a2a_boundary(
         tenant_id=tid, work_run_id=wid, ctx=ctx)
@@ -1268,7 +1270,7 @@ def build_powo(*, tenant_id, work_run_id, reports, negative_space):
         "ConsistentWorkCutValid": R["consistent_work_cut"][
             "consistent_cut_valid"],
         "NoCriticalEvidenceMissing": negative_space["no_critical_missing"],
-        "NoExternalEffectProven": R["no_external_effect"]["theorem_holds"],
+        "NoExternalEffectProven": R["no_external_effect_theorem"]["theorem_holds"],
         "TenantIsolationValid": R["consistent_work_cut"]["no_cross_tenant_edge"],
         "ObservationReproducible": True,
     }
@@ -1301,7 +1303,7 @@ def build_powo(*, tenant_id, work_run_id, reports, negative_space):
         "revocation_status_hash": o["revocation"]["revocation_status_hash"],
         "causal_work_graph_hash": o["causal_work_graph"]["causal_work_graph_hash"],
         "consistent_cut_hash": o["consistent_work_cut"]["consistent_cut_hash"],
-        "no_external_effect_hash": o["no_external_effect"][
+        "no_external_effect_hash": o["no_external_effect_theorem"][
             "no_external_effect_hash"],
         "policy_version": "powo-p-v1", "schema_version": POWO_VERSION,
         "proof_of_work_outcome_valid": valid,
@@ -1325,7 +1327,7 @@ def _derive_truth_state(signals, powo_valid, reports, negative_space):
                 "OUTBOX_RELEASE_DETECTED"} & S
     contradiction = {"CONSISTENT_WORK_CUT_INVALID", "CROSS_TENANT_WORK_EDGE"} & S
     revoked = {"REVOCATION_PROPAGATION_MISSING", "REVOCATION_PROPAGATION_LATE",
-               "MEMORY_FACT_REVOKED", "APPROVAL_REVOKED",
+               "REVOCATION_DETECTED", "MEMORY_FACT_REVOKED", "APPROVAL_REVOKED",
                "PRINCIPAL_MAPPING_REVOKED", "SCHEDULE_OCCURRENCE_REVOKED"} & S
     stale = {"MEMORY_FACT_EXPIRED", "CONTEXT_EXPIRED", "APPROVAL_EXPIRED"} & S
     unknown = {"PRINCIPAL_CONTINUITY_UNKNOWN", "MEMORY_PROVENANCE_UNKNOWN"} & S
@@ -1424,7 +1426,7 @@ def run_local_canary_harness(*, tenant_id, work_run_id, base_ctx, b9_outcome,
     for name in CANARY_CASES:
         c = dict(base_ctx)
         reports = _work_reports(c, b9_outcome, b91_outcome)
-        ne = reports["no_external_effect"]
+        ne = reports["no_external_effect_theorem"]
         di = reports["delivery_intent"]
         safe = (ne["theorem_holds"] and not ne["produced_external_effect"] and
                 not ne["message_sent"] and not ne["payment_executed"] and
@@ -1563,7 +1565,7 @@ def prepare_work_observation_outcome(*, work_run_id, tenant_id, actor_id,
         negative_space=negative_space, powo=powo,
         causal_graph=reports["causal_work_graph"], truth_state=truth_state,
         work_run_state=work_run_state,
-        no_external=reports["no_external_effect"])
+        no_external=reports["no_external_effect_theorem"])
     reports["work_observation_twin"] = twin
 
     canary_harness = run_local_canary_harness(
@@ -1607,7 +1609,7 @@ def prepare_work_observation_outcome(*, work_run_id, tenant_id, actor_id,
         "external_crm_mutated": False, "delivered_externally": False,
         "outbox_released": False, "stores_secret": False,
         "stores_chain_of_thought": False,
-        "no_external_effect": clean_reports["no_external_effect"][
+        "no_external_effect": clean_reports["no_external_effect_theorem"][
             "theorem_holds"],
         "no_critical_evidence_missing": negative_space["no_critical_missing"],
         "observer_health_state": clean_reports["observer_health"][

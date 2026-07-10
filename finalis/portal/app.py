@@ -10697,7 +10697,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         "proof-of-work-outcome": "proof_of_work_outcome",
         "decision-basis": "decision_basis", "otel-adapter": "otel_adapter",
         "a2a-boundary": "a2a_boundary", "consistent-cut": "consistent_work_cut",
-        "no-external-effect": "no_external_effect",
+        "no-external-effect": "no_external_effect_theorem",
         "observer-health-detail": "observer_health",
     }
 
