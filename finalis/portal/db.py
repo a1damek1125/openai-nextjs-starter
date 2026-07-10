@@ -1216,6 +1216,69 @@ CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_write_intent_events_seq
 CREATE INDEX IF NOT EXISTS ix_ai_write_intent_events_request
   ON ai_write_intent_events(tenant_id, write_intent_id, sequence);
 """),
+    (23, """
+-- v23: ViktorAI Machine-Checkable Pre-B9 Assurance Envelope / Local Commit
+-- Simulator (TOOL-B8). The FINAL pre-commit layer, but strictly LOCAL,
+-- DETERMINISTIC and SIMULATION-ONLY. It consumes a TOOL-B7 transaction-escrow
+-- write-intent draft and produces a machine-checkable EVIDENCE envelope that a
+-- FUTURE B9 commit runtime may verify but must never treat as authority. It
+-- re-validates state witnesses, dry-runs the commit against a shadow copy,
+-- simulates staged-effect release without releasing, re-fences semantic
+-- rollback, differentially replays, metamorphically cross-checks, proves the
+-- mutation-proof no-commit theorem, quarantines every artifact and firewalls
+-- B9. It NEVER performs a real commit, releases a staged effect, activates a
+-- commitment, activates B9, grants B9 authority, issues a commit lease, calls a
+-- provider/MCP/LLM, issues/derives a token, reads a credential, sends a
+-- message, executes a payment, mutates CRM/evidence, or exports data. Every
+-- certificate/envelope/proof-bundle/safe-output/handoff-matrix is NON-DELEGABLE
+-- and cannot become authority. There is NO commit/execute/effect-release/
+-- activate-commitment/activate-b9/grant-authority/commit-lease endpoint. The
+-- most permissive outcome is B8_V5_ACCEPTED, a local pre-B9 assurance result
+-- that STILL REQUIRES full B9 revalidation — never an external effect and never
+-- a commit.
+CREATE TABLE IF NOT EXISTS ai_commit_simulation_requests (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  b7_write_intent_id TEXT NOT NULL DEFAULT '',
+  commit_simulation_request_hash TEXT NOT NULL,
+  requested_by TEXT NOT NULL, requested_by_actor_type TEXT NOT NULL,
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_commit_simulation_requests
+  ON ai_commit_simulation_requests(tenant_id, b7_write_intent_id, created_at);
+
+CREATE TABLE IF NOT EXISTS ai_commit_simulation_outcomes (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  commit_simulation_id TEXT NOT NULL,
+  b7_write_intent_id TEXT NOT NULL DEFAULT '',
+  commit_simulation_status TEXT NOT NULL,
+  commit_simulation_decision_status TEXT NOT NULL,
+  commit_simulation_outcome_kind TEXT NOT NULL DEFAULT '',
+  dominant_signal TEXT NOT NULL,
+  assurance_envelope_hash TEXT NOT NULL DEFAULT '',
+  commit_simulation_request_hash TEXT NOT NULL DEFAULT '',
+  commit_simulation_decision_hash TEXT NOT NULL,
+  commit_simulation_state_hash TEXT NOT NULL,
+  commit_simulation_proof_bundle_hash TEXT NOT NULL DEFAULT '',
+  release_gate_status TEXT NOT NULL DEFAULT '',
+  b8_v5_accepted INTEGER NOT NULL DEFAULT 0,
+  decided_by TEXT NOT NULL, decided_by_actor_type TEXT NOT NULL,
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_commit_simulation_outcomes
+  ON ai_commit_simulation_outcomes(tenant_id, commit_simulation_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_ai_commit_simulation_outcomes_status
+  ON ai_commit_simulation_outcomes(tenant_id, commit_simulation_status);
+
+CREATE TABLE IF NOT EXISTS ai_commit_simulation_events (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, commit_simulation_id TEXT,
+  event_type TEXT NOT NULL, sequence INTEGER NOT NULL,
+  actor_id TEXT NOT NULL, actor_type TEXT NOT NULL,
+  event_hash TEXT NOT NULL, previous_event_hash TEXT NOT NULL,
+  commit_simulation_state_hash TEXT NOT NULL DEFAULT '',
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_commit_simulation_events_seq
+  ON ai_commit_simulation_events(tenant_id, sequence);
+CREATE INDEX IF NOT EXISTS ix_ai_commit_simulation_events_request
+  ON ai_commit_simulation_events(tenant_id, commit_simulation_id, sequence);
+"""),
 ]
 
 

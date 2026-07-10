@@ -9721,6 +9721,342 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                                           write_intent_id=write_intent_id),
                 "honesty_labels": _wi.HONESTY_LABELS}
 
+    # ==== TOOL-B8: Machine-Checkable Pre-B9 Assurance / Local Commit Sim =====
+    # Simulation-only pre-B9 assurance. Consumes a B7 escrow draft. NO real
+    # commit / execute / release-effects / activate-commitment / activate-b9 /
+    # grant-authority / commit-lease endpoint exists anywhere below.
+    from ..ai_employee import tool_commit_simulation as _cs
+    from ..ai_employee.tool_commit_simulation_store import (
+        ToolCommitSimulationStore)
+    commit_sim_store = ToolCommitSimulationStore(db)
+    app.state.commit_sim_store = commit_sim_store
+
+    def _cs_emit(tid, *, event_type, commit_simulation_id, actor_id, actor_type,
+                 state_hash, detail):
+        seq = commit_sim_store.next_sequence(tenant_id=tid)
+        prev = commit_sim_store.last_event(tenant_id=tid)
+        ev = _cs.build_commit_simulation_event(
+            event_type=event_type, tenant_id=tid,
+            commit_simulation_id=commit_simulation_id, actor_id=actor_id,
+            actor_type=actor_type, commit_simulation_state_hash=state_hash,
+            previous_event_hash=(prev or {}).get("event_hash"), sequence=seq,
+            detail=detail, created_at=utcnow())
+        commit_sim_store.append_event({
+            "id": str(uuid.uuid4()), "tenant_id": tid, "commit_simulation_id":
+            commit_simulation_id, "event_type": event_type, "sequence": seq,
+            "actor_id": actor_id, "actor_type": actor_type,
+            "event_hash": ev["event_hash"], "previous_event_hash": ev[
+                "previous_event_hash"], "commit_simulation_state_hash":
+            state_hash, "payload_json": json.dumps(ev),
+            "created_at": ev["created_at"]})
+        return ev
+
+    def _load_commit_sim_or_404(commit_simulation_id, user):
+        r = commit_sim_store.request(commit_simulation_id, tenant_id=user["tid"])
+        if r is None:
+            raise HTTPException(404, "commit simulation request not found")
+        return r
+
+    def _load_commit_sim_outcome_or_404(commit_simulation_id, user):
+        _load_commit_sim_or_404(commit_simulation_id, user)
+        o = commit_sim_store.outcome(commit_simulation_id, tenant_id=user["tid"])
+        if o is None:
+            raise HTTPException(404, "no commit simulation outcome")
+        return o
+
+    _CS_SUBFIELDS = {
+        "b7-consumption-gate": "b7_consumption_gate",
+        "state-witness-revalidation": "state_witness_revalidation",
+        "shadow-dry-run": "shadow_dry_run",
+        "effect-simulation": "effect_simulation",
+        "rollback-fence": "rollback_fence",
+        "differential-replay": "differential_replay",
+        "metamorphic-oracle": "metamorphic_oracle",
+        "compliance-predicate": "compliance_predicate",
+        "rollback-simulation": "rollback_simulation",
+        "compensation-simulation": "compensation_simulation",
+        "no-commit-theorem": "no_commit_theorem",
+        "non-execution-certificate": "non_execution_certificate",
+        "artifact-quarantine-vault": "artifact_quarantine_vault",
+        "b9-firewall": "b9_firewall",
+        "b9-revalidation-contract": "b9_revalidation_contract",
+        "trace-coverage": "trace_coverage",
+        "non-production-seal": "non_production_seal",
+        "safety-case": "safety_case",
+        "assurance-envelope": "assurance_envelope",
+        "evidence-closure-net": "evidence_closure_net",
+        "non-delegable-artifact-seal": "non_delegable_artifact_seal",
+        "b9-negative-capability": "b9_negative_capability",
+        "cross-artifact-consistency": "cross_artifact_consistency",
+        "route-topology-diff": "route_topology_diff",
+        "trace-completeness-witness": "trace_completeness_witness",
+        "proof-obligation-matrix": "proof_obligation_matrix",
+        "production-claim-scanner": "production_claim_scanner",
+        "final-ci-gate": "final_ci_gate",
+        "v5-proof-extension": "b8_v5_proof_extension",
+        "fault-injection": "commit_sim_fault_injection_harness",
+        "release-gate": "commit_sim_release_gate_report",
+        "conformance-vector": "commit_sim_conformance_vector",
+        "proof-bundle": "commit_simulation_proof_bundle",
+    }
+
+    @app.get("/ai-tools/commit-simulations/policy")
+    async def commit_sim_policy(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {"commit_sim_model_version": _cs.COMMIT_SIM_MODEL_VERSION,
+                "simulation_only": True, "performs_real_commit": False,
+                "releases_effects": False, "activates_commitment": False,
+                "activates_b9": False, "grants_b9_authority": False,
+                "issues_commit_lease": False, "calls_provider": False,
+                "calls_mcp": False, "calls_llm": False, "issues_tokens": False,
+                "reads_credentials": False, "sends_messages": False,
+                "executes_payment": False, "mutates_crm": False,
+                "mutates_evidence": False, "exports_data": False,
+                "artifacts_are_authority": False,
+                "b9_revalidation_required": True, "production_ready": False,
+                "commit_executable_now": False,
+                "has_commit_endpoint": False, "has_execute_endpoint": False,
+                "has_effect_release_endpoint": False,
+                "has_activate_commitment_endpoint": False,
+                "has_activate_b9_endpoint": False,
+                "has_grant_authority_endpoint": False,
+                "has_commit_lease_endpoint": False,
+                "most_permissive_outcome": "B8_V5_ACCEPTED",
+                "accepts_b7_statuses": sorted(_cs.B7_ACCEPTABLE_STATUSES),
+                "commit_simulation_statuses": sorted(_cs.COMMIT_SIM_STATUSES),
+                "decision_statuses": sorted(_cs.DECISION_STATUSES),
+                "failure_dominance": _cs.FAILURE_DOMINANCE,
+                "reason_codes": _cs.REASON_CODES,
+                "fault_cases": _cs.FAULT_CASES,
+                "required_trace_families": _cs.REQUIRED_TRACE_FAMILIES,
+                "required_obligations": _cs.REQUIRED_OBLIGATIONS,
+                "b9_must_reject_artifacts": _cs.B9_MUST_REJECT_ARTIFACTS,
+                "b9_must_recompute": _cs.B9_MUST_RECOMPUTE,
+                "forbidden_route_semantics": _cs.FORBIDDEN_ROUTE_SEMANTICS,
+                "default_policy": _cs.DEFAULT_POLICY,
+                "honesty_labels": _cs.HONESTY_LABELS}
+
+    @app.get("/ai-tools/commit-simulations/registry")
+    async def commit_sim_registry(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        outs = commit_sim_store.list_outcomes(tenant_id=user["tid"])
+        by_status = {}
+        for o in outs:
+            by_status[o["commit_simulation_status"]] = by_status.get(
+                o["commit_simulation_status"], 0) + 1
+        return {"tenant_id": user["tid"],
+                "commit_simulation_request_count": len(
+                    commit_sim_store.list_requests(tenant_id=user["tid"])),
+                "commit_simulation_outcome_count": len(outs),
+                "outcomes_by_status": by_status,
+                "honesty_labels": _cs.HONESTY_LABELS}
+
+    @app.get("/ai-tools/commit-simulations/events")
+    async def commit_sim_events(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        evs = commit_sim_store.events(tenant_id=user["tid"])
+        chain_ok, prev = True, None
+        for e in evs:
+            if e["previous_event_hash"] != (prev or _cs.GENESIS):
+                chain_ok = False
+            prev = e["event_hash"]
+        return {"tenant_id": user["tid"], "events": evs,
+                "event_count": len(evs), "event_chain_valid": chain_ok,
+                "ledger_note": "local commit-simulation ledger; not a "
+                "production immutable log", "honesty_labels": _cs.HONESTY_LABELS}
+
+    _CS_PASS_KEYS = (
+        "fresh_witnesses", "policy_epoch", "revalidation_ok", "dry_run_ok",
+        "touches_production", "effect_release_attempts", "replay_attack",
+        "authority_resurrection", "replay_consistent", "metamorphic_holds",
+        "predicate_violations", "rollback_feasible", "compensation_gaps",
+        "attempt_markers", "artifact_refs", "artifact_escape_attempts",
+        "b9_authority_transfer", "b9_activation", "b9_contract_present",
+        "observed_trace_families", "seal_poisoned", "artifact_hashes",
+        "delegation_attempts", "bearer_fields", "activation_fields",
+        "b9_negcap_valid", "baseline_routes", "final_routes", "added_routes",
+        "dropped_obligations", "extra_claims", "targeted_pass", "full_pass",
+        "unexpected_positive", "injected_mismatches", "execution_markers",
+        "theorem_refuted", "force_missing_nodes", "force_missing_edges",
+        "force_unclosed_claims", "force_assurance_invalid", "policy",
+    )
+
+    def _prepare_commit_sim(tid, user, body):
+        # A simulation-only pre-B9 assurance request. It consumes a B7 escrow
+        # draft and produces machine-checkable EVIDENCE. NO real commit, NO
+        # effect release, NO commitment/B9 activation, NO external effect.
+        wid = str(body.get("b7_write_intent_id", "") or "")
+        b7o = write_intent_store.outcome(wid, tenant_id=tid) if wid else None
+        if b7o is None:
+            raise HTTPException(404, "b7 write-intent outcome not found")
+        actor_type = "ai_employee" if user["role"] == "ai_worker" else "human"
+        now = utcnow()
+        sid = str(uuid.uuid4())
+        env = _cs.build_commit_simulation_request_envelope(
+            commit_simulation_id=sid, tenant_id=tid, actor_id=user["uid"],
+            actor_type=actor_type, b7_outcome=b7o, created_at=now)
+        passthrough = {k: body[k] for k in _CS_PASS_KEYS if k in body}
+        outcome = _cs.prepare_commit_simulation_outcome(
+            commit_simulation_id=sid, tenant_id=tid, actor_id=user["uid"],
+            actor_type=actor_type, envelope=env, b7_outcome=b7o, created_at=now,
+            **passthrough)
+        commit_sim_store.save_request({
+            "id": sid, "tenant_id": tid, "b7_write_intent_id": wid,
+            "commit_simulation_request_hash": env[
+                "commit_simulation_request_hash"],
+            "requested_by": user["uid"], "requested_by_actor_type": actor_type,
+            "payload_json": json.dumps(env), "created_at": now})
+        commit_sim_store.save_outcome({
+            "id": str(uuid.uuid4()), "tenant_id": tid, "commit_simulation_id":
+            sid, "b7_write_intent_id": wid,
+            "commit_simulation_status": outcome["commit_simulation_status"],
+            "commit_simulation_decision_status": outcome[
+                "commit_simulation_decision_status"],
+            "commit_simulation_outcome_kind": outcome[
+                "commit_simulation_outcome_kind"],
+            "dominant_signal": outcome["dominant_signal"],
+            "assurance_envelope_hash": outcome["assurance_envelope"][
+                "assurance_envelope_hash"],
+            "commit_simulation_request_hash": outcome.get(
+                "commit_simulation_request_hash") or "",
+            "commit_simulation_decision_hash": outcome[
+                "commit_simulation_decision_hash"],
+            "commit_simulation_state_hash": outcome[
+                "commit_simulation_state_hash"],
+            "commit_simulation_proof_bundle_hash": outcome[
+                "commit_simulation_proof_bundle"][
+                "commit_simulation_proof_bundle_hash"],
+            "release_gate_status": outcome["commit_sim_release_gate_report"][
+                "release_gate_status"],
+            "b8_v5_accepted": 1 if outcome["b8_v5_accepted"] else 0,
+            "decided_by": user["uid"], "decided_by_actor_type": actor_type,
+            "payload_json": json.dumps(outcome), "created_at": now,
+            "updated_at": now})
+        _cs_emit(tid, event_type="COMMIT_SIMULATION_REQUEST_OPENED",
+                 commit_simulation_id=sid, actor_id=user["uid"],
+                 actor_type=actor_type,
+                 state_hash=env["commit_simulation_request_hash"],
+                 detail={"b7_write_intent_id": wid})
+        _cs_emit(tid, event_type="COMMIT_SIMULATION_OUTCOME_PREPARED",
+                 commit_simulation_id=sid, actor_id=user["uid"],
+                 actor_type=actor_type,
+                 state_hash=outcome["commit_simulation_state_hash"],
+                 detail={"status": outcome["commit_simulation_status"]})
+        audit.append(event_type="AI_COMMIT_SIMULATION_PREPARED",
+                     actor=user["uid"], payload={"commit_simulation_id": sid,
+                     "status": outcome["commit_simulation_status"]})
+        return outcome
+
+    @app.post("/ai-tools/commit-simulations")
+    async def create_commit_sim(body: dict,
+                                user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        return _prepare_commit_sim(user["tid"], user, body or {})
+
+    @app.get("/ai-tools/commit-simulations")
+    async def list_commit_sims(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return commit_sim_store.list_requests(tenant_id=user["tid"])
+
+    @app.get("/ai-tools/commit-simulations/{commit_simulation_id}")
+    async def get_commit_sim(commit_simulation_id: str,
+                             user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _load_commit_sim_or_404(commit_simulation_id, user)
+
+    @app.get("/ai-tools/commit-simulations/{commit_simulation_id}/outcome")
+    async def get_commit_sim_outcome(commit_simulation_id: str,
+                                     user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _load_commit_sim_outcome_or_404(commit_simulation_id, user)
+
+    @app.get("/ai-tools/commit-simulations/{commit_simulation_id}/safe")
+    async def get_commit_sim_safe(commit_simulation_id: str,
+                                  user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        o = _load_commit_sim_outcome_or_404(commit_simulation_id, user)
+        restricted = user["role"] in ("viewer", "technician", "accountant")
+        return {"commit_simulation_id": commit_simulation_id, "tenant_id": o[
+            "tenant_id"], "commit_simulation_status": o[
+            "commit_simulation_status"],
+            "commit_simulation_decision_status": o[
+                "commit_simulation_decision_status"],
+            "commit_simulation_outcome_kind": o[
+                "commit_simulation_outcome_kind"],
+            "dominant_reason_code": o["dominant_reason_code"],
+            "simulation_only": True, "is_real_commit": False,
+            "is_execution": False, "produced_external_effect": False,
+            "released_effect": False, "activated_commitment": False,
+            "activated_b9": False, "commit_executable_now": False,
+            "production_ready": False, "b8_v5_accepted": o["b8_v5_accepted"],
+            "b9_revalidation_required": True,
+            "assurance_envelope_hash": o["assurance_envelope"][
+                "assurance_envelope_hash"],
+            "all_signals": ([] if restricted else o["all_signals"]),
+            "commit_simulation_decision_hash": o[
+                "commit_simulation_decision_hash"],
+            "commit_simulation_proof_bundle_hash": o[
+                "commit_simulation_proof_bundle"][
+                "commit_simulation_proof_bundle_hash"],
+            "honesty_labels": _cs.HONESTY_LABELS}
+
+    def _cssub(field):
+        async def getter(commit_simulation_id: str,
+                         user: dict = Depends(current_user)):
+            require_permission(user, "case.read")
+            o = _load_commit_sim_outcome_or_404(commit_simulation_id, user)
+            return {"commit_simulation_id": commit_simulation_id, field: o.get(
+                field), "honesty_labels": _cs.HONESTY_LABELS}
+        return getter
+
+    for _slug, _field in _CS_SUBFIELDS.items():
+        app.add_api_route(
+            "/ai-tools/commit-simulations/{commit_simulation_id}/" + _slug,
+            _cssub(_field), methods=["GET"])
+
+    @app.post("/ai-tools/commit-simulations/{commit_simulation_id}/"
+              "fault-injection-check")
+    async def commit_sim_fault_injection_check(
+            commit_simulation_id: str, user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        o = _load_commit_sim_outcome_or_404(commit_simulation_id, user)
+        h = o["commit_sim_fault_injection_harness"]
+        _cs_emit(user["tid"], event_type="COMMIT_SIMULATION_FAULT_INJECTED",
+                 commit_simulation_id=commit_simulation_id, actor_id=user["uid"],
+                 actor_type=("ai_employee" if user["role"] == "ai_worker"
+                             else "human"),
+                 state_hash=h["commit_sim_fault_injection_harness_hash"],
+                 detail={"status": h["harness_status"]})
+        return h
+
+    @app.post("/ai-tools/commit-simulations/{commit_simulation_id}/verify")
+    async def verify_commit_sim_outcome(commit_simulation_id: str,
+                                        user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        o = _load_commit_sim_outcome_or_404(commit_simulation_id, user)
+        recomputed = _cs._core_hash(
+            o, "commit_simulation_decision_hash", "commit_simulation_id",
+            "decided_by_actor_id", "decided_by_actor_type",
+            "commit_simulation_state_hash")
+        ok = recomputed == o["commit_simulation_decision_hash"]
+        return {"commit_simulation_id": commit_simulation_id,
+                "stored_commit_simulation_decision_hash": o[
+                    "commit_simulation_decision_hash"],
+                "recomputed_commit_simulation_decision_hash": recomputed,
+                "commit_simulation_decision_hash_valid": ok,
+                "verification_status": "VALID" if ok else "TAMPERED",
+                "honesty_labels": _cs.HONESTY_LABELS}
+
+    @app.get("/ai-tools/commit-simulations/{commit_simulation_id}/events")
+    async def commit_sim_request_events(commit_simulation_id: str,
+                                        user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_commit_sim_or_404(commit_simulation_id, user)
+        return {"commit_simulation_id": commit_simulation_id, "events":
+                commit_sim_store.events(tenant_id=user["tid"],
+                                        commit_simulation_id=commit_simulation_id),
+                "honesty_labels": _cs.HONESTY_LABELS}
+
     # Hoist the literal /ai-tools/actions/*, /ai-tools/broker/*,
     # /ai-tools/runtime/* and /ai-tools/write-intents/* routes ahead of the
     # earlier-registered parameterised /ai-tools/{tool_id}/* routes so first-
@@ -9734,7 +10070,9 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                        or getattr(r, "path", "").startswith(
                            "/ai-tools/runtime")
                        or getattr(r, "path", "").startswith(
-                           "/ai-tools/write-intents")]
+                           "/ai-tools/write-intents")
+                       or getattr(r, "path", "").startswith(
+                           "/ai-tools/commit-simulations")]
     for _r in _literal_routes:
         app.router.routes.remove(_r)
     for _off, _r in enumerate(_literal_routes):

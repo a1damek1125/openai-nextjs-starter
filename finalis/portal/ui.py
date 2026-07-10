@@ -158,6 +158,7 @@ window.loadSections = async () => {
   if (window.loadBrokerSection) jobs.push(loadBrokerSection(me));
   if (window.loadRuntimeSection) jobs.push(loadRuntimeSection(me));
   if (window.loadWriteIntentSection) jobs.push(loadWriteIntentSection(me));
+  if (window.loadCommitSimSection) jobs.push(loadCommitSimSection(me));
   await Promise.allSettled(jobs);
 };
 
@@ -3386,6 +3387,89 @@ window.openWriteIntentOutcome = async (wid) => {
 };
 """
 
+COMMIT_SIM_SECTIONS = """
+<section id="tool-commit-sim-section"><h2>Machine-Checkable Pre-B9 Assurance Envelope</h2>
+<ul class="labels"><small>
+<li>LOCAL_COMMIT_SIMULATION_ONLY / PRE_B9_ASSURANCE_ONLY — simulation-only; never a real commit.</li>
+<li>MACHINE_CHECKABLE_EVIDENCE_ONLY / NON_DELEGABLE_ARTIFACT_SEAL — artifacts are evidence, never authority.</li>
+<li>B9_REVALIDATION_REQUIRED — B9 must recompute every factor; B8 pre-authorizes nothing.</li>
+<li>NO_REAL_COMMIT / NO_EFFECT_RELEASE / NO_COMMIT_ACTIVATION / NO_B9_ACTIVATION.</li>
+<li>NO_EXTERNAL_PROVIDER / NO_NETWORK / NO_TOKEN / NO_CREDENTIAL / NO_PAYMENT / NO_CUSTOMER_MESSAGE.</li>
+<li>NO_CRM_MUTATION / NO_EVIDENCE_MUTATION / NO_DATA_EXPORT.</li>
+<li>NOT_PRODUCTION_READY / NOT_PRODUCTION_AUTONOMOUS_EXECUTION.</li>
+</small></ul>
+<div id="tool-commit-sim-summary"><i>Loading pre-B9 assurance envelope…</i></div>
+<div id="tool-commit-sim-list"></div>
+</section>
+"""
+
+COMMIT_SIM_JS = """
+window.loadCommitSimSection = async (me) => { await loadCommitSim(); };
+
+window.loadCommitSim = async () => {
+  let reg; try { reg = await get('/ai-tools/commit-simulations/registry'); }
+  catch (e) { $('tool-commit-sim-summary').innerHTML =
+    '<i>The pre-B9 assurance envelope is not available for your role.</i>'; return; }
+  $('tool-commit-sim-summary').innerHTML =
+    `<p><b>requests</b> ${esc(String(reg.commit_simulation_request_count))} ·
+      <b>outcomes</b> ${esc(String(reg.commit_simulation_outcome_count))}</p>` +
+    '<p><small>' + Object.entries(reg.outcomes_by_status || {}).map(
+      ([k, v]) => `${esc(k)}: <b>${esc(String(v))}</b>`).join(' · ') + '</small></p>';
+  let reqs = []; try { reqs = await get('/ai-tools/commit-simulations'); }
+  catch (e) {}
+  $('tool-commit-sim-list').innerHTML = (reqs.length ?
+    '<table><tr><th>Commit-sim</th><th>Write-intent</th><th></th></tr>' +
+    reqs.map(r => `<tr><td><small>${esc((r.commit_simulation_id||'').slice(0,8))}
+       </small></td><td><small>${esc((r.b7_write_intent_id||'').slice(0,8))}</small></td>
+       <td><button onclick="openCommitSimOutcome('${esc(r.commit_simulation_id)}')">
+       Outcome</button></td></tr>`).join('') + '</table>'
+    : '<i>No commit simulations yet.</i>');
+};
+
+window.openCommitSimOutcome = async (sid) => {
+  const base = '/ai-tools/commit-simulations/' + sid;
+  const o = await get(base + '/outcome');
+  let vr = null; try { vr = (await send('POST', base + '/verify', {})).data; }
+  catch (e) {}
+  const gate = o.commit_sim_release_gate_report || {};
+  const env = o.assurance_envelope || {};
+  const net = o.evidence_closure_net || {};
+  const seal = o.non_delegable_artifact_seal || {};
+  const fw = o.b9_firewall || {};
+  const nct = o.no_commit_theorem || {};
+  const ci = o.final_ci_gate || {};
+  $('tool-commit-sim-list').innerHTML = `
+    <h3>Commit-sim outcome ${esc(sid.slice(0,8))}
+      <span class="badge">${esc(o.commit_simulation_status)}</span></h3>
+    <p><b>decision</b> ${esc(o.commit_simulation_decision_status)} ·
+      <b>kind</b> ${esc(o.commit_simulation_outcome_kind)} ·
+      <b>reason</b> <small>${esc(o.dominant_reason_code)}</small></p>
+    <p><b>simulation only</b> <b class="ok">${esc(String(o.simulation_only))}</b> ·
+      <b>commit executable now</b> <b class="${o.commit_executable_now ? 'err' : 'ok'}">${esc(
+        String(o.commit_executable_now))}</b> ·
+      <b>B9 revalidation required</b> ${esc(String(o.b9_revalidation_required))}</p>
+    <p><b>assurance envelope</b> <b class="${env.decision_status === 'VALID'
+      ? 'ok' : 'err'}">${esc(env.decision_status)}</b> · <b>authority</b> ${esc(
+      String(env.is_authority))} · <b>closure</b> <b class="${
+      net.closure_status === 'CLOSED' ? 'ok' : 'err'}">${esc(net.closure_status)}</b></p>
+    <p><b>artifact seal</b> <b class="${seal.seal_status === 'SEALED' ? 'ok' : 'err'}">${esc(
+      seal.seal_status)}</b> · <b>B9 firewall</b> <b class="${
+      fw.firewall_status === 'SEALED' ? 'ok' : 'err'}">${esc(fw.firewall_status)}</b>
+      · <b>no-commit theorem</b> <b class="${nct.theorem_holds ? 'ok' : 'err'}">${esc(
+        nct.theorem_status)}</b> · <b>final CI</b> ${esc(ci.gate_status)}</p>
+    <p><b>release gate</b> <b class="${gate.release_gate_status === 'PASSED'
+      ? 'ok' : 'err'}">${esc(gate.release_gate_status)}</b>
+      · <b>decision hash</b> <code>${esc((o.commit_simulation_decision_hash||'').slice(0,14))}…</code>
+      · <b>verify</b> ${vr ? `<b class="${vr.commit_simulation_decision_hash_valid ? 'ok' : 'err'}">${
+        esc(vr.verification_status)}</b>` : 'n/a'}</p>
+    <p><b>signals</b> ${(o.all_signals||[]).map(s =>
+      `<span class="err">${esc(s)}</span>`).join(' ') || '<i>none</i>'}</p>
+    <ul>${(o.honesty_labels||[]).map(l =>
+      `<li><small>${esc(l)}</small></li>`).join('')}</ul>
+    <button onclick="loadCommitSim()">← back</button>`;
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -3419,6 +3503,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 {BROKER_SECTIONS}
 {RUNTIME_SECTIONS}
 {WRITE_INTENT_SECTIONS}
+{COMMIT_SIM_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -3556,7 +3641,8 @@ boot();
 <script>{ACTIONS_JS}</script>
 <script>{BROKER_JS}</script>
 <script>{RUNTIME_JS}</script>
-<script>{WRITE_INTENT_JS}</script></body></html>"""
+<script>{WRITE_INTENT_JS}</script>
+<script>{COMMIT_SIM_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:

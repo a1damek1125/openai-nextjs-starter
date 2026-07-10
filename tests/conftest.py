@@ -528,6 +528,38 @@ class Gate:
             return self.c.get(url, headers=self.h(actor))
         return self.c.post(url, json=body, headers=self.h(actor))
 
+    # -- TOOL-B8 machine-checkable pre-B9 assurance / commit-sim helpers -------
+    def b7_write_intent_outcome(self, requester=OWNER, **over):
+        """Full pipeline to a clean B7 TRANSACTION_ESCROW_DRAFT_CREATED outcome.
+        Returns (write_intent_id, b7_outcome_dict)."""
+        return self.prepared_write_intent(requester=requester, **over)
+
+    def commit_simulation(self, b7_write_intent_id, actor=OWNER, body=None,
+                          **over):
+        """Create a commit simulation from a B7 write-intent. Returns the raw
+        Response."""
+        if body is None:
+            body = {"b7_write_intent_id": b7_write_intent_id}
+            body.update(over)
+        return self.c.post("/ai-tools/commit-simulations", json=body,
+                           headers=self.h(actor))
+
+    def prepared_commit_simulation(self, requester=OWNER, **over):
+        """Full pipeline: B4 -> B5 -> B6 -> B7 escrow draft -> simulation-only
+        pre-B9 assurance outcome. Returns (commit_simulation_id, outcome_dict).
+        With clean defaults the outcome is B8_V5_ACCEPTED (pre-B9 evidence
+        only; B9 revalidation still required; no real commit)."""
+        wid, _ = self.b7_write_intent_outcome(requester=requester)
+        o = self.commit_simulation(wid, actor=requester, **over).json()
+        return o["commit_simulation_id"], o
+
+    def cs(self, commit_simulation_id, path="", actor=OWNER, method="GET",
+           **body):
+        url = f"/ai-tools/commit-simulations/{commit_simulation_id}{path}"
+        if method == "GET":
+            return self.c.get(url, headers=self.h(actor))
+        return self.c.post(url, json=body, headers=self.h(actor))
+
 
 @pytest.fixture()
 def gate():
