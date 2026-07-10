@@ -1152,6 +1152,70 @@ CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_runtime_events_seq
 CREATE INDEX IF NOT EXISTS ix_ai_runtime_events_request
   ON ai_runtime_events(tenant_id, runtime_request_id, sequence);
 """),
+    (22, """
+-- v22: ViktorAI Transaction-Escrow Write-Intent Draft Runtime (TOOL-B7). The
+-- first write-INTENT layer, but strictly LOCAL, DETERMINISTIC and DRAFT-ONLY.
+-- It models a FUTURE write: local write-intent draft records, semantic
+-- transaction drafts, transaction escrow capsules, escrowed commit-readiness
+-- certificates, a placeholder-only future commit gate contract, revalidation
+-- debt ledgers, semantic rollback-attack fences, action-replay/authority-
+-- resurrection guards, concurrent-draft conflict graphs, transaction conflict
+-- oracles, state-witness quorum vectors and effect-outbox quarantine matrices.
+-- It NEVER commits, sends, pays, mutates CRM/evidence/customer state, exports,
+-- calls a provider/MCP/LLM, issues/derives a token, reads a credential,
+-- releases a staged effect or activates a commitment record. Every effect is a
+-- placeholder; every certificate is local evidence; approval/escrow/commit-
+-- readiness do NOT execute. There is NO commit/execute/effect-release/
+-- activate-commitment endpoint. The most permissive outcome is
+-- TRANSACTION_ESCROW_DRAFT_CREATED, a local escrowed draft — never an external
+-- effect.
+CREATE TABLE IF NOT EXISTS ai_write_intent_requests (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  b6_runtime_request_id TEXT NOT NULL DEFAULT '',
+  target_entity_type TEXT NOT NULL DEFAULT '',
+  target_entity_id TEXT NOT NULL DEFAULT '',
+  write_intent_request_hash TEXT NOT NULL,
+  requested_by TEXT NOT NULL, requested_by_actor_type TEXT NOT NULL,
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_write_intent_requests
+  ON ai_write_intent_requests(tenant_id, target_entity_id, created_at);
+
+CREATE TABLE IF NOT EXISTS ai_write_intent_outcomes (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, write_intent_id TEXT NOT NULL,
+  b6_runtime_request_id TEXT NOT NULL DEFAULT '',
+  target_entity_id TEXT NOT NULL DEFAULT '',
+  write_intent_status TEXT NOT NULL, write_intent_decision_status TEXT NOT NULL,
+  write_intent_outcome_kind TEXT NOT NULL DEFAULT '',
+  dominant_signal TEXT NOT NULL,
+  transaction_escrow_hash TEXT NOT NULL DEFAULT '',
+  escrowed_commit_readiness_certificate_hash TEXT NOT NULL DEFAULT '',
+  write_intent_request_hash TEXT NOT NULL DEFAULT '',
+  write_intent_decision_hash TEXT NOT NULL,
+  write_intent_state_hash TEXT NOT NULL,
+  write_intent_proof_bundle_hash TEXT NOT NULL DEFAULT '',
+  release_gate_status TEXT NOT NULL DEFAULT '',
+  ready_for_future_commit_only INTEGER NOT NULL DEFAULT 0,
+  decided_by TEXT NOT NULL, decided_by_actor_type TEXT NOT NULL,
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_write_intent_outcomes
+  ON ai_write_intent_outcomes(tenant_id, write_intent_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_ai_write_intent_outcomes_entity
+  ON ai_write_intent_outcomes(tenant_id, target_entity_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_ai_write_intent_outcomes_status
+  ON ai_write_intent_outcomes(tenant_id, write_intent_status);
+
+CREATE TABLE IF NOT EXISTS ai_write_intent_events (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, write_intent_id TEXT,
+  event_type TEXT NOT NULL, sequence INTEGER NOT NULL,
+  actor_id TEXT NOT NULL, actor_type TEXT NOT NULL,
+  event_hash TEXT NOT NULL, previous_event_hash TEXT NOT NULL,
+  write_intent_state_hash TEXT NOT NULL DEFAULT '',
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_write_intent_events_seq
+  ON ai_write_intent_events(tenant_id, sequence);
+CREATE INDEX IF NOT EXISTS ix_ai_write_intent_events_request
+  ON ai_write_intent_events(tenant_id, write_intent_id, sequence);
+"""),
 ]
 
 

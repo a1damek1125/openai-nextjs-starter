@@ -157,6 +157,7 @@ window.loadSections = async () => {
   if (window.loadActionsSection) jobs.push(loadActionsSection(me));
   if (window.loadBrokerSection) jobs.push(loadBrokerSection(me));
   if (window.loadRuntimeSection) jobs.push(loadRuntimeSection(me));
+  if (window.loadWriteIntentSection) jobs.push(loadWriteIntentSection(me));
   await Promise.allSettled(jobs);
 };
 
@@ -3302,6 +3303,89 @@ window.openRuntimeOutcome = async (rid) => {
 };
 """
 
+WRITE_INTENT_SECTIONS = """
+<section id="tool-write-intent-section"><h2>Transaction-Escrow Write-Intent Draft Runtime</h2>
+<ul class="labels"><small>
+<li>WRITE_INTENT_DRAFT_ONLY / SEMANTIC_TRANSACTION_DRAFT_ONLY — models a FUTURE write; never executes.</li>
+<li>TRANSACTION_ESCROW_ONLY / COMMIT_READINESS_ESCROW_ONLY — escrow is local evidence, not executable.</li>
+<li>FUTURE_COMMIT_GATE_PLACEHOLDER_ONLY — no commit endpoint exists.</li>
+<li>SEMANTIC_ROLLBACK_ATTACK_FENCE_REQUIRED — action replay and authority resurrection are blocked.</li>
+<li>CONCURRENT_DRAFT_CONFLICT_CHECKED — conflicting drafts cannot both become future-ready.</li>
+<li>STAGED_EFFECT_OUTBOX_PLACEHOLDER_ONLY — every staged effect is quarantined and unreleasable.</li>
+<li>HUMAN_APPROVAL_REQUIRED_BEFORE_FUTURE_COMMIT / MEANINGFUL_HUMAN_JUDGMENT_REQUIRED / APPROVAL_DOES_NOT_EXECUTE.</li>
+<li>NO_REAL_WRITE_EFFECT / NO_EFFECT_RELEASE / NO_COMMIT_ACTIVATION / NO_PAYMENT / NO_CRM_MUTATION / NO_EVIDENCE_MUTATION / NO_DATA_EXPORT.</li>
+<li>NO_EXTERNAL_PROVIDER / NO_NETWORK / NO_TOKEN / NO_CREDENTIAL / NOT_PRODUCTION_AUTONOMOUS_EXECUTION.</li>
+</small></ul>
+<div id="tool-write-intent-summary"><i>Loading write-intent draft runtime…</i></div>
+<div id="tool-write-intent-list"></div>
+</section>
+"""
+
+WRITE_INTENT_JS = """
+window.loadWriteIntentSection = async (me) => { await loadWriteIntent(); };
+
+window.loadWriteIntent = async () => {
+  let reg; try { reg = await get('/ai-tools/write-intents/registry'); }
+  catch (e) { $('tool-write-intent-summary').innerHTML =
+    '<i>The write-intent draft runtime is not available for your role.</i>'; return; }
+  $('tool-write-intent-summary').innerHTML =
+    `<p><b>requests</b> ${esc(String(reg.write_intent_request_count))} ·
+      <b>outcomes</b> ${esc(String(reg.write_intent_outcome_count))}</p>` +
+    '<p><small>' + Object.entries(reg.outcomes_by_status || {}).map(
+      ([k, v]) => `${esc(k)}: <b>${esc(String(v))}</b>`).join(' · ') + '</small></p>';
+  let reqs = []; try { reqs = await get('/ai-tools/write-intents'); }
+  catch (e) {}
+  $('tool-write-intent-list').innerHTML = (reqs.length ?
+    '<table><tr><th>Write-intent</th><th>Target</th><th></th></tr>' +
+    reqs.map(r => `<tr><td><small>${esc((r.write_intent_id||'').slice(0,8))}
+       </small></td><td><small>${esc(r.target_entity_id||'')}</small></td>
+       <td><button onclick="openWriteIntentOutcome('${esc(r.write_intent_id)}')">
+       Outcome</button></td></tr>`).join('') + '</table>'
+    : '<i>No write-intent drafts yet.</i>');
+};
+
+window.openWriteIntentOutcome = async (wid) => {
+  const base = '/ai-tools/write-intents/' + wid;
+  const o = await get(base + '/outcome');
+  let vr = null; try { vr = (await send('POST', base + '/verify', {})).data; }
+  catch (e) {}
+  const gate = o.write_intent_release_gate_report || {};
+  const cap = o.transaction_escrow_capsule || {};
+  const cert = o.escrowed_commit_readiness_certificate || {};
+  const oracle = o.transaction_conflict_oracle || {};
+  const fence = o.semantic_rollback_fence || {};
+  const rne = o.transaction_readiness_non_execution_certificate || {};
+  $('tool-write-intent-list').innerHTML = `
+    <h3>Write-intent outcome ${esc(wid.slice(0,8))}
+      <span class="badge">${esc(o.write_intent_status)}</span></h3>
+    <p><b>decision</b> ${esc(o.write_intent_decision_status)} ·
+      <b>kind</b> ${esc(o.write_intent_outcome_kind)} ·
+      <b>reason</b> <small>${esc(o.dominant_reason_code)}</small></p>
+    <p><b>draft-only</b> <b class="ok">${esc(String(o.draft_only))}</b> ·
+      <b>commit executable now</b> <b class="${o.commit_executable_now ? 'err' : 'ok'}">${esc(
+        String(o.commit_executable_now))}</b> ·
+      <b>ready for FUTURE commit only</b> ${esc(String(o.ready_for_future_commit_only))}</p>
+    <p><b>escrow</b> <b class="${cap.escrow_status === 'ESCROWED' ? 'ok' : 'err'}">${esc(
+      cap.escrow_status)}</b> · <b>immutable</b> ${esc(String(cap.escrow_mutable === false))}
+      · <b>conflict oracle</b> <b class="${oracle.oracle_decision === 'NO_CONFLICT'
+        ? 'ok' : 'err'}">${esc(oracle.oracle_decision)}</b></p>
+    <p><b>rollback fence</b> <b class="${fence.fence_status === 'FENCED' ? 'ok' : 'err'}">${esc(
+      fence.fence_status)}</b> · <b>readiness non-execution</b> <b class="${
+      rne.all_negative_claims_hold ? 'ok' : 'err'}">${esc(rne.certificate_status)}</b>
+      · <b>commit-readiness</b> ${esc(cert.readiness_status)}</p>
+    <p><b>release gate</b> <b class="${gate.release_gate_status === 'PASSED'
+      ? 'ok' : 'err'}">${esc(gate.release_gate_status)}</b>
+      · <b>decision hash</b> <code>${esc((o.write_intent_decision_hash||'').slice(0,14))}…</code>
+      · <b>verify</b> ${vr ? `<b class="${vr.write_intent_decision_hash_valid ? 'ok' : 'err'}">${
+        esc(vr.verification_status)}</b>` : 'n/a'}</p>
+    <p><b>signals</b> ${(o.all_signals||[]).map(s =>
+      `<span class="err">${esc(s)}</span>`).join(' ') || '<i>none</i>'}</p>
+    <ul>${(o.honesty_labels||[]).map(l =>
+      `<li><small>${esc(l)}</small></li>`).join('')}</ul>
+    <button onclick="loadWriteIntent()">← back</button>`;
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -3334,6 +3418,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 {ACTIONS_SECTIONS}
 {BROKER_SECTIONS}
 {RUNTIME_SECTIONS}
+{WRITE_INTENT_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -3470,7 +3555,8 @@ boot();
 <script>{CONTRACTS_JS}</script>
 <script>{ACTIONS_JS}</script>
 <script>{BROKER_JS}</script>
-<script>{RUNTIME_JS}</script></body></html>"""
+<script>{RUNTIME_JS}</script>
+<script>{WRITE_INTENT_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:

@@ -463,6 +463,71 @@ class Gate:
             return self.c.get(url, headers=self.h(actor))
         return self.c.post(url, json=body, headers=self.h(actor))
 
+    # -- TOOL-B7 transaction-escrow write-intent draft helpers ----------------
+    def b6_runtime_outcome(self, requester=OWNER, **over):
+        """Full pipeline to a clean B6 read-only runtime outcome. Returns
+        (b6_runtime_request_id, b6_outcome_dict)."""
+        return self.prepared_runtime(requester=requester, **over)
+
+    def clean_write_intent_body(self, b6_runtime_request_id, **over):
+        """A minimal admissible draft-only write-intent body. Default: a single
+        INTERNAL status delta over a case, LOW risk, 1 SOURCE_STATE_HASH
+        witness. Approvals are added separately (2-phase, see
+        prepared_write_intent) because meaningful judgment binds the review
+        package hash."""
+        body = {
+            "b6_runtime_request_id": b6_runtime_request_id,
+            "target_entity": {"entity_type": "case", "entity_id": "E-1"},
+            "proposed_deltas": [{"field_path": "status", "from_value": "open",
+                                "to_value": "closed", "data_class": "INTERNAL"}],
+            "intent": "update case status", "risk_tier": "LOW",
+            "state_witnesses": [{"witness_class": "SOURCE_STATE_HASH",
+                                "witness_hash": "sw-h", "epoch": 1}],
+        }
+        body.update(over)
+        return body
+
+    def write_intent(self, b6_runtime_request_id, actor=OWNER, body=None,
+                     **over):
+        """Create a write-intent draft. Returns the raw Response."""
+        if body is None:
+            body = self.clean_write_intent_body(b6_runtime_request_id, **over)
+        return self.c.post("/ai-tools/write-intents", json=body,
+                           headers=self.h(actor))
+
+    def prepared_write_intent(self, requester=OWNER, approve=True, **over):
+        """Full pipeline: B4 -> B5 -> B6 read-only runtime -> draft-only escrowed
+        write-intent outcome. When approve=True, performs the 2-phase flow so the
+        clean path reaches TRANSACTION_ESCROW_DRAFT_CREATED: prepare once to read
+        the review-package hash, then re-create with an independent, server-
+        verified approval that viewed exactly that package. Returns
+        (write_intent_id, outcome_dict)."""
+        b6rid, _ = self.b6_runtime_outcome(requester=requester)
+        if not approve:
+            o = self.write_intent(b6rid, actor=requester, **over).json()
+            return o["write_intent_id"], o
+        # Phase 1: read the content-addressed review digest (stable across the
+        # per-request write_intent_id, so the approval below binds it).
+        probe = self.write_intent(b6rid, actor=requester, **over).json()
+        pkg = probe["review_package"]["review_content_digest"]
+        appr = [{"approver_id": "reviewer2", "approver_role": "owner",
+                 "server_verified": True, "challenge_passed": True,
+                 "viewed_package_hash": pkg,
+                 "acknowledgements": {"ACK_DRAFT_ONLY_NO_EXECUTION": True,
+                                      "ACK_FUTURE_COMMIT_SEPARATE": True,
+                                      "ACK_ESCROW_NON_EXECUTING": True,
+                                      "ACK_REVIEWED_SHADOW_DELTAS": True}}]
+        over2 = dict(over)
+        over2["approvals"] = over.get("approvals", appr)
+        o = self.write_intent(b6rid, actor=requester, **over2).json()
+        return o["write_intent_id"], o
+
+    def wi(self, write_intent_id, path="", actor=OWNER, method="GET", **body):
+        url = f"/ai-tools/write-intents/{write_intent_id}{path}"
+        if method == "GET":
+            return self.c.get(url, headers=self.h(actor))
+        return self.c.post(url, json=body, headers=self.h(actor))
+
 
 @pytest.fixture()
 def gate():

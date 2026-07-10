@@ -9370,17 +9370,371 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                                      runtime_request_id=runtime_request_id),
                 "honesty_labels": _rt.HONESTY_LABELS}
 
-    # Hoist the literal /ai-tools/actions/*, /ai-tools/broker/* and
-    # /ai-tools/runtime/* routes ahead of the earlier-registered parameterised
-    # /ai-tools/{tool_id}/* routes so first-match-wins routing does not capture
-    # them (e.g. /ai-tools/runtime/policy as /ai-tools/{tool_id}/policy -> 404).
+    # ==== TOOL-B7: Transaction-Escrow Write-Intent Draft Runtime =============
+    # Draft-only, escrowed FUTURE-write modelling. Consumes a B6 read-path
+    # runtime outcome. NO commit/execute/effect-release/activate-commitment/
+    # escrow-commit endpoint exists anywhere below.
+    from ..ai_employee import tool_write_intent as _wi
+    from ..ai_employee.tool_write_intent_store import ToolWriteIntentStore
+    write_intent_store = ToolWriteIntentStore(db)
+    app.state.write_intent_store = write_intent_store
+
+    def _wi_emit(tid, *, event_type, write_intent_id, actor_id, actor_type,
+                 state_hash, detail):
+        seq = write_intent_store.next_sequence(tenant_id=tid)
+        prev = write_intent_store.last_event(tenant_id=tid)
+        ev = _wi.build_write_intent_event(
+            event_type=event_type, tenant_id=tid,
+            write_intent_id=write_intent_id, actor_id=actor_id,
+            actor_type=actor_type, write_intent_state_hash=state_hash,
+            previous_event_hash=(prev or {}).get("event_hash"), sequence=seq,
+            detail=detail, created_at=utcnow())
+        write_intent_store.append_event({
+            "id": str(uuid.uuid4()), "tenant_id": tid, "write_intent_id":
+            write_intent_id, "event_type": event_type, "sequence": seq,
+            "actor_id": actor_id, "actor_type": actor_type,
+            "event_hash": ev["event_hash"], "previous_event_hash": ev[
+                "previous_event_hash"], "write_intent_state_hash": state_hash,
+            "payload_json": json.dumps(ev), "created_at": ev["created_at"]})
+        return ev
+
+    def _load_write_intent_or_404(write_intent_id, user):
+        r = write_intent_store.request(write_intent_id, tenant_id=user["tid"])
+        if r is None:
+            raise HTTPException(404, "write-intent request not found")
+        return r
+
+    def _load_write_intent_outcome_or_404(write_intent_id, user):
+        _load_write_intent_or_404(write_intent_id, user)
+        o = write_intent_store.outcome(write_intent_id, tenant_id=user["tid"])
+        if o is None:
+            raise HTTPException(404, "no write-intent outcome")
+        return o
+
+    _WI_SUBFIELDS = {
+        "write-intent-draft": "write_intent_draft",
+        "semantic-transaction": "semantic_transaction",
+        "transaction-boundary": "transaction_boundary",
+        "shadow-state-delta-graph": "shadow_state_delta_graph",
+        "state-delta": "state_delta",
+        "staged-effect-outbox": "staged_effect_outbox",
+        "effect-outbox-quarantine": "effect_outbox_quarantine",
+        "active-commitment": "active_commitment_record",
+        "rollback-simulation": "rollback_simulation",
+        "compensation-plan": "compensation_plan",
+        "review-package": "review_package",
+        "approval-requirement": "approval_requirement",
+        "approval-binding": "approval_binding",
+        "meaningful-judgment": "meaningful_judgment",
+        "contestability": "contestability_window",
+        "obligation-containment": "obligation_containment",
+        "evidence-preservation": "evidence_preservation",
+        "transaction-invariants": "transaction_invariants",
+        "semantic-transaction-replay": "semantic_transaction_replay",
+        "commit-non-execution": "commit_non_execution",
+        "transaction-escrow": "transaction_escrow_capsule",
+        "escrowed-commit-readiness": "escrowed_commit_readiness_certificate",
+        "future-commit-gate-contract": "future_commit_gate_contract",
+        "commit-gate-non-existence": "commit_gate_non_existence_proof",
+        "revalidation-debt": "revalidation_debt_ledger",
+        "semantic-rollback-fence": "semantic_rollback_fence",
+        "action-replay-guard": "action_replay_guard",
+        "authority-resurrection-guard": "authority_resurrection_guard",
+        "rollback-replay-equivalence": "rollback_replay_equivalence",
+        "concurrent-draft-conflicts": "concurrent_draft_conflict_graph",
+        "transaction-conflict-oracle": "transaction_conflict_oracle",
+        "state-witness-quorum": "state_witness_quorum",
+        "escrow-expiry": "escrow_expiry_policy",
+        "escrow-tamper-evidence": "escrow_tamper_evidence",
+        "readiness-non-execution":
+            "transaction_readiness_non_execution_certificate",
+        "transaction-escrow-proof-extension":
+            "transaction_escrow_proof_extension",
+        "fault-injection": "write_intent_fault_injection_harness",
+        "release-gate": "write_intent_release_gate_report",
+        "conformance-vector": "write_intent_conformance_vector",
+        "proof-bundle": "write_intent_proof_bundle",
+    }
+
+    @app.get("/ai-tools/write-intents/policy")
+    async def write_intent_policy(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {"write_intent_model_version": _wi.WRITE_INTENT_MODEL_VERSION,
+                "draft_only": True, "escrow_only": True, "commits": False,
+                "executes": False, "releases_effects": False,
+                "activates_commitment": False, "sends_customer_message": False,
+                "executes_payment": False, "mutates_crm": False,
+                "mutates_evidence": False, "exports_data": False,
+                "calls_provider": False, "calls_mcp": False, "calls_llm": False,
+                "issues_tokens": False, "derives_tokens": False,
+                "reads_credentials": False, "has_commit_endpoint": False,
+                "has_execute_endpoint": False,
+                "has_effect_release_endpoint": False,
+                "has_activate_commitment_endpoint": False,
+                "has_escrow_commit_endpoint": False,
+                "approval_does_not_execute": True,
+                "escrow_does_not_execute": True,
+                "commit_readiness_does_not_execute": True,
+                "most_permissive_outcome": "TRANSACTION_ESCROW_DRAFT_CREATED",
+                "accepts_b6_statuses": sorted(_wi.B6_ACCEPTABLE_STATUSES),
+                "write_intent_statuses": sorted(_wi.WRITE_INTENT_STATUSES),
+                "decision_statuses": sorted(_wi.DECISION_STATUSES),
+                "failure_dominance": _wi.FAILURE_DOMINANCE,
+                "reason_codes": _wi.REASON_CODES,
+                "fault_cases": _wi.FAULT_CASES,
+                "conflict_classes": sorted(_wi.CONFLICT_CLASSES),
+                "witness_classes": sorted(_wi.WITNESS_CLASSES),
+                "debt_item_types": sorted(_wi.DEBT_ITEM_TYPES),
+                "commit_surfaces": _wi.COMMIT_SURFACES,
+                "default_policy": _wi.DEFAULT_POLICY,
+                "honesty_labels": _wi.HONESTY_LABELS}
+
+    @app.get("/ai-tools/write-intents/registry")
+    async def write_intent_registry(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        outs = write_intent_store.list_outcomes(tenant_id=user["tid"])
+        by_status = {}
+        for o in outs:
+            by_status[o["write_intent_status"]] = by_status.get(
+                o["write_intent_status"], 0) + 1
+        return {"tenant_id": user["tid"],
+                "write_intent_request_count": len(
+                    write_intent_store.list_requests(tenant_id=user["tid"])),
+                "write_intent_outcome_count": len(outs),
+                "outcomes_by_status": by_status,
+                "honesty_labels": _wi.HONESTY_LABELS}
+
+    @app.get("/ai-tools/write-intents/events")
+    async def write_intent_events(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        evs = write_intent_store.events(tenant_id=user["tid"])
+        chain_ok, prev = True, None
+        for e in evs:
+            if e["previous_event_hash"] != (prev or _wi.GENESIS):
+                chain_ok = False
+            prev = e["event_hash"]
+        return {"tenant_id": user["tid"], "events": evs,
+                "event_count": len(evs), "event_chain_valid": chain_ok,
+                "ledger_note": "local write-intent draft ledger; not a "
+                "production immutable log",
+                "honesty_labels": _wi.HONESTY_LABELS}
+
+    _WI_PASS_KEYS = (
+        "target_entity", "proposed_deltas", "intent", "obligations",
+        "evidence_refs", "consent_scope", "customer_promises", "task_scope",
+        "boundary_operations", "risk_tier", "approvals", "requester_id",
+        "dual_control_required", "objections", "obligation_states",
+        "contestability_window_open", "destructive_repair",
+        "triggering_evidence_preserved", "invariant_violations",
+        "replay_consistent", "rollback_feasible", "compensation_gaps",
+        "debt_items", "prior_action_hashes", "proposed_action_hash",
+        "idempotency_key", "consumed_authority_refs", "approval_refs",
+        "token_like_refs", "credential_like_refs", "resurrected_authority",
+        "checkpoint_refs", "restore_refs", "prior_effect_refs",
+        "proposed_effect_refs", "rollback_replay_mismatch",
+        "related_write_intents", "state_witnesses", "policy_epoch",
+        "escrow_created_epoch", "escrow_expires_epoch", "escrow_mutable",
+        "observed_escrow_hash", "current_epoch", "commit_endpoint_present",
+        "commit_capability_present", "detected_commit_endpoints",
+        "detected_commit_capabilities", "detected_activation_paths",
+        "attempt_markers", "execution_markers", "effect_release_attempts",
+        "commitment_activation_attempts", "policy",
+    )
+
+    def _prepare_write_intent(tid, user, body):
+        # A draft-only, escrowed write-intent request. It models a FUTURE write
+        # over a B6-consumed read-path runtime outcome and produces escrow,
+        # commit-readiness, conflict, rollback-fence and non-execution evidence.
+        # NO write, NO commit, NO effect release, NO commitment activation, NO
+        # external effect. The most permissive outcome is a local escrowed
+        # draft.
+        b6rid = str(body.get("b6_runtime_request_id", "") or "")
+        b6o = runtime_store.outcome(b6rid, tenant_id=tid) if b6rid else None
+        if b6o is None:
+            raise HTTPException(404, "b6 runtime outcome not found")
+        b6r = runtime_store.request(b6rid, tenant_id=tid)
+        actor_type = "ai_employee" if user["role"] == "ai_worker" else "human"
+        now = utcnow()
+        wid = str(uuid.uuid4())
+        te = body.get("target_entity") or {}
+        env = _wi.build_write_intent_request_envelope(
+            write_intent_id=wid, tenant_id=tid, actor_id=user["uid"],
+            actor_type=actor_type, b6_outcome=b6o, target_entity=te,
+            requested_deltas=body.get("proposed_deltas"),
+            intent=body.get("intent"), created_at=now)
+        passthrough = {k: body[k] for k in _WI_PASS_KEYS if k in body}
+        passthrough.setdefault("requester_id", user["uid"])
+        outcome = _wi.prepare_write_intent_outcome(
+            write_intent_id=wid, tenant_id=tid, actor_id=user["uid"],
+            actor_type=actor_type, envelope=env, b6_outcome=b6o,
+            b6_request=b6r, created_at=now, **passthrough)
+        write_intent_store.save_request({
+            "id": wid, "tenant_id": tid, "b6_runtime_request_id": b6rid,
+            "target_entity_type": env["target_entity_type"],
+            "target_entity_id": env["target_entity_id"],
+            "write_intent_request_hash": env["write_intent_request_hash"],
+            "requested_by": user["uid"], "requested_by_actor_type": actor_type,
+            "payload_json": json.dumps(env), "created_at": now})
+        write_intent_store.save_outcome({
+            "id": str(uuid.uuid4()), "tenant_id": tid, "write_intent_id": wid,
+            "b6_runtime_request_id": b6rid,
+            "target_entity_id": env["target_entity_id"],
+            "write_intent_status": outcome["write_intent_status"],
+            "write_intent_decision_status": outcome[
+                "write_intent_decision_status"],
+            "write_intent_outcome_kind": outcome["write_intent_outcome_kind"],
+            "dominant_signal": outcome["dominant_signal"],
+            "transaction_escrow_hash": outcome["transaction_escrow_capsule"][
+                "transaction_escrow_hash"],
+            "escrowed_commit_readiness_certificate_hash": outcome[
+                "escrowed_commit_readiness_certificate"][
+                "escrowed_commit_readiness_certificate_hash"],
+            "write_intent_request_hash": outcome.get(
+                "write_intent_request_hash") or "",
+            "write_intent_decision_hash": outcome["write_intent_decision_hash"],
+            "write_intent_state_hash": outcome["write_intent_state_hash"],
+            "write_intent_proof_bundle_hash": outcome[
+                "write_intent_proof_bundle"]["write_intent_proof_bundle_hash"],
+            "release_gate_status": outcome["write_intent_release_gate_report"][
+                "release_gate_status"],
+            "ready_for_future_commit_only": 1 if outcome[
+                "ready_for_future_commit_only"] else 0,
+            "decided_by": user["uid"], "decided_by_actor_type": actor_type,
+            "payload_json": json.dumps(outcome), "created_at": now,
+            "updated_at": now})
+        _wi_emit(tid, event_type="WRITE_INTENT_REQUEST_OPENED",
+                 write_intent_id=wid, actor_id=user["uid"],
+                 actor_type=actor_type,
+                 state_hash=env["write_intent_request_hash"],
+                 detail={"target_entity_id": env["target_entity_id"]})
+        _wi_emit(tid, event_type="WRITE_INTENT_OUTCOME_PREPARED",
+                 write_intent_id=wid, actor_id=user["uid"],
+                 actor_type=actor_type,
+                 state_hash=outcome["write_intent_state_hash"],
+                 detail={"status": outcome["write_intent_status"]})
+        audit.append(event_type="AI_WRITE_INTENT_DRAFT_PREPARED",
+                     actor=user["uid"], payload={"write_intent_id": wid,
+                     "status": outcome["write_intent_status"]})
+        return outcome
+
+    @app.post("/ai-tools/write-intents")
+    async def create_write_intent(body: dict,
+                                  user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        return _prepare_write_intent(user["tid"], user, body or {})
+
+    @app.get("/ai-tools/write-intents")
+    async def list_write_intents(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return write_intent_store.list_requests(tenant_id=user["tid"])
+
+    @app.get("/ai-tools/write-intents/{write_intent_id}")
+    async def get_write_intent(write_intent_id: str,
+                               user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _load_write_intent_or_404(write_intent_id, user)
+
+    @app.get("/ai-tools/write-intents/{write_intent_id}/outcome")
+    async def get_write_intent_outcome(write_intent_id: str,
+                                       user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _load_write_intent_outcome_or_404(write_intent_id, user)
+
+    @app.get("/ai-tools/write-intents/{write_intent_id}/safe")
+    async def get_write_intent_safe(write_intent_id: str,
+                                    user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        o = _load_write_intent_outcome_or_404(write_intent_id, user)
+        restricted = user["role"] in ("viewer", "technician", "accountant")
+        return {"write_intent_id": write_intent_id, "tenant_id": o[
+            "tenant_id"], "write_intent_status": o["write_intent_status"],
+            "write_intent_decision_status": o["write_intent_decision_status"],
+            "write_intent_outcome_kind": o["write_intent_outcome_kind"],
+            "dominant_reason_code": o["dominant_reason_code"],
+            "draft_only": True, "escrow_only": True, "is_commit": False,
+            "is_execution": False, "produced_external_effect": False,
+            "released_effect": False, "activated_commitment": False,
+            "commit_executable_now": False,
+            "ready_for_future_commit_only": o["ready_for_future_commit_only"],
+            "review_package_hash": o["review_package"]["review_package_hash"],
+            "transaction_escrow_hash": o["transaction_escrow_capsule"][
+                "transaction_escrow_hash"],
+            "all_signals": ([] if restricted else o["all_signals"]),
+            "write_intent_decision_hash": o["write_intent_decision_hash"],
+            "write_intent_proof_bundle_hash": o["write_intent_proof_bundle"][
+                "write_intent_proof_bundle_hash"],
+            "honesty_labels": _wi.HONESTY_LABELS}
+
+    def _wisub(field):
+        async def getter(write_intent_id: str,
+                         user: dict = Depends(current_user)):
+            require_permission(user, "case.read")
+            o = _load_write_intent_outcome_or_404(write_intent_id, user)
+            return {"write_intent_id": write_intent_id, field: o.get(field),
+                    "honesty_labels": _wi.HONESTY_LABELS}
+        return getter
+
+    for _slug, _field in _WI_SUBFIELDS.items():
+        app.add_api_route(
+            f"/ai-tools/write-intents/{{write_intent_id}}/{_slug}",
+            _wisub(_field), methods=["GET"])
+
+    @app.post("/ai-tools/write-intents/{write_intent_id}/fault-injection-check")
+    async def write_intent_fault_injection_check(
+            write_intent_id: str, user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        o = _load_write_intent_outcome_or_404(write_intent_id, user)
+        h = o["write_intent_fault_injection_harness"]
+        _wi_emit(user["tid"], event_type="WRITE_INTENT_FAULT_INJECTED",
+                 write_intent_id=write_intent_id, actor_id=user["uid"],
+                 actor_type=("ai_employee" if user["role"] == "ai_worker"
+                             else "human"),
+                 state_hash=h["write_intent_fault_injection_harness_hash"],
+                 detail={"status": h["harness_status"]})
+        return h
+
+    @app.post("/ai-tools/write-intents/{write_intent_id}/verify")
+    async def verify_write_intent_outcome(write_intent_id: str,
+                                          user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        o = _load_write_intent_outcome_or_404(write_intent_id, user)
+        recomputed = _wi._core_hash(
+            o, "write_intent_decision_hash", "write_intent_id",
+            "decided_by_actor_id", "decided_by_actor_type",
+            "write_intent_state_hash")
+        ok = recomputed == o["write_intent_decision_hash"]
+        return {"write_intent_id": write_intent_id,
+                "stored_write_intent_decision_hash": o[
+                    "write_intent_decision_hash"],
+                "recomputed_write_intent_decision_hash": recomputed,
+                "write_intent_decision_hash_valid": ok,
+                "verification_status": "VALID" if ok else "TAMPERED",
+                "honesty_labels": _wi.HONESTY_LABELS}
+
+    @app.get("/ai-tools/write-intents/{write_intent_id}/events")
+    async def write_intent_request_events(write_intent_id: str,
+                                          user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _load_write_intent_or_404(write_intent_id, user)
+        return {"write_intent_id": write_intent_id, "events":
+                write_intent_store.events(tenant_id=user["tid"],
+                                          write_intent_id=write_intent_id),
+                "honesty_labels": _wi.HONESTY_LABELS}
+
+    # Hoist the literal /ai-tools/actions/*, /ai-tools/broker/*,
+    # /ai-tools/runtime/* and /ai-tools/write-intents/* routes ahead of the
+    # earlier-registered parameterised /ai-tools/{tool_id}/* routes so first-
+    # match-wins routing does not capture them (e.g. /ai-tools/runtime/policy as
+    # /ai-tools/{tool_id}/policy -> 404).
     _param_ix = next((i for i, r in enumerate(app.router.routes)
                       if getattr(r, "path", "") == "/ai-tools/{tool_id}"), 0)
     _literal_routes = [r for r in app.router.routes
                        if getattr(r, "path", "").startswith("/ai-tools/actions")
                        or getattr(r, "path", "").startswith("/ai-tools/broker")
                        or getattr(r, "path", "").startswith(
-                           "/ai-tools/runtime")]
+                           "/ai-tools/runtime")
+                       or getattr(r, "path", "").startswith(
+                           "/ai-tools/write-intents")]
     for _r in _literal_routes:
         app.router.routes.remove(_r)
     for _off, _r in enumerate(_literal_routes):
