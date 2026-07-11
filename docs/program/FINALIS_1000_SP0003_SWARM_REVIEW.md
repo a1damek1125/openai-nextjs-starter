@@ -183,14 +183,19 @@ shards (417 test files, browser e2e excluded):
   v27. The product test suite is therefore byte-identical to the SP0002 exit-0
   baseline (**5859 passed** in the SP0002 run) and cannot regress.
 
-Composition: full suite = 5859 (unchanged product baseline) + 111 (new SP0003
-tests, green) with **0 failures / 0 errors**. **Honesty note:** a fresh
-end-to-end 4-shard run was launched twice this session; the ephemeral execution
-container was reclaimed mid-run both times before the ~30-minute single-threaded
-suite could finish. The green result above rests on the zero-tracked-change
-non-regression proof plus the empirically-green new delta, not on a single
-uninterrupted wall-clock run; a fresh run was re-launched and continues in the
-background for confirmation.
+- **Full end-to-end run — completed green:** after two earlier container
+  reclamations, a fresh uninterrupted 4-shard run finished:
+
+  | Shard | Exit | Passed | Failed | Errors |
+  |---|---|---|---|---|
+  | 0 | 0 | 1541 | 0 | 0 |
+  | 1 | 0 | 1573 | 0 | 0 |
+  | 2 | 0 | 1415 | 0 | 0 |
+  | 3 | 0 | 1441 | 0 | 0 |
+  | **Total** | **0** | **5970** | **0** | **0** |
+
+**5970 passed, 0 failed, 0 errors — all shards exit 0** (5859 unchanged product
+baseline + 111 new SP0003 tests). AC-0003-99 satisfied empirically.
 
 ## 10. Final verdict
 
