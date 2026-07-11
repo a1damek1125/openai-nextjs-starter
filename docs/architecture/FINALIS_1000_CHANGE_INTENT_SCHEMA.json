@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://finalis.local/schemas/FINALIS_1000_CHANGE_INTENT.json",
+  "title": "Finalis 1000 Architecture Change Intent Contract",
+  "description": "Declares intended architectural evolution. Intent is NOT authority: it cannot waive a hard invariant (SP0001 D-0001-04, INV-0001-06).",
+  "type": "object",
+  "required": ["change_id", "sp_id", "base_commit", "target_capabilities", "change_type"],
+  "additionalProperties": true,
+  "properties": {
+    "change_id": {"type": "string"},
+    "sp_id": {"type": "string"},
+    "base_commit": {"type": "string"},
+    "target_capabilities": {"type": "array", "items": {"type": "string"}},
+    "change_type": {
+      "type": "string",
+      "enum": ["INTERNAL_IMPLEMENTATION", "CAPABILITY_EXTENSION", "NEW_CAPABILITY",
+        "DECLARED_REPLACEMENT", "ARCHITECTURE_MIGRATION"]
+    },
+    "extends": {"type": "array", "items": {"type": "string"}},
+    "new_capabilities": {"type": "array", "items": {"type": "string"}},
+    "expected_paths": {"type": "array", "items": {"type": "string"}},
+    "expected_route_changes": {"type": "array", "items": {"type": "string"}},
+    "expected_data_changes": {"type": "array", "items": {"type": "string"}},
+    "expected_dependency_changes": {"type": "array"},
+    "expected_effect_boundary_changes": {"type": "array", "items": {"type": "string"}},
+    "non_goals": {"type": "array", "items": {"type": "string"}},
+    "waives": {
+      "type": "array",
+      "description": "Waiver scopes this change relies on. A hard-invariant marker here is REJECTED.",
+      "items": {"type": "string"}
+    }
+  }
+}
