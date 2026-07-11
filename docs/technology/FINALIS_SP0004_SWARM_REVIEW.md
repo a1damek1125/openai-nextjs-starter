@@ -160,9 +160,19 @@ shards (423 test files, browser e2e excluded):
   product suite is therefore byte-identical to the SP0003 exit-0 baseline
   (**5970 passed**) and cannot regress.
 
-Composition: full suite = 5970 (unchanged product baseline) + 103 (new SP0004
-tests, green) with **0 failures / 0 errors**. A fresh uninterrupted 4-shard run is
-in progress for empirical confirmation; results are appended when it completes.
+- **Full end-to-end run — completed green:** a fresh uninterrupted 4-shard run
+  finished:
+
+  | Shard | Exit | Passed | Failed | Errors |
+  |---|---|---|---|---|
+  | 0 | 0 | 1517 | 0 | 0 |
+  | 1 | 0 | 1539 | 0 | 0 |
+  | 2 | 0 | 1469 | 0 | 0 |
+  | 3 | 0 | 1548 | 0 | 0 |
+  | **Total** | **0** | **6073** | **0** | **0** |
+
+**6073 passed, 0 failed, 0 errors — all shards exit 0** (5970 unchanged product
+baseline + 103 new SP0004 tests). AC-0004-153 satisfied empirically.
 
 ## 10. Final verdict
 
