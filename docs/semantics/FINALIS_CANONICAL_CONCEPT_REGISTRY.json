@@ -1,0 +1,1053 @@
+{
+  "active_epoch": "epoch-0001-genesis",
+  "concepts": [
+    {
+      "aliases": [
+        "ai_task"
+      ],
+      "authority_semantics": [],
+      "canonical_key": "work.task",
+      "concept_id": "c-0001",
+      "concept_kind": "ENTITY",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [
+        "owned_work",
+        "work_item"
+      ],
+      "labels": {
+        "de": "Aufgabe",
+        "en": "Task",
+        "es": "Tarea",
+        "pl": "Zadanie"
+      },
+      "meaning_hash": "3138368dcbe38c478fbad96ce9e64a4fc4a79286cf14a2434e1cb5e51af034a2",
+      "normative_definition": "A canonical Task Contract admitted by the Secure Work Intake Registry (CORE-A2): a bounded, specified unit of requested work. NOT the same as an Owned Work item.",
+      "owner_capability": "core_a2_tasks",
+      "projection_refs": {},
+      "relationships": [
+        {
+          "target": "work.owned_work",
+          "type": "PRECEDES"
+        }
+      ],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [
+        "work_item"
+      ],
+      "authority_semantics": [],
+      "canonical_key": "work.owned_work",
+      "concept_id": "c-0002",
+      "concept_kind": "ENTITY",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [
+        "task"
+      ],
+      "labels": {
+        "de": "Eigene Arbeit",
+        "en": "Owned Work",
+        "es": "Trabajo propio",
+        "pl": "Praca własna"
+      },
+      "meaning_hash": "e7b770c8e88ffc551bbb7b769b33fa51aee5b8d0ec2d8a9f140c514e8f5a4827",
+      "normative_definition": "An admitted, owned unit of work the Employee OS owns over time (EMP-A1 work item): has an owner and a next-action/wait/blocker/completion. Distinct from a CORE-A2 Task Contract.",
+      "owner_capability": "emp_a1_work_inbox",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [
+        "Active(owned_work) => Owner AND (NextAction OR Wait OR Blocker OR Completion)  [SP0000 Zero-Lost-Work]"
+      ],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "work.wait_condition",
+      "concept_id": "c-0003",
+      "concept_kind": "STATE",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [],
+      "labels": {
+        "de": "Wartebedingung",
+        "en": "Wait Condition",
+        "es": "Condición de espera",
+        "pl": "Warunek oczekiwania"
+      },
+      "meaning_hash": "c58902732d3cda59a02cea610c0d5e7e097cb0a034c4f074c607fa74760a4fa3",
+      "normative_definition": "An explicit condition an owned work item is waiting on (time, human, external signal). A wait is not a blocker and not a failure.",
+      "owner_capability": "emp_a1_work_inbox",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "work.blocker",
+      "concept_id": "c-0004",
+      "concept_kind": "STATE",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [],
+      "labels": {
+        "de": "Blocker",
+        "en": "Blocker",
+        "es": "Bloqueo",
+        "pl": "Blokada"
+      },
+      "meaning_hash": "59ac11e9c8018e7002b05154d121d368843ced1d15559a2d52172b056646bc71",
+      "normative_definition": "An explicit impediment preventing progress on owned work. Distinct from a wait condition (expected) and from completion.",
+      "owner_capability": "emp_a1_work_inbox",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "case.case",
+      "concept_id": "c-0005",
+      "concept_kind": "ENTITY",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [
+        "run"
+      ],
+      "labels": {
+        "de": "Fall",
+        "en": "Case",
+        "es": "Caso",
+        "pl": "Sprawa"
+      },
+      "meaning_hash": "af4a5e023ec06ccc1d87d51e148807c0bd8b18d40578bed889646ea3f0f191c0",
+      "normative_definition": "A Case Graph case: the business matter being worked, with missing-info, promises and next-best-action. NOT a Run.",
+      "owner_capability": "case_graph",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "run.run",
+      "concept_id": "c-0006",
+      "concept_kind": "ENTITY",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [
+        "case",
+        "completed"
+      ],
+      "labels": {
+        "de": "Lauf",
+        "en": "Run",
+        "es": "Ejecución",
+        "pl": "Przebieg"
+      },
+      "meaning_hash": "07ff0574e224357b37310194bc84612d60ca85e13c36034b8e45a267b9288cb3",
+      "normative_definition": "A causally-verifiable, event-sourced execution record in the Run Ledger (CORE-A3). A run terminating is NOT a business outcome.",
+      "owner_capability": "core_a3_run_ledger",
+      "projection_refs": {},
+      "relationships": [
+        {
+          "target": "event.event",
+          "type": "PRODUCES"
+        }
+      ],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "event.event",
+      "concept_id": "c-0007",
+      "concept_kind": "EVENT",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [],
+      "labels": {
+        "de": "Ereignis",
+        "en": "Event",
+        "es": "Evento",
+        "pl": "Zdarzenie"
+      },
+      "meaning_hash": "354032850db0d8f0e6bbf47eeb2b7f0d5a55f3dc3efe35ff72f6621da46f4a3d",
+      "normative_definition": "An immutable recorded occurrence with stable identity, tenant scope and a semantic epoch reference; interpreted under the epoch active at occurrence.",
+      "owner_capability": "agent_runtime_governance",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {
+        "bitemporal": true,
+        "interpret_under": "occurrence_epoch"
+      },
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "action.action",
+      "concept_id": "c-0008",
+      "concept_kind": "EVENT",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [
+        "completed",
+        "effect",
+        "outcome"
+      ],
+      "labels": {
+        "de": "Aktion",
+        "en": "Action",
+        "es": "Acción",
+        "pl": "Akcja"
+      },
+      "meaning_hash": "ea32e79c16a3c764b02356a7e6bd89a0fa2f676d750a7b4c43252276638cadcd",
+      "normative_definition": "An ATTEMPTED operation (e.g. send message, dial). An action attempted is not an effect achieved and not an outcome. EMAIL_SENT != CUSTOMER_RESPONDED.",
+      "owner_capability": "action_communication",
+      "projection_refs": {},
+      "relationships": [
+        {
+          "target": "effect.effect",
+          "type": "PRECEDES"
+        }
+      ],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "effect.effect",
+      "concept_id": "c-0009",
+      "concept_kind": "STATE",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [
+        "completed",
+        "action",
+        "outcome"
+      ],
+      "labels": {
+        "de": "Effekt",
+        "en": "Effect",
+        "es": "Efecto",
+        "pl": "Efekt"
+      },
+      "meaning_hash": "06d53673bc63eced319783c75156379b01bdd2c8894163ab59e6a80c6ed5655a",
+      "normative_definition": "A concrete change of state produced by executing an action (real or, in the current closed-effect system, simulated/inert). An effect is not the business outcome. INVOICE_SENT != PAYMENT_RECEIVED.",
+      "owner_capability": "tool_b9_local_transaction",
+      "projection_refs": {},
+      "relationships": [
+        {
+          "target": "outcome.business_outcome",
+          "type": "PRECEDES"
+        }
+      ],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "CLOSED_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "outcome.business_outcome",
+      "concept_id": "c-0010",
+      "concept_kind": "STATE",
+      "deprecated_aliases": [],
+      "epistemic_rules": [
+        "requires ADMITTED_FACT or CERTIFIED_CONCLUSION to assert achieved"
+      ],
+      "forbidden_aliases": [
+        "completed",
+        "activity",
+        "effect"
+      ],
+      "labels": {
+        "de": "Geschäftsergebnis",
+        "en": "Business Outcome",
+        "es": "Resultado de negocio",
+        "pl": "Wynik biznesowy"
+      },
+      "meaning_hash": "5ccaf14e1fe6e706a0048363c819c13c0028386e26cc5d86031b4ded17100674",
+      "normative_definition": "A verified business result (e.g. deal WON, payment received). Under bounded scope, not-verified => not achieved (CLOSED_WORLD). Distinct from activity, effect and formal completion.",
+      "owner_capability": "lifecycle_universal",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "CLOSED_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "lifecycle.completion",
+      "concept_id": "c-0011",
+      "concept_kind": "STATE",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [
+        "completed",
+        "closed_by_user",
+        "message_sent"
+      ],
+      "labels": {
+        "de": "Abschluss",
+        "en": "Completion",
+        "es": "Finalización",
+        "pl": "Ukończenie"
+      },
+      "meaning_hash": "63d5c91b83b155baaca6619228c2ccd90398774551713313d4de02ae5c845e86",
+      "normative_definition": "The formal completion predicate of the Universal Lifecycle: an explicit, bounded rule over invariants. Completion is a proven predicate, not a UI click or a dispatched message.",
+      "owner_capability": "lifecycle_universal",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [
+        "completion is a predicate over lifecycle invariants, not a provider/UI/model assertion"
+      ],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "CLOSED_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "evidence.claim",
+      "concept_id": "c-0012",
+      "concept_kind": "ARTIFACT",
+      "deprecated_aliases": [],
+      "epistemic_rules": [
+        "SIGNAL",
+        "OBSERVATION",
+        "CLAIM",
+        "CORROBORATED_CLAIM"
+      ],
+      "forbidden_aliases": [
+        "fact",
+        "verified"
+      ],
+      "labels": {
+        "de": "Behauptung",
+        "en": "Claim",
+        "es": "Afirmación",
+        "pl": "Twierdzenie"
+      },
+      "meaning_hash": "97cf4ec1117abb649ef90502dc9392c1940a99edbae5a6e5399452658ee145a6",
+      "normative_definition": "An assertion carrying an explicit epistemic status. A claim is NOT a fact. An LLM/model output enters only as a CLAIM (never ADMITTED_FACT directly).",
+      "owner_capability": "core_a6_artifacts",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [
+        "CLAIM != ADMITTED_FACT (INV-0002-05)",
+        "LLM output admits only as CLAIM (INV-0002-13)"
+      ],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "evidence.fact",
+      "concept_id": "c-0013",
+      "concept_kind": "STATE",
+      "deprecated_aliases": [],
+      "epistemic_rules": [
+        "ADMITTED_FACT"
+      ],
+      "forbidden_aliases": [
+        "claim",
+        "guess",
+        "assumption"
+      ],
+      "labels": {
+        "de": "Fakt",
+        "en": "Fact",
+        "es": "Hecho",
+        "pl": "Fakt"
+      },
+      "meaning_hash": "975bd3a305a1db87d1ccc87e7c938dcc725df9f22be715cfd3659e285c5a2e56",
+      "normative_definition": "An ADMITTED_FACT: an assertion that has passed a defined admission process (evidence-bound). A fact is not automatically an external-world truth and not an execution authority.",
+      "owner_capability": "evidence",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [
+        "admission requires a defined process, not a model guess",
+        "ADMITTED_FACT != CERTIFIED_CONCLUSION != AUTHORITY"
+      ],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "evidence.evidence",
+      "concept_id": "c-0014",
+      "concept_kind": "ENTITY",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [
+        "artifact",
+        "claim"
+      ],
+      "labels": {
+        "de": "Nachweis",
+        "en": "Evidence",
+        "es": "Evidencia",
+        "pl": "Dowód"
+      },
+      "meaning_hash": "0daea3b10084cdfa457303c1016d2b71d7059989baf5a2d52f96b985134d9115",
+      "normative_definition": "An evidence object in the Evidence Trust Fabric: content with chain, provenance, holds and proof reports. Evidence supports claims/facts; it is not itself a claim or an artifact.",
+      "owner_capability": "evidence",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "artifact.artifact",
+      "concept_id": "c-0015",
+      "concept_kind": "ARTIFACT",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [
+        "evidence"
+      ],
+      "labels": {
+        "de": "Artefakt",
+        "en": "Artifact",
+        "es": "Artefacto",
+        "pl": "Artefakt"
+      },
+      "meaning_hash": "ad5b5b5a2a05792705ef015df431f5d4ccb7a6cac419b40459fa68d248502dd9",
+      "normative_definition": "An evidence-grade produced artifact in the Claim Graph (CORE-A6) behind a materialization firewall. Distinct from evidence (input) and claim (assertion).",
+      "owner_capability": "core_a6_artifacts",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [
+        "bounded",
+        "non_transferable",
+        "single_use / consume-checked"
+      ],
+      "canonical_key": "approval.approval",
+      "concept_id": "c-0016",
+      "concept_kind": "ENTITY",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [],
+      "labels": {
+        "de": "Genehmigung",
+        "en": "Approval",
+        "es": "Aprobación",
+        "pl": "Zatwierdzenie"
+      },
+      "meaning_hash": "88634dfb388969e3ab6228f9f59b7e846737792b5724c09b61ab49dd6bdb189c",
+      "normative_definition": "A human approval decision producing a bounded, non-transferable, consumable grant (CORE-A4). An approval artifact is not an unlimited execution right.",
+      "owner_capability": "core_a4_approvals",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [
+        "narrows down the ladder, never widens"
+      ],
+      "canonical_key": "authority.authority",
+      "concept_id": "c-0017",
+      "concept_kind": "RELATION",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [
+        "permission",
+        "capability"
+      ],
+      "labels": {
+        "de": "Autorität",
+        "en": "Authority",
+        "es": "Autoridad",
+        "pl": "Uprawnienie władcze"
+      },
+      "meaning_hash": "847798de790489cf4b9a02c485decb8b655a180a9654adfb0ed9f1a358fd7b69",
+      "normative_definition": "The right to authorize an effect within the governance chain. Authority lives only in the Finalis governance chain; model output, external content, certified conclusions and the frontend are never authority.",
+      "owner_capability": "core_a1_identity",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [
+        "MODEL_OUTPUT/EXTERNAL_CONTENT/CERTIFIED/FRONTEND != AUTHORITY (SP0000 INV-0000-02..05)"
+      ],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [
+        "rbac_permission"
+      ],
+      "authority_semantics": [],
+      "canonical_key": "authority.permission",
+      "concept_id": "c-0018",
+      "concept_kind": "RELATION",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [
+        "authority",
+        "capability",
+        "tool"
+      ],
+      "labels": {
+        "de": "Berechtigung",
+        "en": "Permission",
+        "es": "Permiso",
+        "pl": "Pozwolenie"
+      },
+      "meaning_hash": "b95ddccac8fd381567405187b8781d2cee8f3f3dadd46e388f38be281eeef6b0",
+      "normative_definition": "An RBAC grantable permission (deny-by-default catalog). A permission is a policy grant, distinct from governance authority and from a tool.",
+      "owner_capability": "rbac_admin",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "tool.tool",
+      "concept_id": "c-0019",
+      "concept_kind": "ENTITY",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [
+        "skill",
+        "capability",
+        "permission"
+      ],
+      "labels": {
+        "de": "Werkzeug",
+        "en": "Tool",
+        "es": "Herramienta",
+        "pl": "Narzędzie"
+      },
+      "meaning_hash": "958c567f5bb02f8d00f3671373358542c9aab40bf2c6aa5d822c66effb4acbf9",
+      "normative_definition": "A governed tool capability admitted by the Zero-Trust Tool Registry (TOOL-B1). A tool is not a skill and not an RBAC permission and not an SP0001 architecture capability.",
+      "owner_capability": "tool_b1_registry",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "skill.skill",
+      "concept_id": "c-0020",
+      "concept_kind": "ENTITY",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [
+        "tool"
+      ],
+      "labels": {
+        "de": "Fähigkeit",
+        "en": "Skill",
+        "es": "Habilidad",
+        "pl": "Umiejętność"
+      },
+      "meaning_hash": "d767ee6ed11460c4c881da24114c5f12fc75d5d61fa8db2fe90d2fd155120114",
+      "normative_definition": "A composable, versioned procedure/SOP the Employee OS can apply (strategic Finalis IP; FUTURE — not yet implemented in the repo). A skill orchestrates tools; it is not itself a tool.",
+      "owner_capability": "emp_a1_work_inbox",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "PROPOSED",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "capability.architecture_capability",
+      "concept_id": "c-0021",
+      "concept_kind": "RELATION",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [
+        "tool",
+        "permission",
+        "skill"
+      ],
+      "labels": {
+        "de": "Architektur-Fähigkeit",
+        "en": "Architecture Capability",
+        "es": "Capacidad de arquitectura",
+        "pl": "Zdolność architektury"
+      },
+      "meaning_hash": "590f5d9d0d1697b9b465bac057ce99bf18a644570a3ef66e9a8211f8ef129517",
+      "normative_definition": "SP0001 architecture-twin capability: an OWNERSHIP unit of code, NOT a business-domain concept. It must never be used as a business alias for tool or permission (cross-SP collision guard).",
+      "owner_capability": "portal_shell",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [
+        "architecture capability is a projection of SP0001, not a business concept"
+      ],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "provider.provider",
+      "concept_id": "c-0022",
+      "concept_kind": "ENTITY",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [],
+      "labels": {
+        "de": "Anbieter",
+        "en": "Provider",
+        "es": "Proveedor",
+        "pl": "Dostawca"
+      },
+      "meaning_hash": "75b4af6939be43ea6232e9221b4960f559d57714acb3fd526fa29faee5379024",
+      "normative_definition": "An external execution provider (telephony/email/calendar/LLM/etc.), currently mocked. A provider's vocabulary is external and must map through an anti-corruption adapter; it never becomes internal semantic authority.",
+      "owner_capability": "action_communication",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [
+        "EXTERNAL_PROTOCOL != INTERNAL_SEMANTIC_AUTHORITY (INV-0002-09)"
+      ],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "OPEN_WORLD"
+    },
+    {
+      "aliases": [
+        "ai_employee"
+      ],
+      "authority_semantics": [],
+      "canonical_key": "employee.employee",
+      "concept_id": "c-0023",
+      "concept_kind": "ROLE",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [
+        "worker",
+        "agent"
+      ],
+      "labels": {
+        "de": "Mitarbeiter",
+        "en": "Employee",
+        "es": "Empleado",
+        "pl": "Pracownik"
+      },
+      "meaning_hash": "219a718018d10c0d6c1bc8582e262017a2c8db19c5d0710b0b52b5840f204681",
+      "normative_definition": "The single user-facing AI Employee identity (CORE-A1). One employee may use many internal specialist workers, but Owned Work has one ownership model.",
+      "owner_capability": "core_a1_identity",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [
+        "one user-facing employee, many internal workers (SP0000 INV-0000-06)"
+      ],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [
+        "ai_worker"
+      ],
+      "authority_semantics": [],
+      "canonical_key": "employee.worker",
+      "concept_id": "c-0024",
+      "concept_kind": "ROLE",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [
+        "employee",
+        "agent"
+      ],
+      "labels": {
+        "de": "Fachkraft",
+        "en": "Worker",
+        "es": "Especialista",
+        "pl": "Specjalista"
+      },
+      "meaning_hash": "b2d77cda7b4dc50438ac0f5e07138ba0a822d778cbfe4a681d2bfedbe09fa99f",
+      "normative_definition": "An internal specialist worker (bounded capabilities, possibly a different model). A worker is an internal actor, not the user-facing employee and not a generic agent.",
+      "owner_capability": "rbac_admin",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "employee.agent",
+      "concept_id": "c-0025",
+      "concept_kind": "ROLE",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [
+        "employee",
+        "worker"
+      ],
+      "labels": {
+        "de": "Agent",
+        "en": "Agent",
+        "es": "Agente",
+        "pl": "Agent"
+      },
+      "meaning_hash": "a1a98ed1f2622b52c817c43bd68ccb74988669895277fbe37331ac920762457a",
+      "normative_definition": "A generic autonomous agent process. Distinct from the Finalis Employee identity and from an internal worker.",
+      "owner_capability": "agent_runtime_governance",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "memory.memory",
+      "concept_id": "c-0026",
+      "concept_kind": "ENTITY",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [],
+      "labels": {
+        "de": "Gedächtnis",
+        "en": "Memory",
+        "es": "Memoria",
+        "pl": "Pamięć"
+      },
+      "meaning_hash": "a6d5a578a8d65ac8bbeeaf470c29248c0660f0dac84ed6aee0c0dae716b33d4c",
+      "normative_definition": "Governed memory: facts/preferences/relationship context with provenance and temporal validity. Memory is data, never authority; tenant-scoped.",
+      "owner_capability": "crm",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "OPEN_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "memory.experience",
+      "concept_id": "c-0027",
+      "concept_kind": "ENTITY",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [],
+      "labels": {
+        "de": "Erfahrung",
+        "en": "Experience",
+        "es": "Experiencia",
+        "pl": "Doświadczenie"
+      },
+      "meaning_hash": "e18258610a36ac7d80d6eee3a0db473cf25377f8e64266762600d1548ff72d0f",
+      "normative_definition": "A captured outcome-attributed experience feeding controlled learning (FUTURE). Experience yields candidate lessons via a gated pipeline, never direct production mutation.",
+      "owner_capability": "agent_runtime_governance",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "PROPOSED",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "relationship.promise",
+      "concept_id": "c-0028",
+      "concept_kind": "STATE",
+      "deprecated_aliases": [],
+      "epistemic_rules": [
+        "CLAIM",
+        "CORROBORATED_CLAIM"
+      ],
+      "forbidden_aliases": [
+        "commitment"
+      ],
+      "labels": {
+        "de": "Versprechen",
+        "en": "Promise",
+        "es": "Promesa",
+        "pl": "Obietnica"
+      },
+      "meaning_hash": "7f5b03b86f1164222fc80336f78ce4956712b34558e6d96dcb3a821394642c7b",
+      "normative_definition": "A stated intention to do something (tracked by the PromiseTracker). A promise is a CLAIM-level intention, not a verified commitment.",
+      "owner_capability": "crm",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "relationship.commitment",
+      "concept_id": "c-0029",
+      "concept_kind": "STATE",
+      "deprecated_aliases": [],
+      "epistemic_rules": [
+        "CORROBORATED_CLAIM",
+        "ADMITTED_FACT"
+      ],
+      "forbidden_aliases": [
+        "promise"
+      ],
+      "labels": {
+        "de": "Verpflichtung",
+        "en": "Commitment",
+        "es": "Compromiso",
+        "pl": "Zobowiązanie"
+      },
+      "meaning_hash": "eb90a6ebd70d726b32df93c30d1d0cceed6fce0bd9a3bfae91c18938dc46c1a1",
+      "normative_definition": "A verified, corroborated obligation. A commitment carries a higher epistemic status than a promise; the two must not be conflated.",
+      "owner_capability": "crm",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "party.party",
+      "concept_id": "c-0030",
+      "concept_kind": "ENTITY",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [],
+      "labels": {
+        "de": "Partei",
+        "en": "Party",
+        "es": "Parte",
+        "pl": "Strona"
+      },
+      "meaning_hash": "2da295f9dbea1c6f98bd0169ef501f2b372b4bf06354720206d068ebf944d9a1",
+      "normative_definition": "A party in the Relationship Core: person or organization. Supertype of customer.",
+      "owner_capability": "crm",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "party.customer",
+      "concept_id": "c-0031",
+      "concept_kind": "ENTITY",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [],
+      "labels": {
+        "de": "Kunde",
+        "en": "Customer",
+        "es": "Cliente",
+        "pl": "Klient"
+      },
+      "meaning_hash": "31bbc919915a95b4fafaa58f538e23a70564e8c5cc54e26c933d3d53a6f44bbf",
+      "normative_definition": "A party in a commercial relationship. A customer IS_A party.",
+      "owner_capability": "crm",
+      "projection_refs": {},
+      "relationships": [
+        {
+          "target": "party.party",
+          "type": "IS_A"
+        }
+      ],
+      "semantic_invariants": [],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "language.control_language",
+      "concept_id": "c-0032",
+      "concept_kind": "ROLE",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [
+        "work_language"
+      ],
+      "labels": {
+        "de": "Steuersprache",
+        "en": "Control Language",
+        "es": "Idioma de control",
+        "pl": "Język sterowania"
+      },
+      "meaning_hash": "aa45c0cc45d994b97916597971d7c45cc2f45502285cf29262047ef23fd45647",
+      "normative_definition": "The language in which a human controls Finalis. Independent of the work language; control language never defines business semantics (SP0000 INV-0000-12).",
+      "owner_capability": "rbac_admin",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [
+        "control language must not define business semantics"
+      ],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "aliases": [],
+      "authority_semantics": [],
+      "canonical_key": "language.work_language",
+      "concept_id": "c-0033",
+      "concept_kind": "ROLE",
+      "deprecated_aliases": [],
+      "epistemic_rules": [],
+      "forbidden_aliases": [
+        "control_language"
+      ],
+      "labels": {
+        "de": "Arbeitssprache",
+        "en": "Work Language",
+        "es": "Idioma de trabajo",
+        "pl": "Język pracy"
+      },
+      "meaning_hash": "76fd174f15f224875dafb3150f98ca405f0242ba98b1cdeda380e81024ac4351",
+      "normative_definition": "The language in which work is performed with a customer. Independent of the control language; a label/translation cannot change business meaning.",
+      "owner_capability": "action_communication",
+      "projection_refs": {},
+      "relationships": [],
+      "semantic_invariants": [
+        "translation cannot redefine semantics (INV-0002-08)"
+      ],
+      "semantic_revision": 1,
+      "state_semantics": {},
+      "status": "ACTIVE",
+      "temporal_semantics": {},
+      "world_assumption": "PARTIAL_WORLD"
+    }
+  ],
+  "program": "FINALIS_1000",
+  "schema_version": "1.0.0",
+  "sp": "SP0002",
+  "twin_kind": "SEMANTIC_DOMAIN_TWIN"
+}

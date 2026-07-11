@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://finalis.local/schemas/FINALIS_SEMANTIC_PROOF_ENVELOPE.json",
+  "title": "Finalis Proof-Carrying Semantic Change Envelope",
+  "description": "Deterministic, UNSIGNED evidence a semantic epoch change satisfied the gate. EVIDENCE, not authority (INV-0002-16).",
+  "type": "object",
+  "required": ["envelope_version", "base_epoch", "candidate_epoch", "old_registry_hash", "new_registry_hash", "p0_findings", "p1_findings", "classification"],
+  "properties": {
+    "envelope_version": {"type": "string"},
+    "base_epoch": {"type": "string"},
+    "candidate_epoch": {"type": "string"},
+    "old_registry_hash": {"type": "string"},
+    "new_registry_hash": {"type": "string"},
+    "change_intent_hash": {"type": "string"},
+    "compatibility_result_hash": {"type": "string"},
+    "impact_cone_hash": {"type": "string"},
+    "shadow_evaluation_hash": {"type": "string"},
+    "historical_replay_hash": {"type": "string"},
+    "mapping_validation_hash": {"type": "string"},
+    "p0_findings": {"type": "integer", "minimum": 0},
+    "p1_findings": {"type": "integer", "minimum": 0},
+    "classification": {"const": "EVIDENCE_NOT_AUTHORITY"},
+    "envelope_hash": {"type": "string"}
+  }
+}

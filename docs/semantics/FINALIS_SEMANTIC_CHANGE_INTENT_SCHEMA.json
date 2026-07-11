@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://finalis.local/schemas/FINALIS_SEMANTIC_CHANGE_INTENT.json",
+  "title": "Finalis Semantic Change Intent",
+  "description": "Declares intended semantic evolution. Intent is NOT authority: a breaking change still requires a new epoch (INV-0002-10); partial rollout is forbidden (INV-0002-11).",
+  "type": "object",
+  "required": ["change_id", "base_epoch", "target_concepts", "change_classes"],
+  "properties": {
+    "change_id": {"type": "string"},
+    "base_epoch": {"type": "string"},
+    "target_concepts": {"type": "array", "items": {"type": "string"}},
+    "change_classes": {"type": "array", "items": {"enum": ["EDITORIAL", "LABEL_ONLY", "NARROWING", "WIDENING", "NEW_CONCEPT", "DEPRECATION", "RELATIONSHIP_CHANGE", "WORLD_ASSUMPTION_CHANGE", "EPISTEMIC_CHANGE"]}},
+    "expected_compatibility": {"type": "object"},
+    "affected_projections": {"type": "array"},
+    "historical_impact_expected": {"type": "boolean"},
+    "lgtt_impact_expected": {"type": "boolean"},
+    "migration_required": {"type": "boolean"}
+  }
+}
