@@ -11020,7 +11020,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
 
     # ===== EMP-A1 v1: Employee Work Inbox — R-FSAFEQ Governed Work ==========
     # ===== Admission Fabric (LOCAL, intake+admission only, no execution) ====
-    from ..ai_employee import employee_work_inbox as _wi
+    from ..ai_employee import employee_work_inbox as _ewi
     from ..ai_employee.employee_work_inbox_store import EmployeeWorkInboxStore
     work_inbox_store = EmployeeWorkInboxStore(db)
     app.state.work_inbox_store = work_inbox_store
@@ -11031,7 +11031,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
     def _wi_emit(tid, *, event_type, work_item_id, user, decision_hash, detail):
         seq = work_inbox_store.next_sequence(tenant_id=tid)
         prev = work_inbox_store.last_event(tenant_id=tid)
-        ev = _wi.build_work_event(
+        ev = _ewi.build_work_event(
             event_type=event_type, tenant_id=tid, work_item_id=work_item_id,
             actor_id=user["uid"], actor_type=_wi_actor_type(user),
             decision_hash=decision_hash,
@@ -11099,7 +11099,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
             existing_by_key[(tid, key)] = {
                 "work_item_id": prior["work_item_id"],
                 "canonical_request_hash": prior.get("canonical_request_hash")}
-        flow_key = _wi.compute_flow_key(
+        flow_key = _ewi.compute_flow_key(
             tenant_id=tid, req=req,
             intent={"work_type": req.get("work_type"),
                     "canonical_target_refs": req.get("requested_target_refs")},
@@ -11110,7 +11110,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                 tenant_id=tid, flow_key=flow_key),
             "recent_fingerprints": work_inbox_store.recent_fingerprints(
                 tenant_id=tid),
-            "capacity_state": {r: 64 for r in _wi.DEMAND_RESOURCES},
+            "capacity_state": {r: 64 for r in _ewi.DEMAND_RESOURCES},
             "shard_pressures": {},
         }
 
@@ -11137,9 +11137,9 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
             "required_capabilities": intent.get("required_capabilities"),
             "approval_requirement": decision["approval"]["approval_class"],
             "approval_valid": decision["approval"].get("approval_valid"),
-            "risk_class": (_wi.WORK_TYPE_REGISTRY.get(intent.get("work_type"))
+            "risk_class": (_ewi.WORK_TYPE_REGISTRY.get(intent.get("work_type"))
                            or {}).get("risk_profile_id"),
-            "priority_class": (_wi.WORK_TYPE_REGISTRY.get(intent.get("work_type"))
+            "priority_class": (_ewi.WORK_TYPE_REGISTRY.get(intent.get("work_type"))
                                or {}).get("default_priority_class", "NORMAL"),
             "queue_group": decision["queue_group"],
             "flow_key": decision["flow_key"],
@@ -11171,9 +11171,9 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
             "run_created": False, "tool_transaction_started": False,
             "provider_called": False, "external_state_mutated": False,
             "outbox_released": False,
-            "honesty_labels": _wi.HONESTY_LABELS,
+            "honesty_labels": _ewi.HONESTY_LABELS,
         }
-        proj["work_item_hash"] = _wi._sha({k: v for k, v in proj.items()
+        proj["work_item_hash"] = _ewi._sha({k: v for k, v in proj.items()
                                            if k not in ("work_item_hash",
                                                         "honesty_labels")})
         return proj
@@ -11185,7 +11185,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         req["tenant_id"] = req.get("tenant_id") or tid
         work_inbox_store.begin_immediate()
         snapshot = _wi_snapshot(tid, req)
-        decision = _wi.evaluate_admission(snapshot, req, {})
+        decision = _ewi.evaluate_admission(snapshot, req, {})
         now = utcnow()
         idem_status = decision["idempotency"]["idempotency_status"]
         # Exact retry -> return the existing item, charge nothing.
@@ -11196,7 +11196,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
             return {"work_item": existing, "disposition": "ADMIT_READY",
                     "idempotency_status": "EXACT_RETRY", "charged": False,
                     "decision_hash": decision["decision_hash"],
-                    "honesty_labels": _wi.HONESTY_LABELS}
+                    "honesty_labels": _ewi.HONESTY_LABELS}
         # Conflict -> same idempotency key, different canonical request. Never
         # persist a second row under that key; return the conflict + the prior
         # item, charge nothing.
@@ -11208,7 +11208,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                     "idempotency_status": "CONFLICT", "charged": False,
                     "reason_codes": ["IDEMPOTENCY_PAYLOAD_CONFLICT"],
                     "decision_hash": decision["decision_hash"],
-                    "honesty_labels": _wi.HONESTY_LABELS}
+                    "honesty_labels": _ewi.HONESTY_LABELS}
         seq = work_inbox_store.next_created_sequence(tenant_id=tid)
         proj = _wi_project(tid, req, decision, user, now, seq)
         actor_type = _wi_actor_type(user)
@@ -11232,14 +11232,14 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
             "updated_at": now})
         # Admission receipt (durable decision record).
         dseq = work_inbox_store.next_decision_sequence(tenant_id=tid)
-        receipt = {"admission_receipt_id": "rcpt-" + _wi._sha(
+        receipt = {"admission_receipt_id": "rcpt-" + _ewi._sha(
             {"w": proj["work_item_id"], "d": dseq})[:16],
             "tenant_id": tid, "work_item_id": proj["work_item_id"],
             "decision_sequence": dseq, "disposition": decision["disposition"],
             "decision_hash": decision["decision_hash"],
             "reason_codes": decision["reason_codes"], "charged":
             decision["charge_allowed"], "created_at": now}
-        receipt["admission_receipt_hash"] = _wi._sha(receipt)
+        receipt["admission_receipt_hash"] = _ewi._sha(receipt)
         work_inbox_store.save_receipt({
             "id": str(uuid.uuid4()), "tenant_id": tid,
             "work_item_id": proj["work_item_id"], "decision_sequence": dseq,
@@ -11248,7 +11248,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
             "admission_receipt_hash": receipt["admission_receipt_hash"],
             "payload_json": json.dumps(receipt), "created_at": now})
         proj["admission_receipt_hash"] = receipt["admission_receipt_hash"]
-        proj["work_item_hash"] = _wi._sha({k: v for k, v in proj.items()
+        proj["work_item_hash"] = _ewi._sha({k: v for k, v in proj.items()
                                            if k not in ("work_item_hash",
                                                         "honesty_labels")})
         work_inbox_store.update_item(proj["work_item_id"], tenant_id=tid, row={
@@ -11296,19 +11296,19 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                     "idempotency_status"], "charged": decision["charge_allowed"],
                 "decision_hash": decision["decision_hash"],
                 "reason_codes": decision["reason_codes"],
-                "honesty_labels": _wi.HONESTY_LABELS}
+                "honesty_labels": _ewi.HONESTY_LABELS}
 
     def _wi_transition(tid, user, it, event_type, new_state, detail=None):
         src = it["work_item_state"]
-        if not _wi.is_transition_allowed(src, new_state):
+        if not _ewi.is_transition_allowed(src, new_state):
             raise HTTPException(409, {"error": "invalid_transition",
                                       "from": src, "to": new_state})
         now = utcnow()
         it["work_item_state"] = new_state
-        it["work_item_version"] = _wi._int(it.get("work_item_version"), 1) + 1
-        it["projection_version"] = _wi._int(it.get("projection_version"), 1) + 1
+        it["work_item_version"] = _ewi._int(it.get("work_item_version"), 1) + 1
+        it["projection_version"] = _ewi._int(it.get("projection_version"), 1) + 1
         it["updated_at"] = now
-        it["work_item_hash"] = _wi._sha({k: v for k, v in it.items()
+        it["work_item_hash"] = _ewi._sha({k: v for k, v in it.items()
                                          if k not in ("work_item_hash",
                                                       "honesty_labels")})
         work_inbox_store.update_item(it["work_item_id"], tenant_id=tid, row={
@@ -11325,9 +11325,9 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
     @app.get("/ai-employee/work-inbox/policy")
     async def wi_policy(user: dict = Depends(current_user)):
         require_permission(user, "case.read")
-        return {"emp_a1_model_version": _wi.EMP_A1_MODEL_VERSION,
-                "spec_revision": _wi.EMP_A1_SPEC_REVISION,
-                "r_fsafeq_policy_version": _wi.RFSAFEQ_POLICY_VERSION,
+        return {"emp_a1_model_version": _ewi.EMP_A1_MODEL_VERSION,
+                "spec_revision": _ewi.EMP_A1_SPEC_REVISION,
+                "r_fsafeq_policy_version": _ewi.RFSAFEQ_POLICY_VERSION,
                 "inbox_and_admission_only": True, "creates_emp_a2_run": False,
                 "executes_work": False, "calls_provider": False,
                 "calls_tool": False, "starts_b9_transaction": False,
@@ -11337,22 +11337,22 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                 "has_run_endpoint": False, "has_execute_endpoint": False,
                 "has_provider_call_endpoint": False, "has_send_endpoint": False,
                 "has_b9_transaction_endpoint": False,
-                "work_item_states": _wi.WORK_ITEM_STATES,
-                "forbidden_states": sorted(_wi.FORBIDDEN_STATES),
-                "dispositions": _wi.DISPOSITIONS,
-                "demand_resources": _wi.DEMAND_RESOURCES,
-                "calibration_states": _wi.CALIBRATION_STATES,
-                "drift_states": _wi.DRIFT_STATES,
-                "risk_budget_states": _wi.RISK_BUDGET_STATES,
-                "backlog_states": _wi.BACKLOG_STATES,
-                "enabled_sources": sorted(_wi.ENABLED_SOURCES),
-                "disabled_sources": sorted(_wi.DISABLED_SOURCES),
-                "reason_codes": sorted(_wi.REASON_CODES),
+                "work_item_states": _ewi.WORK_ITEM_STATES,
+                "forbidden_states": sorted(_ewi.FORBIDDEN_STATES),
+                "dispositions": _ewi.DISPOSITIONS,
+                "demand_resources": _ewi.DEMAND_RESOURCES,
+                "calibration_states": _ewi.CALIBRATION_STATES,
+                "drift_states": _ewi.DRIFT_STATES,
+                "risk_budget_states": _ewi.RISK_BUDGET_STATES,
+                "backlog_states": _ewi.BACKLOG_STATES,
+                "enabled_sources": sorted(_ewi.ENABLED_SOURCES),
+                "disabled_sources": sorted(_ewi.DISABLED_SOURCES),
+                "reason_codes": sorted(_ewi.REASON_CODES),
                 "permissions": ["employee_work_inbox_read",
                                 "employee_work_inbox_submit",
                                 "employee_work_inbox_claim",
                                 "employee_work_inbox_prepare_handoff"],
-                "honesty_labels": _wi.HONESTY_LABELS}
+                "honesty_labels": _ewi.HONESTY_LABELS}
 
     @app.get("/ai-employee/work-inbox/registry")
     async def wi_registry(user: dict = Depends(current_user)):
@@ -11360,9 +11360,9 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         return {"tenant_id": user["tid"],
                 "work_type_registry": {k: {kk: vv for kk, vv in v.items()}
                                        for k, v in
-                                       _wi.WORK_TYPE_REGISTRY.items()},
-                "priority_classes": _wi.PRIORITY_CLASSES,
-                "honesty_labels": _wi.HONESTY_LABELS}
+                                       _ewi.WORK_TYPE_REGISTRY.items()},
+                "priority_classes": _ewi.PRIORITY_CLASSES,
+                "honesty_labels": _ewi.HONESTY_LABELS}
 
     @app.get("/ai-employee/work-inbox/counts")
     async def wi_counts(user: dict = Depends(current_user)):
@@ -11370,28 +11370,28 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         return {"tenant_id": user["tid"],
                 "counts_by_state": work_inbox_store.counts_by_state(
                     tenant_id=user["tid"]),
-                "honesty_labels": _wi.HONESTY_LABELS}
+                "honesty_labels": _ewi.HONESTY_LABELS}
 
     def _wi_simple_get(path, builder):
         async def getter(user: dict = Depends(current_user)):
             require_permission(user, "case.read")
-            return dict(builder(user), honesty_labels=_wi.HONESTY_LABELS)
+            return dict(builder(user), honesty_labels=_ewi.HONESTY_LABELS)
         app.add_api_route("/ai-employee/work-inbox/" + path, getter,
                           methods=["GET"])
 
     _wi_simple_get("capacity", lambda u: {
         "tenant_id": u["tid"], "capacity_vector": {r: 64 for r in
-                                                   _wi.DEMAND_RESOURCES},
-        "demand_resources": _wi.DEMAND_RESOURCES})
+                                                   _ewi.DEMAND_RESOURCES},
+        "demand_resources": _ewi.DEMAND_RESOURCES})
     _wi_simple_get("risk", lambda u: {
-        "tenant_id": u["tid"], "risk_budget_states": _wi.RISK_BUDGET_STATES,
+        "tenant_id": u["tid"], "risk_budget_states": _ewi.RISK_BUDGET_STATES,
         "calibration_enabled": False, "alpha_total_not_increasable": True})
     _wi_simple_get("calibration", lambda u: {
-        "tenant_id": u["tid"], "calibration_states": _wi.CALIBRATION_STATES,
+        "tenant_id": u["tid"], "calibration_states": _ewi.CALIBRATION_STATES,
         "default_calibration_state": "DISABLED",
         "calibration_disabled_by_default": True})
     _wi_simple_get("drift", lambda u: {
-        "tenant_id": u["tid"], "drift_states": _wi.DRIFT_STATES,
+        "tenant_id": u["tid"], "drift_states": _ewi.DRIFT_STATES,
         "conservative_fallback": "deterministic_upper_envelope"})
     _wi_simple_get("flow-state", lambda u: {
         "tenant_id": u["tid"], "flows": work_inbox_store.list_flow_state(
@@ -11401,7 +11401,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         "counts_by_state": work_inbox_store.counts_by_state(tenant_id=u["tid"])})
     _wi_simple_get("observer-health", lambda u: {
         "tenant_id": u["tid"], "observer_health_state": "OBSERVER_HEALTHY",
-        "model_check": _wi.run_bounded_model_check()["all_invariants_hold"]})
+        "model_check": _ewi.run_bounded_model_check()["all_invariants_hold"]})
 
     @app.get("/ai-employee/work-inbox/items")
     async def wi_items(state: str = "", limit: int = 100,
@@ -11439,10 +11439,10 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         _wi_load_item_or_404(work_item_id, user)
         evs = work_inbox_store.events(tenant_id=user["tid"],
                                       work_item_id=work_item_id)
-        rebuild = _wi.rebuild_work_item_projection(evs)
+        rebuild = _ewi.rebuild_work_item_projection(evs)
         return {"work_item_id": work_item_id, "events": evs,
                 "projection_rebuild": rebuild,
-                "honesty_labels": _wi.HONESTY_LABELS}
+                "honesty_labels": _ewi.HONESTY_LABELS}
 
     _WI_ITEM_SUBFIELDS = {
         "intent": ("compiled_intent_hash", "work_type", "target_refs",
@@ -11466,7 +11466,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
             it = _wi_load_item_or_404(work_item_id, user)
             return dict({f: it.get(f) for f in fields},
                         work_item_id=work_item_id,
-                        honesty_labels=_wi.HONESTY_LABELS)
+                        honesty_labels=_ewi.HONESTY_LABELS)
         return getter
 
     for _slug, _fields in _WI_ITEM_SUBFIELDS.items():
@@ -11479,12 +11479,12 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                                  user: dict = Depends(current_user)):
         require_permission(user, "case.read")
         it = _wi_load_item_or_404(work_item_id, user)
-        hr = _wi.handoff_ready(item=dict(
+        hr = _ewi.handoff_ready(item=dict(
             it, claim_current=True, fence_current=True,
             capabilities_present=True, approval_ok=it.get("approval_valid")
             is not False, source_watermark_current=True), reference_decision=None)
         return {"work_item_id": work_item_id, "handoff_ready": hr,
-                "honesty_labels": _wi.HONESTY_LABELS}
+                "honesty_labels": _ewi.HONESTY_LABELS}
 
     @app.post("/ai-employee/work-inbox/items/{work_item_id}/reserve")
     async def wi_reserve(work_item_id: str, body: dict = None,
@@ -11521,7 +11521,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         work_inbox_store.save_claim({
             "id": claim_id, "tenant_id": user["tid"],
             "work_item_id": work_item_id,
-            "work_item_version": _wi._int(it.get("work_item_version"), 1),
+            "work_item_version": _ewi._int(it.get("work_item_version"), 1),
             "claimant_id": user["uid"], "fencing_token": new_fence,
             "state": "ACTIVE", "payload_json": json.dumps({
                 "claim_id": claim_id, "fencing_token": new_fence,
@@ -11541,7 +11541,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         return {"work_item_id": work_item_id,
                 "active_fencing_token": it.get("active_fencing_token"),
                 "renewed": it["work_item_state"] == "CLAIMED",
-                "honesty_labels": _wi.HONESTY_LABELS}
+                "honesty_labels": _ewi.HONESTY_LABELS}
 
     @app.post("/ai-employee/work-inbox/items/{work_item_id}/release-claim")
     async def wi_release_claim(work_item_id: str, body: dict = None,
@@ -11563,7 +11563,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         require_permission(user, "case.update")
         work_inbox_store.begin_immediate()
         it = _wi_load_item_or_404(work_item_id, user)
-        hr = _wi.handoff_ready(item=dict(
+        hr = _ewi.handoff_ready(item=dict(
             it, claim_current=it["work_item_state"] == "CLAIMED",
             fence_current=True, capabilities_present=True,
             approval_ok=it.get("approval_valid") is not False,
@@ -11576,7 +11576,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                                              work_item_id=work_item_id)
         now = utcnow()
         cap_id = "hoc-" + str(uuid.uuid4())
-        nonce_hash = _wi._sha({"n": str(uuid.uuid4())})
+        nonce_hash = _ewi._sha({"n": str(uuid.uuid4())})
         cap = {"handoff_capability_id": cap_id, "tenant_id": user["tid"],
                "intended_consumer": "EMP-A2", "work_item_id": work_item_id,
                "work_item_version": it.get("work_item_version"),
@@ -11586,12 +11586,12 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                "admission_receipt_hash": it.get("admission_receipt_hash"),
                "issued_at": now, "state": "PREPARED",
                "emp_a1_created_run": False, "consumed_by_emp_a1": False}
-        cap["capability_hash"] = _wi._sha({k: v for k, v in cap.items()
+        cap["capability_hash"] = _ewi._sha({k: v for k, v in cap.items()
                                            if k not in ("capability_hash",)})
         work_inbox_store.save_handoff({
             "id": cap_id, "tenant_id": user["tid"], "work_item_id": work_item_id,
-            "work_item_version": _wi._int(it.get("work_item_version"), 1),
-            "fencing_token": _wi._int(it.get("active_fencing_token")),
+            "work_item_version": _ewi._int(it.get("work_item_version"), 1),
+            "fencing_token": _ewi._int(it.get("active_fencing_token")),
             "intended_consumer": "EMP-A2", "state": "PREPARED",
             "capability_hash": cap["capability_hash"],
             "payload_json": json.dumps(cap), "issued_at": now, "expires_at": ""})
@@ -11600,7 +11600,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                                                cap["capability_hash"]})
         return {"work_item": it2, "handoff_capability": cap,
                 "labels": hr["labels"], "no_emp_a2_run_created": True,
-                "honesty_labels": _wi.HONESTY_LABELS}
+                "honesty_labels": _ewi.HONESTY_LABELS}
 
     @app.post("/ai-employee/work-inbox/items/{work_item_id}/invalidate-handoff")
     async def wi_invalidate_handoff(work_item_id: str, body: dict = None,
@@ -11619,7 +11619,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         else:
             work_inbox_store.commit()
         return {"work_item_id": work_item_id, "handoff_invalidated": True,
-                "honesty_labels": _wi.HONESTY_LABELS}
+                "honesty_labels": _ewi.HONESTY_LABELS}
 
     def _mk_wi_action(new_state, event_type, perm="case.update"):
         async def handler(work_item_id: str, body: dict = None,
@@ -11645,7 +11645,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         require_permission(user, "case.update")
         it = _wi_load_item_or_404(work_item_id, user)
         target = (body or {}).get("defer_state", "DEFERRED_POLICY")
-        if target not in _wi.DEFERRED_STATES:
+        if target not in _ewi.DEFERRED_STATES:
             target = "DEFERRED_POLICY"
         return _wi_transition(user["tid"], user, it, "WORK_ITEM_DEFERRED",
                               target, {"deferred": True})
@@ -11674,10 +11674,10 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         it = _wi_load_item_or_404(work_item_id, user)
         it["assignee_type"] = (body or {}).get("assignee_type", "HUMAN")
         it["assignee_id"] = (body or {}).get("assignee_id", user["uid"])
-        it["assignment_version"] = _wi._int(it.get("assignment_version")) + 1
+        it["assignment_version"] = _ewi._int(it.get("assignment_version")) + 1
         now = utcnow()
         it["updated_at"] = now
-        it["work_item_hash"] = _wi._sha({k: v for k, v in it.items()
+        it["work_item_hash"] = _ewi._sha({k: v for k, v in it.items()
                                          if k not in ("work_item_hash",
                                                       "honesty_labels")})
         work_inbox_store.update_item(work_item_id, tenant_id=user["tid"], row={
@@ -11691,7 +11691,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                  detail={"assignee_id": it["assignee_id"]})
         work_inbox_store.commit()
         return {"work_item": it, "grants_execution": False,
-                "honesty_labels": _wi.HONESTY_LABELS}
+                "honesty_labels": _ewi.HONESTY_LABELS}
 
     @app.post("/ai-employee/work-inbox/items/{work_item_id}/unassign")
     async def wi_unassign(work_item_id: str, body: dict = None,
@@ -11709,7 +11709,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
             "updated_at": now})
         work_inbox_store.commit()
         return {"work_item_id": work_item_id, "assignee_type": "UNASSIGNED",
-                "honesty_labels": _wi.HONESTY_LABELS}
+                "honesty_labels": _ewi.HONESTY_LABELS}
 
     @app.post("/ai-employee/work-inbox/items/{work_item_id}/reprioritize")
     async def wi_reprioritize(work_item_id: str, body: dict,
@@ -11719,7 +11719,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         pc = (body or {}).get("priority_class")
         if pc == "CRITICAL":
             require_permission(user, "case.update")  # critical-priority gate
-        if pc in _wi.PRIORITY_CLASSES:
+        if pc in _ewi.PRIORITY_CLASSES:
             it["priority_class"] = pc
             now = utcnow()
             it["updated_at"] = now
@@ -11732,18 +11732,18 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
             work_inbox_store.commit()
         return {"work_item_id": work_item_id,
                 "priority_class": it.get("priority_class"),
-                "bypasses_approval": False, "honesty_labels": _wi.HONESTY_LABELS}
+                "bypasses_approval": False, "honesty_labels": _ewi.HONESTY_LABELS}
 
     @app.post("/ai-employee/work-inbox/items/{work_item_id}/request-clarification")
     async def wi_request_clarification(work_item_id: str, body: dict = None,
                                        user: dict = Depends(current_user)):
         require_permission(user, "case.update")
         it = _wi_load_item_or_404(work_item_id, user)
-        plan = _wi.plan_clarification(intent={
+        plan = _ewi.plan_clarification(intent={
             "missing_fields": it.get("missing_input_fields") or []})
         return {"work_item_id": work_item_id, "clarification_plan": plan,
                 "llm_supplied_values": False, "honesty_labels":
-                _wi.HONESTY_LABELS}
+                _ewi.HONESTY_LABELS}
 
     @app.post("/ai-employee/work-inbox/items/{work_item_id}/respond-clarification")
     async def wi_respond_clarification(work_item_id: str, body: dict,
@@ -11756,7 +11756,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                  detail={"fields": list((body or {}).get("answers", {}).keys())})
         work_inbox_store.commit()
         return {"work_item_id": work_item_id, "recorded": True,
-                "honesty_labels": _wi.HONESTY_LABELS}
+                "honesty_labels": _ewi.HONESTY_LABELS}
 
     @app.post("/ai-employee/work-inbox/items/{work_item_id}/bind-approval")
     async def wi_bind_approval(work_item_id: str, body: dict,
@@ -11769,7 +11769,7 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                  detail={"approval_refs": (body or {}).get("refs", [])})
         work_inbox_store.commit()
         return {"work_item_id": work_item_id, "approval_bound": True,
-                "honesty_labels": _wi.HONESTY_LABELS}
+                "honesty_labels": _ewi.HONESTY_LABELS}
 
     @app.get("/ai-employee/work-inbox/bundles/{bundle_id}")
     async def wi_get_bundle(bundle_id: str,
@@ -11789,8 +11789,8 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
         _wi_load_item_or_404(wid, user)
         evs = work_inbox_store.events(tenant_id=user["tid"], work_item_id=wid)
         return {"work_item_id": wid,
-                "projection_rebuild": _wi.rebuild_work_item_projection(evs),
-                "honesty_labels": _wi.HONESTY_LABELS}
+                "projection_rebuild": _ewi.rebuild_work_item_projection(evs),
+                "honesty_labels": _ewi.HONESTY_LABELS}
 
     @app.post("/ai-employee/work-inbox/simulate-policy")
     async def wi_simulate_policy(body: dict,
@@ -11800,12 +11800,12 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
             "requests", [])]
         snap = {"tenant_id": user["tid"], "existing_by_key": {},
                 "recent_fingerprints": [],
-                "capacity_state": {r: 64 for r in _wi.DEMAND_RESOURCES},
+                "capacity_state": {r: 64 for r in _ewi.DEMAND_RESOURCES},
                 "shard_pressures": {}}
-        sim = _wi.simulate_policy(
+        sim = _ewi.simulate_policy(
             snapshot=snap, requests=reqs, baseline_policy={},
             candidate_policy=(body or {}).get("candidate_policy") or {})
-        return dict(sim, honesty_labels=_wi.HONESTY_LABELS)
+        return dict(sim, honesty_labels=_ewi.HONESTY_LABELS)
 
     @app.post("/ai-employee/work-inbox/run-reference-kernel-drill")
     async def wi_reference_drill(body: dict = None,
@@ -11823,10 +11823,10 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
             idempotency_key=(body or {}).get("idempotency_key", "drill-1")))
         snap = {"tenant_id": user["tid"], "existing_by_key": {},
                 "recent_fingerprints": [],
-                "capacity_state": {r: 64 for r in _wi.DEMAND_RESOURCES},
+                "capacity_state": {r: 64 for r in _ewi.DEMAND_RESOURCES},
                 "shard_pressures": {}}
-        d1 = _wi.evaluate_admission(snap, req, {})
-        d2 = _wi.evaluate_admission(snap, req, {})
+        d1 = _ewi.evaluate_admission(snap, req, {})
+        d2 = _ewi.evaluate_admission(snap, req, {})
         return {"reference_kernel_deterministic":
                 d1["decision_hash"] == d2["decision_hash"],
                 "decision_hash": d1["decision_hash"],
@@ -11835,16 +11835,16 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                 "tool_transaction_started": d1["tool_transaction_started"],
                 "provider_called": d1["provider_called"],
                 "outbox_released": d1["outbox_released"],
-                "honesty_labels": _wi.HONESTY_LABELS}
+                "honesty_labels": _ewi.HONESTY_LABELS}
 
     @app.post("/ai-employee/work-inbox/run-concurrency-drill")
     async def wi_concurrency_drill(body: dict = None,
                                    user: dict = Depends(current_user)):
         require_permission(user, "case.read")
-        mc = _wi.run_bounded_model_check()
+        mc = _ewi.run_bounded_model_check()
         return {"model_check": mc, "at_most_one_active_claim": True,
                 "monotonic_fencing": True, "run_created": False,
-                "honesty_labels": _wi.HONESTY_LABELS}
+                "honesty_labels": _ewi.HONESTY_LABELS}
 
     @app.post("/ai-employee/work-inbox/run-risk-drill")
     async def wi_risk_drill(body: dict = None,
@@ -11869,26 +11869,26 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
                 idempotency_key="risk-" + name))
             snap = {"tenant_id": user["tid"], "existing_by_key": {},
                     "recent_fingerprints": [],
-                    "capacity_state": {r: 64 for r in _wi.DEMAND_RESOURCES},
+                    "capacity_state": {r: 64 for r in _ewi.DEMAND_RESOURCES},
                     "shard_pressures": {}}
-            d = _wi.evaluate_admission(snap, req, {})
+            d = _ewi.evaluate_admission(snap, req, {})
             cases[name] = {"disposition": d["disposition"],
                            "run_created": d["run_created"]}
         return {"cases": cases, "no_run_created": True, "no_provider_called": True,
-                "honesty_labels": _wi.HONESTY_LABELS}
+                "honesty_labels": _ewi.HONESTY_LABELS}
 
     @app.post("/ai-employee/work-inbox/inbox-drill")
     async def wi_inbox_drill(body: dict = None,
                              user: dict = Depends(current_user)):
         require_permission(user, "case.read")
-        mc = _wi.run_bounded_model_check()
+        mc = _ewi.run_bounded_model_check()
         return {"model_check_holds": mc["all_invariants_hold"],
                 "run_created": False, "tool_transaction_started": False,
                 "provider_called": False, "tool_called": False,
                 "message_sent": False, "payment_executed": False,
                 "external_crm_mutated": False, "outbox_released": False,
                 "external_state_mutated": False,
-                "honesty_labels": _wi.HONESTY_LABELS}
+                "honesty_labels": _ewi.HONESTY_LABELS}
 
     # ---- UI pages -------------------------------------------------------------------------------------
     ui.mount(app)
