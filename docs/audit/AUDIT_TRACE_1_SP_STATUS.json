@@ -1,0 +1,422 @@
+{
+  "audit_id": "AUDIT-TRACE-1",
+  "audit_type": "AUDIT_ONLY_NO_CODE_CHANGE",
+  "generated_from": "repository_only",
+  "repository": "a1damek1125/openai-nextjs-starter",
+  "branch": "claude/finalis-ai-casewoker-blueprint-f1huse",
+  "head_commit": "135de7bca2ffc674986c53df46892dc0e66b0871",
+  "head_subject": "EMP-A1 v1: resolve remaining name collisions with B7 write-intent block",
+  "remote_sync": "IN_SYNC_WITH_ORIGIN",
+  "working_tree": "CLEAN",
+  "total_commits": 106,
+  "earliest_commit": "c2e86a7 (2023-08-17, Initial commit — upstream Next.js starter template)",
+  "first_finalis_commit": "1a57c7f (2026-07-07, Add Finalis AI blueprint)",
+  "python_version": "3.11.15",
+  "latest_migration_version": 27,
+  "migration_versions_contiguous": true,
+  "create_table_statements": 108,
+  "test_files_collected": 398,
+  "tests_collected": 5640,
+  "browser_e2e_excluded": true,
+  "status_legend": [
+    "IMPLEMENTED_AND_TESTED",
+    "IMPLEMENTED_PARTIALLY",
+    "IMPLEMENTED_NOT_WIRED",
+    "IMPLEMENTED_NOT_TESTED",
+    "SCAFFOLD_ONLY",
+    "MOCK_ONLY",
+    "DOC_ONLY",
+    "SUPERSEDED",
+    "NOT_FOUND"
+  ],
+  "production_legend": ["PRODUCTION_READY", "NOT_PRODUCTION_READY", "UNKNOWN"],
+  "sps": [
+    {
+      "id": "DOCS-BLUEPRINT",
+      "title": "Finalis AI blueprint + SOTA review + red-team + readiness docs (docs 1-45)",
+      "commits": ["1a57c7f", "873132a", "5f937b8", "5f937b8", "44e128a"],
+      "status": "DOC_ONLY",
+      "production": "UNKNOWN",
+      "evidence": "docs/finalis-ai/*; specification and readiness matrices only, no runtime",
+      "notes": "Design corpus predating executable code."
+    },
+    {
+      "id": "SCAFFOLD-1",
+      "title": "Executable scaffold: state machine, 12 scoring models, autonomy ladder, audit chain, completion loop, OCR router, WebScout policy",
+      "commits": ["8071a54", "2979cd6", "0e9d116"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/state_machine.py, finalis/scoring*, finalis/completion_loop.py; commit claims 102 passing tests",
+      "notes": "OCR/WebScout/LGGT are seams (Option-B decision), not real providers."
+    },
+    {
+      "id": "VOICE-ENGINE",
+      "title": "Finalis Voice Engine open core: gateway, ASR/TTS routers, understanding extractor, dialogue policy, case-graph connector",
+      "commits": ["a8e15a7", "734d8a0"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/voice/*.py (1106 lines); tests/test_voice_engine.py (26 tests)",
+      "notes": "ASR/TTS are routers over MOCK provider seams; no real speech vendor wired."
+    },
+    {
+      "id": "CASE-GRAPH",
+      "title": "Case Graph service layer: CaseGraphService, MissingInfoService, PromiseTracker, NBA engine, 4-outcome ActionGate, CompletionLoop",
+      "commits": ["47cb24e"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/ case-graph service modules; 23-step E2E lifecycle test",
+      "notes": null
+    },
+    {
+      "id": "CONVERSATION-INTELLIGENCE",
+      "title": "Conversation Intelligence Engine: diarized time-stamped analysis with evidence-bound facts",
+      "commits": ["8379db9"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "tests/test_conversation_intelligence*.py (11 tests)",
+      "notes": null
+    },
+    {
+      "id": "ACTION-COMM-ENGINE",
+      "title": "Action & Communication Engine: gate->consent->rate-limit->route->compose->approve->schedule->send->track",
+      "commits": ["9b8cb1a"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/actions/adapters.py; 25 passing tests",
+      "notes": "Delivery via NovuMock/ChatwootMock — MOCK_ONLY at the send boundary."
+    },
+    {
+      "id": "COMMAND-CENTER",
+      "title": "Case Command Center: dashboard service (13 sections) + server-rendered HTML view",
+      "commits": ["618a7a3", "76fefa3"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "dashboard service + 19 passing tests + regression fixes",
+      "notes": null
+    },
+    {
+      "id": "FULL-PRODUCT-E2E",
+      "title": "Full-product E2E: voice -> CI -> case graph -> completion loop -> action engine -> upload -> dashboard -> WON on one audit chain",
+      "commits": ["96707d0"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "tests/test_full_product_e2e*.py",
+      "notes": null
+    },
+    {
+      "id": "PORTAL-CORE",
+      "title": "Working portal: SQLite+migrations, FastAPI REST, auth+RBAC, portal UI, seed, browser E2E",
+      "commits": ["61c0ea7"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/portal/app.py, db.py, ui.py; migration v1",
+      "notes": "SQLite dev shell; single-writer assumption noted in db.py."
+    },
+    {
+      "id": "UNIVERSAL-LIFECYCLE",
+      "title": "Universal lifecycle logic: LifecycleVector, completion rule, hard blockers, outcome invariants, 8 scoring models, evidence bundles",
+      "commits": ["f869bf9"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/lifecycle/*.py (929 lines); 63 tests",
+      "notes": null
+    },
+    {
+      "id": "TELEPHONY",
+      "title": "Telephony & Call Control Engine: mock provider, permission gate (11 blockers), anti-harassment, human overrides, consent, dispositions, retry",
+      "commits": ["7d017e5"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/telephony/*.py (750 lines); migration v2; tests/test_telephony.py (49 tests)",
+      "notes": "engine.py dial() is a mock provider — MOCK_ONLY at the dial boundary."
+    },
+    {
+      "id": "ADMIN-RBAC",
+      "title": "Admin/Tenant/User/RBAC control plane: 9 roles, 45-permission catalog, deny-by-default AccessDecision, tenant isolation, hashed API keys, IAM seams",
+      "commits": ["6804d92"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/admin/*.py (427 lines); 21 tests",
+      "notes": "IAM adapter seams, not real IdP integration."
+    },
+    {
+      "id": "SCHEDULING",
+      "title": "Calendar & Scheduling Engine: 12 appointment types, availability+slots, confirmation tokens, reschedule/cancel/no-show, mock calendar+video providers",
+      "commits": ["3a334de", "4e663fc"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/scheduling/*.py (325 lines); migrations v4; tests/test_scheduling*.py (29 tests)",
+      "notes": "Mock calendar/video providers — MOCK_ONLY."
+    },
+    {
+      "id": "AGENT-RUNTIME-GOV",
+      "title": "Agent Runtime Governance & Observability: AgentTrace w/ secret redaction, PolicyEnforcementGate, autonomy budgets, shadow mode, feature flags",
+      "commits": ["a96c025"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/governance/*.py (283 lines); 18 tests",
+      "notes": null
+    },
+    {
+      "id": "PORTAL-WIRING",
+      "title": "Portal Wiring W1B/W1C/W2/W3: admin/scheduling/governance APIs + UI + browser E2E + provider honesty labels",
+      "commits": ["9c6a951", "6acd65a", "a301d6f", "7f3a1be"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "35 API tests + UI sections + browser E2E",
+      "notes": "Introduced provider honesty labels (mock disclosure) into the UI."
+    },
+    {
+      "id": "QUOTE-CPQ",
+      "title": "Quote Builder / CPQ Q-A..Q-D: CPQ domain + Decimal pricing, migration v3, QuoteStore, 24 API endpoints, mock providers, UI, browser E2E",
+      "commits": ["19d7019", "1e97937", "0487b91", "3a5c145"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/quotes/*.py (1154 lines); migration v3; tests/test_quote*.py (76 tests)",
+      "notes": "Payment/PDF/e-sign are mock providers — MOCK_ONLY."
+    },
+    {
+      "id": "EVIDENCE-TRUST-FABRIC",
+      "title": "Evidence Trust Fabric V-A..V-F + Transparency Log + Evidence Report Package",
+      "commits": ["0c8e4a7", "d14cee8", "0bbbb92", "f56dfc9", "e6fac68", "dacc084", "64af164", "fe142f9"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/evidence/*.py (2801 lines); migrations v5-v6, v8; tests/test_evidence_*.py (269 tests)",
+      "notes": "Merkle transparency log + proof reports; local verification only."
+    },
+    {
+      "id": "RELATIONSHIP-CRM",
+      "title": "Relationship Core CRM-A..D: own-IP case-first CRM, migration v6/v7, CrmStore, 24 APIs, Customer Panel UI + browser E2E",
+      "commits": ["8f9ef28", "3c9345b", "efbba3a", "c13d6bc"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/crm/*.py (1025 lines); migration v7; tests/test_crm_*.py (63 tests)",
+      "notes": "crm_external_sync_* tables + cursors present; external sync is MOCK_ONLY (no real CRM vendor)."
+    },
+    {
+      "id": "CONSOLIDATE-1",
+      "title": "Integration baseline: merge Evidence + CRM, reconcile migrations, integration safety tests",
+      "commits": ["65c67f5"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "tests/test_integration_baseline.py (EXPECTED_DB_VERSION assertion)",
+      "notes": "Guards migration contiguity and cross-domain invariants."
+    },
+    {
+      "id": "CORE-A1",
+      "title": "Finalis AI Employee identity + authority boundary",
+      "commits": ["905a298"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/ai_employee/identity.py (146), authority.py (210); migration v9",
+      "notes": "Start of the proof-carrying governance ladder."
+    },
+    {
+      "id": "CORE-A2",
+      "title": "Secure Work Intake Registry + Canonical Task Contract",
+      "commits": ["bf10d9a", "e3ab54d"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/ai_employee/tasks.py (382); migration v10; hardened by swarm review",
+      "notes": null
+    },
+    {
+      "id": "CORE-A3",
+      "title": "Causally Verifiable Run Ledger + Event-Sourced Replay",
+      "commits": ["00e0452", "fb5c239"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/ai_employee/run_ledger.py (419); migration v11",
+      "notes": null
+    },
+    {
+      "id": "CORE-A4",
+      "title": "Human Approval Gate Foundation + Approval decisions + non-transferable grants",
+      "commits": ["0590e80", "af4d7fc"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/ai_employee/approvals.py (359), approval_decisions.py (305); migrations v12-v13",
+      "notes": null
+    },
+    {
+      "id": "CORE-A5",
+      "title": "ViktorAI Deterministic Lifecycle Kernel + Completion Loop",
+      "commits": ["f613489"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/ai_employee/lifecycle.py (774); migration v14",
+      "notes": null
+    },
+    {
+      "id": "CORE-A6",
+      "title": "ViktorAI Evidence-Grade Artifact System + Claim Graph + Materialization Firewall",
+      "commits": ["80ea4d0"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/ai_employee/artifacts.py (775); migration v15",
+      "notes": null
+    },
+    {
+      "id": "TOOL-B1",
+      "title": "Zero-Trust Tool Capability Governance Registry + Admission Firewall",
+      "commits": ["d08c07c"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/ai_employee/tool_registry.py (1215); migration v16",
+      "notes": null
+    },
+    {
+      "id": "TOOL-B2",
+      "title": "Formal Tool Descriptor Assurance Graph + Adversarial Robustness + Planner Selection Boundary",
+      "commits": ["da02379"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/ai_employee/tool_quality.py (1657); migration v17",
+      "notes": null
+    },
+    {
+      "id": "TOOL-B3",
+      "title": "Formal Protocol Contract Proof Kernel + Effect-Trace Semantics + Broker-Readiness Certificate",
+      "commits": ["dd24cd8"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/ai_employee/tool_contracts.py (1715); migration v18",
+      "notes": "Contract targets are *_LIKE descriptors (MCP/OpenAI Apps SDK/OpenAPI shapes), explicitly not real runtime integration."
+    },
+    {
+      "id": "TOOL-B4",
+      "title": "Causal Pre-Action Reference Monitor + Counterfactual Denial Twin + Temporal Policy Automaton",
+      "commits": ["7d827ff"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/ai_employee/tool_guardrails.py (1628); migration v19",
+      "notes": null
+    },
+    {
+      "id": "TOOL-B5",
+      "title": "Adversarially Verified Four-Plane Proof-Carrying Null Broker + Multi-Request Safety Lattice + Fault-Injection Release Gate",
+      "commits": ["7d2c44a"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/ai_employee/tool_broker.py (1823); migration v20",
+      "notes": "Null broker: proves it can broker without producing external effect."
+    },
+    {
+      "id": "TOOL-B6",
+      "title": "Verifiable Read-Path Runtime Microkernel + Output Provenance Bisimulation + Canary Exfiltration Harness",
+      "commits": ["48d15f7"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/ai_employee/tool_runtime.py (2208); migration v21",
+      "notes": "Read-path only."
+    },
+    {
+      "id": "TOOL-B7",
+      "title": "Transaction-Escrow Write-Intent Draft Runtime + Semantic Rollback-Attack Fence + Concurrent Draft Conflict Graph",
+      "commits": ["d28b6f7"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/ai_employee/tool_write_intent.py (2361); migration v22",
+      "notes": "Produces DRAFT write-intents only; never commits."
+    },
+    {
+      "id": "TOOL-B8",
+      "title": "Machine-Checkable Pre-B9 Assurance Envelope + Evidence Closure Net + Non-Delegable Artifact Seal",
+      "commits": ["d95be03"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/ai_employee/tool_commit_simulation.py (1814); migration v23",
+      "notes": "B9 authority firewall proven sealed (B8 can never activate/grant B9)."
+    },
+    {
+      "id": "TOOL-B9",
+      "title": "Finalis Transaction Twin + Proof-of-Execution local governed runtime",
+      "commits": ["5493e60", "b6db0f3"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/ai_employee/tool_local_transaction.py (1627); migration v24",
+      "notes": "Local governed runtime; inert outbox; produces proof-of-execution, no real external effect."
+    },
+    {
+      "id": "TOOL-B9.1",
+      "title": "Recovery Safety Case + Chaos Sentinel + Proof-of-Recovery local runtime",
+      "commits": ["c35d827", "d906a5e", "b7bb2f4"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/ai_employee/tool_local_recovery.py (1746); migration v25; ~230 tests / 12 files",
+      "notes": "Local-only recovery/rollback/abort/quarantine over B9; recovery never creates authority or external effect; emergency abort dominates."
+    },
+    {
+      "id": "TOOL-B9.2",
+      "title": "Governed Work Lineage Observatory local runtime",
+      "commits": ["c05681f", "7af76c2", "ca0b891", "cbf083a"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/ai_employee/tool_work_observability.py (1658); migration v26",
+      "notes": "Read-only derived-evidence observatory over B9/B9.1; Proof-of-Work-Outcome authorizes nothing."
+    },
+    {
+      "id": "EMP-A1",
+      "title": "Employee Work Inbox — R-FSAFEQ Governed Work Admission Fabric",
+      "commits": ["6e342e2", "1e2f3b7", "8d05ff9", "c95fd27", "135de7b"],
+      "status": "IMPLEMENTED_AND_TESTED",
+      "production": "NOT_PRODUCTION_READY",
+      "evidence": "finalis/ai_employee/employee_work_inbox.py (1343) + store (249); migration v27; 14 test files (~289 collected)",
+      "notes": "Intake+admission only; three kernels; prepares exactly one fenced single-use EMP-A2 handoff WITHOUT executing work. HEAD SP."
+    },
+    {
+      "id": "AUDIT-REPORT-1",
+      "title": "Prior full system truth audit + completed SP inventory (docs)",
+      "commits": ["4e39dd8"],
+      "status": "DOC_ONLY",
+      "production": "UNKNOWN",
+      "evidence": "docs/audits/AUDIT_REPORT_1_*.md/.json (7 files)",
+      "notes": "Reference documentation; superseded on counts by this AUDIT-TRACE-1 (see historical-claim verification)."
+    },
+    {
+      "id": "ROADMAP-LOCK-1",
+      "title": "Finalis AI Employee OS roadmap lock after TOOL-B8 (docs)",
+      "commits": ["19a3a0b"],
+      "status": "DOC_ONLY",
+      "production": "UNKNOWN",
+      "evidence": "docs/roadmap/ROADMAP_LOCK_1_*.md/.json (5 files); next_coding_sp=EMP-A2",
+      "notes": "SP_SEQUENCE corrected in-session to chain B9->B9.1->B9.2->EMP-A1->EMP-A2..A5."
+    },
+    {
+      "id": "EMP-A2",
+      "title": "Next locked mission (single-use fenced handoff consumer / bounded execution)",
+      "commits": [],
+      "status": "NOT_FOUND",
+      "production": "UNKNOWN",
+      "evidence": "Named as next_coding_sp in ROADMAP_LOCK_1_SP_SEQUENCE.json; no runtime module, migration, route, or test present",
+      "notes": "Locked but not implemented. EMP-A1 only PREPARES the handoff."
+    },
+    {
+      "id": "EMP-A3-A5",
+      "title": "Further locked employee missions",
+      "commits": [],
+      "status": "NOT_FOUND",
+      "production": "UNKNOWN",
+      "evidence": "Roadmap chain only",
+      "notes": "Not implemented."
+    },
+    {
+      "id": "TOOL-B10",
+      "title": "External Adapter Boundary (re-scoped)",
+      "commits": [],
+      "status": "NOT_FOUND",
+      "production": "UNKNOWN",
+      "evidence": "Re-scoped in roadmap doc; no external adapter, no real outbound network primitive exists in finalis/ (grep import requests|httpx|smtplib|boto3 = 0)",
+      "notes": "This is the first point where the system would gain a real external effect — not built."
+    }
+  ],
+  "historical_claim_verification": [
+    {"claim": "ROADMAP-LOCK-1 == 19a3a0b", "verdict": "TRUE", "evidence": "git log 19a3a0b = 'docs: add Finalis AI Employee OS roadmap lock after TOOL-B8'"},
+    {"claim": "AUDIT (AUDIT-REPORT-1) == 4e39dd8", "verdict": "TRUE", "evidence": "git log 4e39dd8 = 'docs: add full system truth audit and completed SP inventory (AUDIT-REPORT-1)'"},
+    {"claim": "TOOL-B8 == d95be03", "verdict": "TRUE", "evidence": "git log d95be03 = 'TOOL-B8 v5: ... Pre-B9 Assurance Envelope ...'"},
+    {"claim": "TOOL-B9.1 == b7bb2f4", "verdict": "PARTIALLY_TRUE", "evidence": "b7bb2f4 is the B9.1 TEST-SUITE commit; the B9.1 runtime landed at c35d827. Both are part of B9.1."},
+    {"claim": "migration reportedly v25", "verdict": "SUPERSEDED", "evidence": "v25 was B9.1's migration; current max is v27 (v26=B9.2, v27=EMP-A1)."},
+    {"claim": "~5061 tests reportedly green", "verdict": "SUPERSEDED", "evidence": "Current collection is 5640 tests across 398 files (browser e2e excluded); count grew with B9.1/B9.2/EMP-A1."},
+    {"claim": "EMP-A1 reportedly in progress", "verdict": "FALSE", "evidence": "EMP-A1 is COMPLETE and is the HEAD SP (commits 6e342e2..135de7b; migration v27; 14 test files)."}
+  ]
+}
