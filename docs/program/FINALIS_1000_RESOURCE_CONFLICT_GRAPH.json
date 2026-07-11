@@ -1,0 +1,45 @@
+{
+  "conflicts": [
+    {
+      "capacity": 1,
+      "nodes": [
+        "CASE-2",
+        "EMP-A2",
+        "INFRA-1",
+        "TOOL-B10"
+      ],
+      "reason": "single SQLite->schema migration lane; concurrent migrations would collide",
+      "resource_key": "migration_lane"
+    },
+    {
+      "capacity": 1,
+      "nodes": [
+        "SAAS-1",
+        "TOOL-B13"
+      ],
+      "reason": "single authoritative RBAC/autonomy write path",
+      "resource_key": "authority_core_write_lane"
+    },
+    {
+      "capacity": 1,
+      "nodes": [
+        "CASE-2",
+        "REFACTOR-1",
+        "REFACTOR-2"
+      ],
+      "reason": "app.py/ui.py monolith hotspot; parallel edits conflict",
+      "resource_key": "portal_monolith_hotspot"
+    },
+    {
+      "capacity": 1,
+      "nodes": [
+        "PILOT-1",
+        "PILOT-2",
+        "PILOT-3",
+        "PILOT-4"
+      ],
+      "reason": "single human domain reviewer for review-first pilots",
+      "resource_key": "human_domain_reviewer"
+    }
+  ]
+}

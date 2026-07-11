@@ -1,0 +1,1095 @@
+{
+  "hyperedges": [
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-0d37833d7f68",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "PACK-3 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "PACK-3",
+      "logic": "ALL_OF",
+      "reason": "PACK-3 reuses/extends the outputs of CASE-2, TOOL-B13 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "CASE-2",
+        "TOOL-B13"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-0f512dc57db9",
+      "dependency_type": "SAFETY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "PILOT-4 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "PILOT-4",
+      "logic": "ALL_OF",
+      "reason": "PILOT-4 reuses/extends the outputs of ADAPTER-1, SAAS-1, VOICE-PROD-1 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "ADAPTER-1",
+        "SAAS-1",
+        "VOICE-PROD-1"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-13420482621d",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "TOOL-B10 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "TOOL-B10",
+      "logic": "ALL_OF",
+      "reason": "TOOL-B10 reuses/extends the outputs of TOOL-B9 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "TOOL-B9"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-13bc869c111a",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "TOOL-B9 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "TOOL-B9",
+      "logic": "ALL_OF",
+      "reason": "TOOL-B9 reuses/extends the outputs of TOOL-B8 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "TOOL-B8"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-159350524f23",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "CHAT-2 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "CHAT-2",
+      "logic": "ALL_OF",
+      "reason": "CHAT-2 reuses/extends the outputs of CHAT-1 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "CHAT-1"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-1a80748c48b2",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "GATE-4 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "GATE-4",
+      "logic": "ALL_OF",
+      "reason": "GATE-4 reuses/extends the outputs of GATE-3 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "GATE-3"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-1bc8f1e54b95",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "TOOL-B12 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "TOOL-B12",
+      "logic": "ALL_OF",
+      "reason": "TOOL-B12 reuses/extends the outputs of CASE-GRAPH, TOOL-B11 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "CASE-GRAPH",
+        "TOOL-B11"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-228a9915047e",
+      "dependency_type": "SAFETY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "A messaging pilot without the provider boundary could leak effects",
+      "head_node": "MESSAGING_PILOT_READY",
+      "logic": "ALL_OF",
+      "reason": "Messaging pilot ready via the Slack path behind the provider boundary",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "ADAPTER-1",
+        "PILOT-1"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-25e0b902a8e8",
+      "dependency_type": "EVALUATION_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "WORKBENCH-1 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "WORKBENCH-1",
+      "logic": "ALL_OF",
+      "reason": "WORKBENCH-1 reuses/extends the outputs of EVAL-1, TOOL-B10 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "EVAL-1",
+        "TOOL-B10"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-2de069e2aa3e",
+      "dependency_type": "ARCHITECTURE_PRECONDITION",
+      "evidence_refs": [
+        "docs/architecture/FINALIS_1000_DEPENDENCY_SPINE.md"
+      ],
+      "failure_if_bypassed": "SP0006 would rest on an unverified foundation",
+      "head_node": "SP0006",
+      "logic": "ALL_OF",
+      "reason": "SP0006 builds on the frozen outputs of SP0003",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "SP0003"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-30ae6e6952d3",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "PACK-7 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "PACK-7",
+      "logic": "ALL_OF",
+      "reason": "PACK-7 reuses/extends the outputs of TOOL-B13, WORKBENCH-1 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "TOOL-B13",
+        "WORKBENCH-1"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-323426e928c5",
+      "dependency_type": "ARCHITECTURE_PRECONDITION",
+      "evidence_refs": [
+        "docs/architecture/FINALIS_1000_DEPENDENCY_SPINE.md"
+      ],
+      "failure_if_bypassed": "SP0004 would rest on an unverified foundation",
+      "head_node": "SP0004",
+      "logic": "ALL_OF",
+      "reason": "SP0004 builds on the frozen outputs of SP0003",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "SP0003"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-330c840197ff",
+      "dependency_type": "ARCHITECTURE_PRECONDITION",
+      "evidence_refs": [
+        "docs/architecture/FINALIS_1000_DEPENDENCY_SPINE.md"
+      ],
+      "failure_if_bypassed": "SP0010 would rest on an unverified foundation",
+      "head_node": "SP0010",
+      "logic": "ALL_OF",
+      "reason": "SP0010 builds on the frozen outputs of SP0003",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "SP0003"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-3686ee6b4fa7",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "REFACTOR-1 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "REFACTOR-1",
+      "logic": "ALL_OF",
+      "reason": "REFACTOR-1 reuses/extends the outputs of TOOL-B13 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "TOOL-B13"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-3bf92e355639",
+      "dependency_type": "SAFETY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "SAAS-1 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "SAAS-1",
+      "logic": "ALL_OF",
+      "reason": "SAAS-1 reuses/extends the outputs of ADAPTER-1, INFRA-1 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "ADAPTER-1",
+        "INFRA-1"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-4726ff59bff0",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "PACK-4 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "PACK-4",
+      "logic": "ALL_OF",
+      "reason": "PACK-4 reuses/extends the outputs of CASE-2, TOOL-B13 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "CASE-2",
+        "TOOL-B13"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-47d6e386e032",
+      "dependency_type": "ARCHITECTURE_PRECONDITION",
+      "evidence_refs": [
+        "docs/architecture/FINALIS_1000_DEPENDENCY_SPINE.md"
+      ],
+      "failure_if_bypassed": "SP0009 would rest on an unverified foundation",
+      "head_node": "SP0009",
+      "logic": "ALL_OF",
+      "reason": "SP0009 builds on the frozen outputs of SP0003",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "SP0003"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-496c00b209b7",
+      "dependency_type": "ARCHITECTURE_PRECONDITION",
+      "evidence_refs": [
+        "docs/architecture/FINALIS_1000_DEPENDENCY_SPINE.md"
+      ],
+      "failure_if_bypassed": "SP0002 would rest on an unverified foundation",
+      "head_node": "SP0002",
+      "logic": "ALL_OF",
+      "reason": "SP0002 builds on the frozen outputs of SP0000, SP0001",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "SP0000",
+        "SP0001"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-4befd995e050",
+      "dependency_type": "SAFETY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "INFRA-2 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "INFRA-2",
+      "logic": "ALL_OF",
+      "reason": "INFRA-2 reuses/extends the outputs of ADAPTER-1 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "ADAPTER-1"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-4f6a2768ba0f",
+      "dependency_type": "ARCHITECTURE_PRECONDITION",
+      "evidence_refs": [
+        "docs/architecture/FINALIS_1000_DEPENDENCY_SPINE.md"
+      ],
+      "failure_if_bypassed": "SP0007 would rest on an unverified foundation",
+      "head_node": "SP0007",
+      "logic": "ALL_OF",
+      "reason": "SP0007 builds on the frozen outputs of SP0003",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "SP0003"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-500a882910f9",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "MOBILE-1 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "MOBILE-1",
+      "logic": "ALL_OF",
+      "reason": "MOBILE-1 reuses/extends the outputs of TOOL-B11 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "TOOL-B11"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-508867f6a60c",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "REFACTOR-3 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "REFACTOR-3",
+      "logic": "ALL_OF",
+      "reason": "REFACTOR-3 reuses/extends the outputs of TOOL-B13 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "TOOL-B13"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-50f77045d231",
+      "dependency_type": "SAFETY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "INFRA-1 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "INFRA-1",
+      "logic": "ALL_OF",
+      "reason": "INFRA-1 reuses/extends the outputs of ADAPTER-1 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "ADAPTER-1"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-5a2beb9b7116",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "EVAL-1 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "EVAL-1",
+      "logic": "ALL_OF",
+      "reason": "EVAL-1 reuses/extends the outputs of TOOL-B9 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "TOOL-B9"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-6792d5386dc6",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "ADAPTER-1 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "ADAPTER-1",
+      "logic": "ALL_OF",
+      "reason": "ADAPTER-1 reuses/extends the outputs of TOOL-B10, TOOL-B13, TOOL-B9 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "TOOL-B10",
+        "TOOL-B13",
+        "TOOL-B9"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-6a1ad81ae4c6",
+      "dependency_type": "SAFETY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "PILOT-2 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "PILOT-2",
+      "logic": "ALL_OF",
+      "reason": "PILOT-2 reuses/extends the outputs of ADAPTER-1, CHAT-2, SAAS-1 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "ADAPTER-1",
+        "CHAT-2",
+        "SAAS-1"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-6df51bef4982",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "PACK-5 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "PACK-5",
+      "logic": "ALL_OF",
+      "reason": "PACK-5 reuses/extends the outputs of CASE-2, TOOL-B13 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "CASE-2",
+        "TOOL-B13"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-6ec1db873aef",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "TOOL-B13 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "TOOL-B13",
+      "logic": "ALL_OF",
+      "reason": "TOOL-B13 reuses/extends the outputs of TOOL-B12 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "TOOL-B12"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-6f08ce9f01a0",
+      "dependency_type": "PRODUCTION_READINESS_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "Shipping without gates would declare production-ready unproven",
+      "head_node": "PRODUCTION_CANDIDATE",
+      "logic": "ALL_OF",
+      "reason": "Production candidacy requires the readiness audit, red-team and beta gates",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "GATE-1",
+        "GATE-2",
+        "GATE-3"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-764248dd974d",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "TOOL-B11 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "TOOL-B11",
+      "logic": "ALL_OF",
+      "reason": "TOOL-B11 reuses/extends the outputs of TOOL-B10 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "TOOL-B10"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-882989143254",
+      "dependency_type": "TECHNOLOGY_DECISION_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "An undecided runtime would leave durability unproven",
+      "head_node": "DURABLE_RUNTIME_READY",
+      "logic": "ALL_OF",
+      "reason": "Durable runtime ready via the Temporal option: technology decision + durable Run Ledger",
+      "required_output": "",
+      "scenario_condition": {
+        "operator": "EQUALS",
+        "value": "TEMPORAL",
+        "variable": "durable_runtime_strategy"
+      },
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "EMP-A2",
+        "SP0004"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-94a68ddb33e4",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "PACK-1 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "PACK-1",
+      "logic": "ALL_OF",
+      "reason": "PACK-1 reuses/extends the outputs of CASE-2, TOOL-B13 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "CASE-2",
+        "TOOL-B13"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-97d919549af0",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "GATE-3 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "GATE-3",
+      "logic": "ALL_OF",
+      "reason": "GATE-3 reuses/extends the outputs of GATE-1, GATE-2 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "GATE-1",
+        "GATE-2"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-97f70930d921",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "PACK-2 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "PACK-2",
+      "logic": "ALL_OF",
+      "reason": "PACK-2 reuses/extends the outputs of CASE-2, TOOL-B13 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "CASE-2",
+        "TOOL-B13"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-9cfc10c52edd",
+      "dependency_type": "ARCHITECTURE_PRECONDITION",
+      "evidence_refs": [
+        "docs/architecture/FINALIS_1000_DEPENDENCY_SPINE.md"
+      ],
+      "failure_if_bypassed": "SP0005 would rest on an unverified foundation",
+      "head_node": "SP0005",
+      "logic": "ALL_OF",
+      "reason": "SP0005 builds on the frozen outputs of SP0003",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "SP0003"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-a0bf8c0d5125",
+      "dependency_type": "SAFETY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "EVID-PROD-1 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "EVID-PROD-1",
+      "logic": "ALL_OF",
+      "reason": "EVID-PROD-1 reuses/extends the outputs of ADAPTER-1, INFRA-2 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "ADAPTER-1",
+        "INFRA-2"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-a64d765b682a",
+      "dependency_type": "TECHNOLOGY_DECISION_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "An undecided runtime would leave durability unproven",
+      "head_node": "DURABLE_RUNTIME_READY",
+      "logic": "ALL_OF",
+      "reason": "Durable runtime ready via the custom-implementation option: technology decision + commit recovery runtime",
+      "required_output": "",
+      "scenario_condition": {
+        "operator": "EQUALS",
+        "value": "CUSTOM",
+        "variable": "durable_runtime_strategy"
+      },
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "SP0004",
+        "TOOL-B10"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-b63c461eccbb",
+      "dependency_type": "SAFETY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "VOICE-PROD-1 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "VOICE-PROD-1",
+      "logic": "ALL_OF",
+      "reason": "VOICE-PROD-1 reuses/extends the outputs of ADAPTER-1, EVID-PROD-1, TOOL-B9 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "ADAPTER-1",
+        "EVID-PROD-1",
+        "TOOL-B9"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-b92449adaeb0",
+      "dependency_type": "SAFETY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json#hard_gates"
+      ],
+      "failure_if_bypassed": "An ungoverned real external effect could escape all safety gates",
+      "head_node": "FIRST_REAL_EFFECT_READY",
+      "logic": "ALL_OF",
+      "reason": "No real external effect may occur before the provider boundary, local-commit runtime, autonomy engine and production auth exist (roadmap hard gate)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "ADAPTER-1",
+        "SAAS-1",
+        "TOOL-B13",
+        "TOOL-B9"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-bb71a492f56d",
+      "dependency_type": "SAFETY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "A messaging pilot without the provider boundary could leak effects",
+      "head_node": "MESSAGING_PILOT_READY",
+      "logic": "ALL_OF",
+      "reason": "Messaging pilot ready via the Teams path behind the provider boundary",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "ADAPTER-1",
+        "PILOT-2"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-bcfa416b4e18",
+      "dependency_type": "PRODUCTION_READINESS_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "INFRA-3 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "INFRA-3",
+      "logic": "ALL_OF",
+      "reason": "INFRA-3 reuses/extends the outputs of INFRA-1 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "INFRA-1"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-c232216e4c28",
+      "dependency_type": "SAFETY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "CHAT-1 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "CHAT-1",
+      "logic": "ALL_OF",
+      "reason": "CHAT-1 reuses/extends the outputs of ADAPTER-1, TOOL-B11 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "ADAPTER-1",
+        "TOOL-B11"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-c5d18c1d6300",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "REFACTOR-2 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "REFACTOR-2",
+      "logic": "ALL_OF",
+      "reason": "REFACTOR-2 reuses/extends the outputs of TOOL-B13 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "TOOL-B13"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-cac209624c25",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "CASE-2 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "CASE-2",
+      "logic": "ALL_OF",
+      "reason": "CASE-2 reuses/extends the outputs of TOOL-B10, TOOL-B12, TOOL-B13 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "TOOL-B10",
+        "TOOL-B12",
+        "TOOL-B13"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-ce73a4562f0d",
+      "dependency_type": "ARCHITECTURE_PRECONDITION",
+      "evidence_refs": [
+        "docs/architecture/FINALIS_1000_DEPENDENCY_SPINE.md"
+      ],
+      "failure_if_bypassed": "SP0001 would rest on an unverified foundation",
+      "head_node": "SP0001",
+      "logic": "ALL_OF",
+      "reason": "SP0001 builds on the frozen outputs of SP0000",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "SP0000"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-d261714ce4f0",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "Claiming vertical coverage on <2 packs would overstate breadth",
+      "head_node": "VERTICAL_COVERAGE",
+      "logic": "AT_LEAST_K_OF_N",
+      "reason": "Vertical coverage milestone requires at least 2 of the 7 worker packs shipped",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "PACK-1",
+        "PACK-2",
+        "PACK-3",
+        "PACK-4",
+        "PACK-5",
+        "PACK-6",
+        "PACK-7"
+      ],
+      "threshold_k": 2
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-d4b461dba431",
+      "dependency_type": "PRODUCTION_READINESS_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "Premature GA would violate INV production gates",
+      "head_node": "GENERAL_AVAILABILITY",
+      "logic": "ALL_OF",
+      "reason": "GA requires the production-candidate gate cleared",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "GATE-4",
+        "PRODUCTION_CANDIDATE"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-dc078249b110",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "MOBILE-2 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "MOBILE-2",
+      "logic": "ALL_OF",
+      "reason": "MOBILE-2 reuses/extends the outputs of EVID-PROD-1, MOBILE-1 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "EVID-PROD-1",
+        "MOBILE-1"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-dc72b4e3bb3a",
+      "dependency_type": "SAFETY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "PILOT-1 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "PILOT-1",
+      "logic": "ALL_OF",
+      "reason": "PILOT-1 reuses/extends the outputs of ADAPTER-1, CHAT-1, EVAL-1, SAAS-1 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "ADAPTER-1",
+        "CHAT-1",
+        "EVAL-1",
+        "SAAS-1"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-e36e5a81ccc0",
+      "dependency_type": "SAFETY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "PILOT-3 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "PILOT-3",
+      "logic": "ALL_OF",
+      "reason": "PILOT-3 reuses/extends the outputs of ADAPTER-1, SAAS-1 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "ADAPTER-1",
+        "SAAS-1"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-e95a241cf8c1",
+      "dependency_type": "PRODUCTION_READINESS_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "INFRA-4 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "INFRA-4",
+      "logic": "ALL_OF",
+      "reason": "INFRA-4 reuses/extends the outputs of INFRA-1, INFRA-2, INFRA-3 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "INFRA-1",
+        "INFRA-2",
+        "INFRA-3"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-e974cd6d8766",
+      "dependency_type": "ARCHITECTURE_PRECONDITION",
+      "evidence_refs": [
+        "docs/architecture/FINALIS_1000_DEPENDENCY_SPINE.md"
+      ],
+      "failure_if_bypassed": "SP0008 would rest on an unverified foundation",
+      "head_node": "SP0008",
+      "logic": "ALL_OF",
+      "reason": "SP0008 builds on the frozen outputs of SP0003",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "SP0003"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-f5b80f624271",
+      "dependency_type": "TECHNOLOGY_DECISION_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "A provider-specific assumption would leak into the core runtime",
+      "head_node": "EMP-A2",
+      "logic": "ALL_OF",
+      "reason": "Under the Temporal option, Run Ledger 2.0 must conform to the chosen durable-execution provider contract",
+      "required_output": "",
+      "scenario_condition": {
+        "operator": "EQUALS",
+        "value": "TEMPORAL",
+        "variable": "durable_runtime_strategy"
+      },
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "SP0004"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-fc0c0165b5d1",
+      "dependency_type": "CAPABILITY_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "PACK-6 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "PACK-6",
+      "logic": "ALL_OF",
+      "reason": "PACK-6 reuses/extends the outputs of EVID-PROD-1, TOOL-B13 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "EVID-PROD-1",
+        "TOOL-B13"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-fc3c6097a475",
+      "dependency_type": "EVALUATION_PRECONDITION",
+      "evidence_refs": [
+        "docs/roadmap/ROADMAP_LOCK_1_SP_SEQUENCE.json"
+      ],
+      "failure_if_bypassed": "GATE-2 could bypass a required precondition and violate the do-not-rebuild / gate discipline",
+      "head_node": "GATE-2",
+      "logic": "ALL_OF",
+      "reason": "GATE-2 reuses/extends the outputs of EVAL-1, PILOT-1, PILOT-2, PILOT-3, PILOT-4 (roadmap-locked prerequisite)",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "EVAL-1",
+        "PILOT-1",
+        "PILOT-2",
+        "PILOT-3",
+        "PILOT-4"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-fd6803f4b347",
+      "dependency_type": "ARCHITECTURE_PRECONDITION",
+      "evidence_refs": [
+        "docs/architecture/FINALIS_1000_DEPENDENCY_SPINE.md"
+      ],
+      "failure_if_bypassed": "SP0003 would rest on an unverified foundation",
+      "head_node": "SP0003",
+      "logic": "ALL_OF",
+      "reason": "SP0003 builds on the frozen outputs of SP0000, SP0001, SP0002",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "SP0000",
+        "SP0001",
+        "SP0002"
+      ]
+    }
+  ],
+  "threshold_gates": [
+    {
+      "candidate_nodes": [
+        "PACK-1",
+        "PACK-2",
+        "PACK-3",
+        "PACK-4",
+        "PACK-5",
+        "PACK-6",
+        "PACK-7"
+      ],
+      "gate_id": "TG-VERTICAL-COVERAGE",
+      "gate_type": "THRESHOLD_PREREQUISITE",
+      "status": "COMPUTED",
+      "threshold_k": 2
+    }
+  ]
+}

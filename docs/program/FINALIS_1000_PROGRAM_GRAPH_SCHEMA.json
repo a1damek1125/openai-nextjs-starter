@@ -1,0 +1,32 @@
+{
+  "schema_id": "FINALIS-1000-PROGRAM-GRAPH-SCHEMA",
+  "sp": "SP0003",
+  "version": "2.0.0",
+  "description": "Canonical shapes for the Finalis 1000 program-control model. Canonical data is kept distinct from derived analytics (INV-0003-17).",
+  "node": {
+    "required": ["node_id", "node_type", "status"],
+    "node_type": ["SP", "MILESTONE", "GATE_NODE", "RESEARCH", "REFACTOR", "PILOT", "PACK", "INFRA", "DOC"],
+    "status": ["NOT_STARTED", "BLOCKED", "READY", "IN_PROGRESS", "VERIFYING", "COMPLETE", "PARTIAL", "SUPERSEDED", "CANCELLED"],
+    "status_source": ["EVIDENCE_DERIVED", "DECLARED", "IMPORTED"]
+  },
+  "hyperedge": {
+    "required": ["dependency_id", "tail_nodes", "head_node", "dependency_type", "logic", "status"],
+    "logic": ["ALL_OF", "ANY_OF", "AT_LEAST_K_OF_N"],
+    "threshold_k": "int, required iff logic=AT_LEAST_K_OF_N, 1<=k<=|tail_nodes|",
+    "dependency_type": ["ARCHITECTURE_PRECONDITION", "SEMANTIC_PRECONDITION", "SAFETY_PRECONDITION", "AUTHORITY_PRECONDITION", "TENANT_ISOLATION_PRECONDITION", "HUMAN_OVERSIGHT_PRECONDITION", "EXTERNAL_EFFECT_PRECONDITION", "PRODUCTION_READINESS_PRECONDITION", "DATA_PRECONDITION", "CAPABILITY_PRECONDITION", "EVALUATION_PRECONDITION", "TECHNOLOGY_DECISION_PRECONDITION"],
+    "status": ["PROPOSED", "UNDER_RESEARCH", "VERIFIED", "ACTIVE", "REJECTED", "DEPRECATED"],
+    "active_requires": ["reason", "failure_if_bypassed", "evidence_refs (non-empty)"],
+    "scenario_condition": "optional {variable, operator in [EQUALS,NOT_EQUALS,IN,NOT_IN], value}",
+    "note": "Multiple hyperedges with the same head_node are ALTERNATIVE prerequisite paths (disjunction). A joint prerequisite is ONE hyperedge with multiple tails; it is never collapsed into ambiguous independent pairwise edges (INV-0003-03)."
+  },
+  "threshold_gate": {"required": ["gate_id", "gate_type", "candidate_nodes", "threshold_k"]},
+  "scenario": {"required": ["scenario_id", "variables", "status"]},
+  "gate": {"required": ["gate_id", "gate_type"], "gate_type": ["ARCHITECTURE_GATE", "SAFETY_GATE", "GOVERNANCE_GATE", "EVALUATION_GATE", "PRODUCTION_GATE", "HUMAN_REVIEW_GATE", "THRESHOLD_PREREQUISITE"], "global_scenario_invariant": ["SAFETY_GATE", "GOVERNANCE_GATE", "HUMAN_REVIEW_GATE"]},
+  "conflict": {"required": ["resource_key", "nodes"], "capacity": "int default 1 (1 = exclusive)"},
+  "rework_edge": {"required": ["rework_edge_id", "from_node", "to_node", "rework_type"], "rework_type": ["MAY_INVALIDATE", "REVERIFY_IF_CHANGED", "REWORK_TRIGGER", "RECALIBRATE_IF_CHANGED", "MIGRATE_IF_CHANGED"], "note": "MAY contain cycles; NEVER a hard prerequisite (INV-0003-07/08)"},
+  "risk_correlation": {"required": ["risk_id", "nodes"], "note": "advisory; never a dependency (INV-0003-06)"},
+  "completion_evidence": {"required": ["node_id", "kind"], "sp_required_kinds": ["final_commit", "acceptance_matrix", "test_evidence", "p0p1_status"]},
+  "temporal_constraint": {"required": ["constraint_id"], "fields": ["from_timepoint", "to_timepoint", "lower_bound", "upper_bound", "unit", "constraint_type"], "constraint_type": ["REQUIREMENT", "DEADLINE", "RELEASE_TIME", "OVERLAP", "CONTINGENT"], "note": "difference constraints x_j - x_i <= c; consistency by negative-cycle detection"},
+  "duration_model": {"required": ["duration_model_id", "mode"], "mode": ["UNKNOWN", "STRUCTURAL_UNIT", "EXPERT_POINT_ESTIMATE", "THREE_POINT_ESTIMATE", "EMPIRICAL_DISTRIBUTION", "BAYESIAN_POSTERIOR"], "note": "UNKNOWN never becomes a fake number (D-0003-11)"},
+  "uncertainty": {"required": ["uncertainty_id", "status", "decision_impact"], "status": ["IDENTIFIED", "UNDER_RESEARCH", "RESOLVED", "ACCEPTED_UNCERTAINTY"]}
+}

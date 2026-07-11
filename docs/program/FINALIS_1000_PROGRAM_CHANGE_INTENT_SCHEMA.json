@@ -1,0 +1,9 @@
+{
+  "schema_id": "FINALIS-1000-PROGRAM-CHANGE-INTENT",
+  "sp": "SP0003",
+  "version": "2.0.0",
+  "required": ["change_id", "change_kind", "target"],
+  "change_kind": ["ADD_NODE", "REMOVE_NODE", "ADD_DEPENDENCY", "ACTIVATE_DEPENDENCY", "DEPRECATE_DEPENDENCY", "CHANGE_GATE", "EDIT_SCENARIO", "UPDATE_DURATION_MODEL", "ADD_REWORK_EDGE"],
+  "state_machine": ["PROPOSED", "VALIDATING", "IMPACT_ANALYZED", "REVIEWED", "ACCEPTED", "ACTIVE"],
+  "note": "An LLM may PROPOSE a change intent but may never ACTIVATE a hard dependency, pass a gate, or mark completion (INV-0003-02, §17.5). Admission runs the full program validator + dependency/rework impact analysis."
+}

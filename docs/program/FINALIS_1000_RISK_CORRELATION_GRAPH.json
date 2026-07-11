@@ -1,0 +1,23 @@
+{
+  "risk_correlations": [
+    {
+      "nodes": [
+        "PILOT-1",
+        "PILOT-2",
+        "PILOT-3",
+        "PILOT-4"
+      ],
+      "reason": "all pilots share unproven external-provider integration risk",
+      "risk_id": "RISK-PROVIDER-IMMATURITY"
+    },
+    {
+      "nodes": [
+        "EMP-A2",
+        "SP0004",
+        "TOOL-B10"
+      ],
+      "reason": "share the undecided durable-runtime technology assumption",
+      "risk_id": "RISK-DURABLE-RUNTIME-UNCERTAINTY"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "gate_bindings": [],
+  "gates": [
+    {
+      "gate_id": "GATE-PROVIDER-BOUNDARY",
+      "gate_type": "SAFETY_GATE",
+      "guarded_nodes": [
+        "PILOT-1",
+        "PILOT-2",
+        "PILOT-3",
+        "PILOT-4"
+      ],
+      "reason": "No real provider before ADAPTER-1 (roadmap hard gate)",
+      "scenario_invariant": true
+    },
+    {
+      "gate_id": "GATE-PROD-AUTH",
+      "gate_type": "GOVERNANCE_GATE",
+      "guarded_nodes": [
+        "SAAS-1"
+      ],
+      "reason": "Production auth/IAM required before real multi-tenant use",
+      "scenario_invariant": true
+    },
+    {
+      "gate_id": "GATE-HUMAN-OVERSIGHT",
+      "gate_type": "HUMAN_REVIEW_GATE",
+      "guarded_nodes": [
+        "PILOT-1",
+        "PILOT-2",
+        "PILOT-3",
+        "PILOT-4"
+      ],
+      "reason": "Sensitive real actions start review-first (Viktor pattern)",
+      "scenario_invariant": true
+    },
+    {
+      "gate_id": "GATE-PRODUCTION",
+      "gate_type": "PRODUCTION_GATE",
+      "guarded_nodes": [
+        "GENERAL_AVAILABILITY"
+      ],
+      "reason": "No production deploy before INFRA + REFACTOR + GATE-4",
+      "scenario_invariant": true
+    }
+  ]
+}

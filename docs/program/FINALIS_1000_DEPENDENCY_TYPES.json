@@ -1,0 +1,24 @@
+{
+  "schema_id": "FINALIS-1000-DEPENDENCY-TYPES",
+  "sp": "SP0003",
+  "principle": "Dependency TYPE (why) is orthogonal to dependency LOGIC (how it combines) — D-0003-05.",
+  "types": {
+    "ARCHITECTURE_PRECONDITION": "Depends on a frozen SP0000/SP0001 architecture output.",
+    "SEMANTIC_PRECONDITION": "Depends on an SP0002 semantic-epoch contract.",
+    "SAFETY_PRECONDITION": "Mandatory safety gate; never bypassable by VOI (INV-0003-18).",
+    "AUTHORITY_PRECONDITION": "Depends on authoritative RBAC/autonomy/auth foundation.",
+    "TENANT_ISOLATION_PRECONDITION": "Depends on tenant-isolation guarantees.",
+    "HUMAN_OVERSIGHT_PRECONDITION": "Requires human-in-the-loop review before proceeding.",
+    "EXTERNAL_EFFECT_PRECONDITION": "Requires the governed external-effect boundary.",
+    "PRODUCTION_READINESS_PRECONDITION": "Requires production infra/readiness gates.",
+    "DATA_PRECONDITION": "Requires a data/store precondition.",
+    "CAPABILITY_PRECONDITION": "Reuses/extends an existing implemented capability.",
+    "EVALUATION_PRECONDITION": "Requires the evaluation lab/benchmark.",
+    "TECHNOLOGY_DECISION_PRECONDITION": "Depends on a technology decision record / scenario choice."
+  },
+  "logic": {
+    "ALL_OF": "every tail must be complete (conjunction)",
+    "ANY_OF": "at least one tail complete (disjunction)",
+    "AT_LEAST_K_OF_N": "at least k of the tails complete (threshold)"
+  }
+}

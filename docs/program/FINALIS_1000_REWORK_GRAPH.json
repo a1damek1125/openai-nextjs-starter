@@ -1,0 +1,58 @@
+{
+  "rework_edges": [
+    {
+      "evidence_refs": [],
+      "from_node": "SP0001",
+      "reason": "architecture-guard changes may reshape the app.py modularization",
+      "rework_edge_id": "rw-08a3d3d86eda",
+      "rework_type": "REVERIFY_IF_CHANGED",
+      "to_node": "REFACTOR-1",
+      "trigger": "SP0001 contract changed"
+    },
+    {
+      "evidence_refs": [],
+      "from_node": "EMP-A2",
+      "reason": "Run Ledger constraints may force revisiting the runtime decision",
+      "rework_edge_id": "rw-0d3aacbeba4a",
+      "rework_type": "RECALIBRATE_IF_CHANGED",
+      "to_node": "SP0004",
+      "trigger": "EMP-A2 contract changed"
+    },
+    {
+      "evidence_refs": [],
+      "from_node": "SP0002",
+      "reason": "a semantic-epoch change may invalidate case completion meaning",
+      "rework_edge_id": "rw-81ef8b6f8f52",
+      "rework_type": "REVERIFY_IF_CHANGED",
+      "to_node": "CASE-2",
+      "trigger": "SP0002 contract changed"
+    },
+    {
+      "evidence_refs": [],
+      "from_node": "SP0004",
+      "reason": "a runtime technology decision reshapes Run Ledger 2.0",
+      "rework_edge_id": "rw-9e97ac66ae93",
+      "rework_type": "REWORK_TRIGGER",
+      "to_node": "EMP-A2",
+      "trigger": "SP0004 contract changed"
+    },
+    {
+      "evidence_refs": [],
+      "from_node": "INFRA-1",
+      "reason": "storage migration reshapes object-store integration",
+      "rework_edge_id": "rw-acb063701fa3",
+      "rework_type": "MIGRATE_IF_CHANGED",
+      "to_node": "INFRA-2",
+      "trigger": "INFRA-1 contract changed"
+    },
+    {
+      "evidence_refs": [],
+      "from_node": "SP0002",
+      "reason": "a semantic-epoch change may invalidate run-ledger meaning",
+      "rework_edge_id": "rw-fd6ea7d7b5cb",
+      "rework_type": "REVERIFY_IF_CHANGED",
+      "to_node": "EMP-A2",
+      "trigger": "SP0002 contract changed"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "temporal_constraints": [
+    {
+      "constraint_id": "T-ADAPTER-BEFORE-PILOT1",
+      "constraint_type": "REQUIREMENT",
+      "from_timepoint": "ADAPTER-1",
+      "lower_bound": 0,
+      "to_timepoint": "PILOT-1",
+      "unit": "days",
+      "upper_bound": 365
+    },
+    {
+      "constraint_id": "T-GA-DEADLINE",
+      "constraint_type": "DEADLINE",
+      "from_timepoint": "__ZERO__",
+      "lower_bound": 30,
+      "to_timepoint": "GENERAL_AVAILABILITY",
+      "unit": "days",
+      "upper_bound": 1000
+    },
+    {
+      "constraint_id": "T-PROVIDER-REVIEW-CONTINGENT",
+      "constraint_type": "CONTINGENT",
+      "contingent": true,
+      "from_timepoint": "ADAPTER-1",
+      "lower_bound": null,
+      "to_timepoint": "SAAS-1",
+      "unit": "days",
+      "upper_bound": 180
+    }
+  ]
+}

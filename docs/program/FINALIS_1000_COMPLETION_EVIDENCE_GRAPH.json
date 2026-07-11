@@ -1,0 +1,799 @@
+{
+  "completion_evidence": [
+    {
+      "kind": "final_commit",
+      "node_id": "SP0000",
+      "ref": "e1b6b5c"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "SP0000",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "SP0000",
+      "ref": "SP0000 acceptance matrix complete"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "SP0000",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "SP0001",
+      "ref": "19413f2"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "SP0001",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "SP0001",
+      "ref": "SP0001 acceptance matrix complete"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "SP0001",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "SP0002",
+      "ref": "3eacdb0"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "SP0002",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "SP0002",
+      "ref": "SP0002 acceptance matrix complete"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "SP0002",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "doc",
+      "node_id": "DOCS-BLUEPRINT",
+      "ref": "44e128a"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "SCAFFOLD-1",
+      "ref": "0e9d116"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "SCAFFOLD-1",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "SCAFFOLD-1",
+      "ref": "finalis/state_machine.py, finalis/scoring*, finalis/completion_loop.py; commit claims 102 passing tests"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "SCAFFOLD-1",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "VOICE-ENGINE",
+      "ref": "734d8a0"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "VOICE-ENGINE",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "VOICE-ENGINE",
+      "ref": "finalis/voice/*.py (1106 lines); tests/test_voice_engine.py (26 tests)"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "VOICE-ENGINE",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "CASE-GRAPH",
+      "ref": "47cb24e"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "CASE-GRAPH",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "CASE-GRAPH",
+      "ref": "finalis/ case-graph service modules; 23-step E2E lifecycle test"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "CASE-GRAPH",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "CONVERSATION-INTELLIGENCE",
+      "ref": "8379db9"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "CONVERSATION-INTELLIGENCE",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "CONVERSATION-INTELLIGENCE",
+      "ref": "tests/test_conversation_intelligence*.py (11 tests)"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "CONVERSATION-INTELLIGENCE",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "ACTION-COMM-ENGINE",
+      "ref": "9b8cb1a"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "ACTION-COMM-ENGINE",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "ACTION-COMM-ENGINE",
+      "ref": "finalis/actions/adapters.py; 25 passing tests"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "ACTION-COMM-ENGINE",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "COMMAND-CENTER",
+      "ref": "76fefa3"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "COMMAND-CENTER",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "COMMAND-CENTER",
+      "ref": "dashboard service + 19 passing tests + regression fixes"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "COMMAND-CENTER",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "FULL-PRODUCT-E2E",
+      "ref": "96707d0"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "FULL-PRODUCT-E2E",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "FULL-PRODUCT-E2E",
+      "ref": "tests/test_full_product_e2e*.py"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "FULL-PRODUCT-E2E",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "PORTAL-CORE",
+      "ref": "61c0ea7"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "PORTAL-CORE",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "PORTAL-CORE",
+      "ref": "finalis/portal/app.py, db.py, ui.py; migration v1"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "PORTAL-CORE",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "UNIVERSAL-LIFECYCLE",
+      "ref": "f869bf9"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "UNIVERSAL-LIFECYCLE",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "UNIVERSAL-LIFECYCLE",
+      "ref": "finalis/lifecycle/*.py (929 lines); 63 tests"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "UNIVERSAL-LIFECYCLE",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "TELEPHONY",
+      "ref": "7d017e5"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "TELEPHONY",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "TELEPHONY",
+      "ref": "finalis/telephony/*.py (750 lines); migration v2; tests/test_telephony.py (49 tests)"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "TELEPHONY",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "ADMIN-RBAC",
+      "ref": "6804d92"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "ADMIN-RBAC",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "ADMIN-RBAC",
+      "ref": "finalis/admin/*.py (427 lines); 21 tests"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "ADMIN-RBAC",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "SCHEDULING",
+      "ref": "4e663fc"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "SCHEDULING",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "SCHEDULING",
+      "ref": "finalis/scheduling/*.py (325 lines); migrations v4; tests/test_scheduling*.py (29 tests)"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "SCHEDULING",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "AGENT-RUNTIME-GOV",
+      "ref": "a96c025"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "AGENT-RUNTIME-GOV",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "AGENT-RUNTIME-GOV",
+      "ref": "finalis/governance/*.py (283 lines); 18 tests"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "AGENT-RUNTIME-GOV",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "PORTAL-WIRING",
+      "ref": "7f3a1be"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "PORTAL-WIRING",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "PORTAL-WIRING",
+      "ref": "35 API tests + UI sections + browser E2E"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "PORTAL-WIRING",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "QUOTE-CPQ",
+      "ref": "3a5c145"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "QUOTE-CPQ",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "QUOTE-CPQ",
+      "ref": "finalis/quotes/*.py (1154 lines); migration v3; tests/test_quote*.py (76 tests)"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "QUOTE-CPQ",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "EVIDENCE-TRUST-FABRIC",
+      "ref": "fe142f9"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "EVIDENCE-TRUST-FABRIC",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "EVIDENCE-TRUST-FABRIC",
+      "ref": "finalis/evidence/*.py (2801 lines); migrations v5-v6, v8; tests/test_evidence_*.py (269 tests)"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "EVIDENCE-TRUST-FABRIC",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "RELATIONSHIP-CRM",
+      "ref": "c13d6bc"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "RELATIONSHIP-CRM",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "RELATIONSHIP-CRM",
+      "ref": "finalis/crm/*.py (1025 lines); migration v7; tests/test_crm_*.py (63 tests)"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "RELATIONSHIP-CRM",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "CONSOLIDATE-1",
+      "ref": "65c67f5"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "CONSOLIDATE-1",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "CONSOLIDATE-1",
+      "ref": "tests/test_integration_baseline.py (EXPECTED_DB_VERSION assertion)"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "CONSOLIDATE-1",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "CORE-A1",
+      "ref": "905a298"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "CORE-A1",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "CORE-A1",
+      "ref": "finalis/ai_employee/identity.py (146), authority.py (210); migration v9"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "CORE-A1",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "CORE-A2",
+      "ref": "e3ab54d"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "CORE-A2",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "CORE-A2",
+      "ref": "finalis/ai_employee/tasks.py (382); migration v10; hardened by swarm review"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "CORE-A2",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "CORE-A3",
+      "ref": "fb5c239"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "CORE-A3",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "CORE-A3",
+      "ref": "finalis/ai_employee/run_ledger.py (419); migration v11"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "CORE-A3",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "CORE-A4",
+      "ref": "af4d7fc"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "CORE-A4",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "CORE-A4",
+      "ref": "finalis/ai_employee/approvals.py (359), approval_decisions.py (305); migrations v12-v13"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "CORE-A4",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "CORE-A5",
+      "ref": "f613489"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "CORE-A5",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "CORE-A5",
+      "ref": "finalis/ai_employee/lifecycle.py (774); migration v14"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "CORE-A5",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "CORE-A6",
+      "ref": "80ea4d0"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "CORE-A6",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "CORE-A6",
+      "ref": "finalis/ai_employee/artifacts.py (775); migration v15"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "CORE-A6",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "TOOL-B1",
+      "ref": "d08c07c"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "TOOL-B1",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "TOOL-B1",
+      "ref": "finalis/ai_employee/tool_registry.py (1215); migration v16"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "TOOL-B1",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "TOOL-B2",
+      "ref": "da02379"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "TOOL-B2",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "TOOL-B2",
+      "ref": "finalis/ai_employee/tool_quality.py (1657); migration v17"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "TOOL-B2",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "TOOL-B3",
+      "ref": "dd24cd8"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "TOOL-B3",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "TOOL-B3",
+      "ref": "finalis/ai_employee/tool_contracts.py (1715); migration v18"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "TOOL-B3",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "TOOL-B4",
+      "ref": "7d827ff"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "TOOL-B4",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "TOOL-B4",
+      "ref": "finalis/ai_employee/tool_guardrails.py (1628); migration v19"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "TOOL-B4",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "TOOL-B5",
+      "ref": "7d2c44a"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "TOOL-B5",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "TOOL-B5",
+      "ref": "finalis/ai_employee/tool_broker.py (1823); migration v20"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "TOOL-B5",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "TOOL-B6",
+      "ref": "48d15f7"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "TOOL-B6",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "TOOL-B6",
+      "ref": "finalis/ai_employee/tool_runtime.py (2208); migration v21"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "TOOL-B6",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "TOOL-B7",
+      "ref": "d28b6f7"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "TOOL-B7",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "TOOL-B7",
+      "ref": "finalis/ai_employee/tool_write_intent.py (2361); migration v22"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "TOOL-B7",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "TOOL-B8",
+      "ref": "d95be03"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "TOOL-B8",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "TOOL-B8",
+      "ref": "finalis/ai_employee/tool_commit_simulation.py (1814); migration v23"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "TOOL-B8",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "TOOL-B9",
+      "ref": "b6db0f3"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "TOOL-B9",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "TOOL-B9",
+      "ref": "finalis/ai_employee/tool_local_transaction.py (1627); migration v24"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "TOOL-B9",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "TOOL-B9.1",
+      "ref": "b7bb2f4"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "TOOL-B9.1",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "TOOL-B9.1",
+      "ref": "finalis/ai_employee/tool_local_recovery.py (1746); migration v25; ~230 tests / 12 files"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "TOOL-B9.1",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "TOOL-B9.2",
+      "ref": "cbf083a"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "TOOL-B9.2",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "TOOL-B9.2",
+      "ref": "finalis/ai_employee/tool_work_observability.py (1658); migration v26"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "TOOL-B9.2",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "final_commit",
+      "node_id": "EMP-A1",
+      "ref": "135de7b"
+    },
+    {
+      "kind": "acceptance_matrix",
+      "node_id": "EMP-A1",
+      "ref": "docs/audit/AUDIT_TRACE_1_SP_STATUS.json"
+    },
+    {
+      "kind": "test_evidence",
+      "node_id": "EMP-A1",
+      "ref": "finalis/ai_employee/employee_work_inbox.py (1343) + store (249); migration v27; 14 test files (~289 collected)"
+    },
+    {
+      "kind": "p0p1_status",
+      "node_id": "EMP-A1",
+      "ref": "P0=0 P1=0 (audit-verified)"
+    },
+    {
+      "kind": "doc",
+      "node_id": "AUDIT-REPORT-1",
+      "ref": "4e39dd8"
+    },
+    {
+      "kind": "doc",
+      "node_id": "ROADMAP-LOCK-1",
+      "ref": "19a3a0b"
+    }
+  ]
+}
