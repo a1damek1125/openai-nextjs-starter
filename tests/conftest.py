@@ -698,6 +698,52 @@ class Gate:
             f"/ai-tools/local-transactions/observability/{slug}/{work_run_id}",
             headers=self.h(actor))
 
+    # -- EMP-A1 Employee Work Inbox helpers -----------------------------------
+    def clean_work_intake(self, **over):
+        """A minimal admissible work-intake body: a portal-manual case_summary
+        over a case target with a fresh idempotency key. Clean defaults admit
+        to READY (ADMIT_READY)."""
+        import uuid as _uuid
+        body = {
+            "source_type": "PORTAL_MANUAL", "source_schema_version": "1",
+            "work_type": "case_summary", "requested_target_refs": ["case:E-1"],
+            "canonical_parameters": {"target": "case:E-1"},
+            "idempotency_key": "idem-" + _uuid.uuid4().hex[:12],
+            "raw_payload": {"note": "summarize this case"},
+        }
+        body.update(over)
+        return body
+
+    def submit_work(self, actor=OWNER, body=None, **over):
+        """POST a work-intake request. Returns the raw Response; `.json()` is the
+        admission outcome ({work_item, disposition, decision_hash, ...})."""
+        payload = self.clean_work_intake(**over) if body is None else body
+        return self.c.post("/ai-employee/work-inbox/items", json=payload,
+                           headers=self.h(actor))
+
+    def admitted_work(self, actor=OWNER, **over):
+        """Submit a clean work item. Returns (work_item_id, outcome). With clean
+        defaults the item is admitted READY (ADMIT_READY)."""
+        o = self.submit_work(actor=actor, **over).json()
+        wi = o.get("work_item") or {}
+        return wi.get("work_item_id"), o
+
+    def wi(self, work_item_id, path="", actor=OWNER, method="GET", **body):
+        """GET/POST an EMP-A1 work-item endpoint."""
+        url = f"/ai-employee/work-inbox/items/{work_item_id}{path}"
+        if method == "GET":
+            return self.c.get(url, headers=self.h(actor))
+        return self.c.post(url, json=body or {}, headers=self.h(actor))
+
+    def ready_to_handoff(self, actor=OWNER, **over):
+        """Full pipeline: admit -> claim -> prepare-handoff. Returns
+        (work_item_id, handoff_response). Prepares exactly one fenced single-use
+        EMP-A2 handoff capability; creates NO run."""
+        wid, _ = self.admitted_work(actor=actor, **over)
+        self.wi(wid, "/claim", actor=actor, method="POST")
+        r = self.wi(wid, "/prepare-handoff", actor=actor, method="POST")
+        return wid, r
+
 
 @pytest.fixture()
 def gate():

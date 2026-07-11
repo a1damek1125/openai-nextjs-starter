@@ -1489,6 +1489,120 @@ CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_work_lineage_events_seq
 CREATE INDEX IF NOT EXISTS ix_ai_work_lineage_events_wr
   ON ai_work_lineage_events(tenant_id, work_run_id, sequence);
 """),
+    (27, """
+-- EMP-A1 v1: Employee Work Inbox — R-FSAFEQ Governed Work Admission Fabric. The
+-- canonical, durable, tenant-isolated intake + admission fabric that converts
+-- source requests into governed canonical work items and prepares exactly ONE
+-- fenced single-use handoff capability for EMP-A2 WITHOUT executing work. It is
+-- LOCAL_ONLY, WORK_INTAKE_AND_ADMISSION_ONLY, ORDER_RECOMMENDATION_ONLY: it never
+-- executes work, calls a provider/tool, starts a TOOL-B9 transaction, creates an
+-- EMP-A2 run, performs recovery, releases an outbox, sends a message or mutates
+-- an external system. Calibration/conformal estimation is schema-only and
+-- DISABLED by default. Bounded calibration/risk/backlog/fairness state lives in
+-- flow_state/policies/receipts payload_json; sub-objects live in payload_json.
+-- NOT production ready.
+CREATE TABLE IF NOT EXISTS ai_employee_work_items (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  idempotency_key TEXT NOT NULL DEFAULT '',
+  bundle_id TEXT NOT NULL DEFAULT '',
+  conversation_context_id TEXT NOT NULL DEFAULT '',
+  work_type TEXT NOT NULL DEFAULT '', flow_key TEXT NOT NULL DEFAULT '',
+  queue_group TEXT NOT NULL DEFAULT '', queue_shard INTEGER NOT NULL DEFAULT 0,
+  source_principal_id TEXT NOT NULL DEFAULT '',
+  structural_fingerprint TEXT NOT NULL DEFAULT '',
+  priority_class TEXT NOT NULL DEFAULT 'NORMAL',
+  work_item_state TEXT NOT NULL, work_item_version INTEGER NOT NULL DEFAULT 1,
+  work_item_hash TEXT NOT NULL DEFAULT '',
+  admission_receipt_hash TEXT NOT NULL DEFAULT '',
+  decision_hash TEXT NOT NULL DEFAULT '',
+  created_sequence INTEGER NOT NULL,
+  requested_by TEXT NOT NULL, requested_by_actor_type TEXT NOT NULL,
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_employee_work_items_idem
+  ON ai_employee_work_items(tenant_id, idempotency_key);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_employee_work_items_seq
+  ON ai_employee_work_items(tenant_id, created_sequence);
+CREATE INDEX IF NOT EXISTS ix_ai_employee_work_items_state
+  ON ai_employee_work_items(tenant_id, work_item_state, created_sequence);
+CREATE INDEX IF NOT EXISTS ix_ai_employee_work_items_flow
+  ON ai_employee_work_items(tenant_id, flow_key, created_sequence);
+CREATE INDEX IF NOT EXISTS ix_ai_employee_work_items_shard
+  ON ai_employee_work_items(tenant_id, queue_shard, created_sequence);
+
+CREATE TABLE IF NOT EXISTS ai_employee_work_item_events (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, work_item_id TEXT,
+  event_type TEXT NOT NULL, sequence INTEGER NOT NULL,
+  actor_id TEXT NOT NULL, actor_type TEXT NOT NULL,
+  event_hash TEXT NOT NULL, previous_event_hash TEXT NOT NULL,
+  decision_hash TEXT NOT NULL DEFAULT '',
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_employee_work_item_events_seq
+  ON ai_employee_work_item_events(tenant_id, sequence);
+CREATE INDEX IF NOT EXISTS ix_ai_employee_work_item_events_wi
+  ON ai_employee_work_item_events(tenant_id, work_item_id, sequence);
+
+CREATE TABLE IF NOT EXISTS ai_employee_work_bundles (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  intake_envelope_id TEXT NOT NULL DEFAULT '',
+  bundle_idempotency_key TEXT NOT NULL DEFAULT '',
+  work_type TEXT NOT NULL DEFAULT '', bundle_flow_key TEXT NOT NULL DEFAULT '',
+  bundle_state TEXT NOT NULL DEFAULT '', bundle_hash TEXT NOT NULL DEFAULT '',
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_employee_work_bundles_idem
+  ON ai_employee_work_bundles(tenant_id, bundle_idempotency_key);
+
+CREATE TABLE IF NOT EXISTS ai_employee_work_claims (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, work_item_id TEXT NOT NULL,
+  work_item_version INTEGER NOT NULL DEFAULT 1,
+  claimant_id TEXT NOT NULL DEFAULT '', fencing_token INTEGER NOT NULL,
+  state TEXT NOT NULL DEFAULT 'ACTIVE',
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL DEFAULT '');
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_employee_work_claims_active
+  ON ai_employee_work_claims(tenant_id, work_item_id, state)
+  WHERE state='ACTIVE';
+CREATE INDEX IF NOT EXISTS ix_ai_employee_work_claims_fence
+  ON ai_employee_work_claims(tenant_id, work_item_id, fencing_token);
+
+CREATE TABLE IF NOT EXISTS ai_employee_work_flow_state (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, flow_key TEXT NOT NULL,
+  payload_json TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT '');
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_employee_work_flow_state_key
+  ON ai_employee_work_flow_state(tenant_id, flow_key);
+
+CREATE TABLE IF NOT EXISTS ai_employee_work_admission_receipts (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, work_item_id TEXT NOT NULL,
+  decision_sequence INTEGER NOT NULL, disposition TEXT NOT NULL DEFAULT '',
+  decision_hash TEXT NOT NULL DEFAULT '',
+  admission_receipt_hash TEXT NOT NULL DEFAULT '',
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_employee_work_receipts_seq
+  ON ai_employee_work_admission_receipts(tenant_id, decision_sequence);
+CREATE INDEX IF NOT EXISTS ix_ai_employee_work_receipts_wi
+  ON ai_employee_work_admission_receipts(tenant_id, work_item_id,
+                                         decision_sequence);
+
+CREATE TABLE IF NOT EXISTS ai_employee_work_handoff_capabilities (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, work_item_id TEXT NOT NULL,
+  work_item_version INTEGER NOT NULL DEFAULT 1,
+  fencing_token INTEGER NOT NULL DEFAULT 0, intended_consumer TEXT NOT NULL
+  DEFAULT 'EMP-A2', state TEXT NOT NULL DEFAULT 'PREPARED',
+  capability_hash TEXT NOT NULL DEFAULT '',
+  payload_json TEXT NOT NULL, issued_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL DEFAULT '');
+CREATE UNIQUE INDEX IF NOT EXISTS ix_ai_employee_work_handoff_active
+  ON ai_employee_work_handoff_capabilities(tenant_id, work_item_id,
+     work_item_version, fencing_token, state) WHERE state='PREPARED';
+CREATE INDEX IF NOT EXISTS ix_ai_employee_work_handoff_wi
+  ON ai_employee_work_handoff_capabilities(tenant_id, work_item_id);
+
+CREATE TABLE IF NOT EXISTS ai_employee_work_inbox_policies (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL,
+  policy_version TEXT NOT NULL DEFAULT 'r-fsafeq-policy-v1',
+  payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_ai_employee_work_inbox_policies
+  ON ai_employee_work_inbox_policies(tenant_id, created_at);
+"""),
 ]
 
 

@@ -162,6 +162,7 @@ window.loadSections = async () => {
   if (window.loadLocalTxSection) jobs.push(loadLocalTxSection(me));
   if (window.loadRecoverySection) jobs.push(loadRecoverySection(me));
   if (window.loadWorkObsSection) jobs.push(loadWorkObsSection(me));
+  if (window.loadWorkInboxSection) jobs.push(loadWorkInboxSection(me));
   await Promise.allSettled(jobs);
 };
 
@@ -3758,6 +3759,76 @@ window.openWorkObs = async (wid) => {
 };
 """
 
+WORK_INBOX_SECTIONS = """
+<section id="tool-work-inbox-section"><h2>Employee Work Inbox — R-FSAFEQ Admission</h2>
+<ul class="labels"><small>
+<li>INBOX_AND_ADMISSION_ONLY / ORDER_RECOMMENDATION_ONLY — governed intake + admission; never executes work.</li>
+<li>NO_EMP_A2_RUN_CREATED / NO_EXECUTION_STARTED / NO_PROVIDER_CALLED / NO_EXTERNAL_EFFECT.</li>
+<li>CALIBRATION_DISABLED_OR_NOT_EXECUTION_VALIDATED — conformal estimation is schema-only and disabled.</li>
+<li>ESTIMATED_DEMAND_NOT_ACTUAL_USAGE / VIRTUAL_BACKLOG_IS_ADMISSION_SIDE_PROXY.</li>
+<li>DEADLINE_NOT_GUARANTEED / NOT_PRODUCTION_READY.</li>
+</small></ul>
+<div id="tool-work-inbox-summary"><i>Loading Employee Work Inbox…</i></div>
+<div id="tool-work-inbox-list"></div>
+</section>
+"""
+
+WORK_INBOX_JS = """
+window.loadWorkInboxSection = async (me) => { await loadWorkInbox(); };
+
+window.loadWorkInbox = async () => {
+  const base = '/ai-employee/work-inbox';
+  let counts; try { counts = await get(base + '/counts'); }
+  catch (e) { $('tool-work-inbox-summary').innerHTML =
+    '<i>The Employee Work Inbox is not available for your role.</i>'; return; }
+  $('tool-work-inbox-summary').innerHTML =
+    '<p><small>' + Object.entries(counts.counts_by_state || {}).map(
+      ([k, v]) => `${esc(k)}: <b>${esc(String(v))}</b>`).join(' · ') +
+    (Object.keys(counts.counts_by_state||{}).length ? '' : '<i>No work items yet.</i>') + '</small></p>';
+  let rows = []; try { rows = await get(base + '/items?limit=50'); } catch (e) {}
+  $('tool-work-inbox-list').innerHTML = (rows.length ?
+    '<table><tr><th>Work item</th><th>Type</th><th>State</th><th>Priority</th><th>Shard</th><th></th></tr>' +
+    rows.map(r => `<tr><td><small>${esc((r.work_item_id||'').slice(0,10))}</small></td>
+       <td><small>${esc(r.work_type||'')}</small></td>
+       <td><small>${esc(r.work_item_state||'')}</small></td>
+       <td><small>${esc(r.priority_class||'')}</small></td>
+       <td><small>${esc(String(r.queue_shard))}</small></td>
+       <td><button onclick="openWorkItem('${esc(r.work_item_id)}')">Detail</button></td></tr>`
+      ).join('') + '</table>'
+    : '<i>No work items yet.</i>');
+};
+
+window.openWorkItem = async (wid) => {
+  const base = '/ai-employee/work-inbox/items/' + wid;
+  const it = await get(base);
+  let adm = {}; try { adm = await get(base + '/admission'); } catch (e) {}
+  let hp = {}; try { hp = (await get(base + '/handoff-preview')).handoff_ready || {}; } catch (e) {}
+  const dem = it.work_demand_envelope || {};
+  $('tool-work-inbox-list').innerHTML = `
+    <h3>Work item ${esc(wid.slice(0,10))}
+      <span class="badge">${esc(it.work_item_state)}</span></h3>
+    <p><b>type</b> ${esc(it.work_type)} · <b>disposition</b> ${esc(it.disposition)} ·
+      <b>priority</b> ${esc(it.priority_class)} · <b>queue shard</b> ${esc(String(it.queue_shard))}</p>
+    <p><b>missing fields</b> ${(it.missing_input_fields||[]).map(esc).join(', ') || '<i>none</i>'} ·
+      <b>approval</b> ${esc(it.approval_requirement)} ·
+      <b>capabilities</b> ${(it.required_capabilities||[]).map(esc).join(', ')}</p>
+    <p><b>demand floor</b> <code>${esc(JSON.stringify(dem.deterministic_floor||{}))}</code></p>
+    <p><b>safety upper</b> <code>${esc(JSON.stringify(dem.safety_upper||{}))}</code> ·
+      <b>demand valid</b> <b class="${it.demand_envelope_valid ? 'ok' : 'err'}">${esc(String(it.demand_envelope_valid))}</b></p>
+    <p><b>calibration</b> ${esc(it.calibration_status)} · <b>drift</b> ${esc(it.drift_status)} ·
+      <b>risk budget</b> ${esc(it.risk_budget_status)} · <b>backlog</b> ${esc(it.virtual_backlog_status)}</p>
+    <p><b>admission memory</b> ${esc(it.admission_memory_state)} ·
+      <b>fairness deficit</b> ${esc(String(it.fairness_deficit))} (${esc(it.fairness_deficit_class)})</p>
+    <p><b>claim</b> ${esc(String(it.active_fencing_token||0))} · <b>assignee</b> ${esc(it.assignee_type)} ·
+      <b>receipt</b> <code>${esc((it.admission_receipt_hash||'').slice(0,14))}…</code></p>
+    <p><b>handoff ready</b> <b class="${hp.handoff_ready ? 'ok' : ''}">${esc(String(!!hp.handoff_ready))}</b> ·
+      <b>decision hash</b> <code>${esc((it.decision_hash||'').slice(0,14))}…</code></p>
+    <p><b>reason codes</b> ${(it.reason_codes||[]).map(s => `<span class="badge">${esc(s)}</span>`).join(' ')}</p>
+    <ul>${(it.honesty_labels||[]).map(l => `<li><small>${esc(l)}</small></li>`).join('')}</ul>
+    <button onclick="loadWorkInbox()">← back</button>`;
+};
+"""
+
 PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Finalis — Case Command Center</title><style>{STYLE}</style></head><body>
 <h1>Case Command Center</h1>
@@ -3795,6 +3866,7 @@ PORTAL_PAGE = f"""<!doctype html><html><head><meta charset="utf-8">
 {LOCAL_TX_SECTIONS}
 {LOCAL_RECOVERY_SECTIONS}
 {WORK_OBS_SECTIONS}
+{WORK_INBOX_SECTIONS}
 </div>
 <script>
 const T = () => localStorage.getItem('finalis_token');
@@ -3936,7 +4008,8 @@ boot();
 <script>{COMMIT_SIM_JS}</script>
 <script>{LOCAL_TX_JS}</script>
 <script>{LOCAL_RECOVERY_JS}</script>
-<script>{WORK_OBS_JS}</script></body></html>"""
+<script>{WORK_OBS_JS}</script>
+<script>{WORK_INBOX_JS}</script></body></html>"""
 
 
 def upload_page(token: str) -> str:

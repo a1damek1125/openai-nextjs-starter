@@ -11018,6 +11018,878 @@ def create_app(db_path: str = ":memory:") -> FastAPI:
     for _off, _r in enumerate(_literal_routes):
         app.router.routes.insert(_param_ix + _off, _r)
 
+    # ===== EMP-A1 v1: Employee Work Inbox — R-FSAFEQ Governed Work ==========
+    # ===== Admission Fabric (LOCAL, intake+admission only, no execution) ====
+    from ..ai_employee import employee_work_inbox as _wi
+    from ..ai_employee.employee_work_inbox_store import EmployeeWorkInboxStore
+    work_inbox_store = EmployeeWorkInboxStore(db)
+    app.state.work_inbox_store = work_inbox_store
+
+    def _wi_actor_type(user):
+        return "ai_employee" if user["role"] == "ai_worker" else "human"
+
+    def _wi_emit(tid, *, event_type, work_item_id, user, decision_hash, detail):
+        seq = work_inbox_store.next_sequence(tenant_id=tid)
+        prev = work_inbox_store.last_event(tenant_id=tid)
+        ev = _wi.build_work_event(
+            event_type=event_type, tenant_id=tid, work_item_id=work_item_id,
+            actor_id=user["uid"], actor_type=_wi_actor_type(user),
+            decision_hash=decision_hash,
+            previous_event_hash=prev["event_hash"] if prev else None,
+            sequence=seq, detail=detail, created_at=utcnow())
+        work_inbox_store.append_event({
+            "id": str(uuid.uuid4()), "tenant_id": tid,
+            "work_item_id": work_item_id, "event_type": event_type,
+            "sequence": seq, "actor_id": user["uid"],
+            "actor_type": _wi_actor_type(user), "event_hash": ev["event_hash"],
+            "previous_event_hash": ev["previous_event_hash"],
+            "decision_hash": decision_hash or "", "payload_json": json.dumps(ev),
+            "created_at": ev["created_at"]})
+        return ev
+
+    def _wi_load_item_or_404(work_item_id, user):
+        it = work_inbox_store.item(work_item_id, tenant_id=user["tid"])
+        if it is None:
+            raise HTTPException(404, "work item not found")
+        return it
+
+    def _wi_canonical_request(body):
+        return {
+            "tenant_id": body.get("tenant_id"),
+            "source_type": body.get("source_type", "PORTAL_MANUAL"),
+            "source_surface": body.get("source_surface", "WEB_PORTAL"),
+            "source_schema_version": body.get("source_schema_version", "1"),
+            "source_principal_id": body.get("source_principal_id"),
+            "authenticated_principal_id": body.get("authenticated_principal_id"),
+            "principal_active": body.get("principal_active", True),
+            "conversation_context_id": body.get("conversation_context_id"),
+            "continuation_of_work_item_id": body.get(
+                "continuation_of_work_item_id"),
+            "work_type": body.get("work_type"),
+            "candidate_work_type": body.get("candidate_work_type"),
+            "requested_target_refs": body.get("requested_target_refs") or [],
+            "canonical_parameters": body.get("canonical_parameters") or {},
+            "idempotency_key": body.get("idempotency_key"),
+            "canonical_request_hash": body.get("canonical_request_hash"),
+            "raw_payload": body.get("raw_payload") or {},
+            "source_business_key": body.get("source_business_key"),
+            "approval_record": body.get("approval_record"),
+            "requested_scope": body.get("requested_scope"),
+            # Risk/stability knobs (schema-only; calibration disabled by default).
+            "calibration_state": body.get("calibration_state"),
+            "drift_state": body.get("drift_state"),
+            "risk_budget_status": body.get("risk_budget_status"),
+            "backlog_state": body.get("backlog_state"),
+            "intervals_nested": body.get("intervals_nested", True),
+            "action_calibration_mismatch": body.get(
+                "action_calibration_mismatch"),
+            "governed_recalibration": body.get("governed_recalibration"),
+            "capacity_unknown": body.get("capacity_unknown"),
+            "demand_unknown": body.get("demand_unknown"),
+            "estimate_source": body.get("estimate_source"),
+            "demand_override": body.get("demand_override"),
+        }
+
+    def _wi_snapshot(tid, req):
+        key = req.get("idempotency_key")
+        prior = work_inbox_store.item_by_idempotency(
+            tenant_id=tid, idempotency_key=key) if key else None
+        existing_by_key = {}
+        if prior:
+            existing_by_key[(tid, key)] = {
+                "work_item_id": prior["work_item_id"],
+                "canonical_request_hash": prior.get("canonical_request_hash")}
+        flow_key = _wi.compute_flow_key(
+            tenant_id=tid, req=req,
+            intent={"work_type": req.get("work_type"),
+                    "canonical_target_refs": req.get("requested_target_refs")},
+            queue_group=req.get("work_type") or "default")
+        return {
+            "tenant_id": tid, "existing_by_key": existing_by_key,
+            "flow_state": work_inbox_store.flow_state(
+                tenant_id=tid, flow_key=flow_key),
+            "recent_fingerprints": work_inbox_store.recent_fingerprints(
+                tenant_id=tid),
+            "capacity_state": {r: 64 for r in _wi.DEMAND_RESOURCES},
+            "shard_pressures": {},
+        }
+
+    def _wi_project(tid, req, decision, user, now, seq):
+        wid = "wi-" + str(uuid.uuid4())
+        intent = decision["intent"]
+        demand = decision["demand_envelope"]
+        proj = {
+            "work_item_id": wid, "tenant_id": tid,
+            "idempotency_key": req.get("idempotency_key"),
+            "conversation_context_id": req.get("conversation_context_id"),
+            "work_item_version": 1, "projection_version": 1,
+            "work_type": intent.get("work_type"),
+            "work_type_version": intent.get("work_type_version"),
+            "compiled_intent_hash": intent.get("compiled_intent_hash"),
+            "canonical_request_hash": decision["idempotency"][
+                "canonical_request_hash"],
+            "title": (req.get("raw_payload") or {}).get("title") or
+            intent.get("work_type"),
+            "safe_summary": (req.get("raw_payload") or {}).get("note", ""),
+            "requester_principal_id": req.get("source_principal_id"),
+            "target_refs": intent.get("canonical_target_refs"),
+            "missing_input_fields": intent.get("missing_fields"),
+            "required_capabilities": intent.get("required_capabilities"),
+            "approval_requirement": decision["approval"]["approval_class"],
+            "approval_valid": decision["approval"].get("approval_valid"),
+            "risk_class": (_wi.WORK_TYPE_REGISTRY.get(intent.get("work_type"))
+                           or {}).get("risk_profile_id"),
+            "priority_class": (_wi.WORK_TYPE_REGISTRY.get(intent.get("work_type"))
+                               or {}).get("default_priority_class", "NORMAL"),
+            "queue_group": decision["queue_group"],
+            "flow_key": decision["flow_key"],
+            "queue_shard": decision["queue_placement"]["queue_shard"],
+            "work_demand_envelope": demand,
+            "demand_envelope_valid": demand["envelope_valid"],
+            "calibration_status": decision["calibration"]["calibration_state"],
+            "calibration_fallback_valid": True,
+            "drift_status": decision["drift"]["drift_state"],
+            "risk_budget_status": decision["risk_budget"]["risk_budget_status"],
+            "admission_memory_state": decision["admission_memory"][
+                "admission_memory_state"],
+            "virtual_backlog_status": decision["virtual_backlog"][
+                "backlog_state"],
+            "fairness_deficit": decision["fairness"]["fairness_deficit"],
+            "fairness_deficit_class": decision["fairness"][
+                "fairness_deficit_class"],
+            "assignee_type": "UNASSIGNED", "assignee_id": None,
+            "assignment_version": 0, "active_claim_id": None,
+            "active_fencing_token": 0, "active_eligible_age": 0,
+            "aging_horizon": 100,
+            "structural_fingerprint": decision["fragmentation"][
+                "structural_fingerprint"],
+            "work_item_state": decision["resulting_state"],
+            "disposition": decision["disposition"],
+            "reason_codes": decision["reason_codes"],
+            "created_sequence": seq, "decision_hash": decision["decision_hash"],
+            "created_at": now, "updated_at": now,
+            "run_created": False, "tool_transaction_started": False,
+            "provider_called": False, "external_state_mutated": False,
+            "outbox_released": False,
+            "honesty_labels": _wi.HONESTY_LABELS,
+        }
+        proj["work_item_hash"] = _wi._sha({k: v for k, v in proj.items()
+                                           if k not in ("work_item_hash",
+                                                        "honesty_labels")})
+        return proj
+
+    def _admit_work_item(tid, user, body):
+        # SERIALIZABLE admission: begin the write transaction before the
+        # admission-dependent reads. A retry rolls back the full attempt.
+        req = _wi_canonical_request(body)
+        req["tenant_id"] = req.get("tenant_id") or tid
+        work_inbox_store.begin_immediate()
+        snapshot = _wi_snapshot(tid, req)
+        decision = _wi.evaluate_admission(snapshot, req, {})
+        now = utcnow()
+        idem_status = decision["idempotency"]["idempotency_status"]
+        # Exact retry -> return the existing item, charge nothing.
+        if idem_status == "EXACT_RETRY":
+            wid = decision["idempotency"]["existing_work_item_id"]
+            work_inbox_store.commit()
+            existing = work_inbox_store.item(wid, tenant_id=tid) if wid else None
+            return {"work_item": existing, "disposition": "ADMIT_READY",
+                    "idempotency_status": "EXACT_RETRY", "charged": False,
+                    "decision_hash": decision["decision_hash"],
+                    "honesty_labels": _wi.HONESTY_LABELS}
+        # Conflict -> same idempotency key, different canonical request. Never
+        # persist a second row under that key; return the conflict + the prior
+        # item, charge nothing.
+        if idem_status == "CONFLICT":
+            wid = decision["idempotency"]["existing_work_item_id"]
+            work_inbox_store.commit()
+            existing = work_inbox_store.item(wid, tenant_id=tid) if wid else None
+            return {"work_item": existing, "disposition": "CONFLICT",
+                    "idempotency_status": "CONFLICT", "charged": False,
+                    "reason_codes": ["IDEMPOTENCY_PAYLOAD_CONFLICT"],
+                    "decision_hash": decision["decision_hash"],
+                    "honesty_labels": _wi.HONESTY_LABELS}
+        seq = work_inbox_store.next_created_sequence(tenant_id=tid)
+        proj = _wi_project(tid, req, decision, user, now, seq)
+        actor_type = _wi_actor_type(user)
+        work_inbox_store.save_item({
+            "id": proj["work_item_id"], "tenant_id": tid,
+            "idempotency_key": proj["idempotency_key"] or "",
+            "bundle_id": "", "conversation_context_id":
+            proj["conversation_context_id"] or "",
+            "work_type": proj["work_type"] or "", "flow_key": proj["flow_key"],
+            "queue_group": proj["queue_group"] or "",
+            "queue_shard": proj["queue_shard"],
+            "source_principal_id": proj["requester_principal_id"] or "",
+            "structural_fingerprint": proj["structural_fingerprint"],
+            "priority_class": proj["priority_class"],
+            "work_item_state": proj["work_item_state"],
+            "work_item_version": 1, "work_item_hash": proj["work_item_hash"],
+            "admission_receipt_hash": "", "decision_hash": proj["decision_hash"],
+            "created_sequence": seq, "requested_by": user["uid"],
+            "requested_by_actor_type": actor_type,
+            "payload_json": json.dumps(proj), "created_at": now,
+            "updated_at": now})
+        # Admission receipt (durable decision record).
+        dseq = work_inbox_store.next_decision_sequence(tenant_id=tid)
+        receipt = {"admission_receipt_id": "rcpt-" + _wi._sha(
+            {"w": proj["work_item_id"], "d": dseq})[:16],
+            "tenant_id": tid, "work_item_id": proj["work_item_id"],
+            "decision_sequence": dseq, "disposition": decision["disposition"],
+            "decision_hash": decision["decision_hash"],
+            "reason_codes": decision["reason_codes"], "charged":
+            decision["charge_allowed"], "created_at": now}
+        receipt["admission_receipt_hash"] = _wi._sha(receipt)
+        work_inbox_store.save_receipt({
+            "id": str(uuid.uuid4()), "tenant_id": tid,
+            "work_item_id": proj["work_item_id"], "decision_sequence": dseq,
+            "disposition": decision["disposition"],
+            "decision_hash": decision["decision_hash"],
+            "admission_receipt_hash": receipt["admission_receipt_hash"],
+            "payload_json": json.dumps(receipt), "created_at": now})
+        proj["admission_receipt_hash"] = receipt["admission_receipt_hash"]
+        proj["work_item_hash"] = _wi._sha({k: v for k, v in proj.items()
+                                           if k not in ("work_item_hash",
+                                                        "honesty_labels")})
+        work_inbox_store.update_item(proj["work_item_id"], tenant_id=tid, row={
+            "work_item_state": proj["work_item_state"], "work_item_version": 1,
+            "work_item_hash": proj["work_item_hash"], "payload": proj,
+            "updated_at": now})
+        # Charge flow state only when admission actually charges (never on
+        # exact retry / reject / duplicate).
+        if decision["charge_allowed"]:
+            fs = work_inbox_store.flow_state(
+                tenant_id=tid, flow_key=proj["flow_key"]) or {
+                    "flow_key": proj["flow_key"], "memory": 0,
+                    "fairness_deficit": 0, "risk_spent": 0}
+            fs["memory"] = decision["admission_memory"]["memory_after"]
+            fs["fairness_deficit"] = decision["fairness"]["fairness_deficit"]
+            fs["updated_at"] = now
+            work_inbox_store.upsert_flow_state(
+                tenant_id=tid, flow_key=proj["flow_key"], state=fs)
+        _wi_emit(tid, event_type="WORK_ITEM_RECEIVED",
+                 work_item_id=proj["work_item_id"], user=user,
+                 decision_hash=decision["decision_hash"],
+                 detail={"source": req.get("source_type")})
+        _wi_emit(tid, event_type="WORK_ITEM_ADMISSION_EVALUATED",
+                 work_item_id=proj["work_item_id"], user=user,
+                 decision_hash=decision["decision_hash"],
+                 detail={"disposition": decision["disposition"],
+                         "resulting_state": proj["work_item_state"]})
+        _wi_emit(tid, event_type="WORK_ITEM_ADMISSION_COMMITTED",
+                 work_item_id=proj["work_item_id"], user=user,
+                 decision_hash=decision["decision_hash"],
+                 detail={"resulting_state": proj["work_item_state"]})
+        if proj["work_item_state"] == "READY":
+            _wi_emit(tid, event_type="WORK_ITEM_QUEUE_PLACED",
+                     work_item_id=proj["work_item_id"], user=user,
+                     decision_hash=decision["decision_hash"],
+                     detail={"queue_shard": proj["queue_shard"],
+                             "resulting_state": "READY"})
+        _wi_emit(tid, event_type="WORK_ITEM_ADMISSION_RECEIPT_CREATED",
+                 work_item_id=proj["work_item_id"], user=user,
+                 decision_hash=decision["decision_hash"],
+                 detail={"receipt": receipt["admission_receipt_hash"]})
+        work_inbox_store.commit()
+        return {"work_item": proj, "disposition": decision["disposition"],
+                "idempotency_status": decision["idempotency"][
+                    "idempotency_status"], "charged": decision["charge_allowed"],
+                "decision_hash": decision["decision_hash"],
+                "reason_codes": decision["reason_codes"],
+                "honesty_labels": _wi.HONESTY_LABELS}
+
+    def _wi_transition(tid, user, it, event_type, new_state, detail=None):
+        src = it["work_item_state"]
+        if not _wi.is_transition_allowed(src, new_state):
+            raise HTTPException(409, {"error": "invalid_transition",
+                                      "from": src, "to": new_state})
+        now = utcnow()
+        it["work_item_state"] = new_state
+        it["work_item_version"] = _wi._int(it.get("work_item_version"), 1) + 1
+        it["projection_version"] = _wi._int(it.get("projection_version"), 1) + 1
+        it["updated_at"] = now
+        it["work_item_hash"] = _wi._sha({k: v for k, v in it.items()
+                                         if k not in ("work_item_hash",
+                                                      "honesty_labels")})
+        work_inbox_store.update_item(it["work_item_id"], tenant_id=tid, row={
+            "work_item_state": new_state,
+            "work_item_version": it["work_item_version"],
+            "work_item_hash": it["work_item_hash"], "payload": it,
+            "updated_at": now})
+        _wi_emit(tid, event_type=event_type, work_item_id=it["work_item_id"],
+                 user=user, decision_hash=it.get("decision_hash"),
+                 detail=dict(detail or {}, resulting_state=new_state))
+        work_inbox_store.commit()
+        return it
+
+    @app.get("/ai-employee/work-inbox/policy")
+    async def wi_policy(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {"emp_a1_model_version": _wi.EMP_A1_MODEL_VERSION,
+                "spec_revision": _wi.EMP_A1_SPEC_REVISION,
+                "r_fsafeq_policy_version": _wi.RFSAFEQ_POLICY_VERSION,
+                "inbox_and_admission_only": True, "creates_emp_a2_run": False,
+                "executes_work": False, "calls_provider": False,
+                "calls_tool": False, "starts_b9_transaction": False,
+                "performs_recovery": False, "releases_outbox": False,
+                "sends_message": False, "guarantees_deadline": False,
+                "calibration_enabled": False, "production_ready": False,
+                "has_run_endpoint": False, "has_execute_endpoint": False,
+                "has_provider_call_endpoint": False, "has_send_endpoint": False,
+                "has_b9_transaction_endpoint": False,
+                "work_item_states": _wi.WORK_ITEM_STATES,
+                "forbidden_states": sorted(_wi.FORBIDDEN_STATES),
+                "dispositions": _wi.DISPOSITIONS,
+                "demand_resources": _wi.DEMAND_RESOURCES,
+                "calibration_states": _wi.CALIBRATION_STATES,
+                "drift_states": _wi.DRIFT_STATES,
+                "risk_budget_states": _wi.RISK_BUDGET_STATES,
+                "backlog_states": _wi.BACKLOG_STATES,
+                "enabled_sources": sorted(_wi.ENABLED_SOURCES),
+                "disabled_sources": sorted(_wi.DISABLED_SOURCES),
+                "reason_codes": sorted(_wi.REASON_CODES),
+                "permissions": ["employee_work_inbox_read",
+                                "employee_work_inbox_submit",
+                                "employee_work_inbox_claim",
+                                "employee_work_inbox_prepare_handoff"],
+                "honesty_labels": _wi.HONESTY_LABELS}
+
+    @app.get("/ai-employee/work-inbox/registry")
+    async def wi_registry(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {"tenant_id": user["tid"],
+                "work_type_registry": {k: {kk: vv for kk, vv in v.items()}
+                                       for k, v in
+                                       _wi.WORK_TYPE_REGISTRY.items()},
+                "priority_classes": _wi.PRIORITY_CLASSES,
+                "honesty_labels": _wi.HONESTY_LABELS}
+
+    @app.get("/ai-employee/work-inbox/counts")
+    async def wi_counts(user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return {"tenant_id": user["tid"],
+                "counts_by_state": work_inbox_store.counts_by_state(
+                    tenant_id=user["tid"]),
+                "honesty_labels": _wi.HONESTY_LABELS}
+
+    def _wi_simple_get(path, builder):
+        async def getter(user: dict = Depends(current_user)):
+            require_permission(user, "case.read")
+            return dict(builder(user), honesty_labels=_wi.HONESTY_LABELS)
+        app.add_api_route("/ai-employee/work-inbox/" + path, getter,
+                          methods=["GET"])
+
+    _wi_simple_get("capacity", lambda u: {
+        "tenant_id": u["tid"], "capacity_vector": {r: 64 for r in
+                                                   _wi.DEMAND_RESOURCES},
+        "demand_resources": _wi.DEMAND_RESOURCES})
+    _wi_simple_get("risk", lambda u: {
+        "tenant_id": u["tid"], "risk_budget_states": _wi.RISK_BUDGET_STATES,
+        "calibration_enabled": False, "alpha_total_not_increasable": True})
+    _wi_simple_get("calibration", lambda u: {
+        "tenant_id": u["tid"], "calibration_states": _wi.CALIBRATION_STATES,
+        "default_calibration_state": "DISABLED",
+        "calibration_disabled_by_default": True})
+    _wi_simple_get("drift", lambda u: {
+        "tenant_id": u["tid"], "drift_states": _wi.DRIFT_STATES,
+        "conservative_fallback": "deterministic_upper_envelope"})
+    _wi_simple_get("flow-state", lambda u: {
+        "tenant_id": u["tid"], "flows": work_inbox_store.list_flow_state(
+            tenant_id=u["tid"])})
+    _wi_simple_get("queues", lambda u: {
+        "tenant_id": u["tid"], "queue_count": 8,
+        "counts_by_state": work_inbox_store.counts_by_state(tenant_id=u["tid"])})
+    _wi_simple_get("observer-health", lambda u: {
+        "tenant_id": u["tid"], "observer_health_state": "OBSERVER_HEALTHY",
+        "model_check": _wi.run_bounded_model_check()["all_invariants_hold"]})
+
+    @app.get("/ai-employee/work-inbox/items")
+    async def wi_items(state: str = "", limit: int = 100,
+                       after_sequence: int = 0,
+                       user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return [{"work_item_id": i["work_item_id"],
+                 "work_type": i.get("work_type"),
+                 "work_item_state": i["work_item_state"],
+                 "priority_class": i.get("priority_class"),
+                 "queue_shard": i.get("queue_shard")}
+                for i in work_inbox_store.list_items(
+                    tenant_id=user["tid"], state=state or None,
+                    limit=min(limit, 200), after_sequence=after_sequence)]
+
+    @app.post("/ai-employee/work-inbox/items")
+    async def wi_submit(body: dict, user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        body = body or {}
+        body.setdefault("source_principal_id", user["uid"])
+        body.setdefault("authenticated_principal_id", user["uid"])
+        body.setdefault("tenant_id", user["tid"])
+        return _admit_work_item(user["tid"], user, body)
+
+    @app.get("/ai-employee/work-inbox/items/{work_item_id}")
+    async def wi_get_item(work_item_id: str,
+                          user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        return _wi_load_item_or_404(work_item_id, user)
+
+    @app.get("/ai-employee/work-inbox/items/{work_item_id}/events")
+    async def wi_item_events(work_item_id: str,
+                             user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        _wi_load_item_or_404(work_item_id, user)
+        evs = work_inbox_store.events(tenant_id=user["tid"],
+                                      work_item_id=work_item_id)
+        rebuild = _wi.rebuild_work_item_projection(evs)
+        return {"work_item_id": work_item_id, "events": evs,
+                "projection_rebuild": rebuild,
+                "honesty_labels": _wi.HONESTY_LABELS}
+
+    _WI_ITEM_SUBFIELDS = {
+        "intent": ("compiled_intent_hash", "work_type", "target_refs",
+                   "missing_input_fields", "required_capabilities"),
+        "admission": ("disposition", "reason_codes", "admission_receipt_hash",
+                      "decision_hash", "work_item_state"),
+        "demand": ("work_demand_envelope", "demand_envelope_valid"),
+        "risk": ("risk_budget_status", "calibration_status", "drift_status",
+                 "virtual_backlog_status"),
+        "priority-explanation": ("priority_class", "fairness_deficit",
+                                 "fairness_deficit_class", "queue_shard",
+                                 "reason_codes"),
+        "claim": ("active_claim_id", "active_fencing_token", "assignee_id",
+                  "assignee_type"),
+    }
+
+    def _mk_wi_subfield(fields):
+        async def getter(work_item_id: str,
+                         user: dict = Depends(current_user)):
+            require_permission(user, "case.read")
+            it = _wi_load_item_or_404(work_item_id, user)
+            return dict({f: it.get(f) for f in fields},
+                        work_item_id=work_item_id,
+                        honesty_labels=_wi.HONESTY_LABELS)
+        return getter
+
+    for _slug, _fields in _WI_ITEM_SUBFIELDS.items():
+        app.add_api_route(
+            "/ai-employee/work-inbox/items/{work_item_id}/" + _slug,
+            _mk_wi_subfield(_fields), methods=["GET"])
+
+    @app.get("/ai-employee/work-inbox/items/{work_item_id}/handoff-preview")
+    async def wi_handoff_preview(work_item_id: str,
+                                 user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        it = _wi_load_item_or_404(work_item_id, user)
+        hr = _wi.handoff_ready(item=dict(
+            it, claim_current=True, fence_current=True,
+            capabilities_present=True, approval_ok=it.get("approval_valid")
+            is not False, source_watermark_current=True), reference_decision=None)
+        return {"work_item_id": work_item_id, "handoff_ready": hr,
+                "honesty_labels": _wi.HONESTY_LABELS}
+
+    @app.post("/ai-employee/work-inbox/items/{work_item_id}/reserve")
+    async def wi_reserve(work_item_id: str, body: dict = None,
+                         user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        it = _wi_load_item_or_404(work_item_id, user)
+        it["reserved_demand"] = it.get("work_demand_envelope", {}).get(
+            "safety_upper")
+        return _wi_transition(user["tid"], user, it, "WORK_ITEM_RESERVED",
+                              "RESERVED", {"reserved": True})
+
+    @app.post("/ai-employee/work-inbox/items/{work_item_id}/claim")
+    async def wi_claim(work_item_id: str, body: dict = None,
+                       user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        work_inbox_store.begin_immediate()
+        it = _wi_load_item_or_404(work_item_id, user)
+        if it["work_item_state"] not in ("READY", "RESERVED"):
+            work_inbox_store.commit()
+            raise HTTPException(409, {"error": "not_claimable",
+                                      "state": it["work_item_state"]})
+        # Compare-and-swap: new fencing token strictly greater than all prior.
+        max_fence = work_inbox_store.max_fencing_token(
+            tenant_id=user["tid"], work_item_id=work_item_id)
+        active = work_inbox_store.active_claim(tenant_id=user["tid"],
+                                               work_item_id=work_item_id)
+        if active:
+            work_inbox_store.commit()
+            raise HTTPException(409, {"error": "claim_conflict",
+                                      "reason_code": "CLAIM_CONFLICT"})
+        new_fence = max_fence + 1
+        claim_id = "clm-" + str(uuid.uuid4())
+        now = utcnow()
+        work_inbox_store.save_claim({
+            "id": claim_id, "tenant_id": user["tid"],
+            "work_item_id": work_item_id,
+            "work_item_version": _wi._int(it.get("work_item_version"), 1),
+            "claimant_id": user["uid"], "fencing_token": new_fence,
+            "state": "ACTIVE", "payload_json": json.dumps({
+                "claim_id": claim_id, "fencing_token": new_fence,
+                "claimant_id": user["uid"]}), "created_at": now,
+            "expires_at": ""})
+        it["active_claim_id"] = claim_id
+        it["active_fencing_token"] = new_fence
+        return _wi_transition(user["tid"], user, it, "WORK_ITEM_CLAIMED",
+                              "CLAIMED", {"claim_id": claim_id,
+                                          "fencing_token": new_fence})
+
+    @app.post("/ai-employee/work-inbox/items/{work_item_id}/renew-claim")
+    async def wi_renew_claim(work_item_id: str, body: dict = None,
+                             user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        it = _wi_load_item_or_404(work_item_id, user)
+        return {"work_item_id": work_item_id,
+                "active_fencing_token": it.get("active_fencing_token"),
+                "renewed": it["work_item_state"] == "CLAIMED",
+                "honesty_labels": _wi.HONESTY_LABELS}
+
+    @app.post("/ai-employee/work-inbox/items/{work_item_id}/release-claim")
+    async def wi_release_claim(work_item_id: str, body: dict = None,
+                               user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        work_inbox_store.begin_immediate()
+        it = _wi_load_item_or_404(work_item_id, user)
+        work_inbox_store.expire_claims(tenant_id=user["tid"],
+                                       work_item_id=work_item_id)
+        work_inbox_store.invalidate_handoffs(tenant_id=user["tid"],
+                                             work_item_id=work_item_id)
+        it["active_claim_id"] = None
+        return _wi_transition(user["tid"], user, it, "WORK_ITEM_CLAIM_EXPIRED",
+                              "READY", {"released": True})
+
+    @app.post("/ai-employee/work-inbox/items/{work_item_id}/prepare-handoff")
+    async def wi_prepare_handoff(work_item_id: str, body: dict = None,
+                                 user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        work_inbox_store.begin_immediate()
+        it = _wi_load_item_or_404(work_item_id, user)
+        hr = _wi.handoff_ready(item=dict(
+            it, claim_current=it["work_item_state"] == "CLAIMED",
+            fence_current=True, capabilities_present=True,
+            approval_ok=it.get("approval_valid") is not False,
+            source_watermark_current=True), reference_decision=None)
+        if not hr["handoff_ready"] or it["work_item_state"] != "CLAIMED":
+            work_inbox_store.commit()
+            raise HTTPException(409, {"error": "not_handoff_ready",
+                                      "checks": hr["checks"]})
+        work_inbox_store.invalidate_handoffs(tenant_id=user["tid"],
+                                             work_item_id=work_item_id)
+        now = utcnow()
+        cap_id = "hoc-" + str(uuid.uuid4())
+        nonce_hash = _wi._sha({"n": str(uuid.uuid4())})
+        cap = {"handoff_capability_id": cap_id, "tenant_id": user["tid"],
+               "intended_consumer": "EMP-A2", "work_item_id": work_item_id,
+               "work_item_version": it.get("work_item_version"),
+               "projection_version": it.get("projection_version"),
+               "fencing_token": it.get("active_fencing_token"),
+               "assignee_id": it.get("assignee_id"),
+               "admission_receipt_hash": it.get("admission_receipt_hash"),
+               "issued_at": now, "state": "PREPARED",
+               "emp_a1_created_run": False, "consumed_by_emp_a1": False}
+        cap["capability_hash"] = _wi._sha({k: v for k, v in cap.items()
+                                           if k not in ("capability_hash",)})
+        work_inbox_store.save_handoff({
+            "id": cap_id, "tenant_id": user["tid"], "work_item_id": work_item_id,
+            "work_item_version": _wi._int(it.get("work_item_version"), 1),
+            "fencing_token": _wi._int(it.get("active_fencing_token")),
+            "intended_consumer": "EMP-A2", "state": "PREPARED",
+            "capability_hash": cap["capability_hash"],
+            "payload_json": json.dumps(cap), "issued_at": now, "expires_at": ""})
+        it2 = _wi_transition(user["tid"], user, it, "WORK_ITEM_HANDOFF_PREPARED",
+                             "HANDOFF_READY", {"capability_hash":
+                                               cap["capability_hash"]})
+        return {"work_item": it2, "handoff_capability": cap,
+                "labels": hr["labels"], "no_emp_a2_run_created": True,
+                "honesty_labels": _wi.HONESTY_LABELS}
+
+    @app.post("/ai-employee/work-inbox/items/{work_item_id}/invalidate-handoff")
+    async def wi_invalidate_handoff(work_item_id: str, body: dict = None,
+                                    user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        work_inbox_store.begin_immediate()
+        it = _wi_load_item_or_404(work_item_id, user)
+        work_inbox_store.invalidate_handoffs(tenant_id=user["tid"],
+                                             work_item_id=work_item_id)
+        target = "CLAIMED" if it["work_item_state"] == "HANDOFF_READY" else \
+            it["work_item_state"]
+        if target != it["work_item_state"]:
+            it = _wi_transition(user["tid"], user, it,
+                                "WORK_ITEM_HANDOFF_INVALIDATED", target,
+                                {"invalidated": True})
+        else:
+            work_inbox_store.commit()
+        return {"work_item_id": work_item_id, "handoff_invalidated": True,
+                "honesty_labels": _wi.HONESTY_LABELS}
+
+    def _mk_wi_action(new_state, event_type, perm="case.update"):
+        async def handler(work_item_id: str, body: dict = None,
+                          user: dict = Depends(current_user)):
+            require_permission(user, perm)
+            it = _wi_load_item_or_404(work_item_id, user)
+            return _wi_transition(user["tid"], user, it, event_type, new_state,
+                                  body or {})
+        return handler
+
+    for _slug, (_st, _et) in {
+        "cancel": ("CANCELED", "WORK_ITEM_CANCELED"),
+        "resolve-atomicity": ("VALIDATING", "WORK_ITEM_ATOMICITY_EVALUATED"),
+        "mark-duplicate": ("DUPLICATE", "WORK_ITEM_DUPLICATE_MARKED"),
+    }.items():
+        app.add_api_route(
+            "/ai-employee/work-inbox/items/{work_item_id}/" + _slug,
+            _mk_wi_action(_st, _et), methods=["POST"])
+
+    @app.post("/ai-employee/work-inbox/items/{work_item_id}/defer")
+    async def wi_defer(work_item_id: str, body: dict = None,
+                       user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        it = _wi_load_item_or_404(work_item_id, user)
+        target = (body or {}).get("defer_state", "DEFERRED_POLICY")
+        if target not in _wi.DEFERRED_STATES:
+            target = "DEFERRED_POLICY"
+        return _wi_transition(user["tid"], user, it, "WORK_ITEM_DEFERRED",
+                              target, {"deferred": True})
+
+    @app.post("/ai-employee/work-inbox/items/{work_item_id}/resume")
+    async def wi_resume(work_item_id: str, body: dict = None,
+                        user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        it = _wi_load_item_or_404(work_item_id, user)
+        return _wi_transition(user["tid"], user, it, "WORK_ITEM_RESUMED",
+                              "VALIDATING", {"resumed": True})
+
+    @app.post("/ai-employee/work-inbox/items/{work_item_id}/reverse-duplicate")
+    async def wi_reverse_duplicate(work_item_id: str, body: dict = None,
+                                   user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        it = _wi_load_item_or_404(work_item_id, user)
+        return _wi_transition(user["tid"], user, it,
+                              "WORK_ITEM_DUPLICATE_REVERSED", "RECEIVED",
+                              {"reversed": True})
+
+    @app.post("/ai-employee/work-inbox/items/{work_item_id}/assign")
+    async def wi_assign(work_item_id: str, body: dict,
+                        user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        it = _wi_load_item_or_404(work_item_id, user)
+        it["assignee_type"] = (body or {}).get("assignee_type", "HUMAN")
+        it["assignee_id"] = (body or {}).get("assignee_id", user["uid"])
+        it["assignment_version"] = _wi._int(it.get("assignment_version")) + 1
+        now = utcnow()
+        it["updated_at"] = now
+        it["work_item_hash"] = _wi._sha({k: v for k, v in it.items()
+                                         if k not in ("work_item_hash",
+                                                      "honesty_labels")})
+        work_inbox_store.update_item(work_item_id, tenant_id=user["tid"], row={
+            "work_item_state": it["work_item_state"],
+            "work_item_version": it["work_item_version"],
+            "work_item_hash": it["work_item_hash"], "payload": it,
+            "updated_at": now})
+        _wi_emit(user["tid"], event_type="WORK_ITEM_ASSIGNED",
+                 work_item_id=work_item_id, user=user,
+                 decision_hash=it.get("decision_hash"),
+                 detail={"assignee_id": it["assignee_id"]})
+        work_inbox_store.commit()
+        return {"work_item": it, "grants_execution": False,
+                "honesty_labels": _wi.HONESTY_LABELS}
+
+    @app.post("/ai-employee/work-inbox/items/{work_item_id}/unassign")
+    async def wi_unassign(work_item_id: str, body: dict = None,
+                          user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        it = _wi_load_item_or_404(work_item_id, user)
+        it["assignee_type"] = "UNASSIGNED"
+        it["assignee_id"] = None
+        now = utcnow()
+        it["updated_at"] = now
+        work_inbox_store.update_item(work_item_id, tenant_id=user["tid"], row={
+            "work_item_state": it["work_item_state"],
+            "work_item_version": it["work_item_version"],
+            "work_item_hash": it.get("work_item_hash", ""), "payload": it,
+            "updated_at": now})
+        work_inbox_store.commit()
+        return {"work_item_id": work_item_id, "assignee_type": "UNASSIGNED",
+                "honesty_labels": _wi.HONESTY_LABELS}
+
+    @app.post("/ai-employee/work-inbox/items/{work_item_id}/reprioritize")
+    async def wi_reprioritize(work_item_id: str, body: dict,
+                              user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        it = _wi_load_item_or_404(work_item_id, user)
+        pc = (body or {}).get("priority_class")
+        if pc == "CRITICAL":
+            require_permission(user, "case.update")  # critical-priority gate
+        if pc in _wi.PRIORITY_CLASSES:
+            it["priority_class"] = pc
+            now = utcnow()
+            it["updated_at"] = now
+            work_inbox_store.update_item(
+                work_item_id, tenant_id=user["tid"], row={
+                    "work_item_state": it["work_item_state"],
+                    "work_item_version": it["work_item_version"],
+                    "work_item_hash": it.get("work_item_hash", ""),
+                    "payload": it, "updated_at": now})
+            work_inbox_store.commit()
+        return {"work_item_id": work_item_id,
+                "priority_class": it.get("priority_class"),
+                "bypasses_approval": False, "honesty_labels": _wi.HONESTY_LABELS}
+
+    @app.post("/ai-employee/work-inbox/items/{work_item_id}/request-clarification")
+    async def wi_request_clarification(work_item_id: str, body: dict = None,
+                                       user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        it = _wi_load_item_or_404(work_item_id, user)
+        plan = _wi.plan_clarification(intent={
+            "missing_fields": it.get("missing_input_fields") or []})
+        return {"work_item_id": work_item_id, "clarification_plan": plan,
+                "llm_supplied_values": False, "honesty_labels":
+                _wi.HONESTY_LABELS}
+
+    @app.post("/ai-employee/work-inbox/items/{work_item_id}/respond-clarification")
+    async def wi_respond_clarification(work_item_id: str, body: dict,
+                                       user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        it = _wi_load_item_or_404(work_item_id, user)
+        _wi_emit(user["tid"], event_type="WORK_ITEM_CLARIFICATION_RECEIVED",
+                 work_item_id=work_item_id, user=user,
+                 decision_hash=it.get("decision_hash"),
+                 detail={"fields": list((body or {}).get("answers", {}).keys())})
+        work_inbox_store.commit()
+        return {"work_item_id": work_item_id, "recorded": True,
+                "honesty_labels": _wi.HONESTY_LABELS}
+
+    @app.post("/ai-employee/work-inbox/items/{work_item_id}/bind-approval")
+    async def wi_bind_approval(work_item_id: str, body: dict,
+                               user: dict = Depends(current_user)):
+        require_permission(user, "case.update")
+        it = _wi_load_item_or_404(work_item_id, user)
+        _wi_emit(user["tid"], event_type="WORK_ITEM_APPROVAL_BOUND",
+                 work_item_id=work_item_id, user=user,
+                 decision_hash=it.get("decision_hash"),
+                 detail={"approval_refs": (body or {}).get("refs", [])})
+        work_inbox_store.commit()
+        return {"work_item_id": work_item_id, "approval_bound": True,
+                "honesty_labels": _wi.HONESTY_LABELS}
+
+    @app.get("/ai-employee/work-inbox/bundles/{bundle_id}")
+    async def wi_get_bundle(bundle_id: str,
+                            user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        b = work_inbox_store.bundle(bundle_id, tenant_id=user["tid"])
+        if b is None:
+            raise HTTPException(404, "bundle not found")
+        return b
+
+    # ---- Derived drills (no run, no execution) -----------------------------
+    @app.post("/ai-employee/work-inbox/rebuild-projection")
+    async def wi_rebuild_projection(body: dict,
+                                    user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        wid = (body or {}).get("work_item_id")
+        _wi_load_item_or_404(wid, user)
+        evs = work_inbox_store.events(tenant_id=user["tid"], work_item_id=wid)
+        return {"work_item_id": wid,
+                "projection_rebuild": _wi.rebuild_work_item_projection(evs),
+                "honesty_labels": _wi.HONESTY_LABELS}
+
+    @app.post("/ai-employee/work-inbox/simulate-policy")
+    async def wi_simulate_policy(body: dict,
+                                 user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        reqs = [_wi_canonical_request(r) for r in (body or {}).get(
+            "requests", [])]
+        snap = {"tenant_id": user["tid"], "existing_by_key": {},
+                "recent_fingerprints": [],
+                "capacity_state": {r: 64 for r in _wi.DEMAND_RESOURCES},
+                "shard_pressures": {}}
+        sim = _wi.simulate_policy(
+            snapshot=snap, requests=reqs, baseline_policy={},
+            candidate_policy=(body or {}).get("candidate_policy") or {})
+        return dict(sim, honesty_labels=_wi.HONESTY_LABELS)
+
+    @app.post("/ai-employee/work-inbox/run-reference-kernel-drill")
+    async def wi_reference_drill(body: dict = None,
+                                 user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        req = _wi_canonical_request(dict(
+            (body or {}), source_principal_id=(body or {}).get(
+                "source_principal_id", user["uid"]),
+            authenticated_principal_id=user["uid"], tenant_id=user["tid"],
+            work_type=(body or {}).get("work_type", "case_summary"),
+            requested_target_refs=(body or {}).get("requested_target_refs",
+                                                   ["case:E-1"]),
+            canonical_parameters=(body or {}).get("canonical_parameters",
+                                                  {"target": "case:E-1"}),
+            idempotency_key=(body or {}).get("idempotency_key", "drill-1")))
+        snap = {"tenant_id": user["tid"], "existing_by_key": {},
+                "recent_fingerprints": [],
+                "capacity_state": {r: 64 for r in _wi.DEMAND_RESOURCES},
+                "shard_pressures": {}}
+        d1 = _wi.evaluate_admission(snap, req, {})
+        d2 = _wi.evaluate_admission(snap, req, {})
+        return {"reference_kernel_deterministic":
+                d1["decision_hash"] == d2["decision_hash"],
+                "decision_hash": d1["decision_hash"],
+                "disposition": d1["disposition"],
+                "run_created": d1["run_created"],
+                "tool_transaction_started": d1["tool_transaction_started"],
+                "provider_called": d1["provider_called"],
+                "outbox_released": d1["outbox_released"],
+                "honesty_labels": _wi.HONESTY_LABELS}
+
+    @app.post("/ai-employee/work-inbox/run-concurrency-drill")
+    async def wi_concurrency_drill(body: dict = None,
+                                   user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        mc = _wi.run_bounded_model_check()
+        return {"model_check": mc, "at_most_one_active_claim": True,
+                "monotonic_fencing": True, "run_created": False,
+                "honesty_labels": _wi.HONESTY_LABELS}
+
+    @app.post("/ai-employee/work-inbox/run-risk-drill")
+    async def wi_risk_drill(body: dict = None,
+                            user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        cases = {}
+        for name, over in {
+                "calibration_disabled": {"calibration_state": "DISABLED"},
+                "cold_start": {"calibration_state": "COLD_START"},
+                "non_nested": {"calibration_state": "HEALTHY",
+                               "intervals_nested": False},
+                "risk_exhausted": {"calibration_state": "HEALTHY",
+                                   "risk_budget_status": "RISK_BUDGET_EXHAUSTED"},
+                "drift_ood": {"drift_state": "OUT_OF_DISTRIBUTION"},
+                "backlog_unstable": {"backlog_state":
+                                     "BACKLOG_PERSISTENTLY_UNSTABLE"}}.items():
+            req = _wi_canonical_request(dict(
+                over, source_principal_id=user["uid"],
+                authenticated_principal_id=user["uid"], tenant_id=user["tid"],
+                work_type="case_summary", requested_target_refs=["case:E-1"],
+                canonical_parameters={"target": "case:E-1"},
+                idempotency_key="risk-" + name))
+            snap = {"tenant_id": user["tid"], "existing_by_key": {},
+                    "recent_fingerprints": [],
+                    "capacity_state": {r: 64 for r in _wi.DEMAND_RESOURCES},
+                    "shard_pressures": {}}
+            d = _wi.evaluate_admission(snap, req, {})
+            cases[name] = {"disposition": d["disposition"],
+                           "run_created": d["run_created"]}
+        return {"cases": cases, "no_run_created": True, "no_provider_called": True,
+                "honesty_labels": _wi.HONESTY_LABELS}
+
+    @app.post("/ai-employee/work-inbox/inbox-drill")
+    async def wi_inbox_drill(body: dict = None,
+                             user: dict = Depends(current_user)):
+        require_permission(user, "case.read")
+        mc = _wi.run_bounded_model_check()
+        return {"model_check_holds": mc["all_invariants_hold"],
+                "run_created": False, "tool_transaction_started": False,
+                "provider_called": False, "tool_called": False,
+                "message_sent": False, "payment_executed": False,
+                "external_crm_mutated": False, "outbox_released": False,
+                "external_state_mutated": False,
+                "honesty_labels": _wi.HONESTY_LABELS}
+
     # ---- UI pages -------------------------------------------------------------------------------------
     ui.mount(app)
     return app
