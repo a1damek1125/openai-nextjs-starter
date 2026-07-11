@@ -1,0 +1,509 @@
+{
+  "contracts": [
+    {
+      "contract_id": "CT-MODEL",
+      "contract_version": "1.0",
+      "core_capabilities": [
+        "structured_output",
+        "tool_request",
+        "streaming"
+      ],
+      "credential_contract": {
+        "by_reference": true,
+        "personal_shared_separation": true,
+        "read_write_separation": true,
+        "tenant_scope": true
+      },
+      "effectful": false,
+      "error_mappings": [
+        {
+          "from": "HTTP_429",
+          "maps_to": "provider_condition"
+        }
+      ],
+      "error_taxonomy": [
+        "TIMEOUT",
+        "RATE_LIMIT",
+        "AUTHENTICATION_FAILURE",
+        "PROVIDER_OUTAGE",
+        "UNKNOWN_OUTCOME"
+      ],
+      "extension_namespace_policy": {
+        "required": true
+      },
+      "extensions": [
+        {
+          "name": "native_computer_use",
+          "namespace": "provider_x"
+        }
+      ],
+      "idempotency_semantics": {
+        "idempotency_key": true
+      },
+      "observability_contract": {
+        "otel_compatible": true
+      },
+      "portability_contract": {
+        "export": "canonical"
+      },
+      "provider_class": "model_provider",
+      "provider_id_mappings": [
+        {
+          "kind": "external_reference",
+          "maps_to": "external_reference"
+        }
+      ],
+      "request_schema": {
+        "canonical_input": "object",
+        "credential_ref": "string"
+      },
+      "response_schema": {
+        "canonical_output": "object",
+        "outcome": "enum"
+      },
+      "timeout_semantics": {
+        "default_ms": 30000
+      },
+      "unknown_outcome_semantics": {
+        "never_blind_retry": true
+      }
+    },
+    {
+      "contract_id": "CT-ASR",
+      "contract_version": "1.0",
+      "core_capabilities": [
+        "transcribe",
+        "confidence"
+      ],
+      "credential_contract": {
+        "by_reference": true,
+        "personal_shared_separation": true,
+        "read_write_separation": true,
+        "tenant_scope": true
+      },
+      "effectful": false,
+      "error_mappings": [
+        {
+          "from": "HTTP_429",
+          "maps_to": "provider_condition"
+        }
+      ],
+      "error_taxonomy": [
+        "TIMEOUT",
+        "RATE_LIMIT",
+        "AUTHENTICATION_FAILURE",
+        "PROVIDER_OUTAGE",
+        "UNKNOWN_OUTCOME"
+      ],
+      "extension_namespace_policy": {
+        "required": true
+      },
+      "extensions": [],
+      "idempotency_semantics": {
+        "idempotency_key": true
+      },
+      "observability_contract": {
+        "otel_compatible": true
+      },
+      "portability_contract": {
+        "export": "canonical"
+      },
+      "provider_class": "asr_provider",
+      "provider_id_mappings": [
+        {
+          "kind": "external_reference",
+          "maps_to": "external_reference"
+        }
+      ],
+      "request_schema": {
+        "canonical_input": "object",
+        "credential_ref": "string"
+      },
+      "response_schema": {
+        "canonical_output": "object",
+        "outcome": "enum"
+      },
+      "timeout_semantics": {
+        "default_ms": 30000
+      },
+      "unknown_outcome_semantics": {
+        "never_blind_retry": true
+      }
+    },
+    {
+      "contract_id": "CT-TTS",
+      "contract_version": "1.0",
+      "core_capabilities": [
+        "synthesize",
+        "voice_select"
+      ],
+      "credential_contract": {
+        "by_reference": true,
+        "personal_shared_separation": true,
+        "read_write_separation": true,
+        "tenant_scope": true
+      },
+      "effectful": false,
+      "error_mappings": [
+        {
+          "from": "HTTP_429",
+          "maps_to": "provider_condition"
+        }
+      ],
+      "error_taxonomy": [
+        "TIMEOUT",
+        "RATE_LIMIT",
+        "AUTHENTICATION_FAILURE",
+        "PROVIDER_OUTAGE",
+        "UNKNOWN_OUTCOME"
+      ],
+      "extension_namespace_policy": {
+        "required": true
+      },
+      "extensions": [],
+      "idempotency_semantics": {
+        "idempotency_key": true
+      },
+      "observability_contract": {
+        "otel_compatible": true
+      },
+      "portability_contract": {
+        "export": "canonical"
+      },
+      "provider_class": "tts_provider",
+      "provider_id_mappings": [
+        {
+          "kind": "external_reference",
+          "maps_to": "external_reference"
+        }
+      ],
+      "request_schema": {
+        "canonical_input": "object",
+        "credential_ref": "string"
+      },
+      "response_schema": {
+        "canonical_output": "object",
+        "outcome": "enum"
+      },
+      "timeout_semantics": {
+        "default_ms": 30000
+      },
+      "unknown_outcome_semantics": {
+        "never_blind_retry": true
+      }
+    },
+    {
+      "contract_id": "CT-TELEPHONY",
+      "contract_version": "1.0",
+      "core_capabilities": [
+        "place_call",
+        "call_status"
+      ],
+      "credential_contract": {
+        "by_reference": true,
+        "personal_shared_separation": true,
+        "read_write_separation": true,
+        "tenant_scope": true
+      },
+      "effectful": true,
+      "error_mappings": [
+        {
+          "from": "HTTP_429",
+          "maps_to": "provider_condition"
+        }
+      ],
+      "error_taxonomy": [
+        "TIMEOUT",
+        "RATE_LIMIT",
+        "AUTHENTICATION_FAILURE",
+        "PROVIDER_OUTAGE",
+        "UNKNOWN_OUTCOME"
+      ],
+      "extension_namespace_policy": {
+        "required": true
+      },
+      "extensions": [],
+      "idempotency_semantics": {
+        "idempotency_key": true
+      },
+      "observability_contract": {
+        "otel_compatible": true
+      },
+      "portability_contract": {
+        "export": "canonical"
+      },
+      "provider_class": "telephony_provider",
+      "provider_id_mappings": [
+        {
+          "kind": "external_reference",
+          "maps_to": "external_reference"
+        }
+      ],
+      "request_schema": {
+        "canonical_input": "object",
+        "credential_ref": "string"
+      },
+      "response_schema": {
+        "canonical_output": "object",
+        "outcome": "enum"
+      },
+      "timeout_semantics": {
+        "default_ms": 30000
+      },
+      "unknown_outcome_semantics": {
+        "never_blind_retry": true
+      }
+    },
+    {
+      "contract_id": "CT-EMAIL",
+      "contract_version": "1.0",
+      "core_capabilities": [
+        "draft",
+        "send",
+        "read"
+      ],
+      "credential_contract": {
+        "by_reference": true,
+        "personal_shared_separation": true,
+        "read_write_separation": true,
+        "tenant_scope": true
+      },
+      "effectful": true,
+      "error_mappings": [
+        {
+          "from": "HTTP_429",
+          "maps_to": "provider_condition"
+        }
+      ],
+      "error_taxonomy": [
+        "TIMEOUT",
+        "RATE_LIMIT",
+        "AUTHENTICATION_FAILURE",
+        "PROVIDER_OUTAGE",
+        "UNKNOWN_OUTCOME"
+      ],
+      "extension_namespace_policy": {
+        "required": true
+      },
+      "extensions": [],
+      "idempotency_semantics": {
+        "idempotency_key": true
+      },
+      "observability_contract": {
+        "otel_compatible": true
+      },
+      "portability_contract": {
+        "export": "canonical"
+      },
+      "provider_class": "email_provider",
+      "provider_id_mappings": [
+        {
+          "kind": "external_reference",
+          "maps_to": "external_reference"
+        }
+      ],
+      "request_schema": {
+        "canonical_input": "object",
+        "credential_ref": "string"
+      },
+      "response_schema": {
+        "canonical_output": "object",
+        "outcome": "enum"
+      },
+      "timeout_semantics": {
+        "default_ms": 30000
+      },
+      "unknown_outcome_semantics": {
+        "never_blind_retry": true
+      }
+    },
+    {
+      "contract_id": "CT-DURABLE",
+      "contract_version": "1.0",
+      "core_capabilities": [
+        "start_run",
+        "signal",
+        "query"
+      ],
+      "credential_contract": {
+        "by_reference": true,
+        "personal_shared_separation": true,
+        "read_write_separation": true,
+        "tenant_scope": true
+      },
+      "effectful": false,
+      "error_mappings": [
+        {
+          "from": "HTTP_429",
+          "maps_to": "provider_condition"
+        }
+      ],
+      "error_taxonomy": [
+        "TIMEOUT",
+        "RATE_LIMIT",
+        "AUTHENTICATION_FAILURE",
+        "PROVIDER_OUTAGE",
+        "UNKNOWN_OUTCOME"
+      ],
+      "extension_namespace_policy": {
+        "required": true
+      },
+      "extensions": [],
+      "idempotency_semantics": {
+        "idempotency_key": true
+      },
+      "observability_contract": {
+        "otel_compatible": true
+      },
+      "portability_contract": {
+        "export": "canonical"
+      },
+      "provider_class": "durable_runtime",
+      "provider_id_mappings": [
+        {
+          "kind": "external_reference",
+          "maps_to": "external_reference"
+        }
+      ],
+      "request_schema": {
+        "canonical_input": "object",
+        "credential_ref": "string"
+      },
+      "response_schema": {
+        "canonical_output": "object",
+        "outcome": "enum"
+      },
+      "timeout_semantics": {
+        "default_ms": 30000
+      },
+      "unknown_outcome_semantics": {
+        "never_blind_retry": true
+      }
+    },
+    {
+      "contract_id": "CT-STORAGE",
+      "contract_version": "1.0",
+      "core_capabilities": [
+        "put_object",
+        "get_object",
+        "delete_object"
+      ],
+      "credential_contract": {
+        "by_reference": true,
+        "personal_shared_separation": true,
+        "read_write_separation": true,
+        "tenant_scope": true
+      },
+      "effectful": true,
+      "error_mappings": [
+        {
+          "from": "HTTP_429",
+          "maps_to": "provider_condition"
+        }
+      ],
+      "error_taxonomy": [
+        "TIMEOUT",
+        "RATE_LIMIT",
+        "AUTHENTICATION_FAILURE",
+        "PROVIDER_OUTAGE",
+        "UNKNOWN_OUTCOME"
+      ],
+      "extension_namespace_policy": {
+        "required": true
+      },
+      "extensions": [],
+      "idempotency_semantics": {
+        "idempotency_key": true
+      },
+      "observability_contract": {
+        "otel_compatible": true
+      },
+      "portability_contract": {
+        "export": "canonical"
+      },
+      "provider_class": "object_storage",
+      "provider_id_mappings": [
+        {
+          "kind": "external_reference",
+          "maps_to": "external_reference"
+        }
+      ],
+      "request_schema": {
+        "canonical_input": "object",
+        "credential_ref": "string"
+      },
+      "response_schema": {
+        "canonical_output": "object",
+        "outcome": "enum"
+      },
+      "timeout_semantics": {
+        "default_ms": 30000
+      },
+      "unknown_outcome_semantics": {
+        "never_blind_retry": true
+      }
+    },
+    {
+      "contract_id": "CT-DATABASE",
+      "contract_version": "1.0",
+      "core_capabilities": [
+        "query",
+        "transaction"
+      ],
+      "credential_contract": {
+        "by_reference": true,
+        "personal_shared_separation": true,
+        "read_write_separation": true,
+        "tenant_scope": true
+      },
+      "effectful": false,
+      "error_mappings": [
+        {
+          "from": "HTTP_429",
+          "maps_to": "provider_condition"
+        }
+      ],
+      "error_taxonomy": [
+        "TIMEOUT",
+        "RATE_LIMIT",
+        "AUTHENTICATION_FAILURE",
+        "PROVIDER_OUTAGE",
+        "UNKNOWN_OUTCOME"
+      ],
+      "extension_namespace_policy": {
+        "required": true
+      },
+      "extensions": [],
+      "idempotency_semantics": {
+        "idempotency_key": true
+      },
+      "observability_contract": {
+        "otel_compatible": true
+      },
+      "portability_contract": {
+        "export": "canonical"
+      },
+      "provider_class": "database",
+      "provider_id_mappings": [
+        {
+          "kind": "external_reference",
+          "maps_to": "external_reference"
+        }
+      ],
+      "request_schema": {
+        "canonical_input": "object",
+        "credential_ref": "string"
+      },
+      "response_schema": {
+        "canonical_output": "object",
+        "outcome": "enum"
+      },
+      "timeout_semantics": {
+        "default_ms": 30000
+      },
+      "unknown_outcome_semantics": {
+        "never_blind_retry": true
+      }
+    }
+  ]
+}

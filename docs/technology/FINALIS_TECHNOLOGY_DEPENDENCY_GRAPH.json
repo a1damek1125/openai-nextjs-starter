@@ -1,0 +1,115 @@
+{
+  "edges": [
+    {
+      "from": "fastapi",
+      "to": "python"
+    },
+    {
+      "from": "fastapi",
+      "to": "starlette"
+    },
+    {
+      "from": "uvicorn",
+      "to": "python"
+    },
+    {
+      "from": "starlette",
+      "to": "python"
+    },
+    {
+      "from": "sqlite",
+      "to": "python"
+    },
+    {
+      "from": "pytest",
+      "to": "python"
+    }
+  ],
+  "nodes": [
+    {
+      "failure_domain": {},
+      "kind": "language",
+      "node_id": "python"
+    },
+    {
+      "failure_domain": {},
+      "kind": "web_framework",
+      "node_id": "fastapi"
+    },
+    {
+      "failure_domain": {},
+      "kind": "asgi_server",
+      "node_id": "uvicorn"
+    },
+    {
+      "failure_domain": {},
+      "kind": "web_framework",
+      "node_id": "starlette"
+    },
+    {
+      "failure_domain": {},
+      "kind": "database",
+      "node_id": "sqlite"
+    },
+    {
+      "failure_domain": {},
+      "kind": "test_framework",
+      "node_id": "pytest"
+    },
+    {
+      "failure_domain": {},
+      "kind": "model_provider",
+      "node_id": "model_provider_seam"
+    },
+    {
+      "failure_domain": {},
+      "kind": "asr_provider",
+      "node_id": "asr_seam"
+    },
+    {
+      "failure_domain": {},
+      "kind": "tts_provider",
+      "node_id": "tts_seam"
+    },
+    {
+      "failure_domain": {},
+      "kind": "telephony_provider",
+      "node_id": "telephony_seam"
+    },
+    {
+      "failure_domain": {},
+      "kind": "email_provider",
+      "node_id": "email_seam"
+    },
+    {
+      "failure_domain": {},
+      "kind": "durable_runtime",
+      "node_id": "durable_runtime_seam"
+    },
+    {
+      "failure_domain": {},
+      "kind": "event_transport",
+      "node_id": "event_transport_seam"
+    },
+    {
+      "failure_domain": {},
+      "kind": "object_storage",
+      "node_id": "object_storage_seam"
+    },
+    {
+      "failure_domain": {},
+      "kind": "observability",
+      "node_id": "observability_seam"
+    },
+    {
+      "failure_domain": {},
+      "kind": "protocol",
+      "node_id": "mcp"
+    },
+    {
+      "failure_domain": {},
+      "kind": "protocol",
+      "node_id": "a2a"
+    }
+  ]
+}

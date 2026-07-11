@@ -1,0 +1,45 @@
+{
+  "protocols": [
+    {
+      "family": "MCP",
+      "protected": true,
+      "protocol_id": "PROTO-MCP",
+      "review_by": "2026-10-01",
+      "role": "INTEROP_BOUNDARY",
+      "source_url": "https://modelcontextprotocol.io/specification/2025-11-25",
+      "status": "SUPPORTED",
+      "sunset_date": null,
+      "supported_version": "2025-11-25"
+    },
+    {
+      "family": "A2A",
+      "protected": true,
+      "protocol_id": "PROTO-A2A",
+      "review_by": "2027-01-01",
+      "role": "INTEROP_BOUNDARY",
+      "source_url": "https://a2a-protocol.org/latest/",
+      "status": "SUPPORTED",
+      "sunset_date": null,
+      "supported_version": "1.0"
+    },
+    {
+      "family": "OpenTelemetry",
+      "protected": true,
+      "protocol_id": "PROTO-OTEL",
+      "review_by": "2027-01-01",
+      "role": "TELEMETRY_STANDARD",
+      "source_url": "https://opentelemetry.io/docs/specs/status/",
+      "status": "SUPPORTED",
+      "supported_version": "1.x"
+    },
+    {
+      "family": "CloudEvents",
+      "protected": true,
+      "protocol_id": "PROTO-CLOUDEVENTS",
+      "review_by": "2028-01-01",
+      "role": "INTEROP_BOUNDARY",
+      "status": "SUPPORTED",
+      "supported_version": "1.0"
+    }
+  ]
+}

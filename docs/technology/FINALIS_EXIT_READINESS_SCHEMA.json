@@ -1,0 +1,3 @@
+{"schema_id":"FINALIS-EXIT-READINESS","sp":"SP0004","required":["technology_id"],
+ "dimensions":["data_export","state_export","adapter_portability","replacement_availability","replay_coverage","rollback_readiness","operational_readiness","documentation_readiness"],
+ "note":"Never a bare replaceable=true (D-0004-39). A critical missing data export is a hard blocker regardless of averaged ERI (D-0004-40, §12.6). T3/T4 without exit plan FAILS (INV-0004-12)."}

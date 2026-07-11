@@ -1,0 +1,3 @@
+{"schema_id":"FINALIS-TECH-FITNESS","sp":"SP0004","required":["fitness_id","severity","mode","condition"],
+ "mode":["DETERMINISTIC","ADVISORY"],"severity":["P0","P1","P2"],
+ "note":"Hard and advisory fitness are separate (D-0004-45). A fitness function detects/reports/blocks but NEVER grants runtime authority (INV-0004-22). Constitutional P0 fitness cannot be waived (§17.6)."}

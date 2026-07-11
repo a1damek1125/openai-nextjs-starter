@@ -1,0 +1,40 @@
+{
+  "entries": [
+    {
+      "ring": "ADOPT",
+      "technology": "Python 3.11"
+    },
+    {
+      "ring": "ADOPT",
+      "technology": "FastAPI"
+    },
+    {
+      "ring": "ADOPT",
+      "technology": "SQLite"
+    },
+    {
+      "ring": "ADOPT",
+      "technology": "OpenTelemetry"
+    },
+    {
+      "ring": "TRIAL",
+      "technology": "MCP"
+    },
+    {
+      "ring": "ASSESS",
+      "technology": "A2A"
+    },
+    {
+      "ring": "ASSESS",
+      "technology": "Temporal"
+    },
+    {
+      "ring": "TRIAL",
+      "technology": "PostgreSQL"
+    },
+    {
+      "ring": "ASSESS",
+      "technology": "CycloneDX AI/ML-BOM"
+    }
+  ]
+}

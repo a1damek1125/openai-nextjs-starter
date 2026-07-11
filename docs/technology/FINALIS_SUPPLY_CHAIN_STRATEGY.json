@@ -1,0 +1,33 @@
+{
+  "standards": [
+    {
+      "claims_compliance": false,
+      "decision": "ADOPT_TARGET",
+      "implementation_evidence": null,
+      "note": "future build-provenance target; not yet implemented",
+      "standard": "SLSA",
+      "target_version": "1.2"
+    },
+    {
+      "claims_compliance": false,
+      "decision": "ADOPT_TARGET",
+      "note": "SBOM + AI/ML-BOM target",
+      "standard": "CYCLONEDX",
+      "target_version": "1.7"
+    },
+    {
+      "claims_compliance": false,
+      "decision": "EVALUATE",
+      "note": "complementary; 3.1 is RC",
+      "standard": "SPDX",
+      "target_version": "3.0.1"
+    },
+    {
+      "claims_compliance": false,
+      "decision": "ADOPT_TARGET",
+      "note": "model/adapter/eval inventory strategy only",
+      "standard": "AI_ML_BOM",
+      "target_version": "cyclonedx-1.7"
+    }
+  ]
+}

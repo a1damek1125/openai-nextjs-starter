@@ -1,0 +1,4 @@
+{"schema_id":"FINALIS-PROVIDER-PROFILE","sp":"SP0004","required":["provider_id","contract_id","contract_version"],
+ "fields":["provider_id","adapter_version","technology_id","core_capabilities","extensions","limitations","failure_domain_refs","certification_status"],
+ "certification_status":["UNREGISTERED","REGISTERED","CONTRACT_VALIDATED","FAULT_TESTED","SHADOW_VALIDATED","PRODUCTION_ELIGIBLE","SUSPENDED","RETIRED"],
+ "note":"SP0004 never marks a real provider PRODUCTION_ELIGIBLE without real evidence (§13.3)."}

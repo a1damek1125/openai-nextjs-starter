@@ -1,0 +1,164 @@
+{
+  "evidence": [
+    {
+      "applicability": "Python 3.11 EOL 2027-10-31",
+      "evidence_id": "EV-PY",
+      "freshness_status": "CURRENT",
+      "limitations": [],
+      "published_at": null,
+      "retrieved_at": "2026-07-11",
+      "source_type": "OFFICIAL_DOCUMENTATION",
+      "source_url": "https://devguide.python.org/versions/",
+      "technology_version": "3.11"
+    },
+    {
+      "applicability": "mature, still 0.x versioning",
+      "evidence_id": "EV-FASTAPI",
+      "freshness_status": "CURRENT",
+      "limitations": [],
+      "published_at": null,
+      "retrieved_at": "2026-07-11",
+      "source_type": "OFFICIAL_DOCUMENTATION",
+      "source_url": "https://fastapi.tiangolo.com/",
+      "technology_version": "0.135"
+    },
+    {
+      "applicability": "prototype/low-concurrency; Postgres recommended for high-concurrency prod",
+      "evidence_id": "EV-SQLITE",
+      "freshness_status": "CURRENT",
+      "limitations": [
+        "not for high write concurrency"
+      ],
+      "published_at": null,
+      "retrieved_at": "2026-07-11",
+      "source_type": "OFFICIAL_DOCUMENTATION",
+      "source_url": "https://www.sqlite.org/",
+      "technology_version": "3"
+    },
+    {
+      "applicability": "current finalized MCP spec",
+      "evidence_id": "EV-MCP",
+      "freshness_status": "CURRENT",
+      "limitations": [
+        "2026-07-28 is an RC, not finalized"
+      ],
+      "published_at": null,
+      "retrieved_at": "2026-07-11",
+      "source_type": "OFFICIAL_SPECIFICATION",
+      "source_url": "https://modelcontextprotocol.io/specification/2025-11-25",
+      "technology_version": "2025-11-25"
+    },
+    {
+      "applicability": "A2A v1.0 stable (Linux Foundation)",
+      "evidence_id": "EV-A2A",
+      "freshness_status": "CURRENT",
+      "limitations": [],
+      "published_at": null,
+      "retrieved_at": "2026-07-11",
+      "source_type": "OFFICIAL_SPECIFICATION",
+      "source_url": "https://a2a-protocol.org/latest/announcing-1.0/",
+      "technology_version": "1.0"
+    },
+    {
+      "applicability": "traces/metrics/logs stable; profiling RC",
+      "evidence_id": "EV-OTEL",
+      "freshness_status": "CURRENT",
+      "limitations": [
+        "profiling is RC"
+      ],
+      "published_at": null,
+      "retrieved_at": "2026-07-11",
+      "source_type": "OFFICIAL_SPECIFICATION",
+      "source_url": "https://opentelemetry.io/docs/specs/status/",
+      "technology_version": "stable"
+    },
+    {
+      "applicability": "v1.2 approved specification line",
+      "evidence_id": "EV-SLSA",
+      "freshness_status": "CURRENT",
+      "limitations": [],
+      "published_at": null,
+      "retrieved_at": "2026-07-11",
+      "source_type": "OFFICIAL_SPECIFICATION",
+      "source_url": "https://slsa.dev/spec/v1.2/",
+      "technology_version": "1.2"
+    },
+    {
+      "applicability": "AI/ML-BOM supported since 1.6",
+      "evidence_id": "EV-CYCLONEDX",
+      "freshness_status": "CURRENT",
+      "limitations": [],
+      "published_at": null,
+      "retrieved_at": "2026-07-11",
+      "source_type": "OFFICIAL_SPECIFICATION",
+      "source_url": "https://cyclonedx.org/capabilities/mlbom/",
+      "technology_version": "1.7"
+    },
+    {
+      "applicability": "3.0.1 finalized; 3.1 is RC",
+      "evidence_id": "EV-SPDX",
+      "freshness_status": "CURRENT",
+      "limitations": [],
+      "published_at": null,
+      "retrieved_at": "2026-07-11",
+      "source_type": "OFFICIAL_SPECIFICATION",
+      "source_url": "https://spdx.github.io/spdx-spec/v3.0.1/",
+      "technology_version": "3.0.1"
+    },
+    {
+      "applicability": "durable execution infra, not business truth",
+      "evidence_id": "EV-TEMPORAL",
+      "freshness_status": "CURRENT",
+      "limitations": [],
+      "published_at": null,
+      "retrieved_at": "2026-07-11",
+      "source_type": "OFFICIAL_DOCUMENTATION",
+      "source_url": "https://docs.temporal.io/evaluate/understanding-temporal",
+      "technology_version": "current"
+    },
+    {
+      "applicability": "open source still incurs soft lock-in",
+      "evidence_id": "EV-OSS-LOCKIN",
+      "freshness_status": "CURRENT",
+      "limitations": [],
+      "published_at": null,
+      "retrieved_at": "2026-07-11",
+      "source_type": "RESEARCH_PAPER",
+      "source_url": "https://arxiv.org/abs/2409.01118",
+      "technology_version": "2024"
+    },
+    {
+      "applicability": "silent model substitution is a live risk; no cryptographic provider identity proof exists",
+      "evidence_id": "EV-MODEL-SWAP",
+      "freshness_status": "CURRENT",
+      "limitations": [],
+      "published_at": null,
+      "retrieved_at": "2026-07-11",
+      "source_type": "RESEARCH_PAPER",
+      "source_url": "https://openreview.net/forum?id=3DZeEUTwhq",
+      "technology_version": "2026"
+    },
+    {
+      "applicability": "append-only architecture decision records",
+      "evidence_id": "EV-ADR",
+      "freshness_status": "CURRENT",
+      "limitations": [],
+      "published_at": null,
+      "retrieved_at": "2026-07-11",
+      "source_type": "OFFICIAL_DOCUMENTATION",
+      "source_url": "https://adr.github.io/",
+      "technology_version": "-"
+    },
+    {
+      "applicability": "continuous architecture fitness",
+      "evidence_id": "EV-FITNESS",
+      "freshness_status": "CURRENT",
+      "limitations": [],
+      "published_at": null,
+      "retrieved_at": "2026-07-11",
+      "source_type": "OFFICIAL_DOCUMENTATION",
+      "source_url": "https://continuous-architecture.org/practices/fitness-functions/",
+      "technology_version": "-"
+    }
+  ]
+}

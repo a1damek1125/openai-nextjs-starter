@@ -1,0 +1,3 @@
+{"schema_id":"FINALIS-SUBSTITUTION-EVIDENCE","sp":"SP0004","required":["substitution_id","source_provider","candidate_provider","contract_version","corpus_version","tested_at"],
+ "version_bound":"Evidence applies only while provider_version + contract_version + corpus_version match; a material change invalidates it (INV-0004-20, D-0004-42).",
+ "substitutability":["CONTRACT_EQUIVALENT","FUNCTIONALLY_ACCEPTABLE","PARTIALLY_SUBSTITUTABLE","NON_EQUIVALENT","UNKNOWN"]}

@@ -1,0 +1,4 @@
+{"schema_id":"FINALIS-EVIDENCE","sp":"SP0004","required":["evidence_id","source_url","source_type","retrieved_at"],
+ "source_type":["OFFICIAL_DOCUMENTATION","OFFICIAL_SPECIFICATION","PRIMARY_SOURCE","VENDOR_CLAIM","BENCHMARK","RESEARCH_PAPER","REPOSITORY_FACT","ARCHITECTURAL_INFERENCE"],
+ "freshness_status":["CURRENT","REVIEW_DUE","STALE","SUPERSEDED"],
+ "note":"Vendor documentation is authoritative for its own interface/version, NOT for comparative superiority (§17.2). Freshness is technology-relative (D-0004-56)."}

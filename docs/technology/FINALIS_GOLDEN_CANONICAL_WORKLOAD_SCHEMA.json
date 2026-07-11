@@ -1,0 +1,3 @@
+{"schema_id":"FINALIS-GOLDEN-WORKLOAD","sp":"SP0004","required":["workload_id","provider_class","canonical_input"],
+ "provider_neutral":"canonical_input describes Finalis INTENT, never a provider-native request (D-0004-33, AC-0004-064).",
+ "effect_mode":["NO_EXTERNAL_EFFECT"],"note":"Effectful workloads default to NO_EXTERNAL_EFFECT (AC-0004-065). The corpus belongs to Finalis."}
