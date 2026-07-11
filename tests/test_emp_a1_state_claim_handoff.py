@@ -64,7 +64,7 @@ def test_sch_ready_cannot_jump_to_handoff_ready():
 # --- API: reservation + fenced claim (section 37) --------------------------
 def test_sch_api_claim_sets_claimed_and_fencing_token(gate):
     wid, _ = gate.admitted_work()
-    r = gate.wi(wid, "/claim", method="POST")
+    r = gate.wki(wid, "/claim", method="POST")
     assert r.status_code == 200
     j = r.json()
     assert j["work_item_state"] == "CLAIMED"
@@ -73,29 +73,29 @@ def test_sch_api_claim_sets_claimed_and_fencing_token(gate):
 
 def test_sch_api_second_concurrent_claim_conflicts(gate):
     wid, _ = gate.admitted_work()
-    r1 = gate.wi(wid, "/claim", method="POST")
+    r1 = gate.wki(wid, "/claim", method="POST")
     assert r1.status_code == 200
-    r2 = gate.wi(wid, "/claim", method="POST")
+    r2 = gate.wki(wid, "/claim", method="POST")
     assert r2.status_code == 409
     detail = r2.json()["detail"]
     assert (detail.get("reason_code") == "CLAIM_CONFLICT"
             or detail.get("error") in ("claim_conflict", "not_claimable"))
     # The prior claim survives; fencing is not re-issued.
-    assert gate.wi(wid).json()["work_item_state"] == "CLAIMED"
+    assert gate.wki(wid).json()["work_item_state"] == "CLAIMED"
 
 
 def test_sch_api_fencing_first_token_is_one(gate):
     wid, _ = gate.admitted_work()
-    j = gate.wi(wid, "/claim", method="POST").json()
+    j = gate.wki(wid, "/claim", method="POST").json()
     assert j["active_fencing_token"] == 1
 
 
 def test_sch_api_reserve_then_claim(gate):
     wid, _ = gate.admitted_work()
-    rr = gate.wi(wid, "/reserve", method="POST")
+    rr = gate.wki(wid, "/reserve", method="POST")
     assert rr.status_code == 200
     assert rr.json()["work_item_state"] == "RESERVED"
-    rc = gate.wi(wid, "/claim", method="POST")
+    rc = gate.wki(wid, "/claim", method="POST")
     assert rc.status_code == 200
     assert rc.json()["work_item_state"] == "CLAIMED"
     assert rc.json()["active_fencing_token"] == 1
@@ -103,8 +103,8 @@ def test_sch_api_reserve_then_claim(gate):
 
 def test_sch_api_release_claim_returns_to_ready(gate):
     wid, _ = gate.admitted_work()
-    gate.wi(wid, "/claim", method="POST")
-    rel = gate.wi(wid, "/release-claim", method="POST")
+    gate.wki(wid, "/claim", method="POST")
+    rel = gate.wki(wid, "/release-claim", method="POST")
     assert rel.status_code == 200
     assert rel.json()["work_item_state"] == "READY"
 
@@ -112,16 +112,16 @@ def test_sch_api_release_claim_returns_to_ready(gate):
 def test_sch_api_release_claim_invalidates_handoff(gate):
     wid, hr = gate.ready_to_handoff()
     assert hr.json()["work_item"]["work_item_state"] == "HANDOFF_READY"
-    rel = gate.wi(wid, "/release-claim", method="POST")
+    rel = gate.wki(wid, "/release-claim", method="POST")
     assert rel.status_code == 200
     # The handoff no longer holds the item; it is back to READY.
-    assert gate.wi(wid).json()["work_item_state"] == "READY"
+    assert gate.wki(wid).json()["work_item_state"] == "READY"
 
 
 # --- API: single-use handoff (sections 38-39) ------------------------------
 def test_sch_api_prepare_handoff_requires_claimed(gate):
     wid, _ = gate.admitted_work()  # READY, not CLAIMED
-    r = gate.wi(wid, "/prepare-handoff", method="POST")
+    r = gate.wki(wid, "/prepare-handoff", method="POST")
     assert r.status_code == 409
 
 
@@ -160,15 +160,15 @@ def test_sch_api_handoff_item_state_is_handoff_ready(gate):
 
 def test_sch_api_invalidate_handoff_returns_to_claimed(gate):
     wid, _ = gate.ready_to_handoff()
-    iv = gate.wi(wid, "/invalidate-handoff", method="POST")
+    iv = gate.wki(wid, "/invalidate-handoff", method="POST")
     assert iv.status_code == 200
     assert iv.json()["handoff_invalidated"] is True
-    assert gate.wi(wid).json()["work_item_state"] == "CLAIMED"
+    assert gate.wki(wid).json()["work_item_state"] == "CLAIMED"
 
 
 def test_sch_api_stale_claimant_cannot_prepare_handoff(gate):
     wid, _ = gate.admitted_work()
-    gate.wi(wid, "/claim", method="POST")
-    gate.wi(wid, "/release-claim", method="POST")  # claim released -> READY
-    r = gate.wi(wid, "/prepare-handoff", method="POST")
+    gate.wki(wid, "/claim", method="POST")
+    gate.wki(wid, "/release-claim", method="POST")  # claim released -> READY
+    r = gate.wki(wid, "/prepare-handoff", method="POST")
     assert r.status_code == 409

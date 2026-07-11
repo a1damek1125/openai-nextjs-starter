@@ -115,19 +115,19 @@ def test_rbac_viewer_cannot_submit_items(gate):
 
 def test_rbac_viewer_cannot_claim(gate):
     wid, _ = gate.admitted_work()
-    assert gate.wi(wid, "/claim", actor=VIEWER,
+    assert gate.wki(wid, "/claim", actor=VIEWER,
                    method="POST").status_code == 403
 
 
 def test_rbac_viewer_cannot_reprioritize(gate):
     wid, _ = gate.admitted_work()
-    assert gate.wi(wid, "/reprioritize", actor=VIEWER, method="POST",
+    assert gate.wki(wid, "/reprioritize", actor=VIEWER, method="POST",
                    priority_class="HIGH").status_code == 403
 
 
 def test_rbac_viewer_cannot_cancel(gate):
     wid, _ = gate.admitted_work()
-    assert gate.wi(wid, "/cancel", actor=VIEWER,
+    assert gate.wki(wid, "/cancel", actor=VIEWER,
                    method="POST").status_code == 403
 
 
@@ -141,7 +141,7 @@ def test_tenant_other_cannot_get_item(gate):
 def test_tenant_other_cannot_get_subfield(gate):
     wid, _ = gate.admitted_work()
     for sf in ("/intent", "/admission", "/events"):
-        assert gate.wi(wid, sf, actor=OTHER_OWNER).status_code == 404, sf
+        assert gate.wki(wid, sf, actor=OTHER_OWNER).status_code == 404, sf
 
 
 def test_tenant_other_items_list_empty(gate):

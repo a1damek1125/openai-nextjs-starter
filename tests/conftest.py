@@ -728,7 +728,7 @@ class Gate:
         wi = o.get("work_item") or {}
         return wi.get("work_item_id"), o
 
-    def wi(self, work_item_id, path="", actor=OWNER, method="GET", **body):
+    def wki(self, work_item_id, path="", actor=OWNER, method="GET", **body):
         """GET/POST an EMP-A1 work-item endpoint."""
         url = f"/ai-employee/work-inbox/items/{work_item_id}{path}"
         if method == "GET":
@@ -740,8 +740,8 @@ class Gate:
         (work_item_id, handoff_response). Prepares exactly one fenced single-use
         EMP-A2 handoff capability; creates NO run."""
         wid, _ = self.admitted_work(actor=actor, **over)
-        self.wi(wid, "/claim", actor=actor, method="POST")
-        r = self.wi(wid, "/prepare-handoff", actor=actor, method="POST")
+        self.wki(wid, "/claim", actor=actor, method="POST")
+        r = self.wki(wid, "/prepare-handoff", actor=actor, method="POST")
         return wid, r
 
 

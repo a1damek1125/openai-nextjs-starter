@@ -172,7 +172,7 @@ def test_clarapp_natural_language_not_an_approval():
 # --- API layer -------------------------------------------------------------
 def test_clarapp_api_request_clarification(gate):
     wid, _ = gate.admitted_work()
-    r = gate.wi(wid, "/request-clarification", method="POST")
+    r = gate.wki(wid, "/request-clarification", method="POST")
     assert r.status_code == 200
     j = r.json()
     assert j["llm_supplied_values"] is False
@@ -181,7 +181,7 @@ def test_clarapp_api_request_clarification(gate):
 
 def test_clarapp_api_respond_clarification(gate):
     wid, _ = gate.admitted_work()
-    r = gate.wi(wid, "/respond-clarification", method="POST",
+    r = gate.wki(wid, "/respond-clarification", method="POST",
                 answers={"message_intent": "reply"})
     assert r.status_code == 200
     assert r.json()["recorded"] is True
@@ -189,7 +189,7 @@ def test_clarapp_api_respond_clarification(gate):
 
 def test_clarapp_api_bind_approval(gate):
     wid, _ = gate.admitted_work()
-    r = gate.wi(wid, "/bind-approval", method="POST",
+    r = gate.wki(wid, "/bind-approval", method="POST",
                 refs=["approval:signed:1"])
     assert r.status_code == 200
     assert r.json()["approval_bound"] is True

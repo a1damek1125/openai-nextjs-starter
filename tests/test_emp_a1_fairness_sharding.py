@@ -227,13 +227,13 @@ def test_placement_versioned_shuffle_changes_candidates():
 # --- API layer -------------------------------------------------------------
 def test_api_priority_explanation_shard_and_fairness(gate):
     wid, _ = gate.admitted_work()
-    pe = gate.wi(wid, "/priority-explanation").json()
+    pe = gate.wki(wid, "/priority-explanation").json()
     assert 0 <= pe["queue_shard"] < 8
     assert pe["fairness_deficit_class"] in ("OWED", "EVEN", "OVERSERVED")
 
 
 def test_api_flow_key_present_and_shard_bounded(gate):
     wid, _ = gate.admitted_work()
-    item = gate.wi(wid).json()
+    item = gate.wki(wid).json()
     assert item["flow_key"]
     assert 0 <= item["queue_shard"] < 8

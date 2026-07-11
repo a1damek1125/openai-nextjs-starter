@@ -76,7 +76,7 @@ def test_apidrills_submit_happy_path_admit_ready(gate):
 
 def test_apidrills_get_item_200(gate):
     wid, _ = gate.admitted_work()
-    r = gate.wi(wid)
+    r = gate.wki(wid)
     assert r.status_code == 200
     assert r.json()["work_item_id"] == wid
 
@@ -85,21 +85,21 @@ def test_apidrills_item_subfields_all_200(gate):
     wid, _ = gate.admitted_work()
     for sf in ("/intent", "/admission", "/demand", "/risk",
                "/priority-explanation", "/claim"):
-        r = gate.wi(wid, sf)
+        r = gate.wki(wid, sf)
         assert r.status_code == 200, sf
         assert r.json()["work_item_id"] == wid
 
 
 def test_apidrills_handoff_preview_200(gate):
     wid, _ = gate.admitted_work()
-    r = gate.wi(wid, "/handoff-preview")
+    r = gate.wki(wid, "/handoff-preview")
     assert r.status_code == 200
     assert "handoff_ready" in r.json()
 
 
 def test_apidrills_events_projection_identical(gate):
     wid, _ = gate.admitted_work()
-    r = gate.wi(wid, "/events")
+    r = gate.wki(wid, "/events")
     assert r.status_code == 200
     assert r.json()["projection_rebuild"]["result"] == \
         "PROJECTION_REBUILD_IDENTICAL"
@@ -108,84 +108,84 @@ def test_apidrills_events_projection_identical(gate):
 # --- lifecycle POSTs -------------------------------------------------------
 def test_apidrills_reserve_claim_prepare_invalidate_release(gate):
     wid, _ = gate.admitted_work()
-    assert gate.wi(wid, "/reserve", method="POST").status_code == 200
-    assert gate.wi(wid, "/claim", method="POST").status_code == 200
-    pr = gate.wi(wid, "/prepare-handoff", method="POST")
+    assert gate.wki(wid, "/reserve", method="POST").status_code == 200
+    assert gate.wki(wid, "/claim", method="POST").status_code == 200
+    pr = gate.wki(wid, "/prepare-handoff", method="POST")
     assert pr.status_code == 200
     assert pr.json()["no_emp_a2_run_created"] is True
-    assert gate.wi(wid, "/invalidate-handoff", method="POST").status_code == 200
-    assert gate.wi(wid, "/release-claim", method="POST").status_code == 200
+    assert gate.wki(wid, "/invalidate-handoff", method="POST").status_code == 200
+    assert gate.wki(wid, "/release-claim", method="POST").status_code == 200
 
 
 def test_apidrills_claim_no_run_created(gate):
     wid, _ = gate.admitted_work()
-    hj = gate.wi(wid, "/claim", method="POST").json()
+    hj = gate.wki(wid, "/claim", method="POST").json()
     # Claiming an item never creates an EMP-A2 run or executes work.
     assert hj["work_item_state"] == "CLAIMED"
 
 
 def test_apidrills_defer_and_resume(gate):
     wid, _ = gate.admitted_work()
-    assert gate.wi(wid, "/defer", method="POST").status_code == 200
-    assert gate.wi(wid, "/resume", method="POST").status_code == 200
+    assert gate.wki(wid, "/defer", method="POST").status_code == 200
+    assert gate.wki(wid, "/resume", method="POST").status_code == 200
 
 
 def test_apidrills_cancel(gate):
     wid, _ = gate.admitted_work()
-    r = gate.wi(wid, "/cancel", method="POST")
+    r = gate.wki(wid, "/cancel", method="POST")
     assert r.status_code == 200
     assert r.json()["work_item_state"] == "CANCELED"
 
 
 def test_apidrills_assign_and_unassign(gate):
     wid, _ = gate.admitted_work()
-    a = gate.wi(wid, "/assign", method="POST", assignee_id="u-1",
+    a = gate.wki(wid, "/assign", method="POST", assignee_id="u-1",
                 assignee_type="HUMAN")
     assert a.status_code == 200
     assert a.json()["grants_execution"] is False
-    u = gate.wi(wid, "/unassign", method="POST")
+    u = gate.wki(wid, "/unassign", method="POST")
     assert u.status_code == 200
     assert u.json()["assignee_type"] == "UNASSIGNED"
 
 
 def test_apidrills_reprioritize(gate):
     wid, _ = gate.admitted_work()
-    r = gate.wi(wid, "/reprioritize", method="POST", priority_class="HIGH")
+    r = gate.wki(wid, "/reprioritize", method="POST", priority_class="HIGH")
     assert r.status_code == 200
     assert r.json()["bypasses_approval"] is False
 
 
 def test_apidrills_request_and_respond_clarification(gate):
     wid, _ = gate.admitted_work()
-    rq = gate.wi(wid, "/request-clarification", method="POST")
+    rq = gate.wki(wid, "/request-clarification", method="POST")
     assert rq.status_code == 200
     assert rq.json()["llm_supplied_values"] is False
-    rs = gate.wi(wid, "/respond-clarification", method="POST", answers={})
+    rs = gate.wki(wid, "/respond-clarification", method="POST", answers={})
     assert rs.status_code == 200
     assert rs.json()["recorded"] is True
 
 
 def test_apidrills_bind_approval(gate):
     wid, _ = gate.admitted_work()
-    r = gate.wi(wid, "/bind-approval", method="POST", refs=["approval:1"])
+    r = gate.wki(wid, "/bind-approval", method="POST", refs=["approval:1"])
     assert r.status_code == 200
     assert r.json()["approval_bound"] is True
 
 
 def test_apidrills_mark_and_reverse_duplicate(gate):
     wid, _ = gate.admitted_work()
-    md = gate.wi(wid, "/mark-duplicate", method="POST")
+    md = gate.wki(wid, "/mark-duplicate", method="POST")
     assert md.status_code == 200
     assert md.json()["work_item_state"] == "DUPLICATE"
-    rv = gate.wi(wid, "/reverse-duplicate", method="POST")
+    rv = gate.wki(wid, "/reverse-duplicate", method="POST")
     assert rv.status_code == 200
     assert rv.json()["work_item_state"] == "RECEIVED"
 
 
 def test_apidrills_unknown_item_id_404(gate):
-    assert gate.wi("wi-does-not-exist").status_code == 404
-    assert gate.wi("wi-does-not-exist", "/intent").status_code == 404
-    assert gate.wi("wi-does-not-exist", "/claim",
+    assert gate.wki("wi-does-not-exist").status_code == 404
+    assert gate.wki("wi-does-not-exist", "/intent").status_code == 404
+    assert gate.wki("wi-does-not-exist", "/claim",
                    method="POST").status_code == 404
 
 

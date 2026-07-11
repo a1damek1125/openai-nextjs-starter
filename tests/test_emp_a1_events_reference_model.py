@@ -71,7 +71,7 @@ def test_erm_rebuild_empty_chain_invalid():
 
 def test_erm_api_events_are_hash_chained(gate):
     wid, _ = gate.admitted_work()
-    evs = gate.wi(wid, "/events").json()["events"]
+    evs = gate.wki(wid, "/events").json()["events"]
     assert len(evs) >= 2
     prev = wi.GENESIS
     for e in evs:
@@ -82,7 +82,7 @@ def test_erm_api_events_are_hash_chained(gate):
 
 def test_erm_api_events_projection_rebuild_identical(gate):
     wid, _ = gate.admitted_work()
-    ev = gate.wi(wid, "/events").json()
+    ev = gate.wki(wid, "/events").json()
     assert ev["projection_rebuild"]["result"] == "PROJECTION_REBUILD_IDENTICAL"
 
 

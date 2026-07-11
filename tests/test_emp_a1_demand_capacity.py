@@ -133,7 +133,7 @@ def test_demcap_unknown_is_zero_flag_false():
 # --- API layer -------------------------------------------------------------
 def test_demcap_api_demand_subfield_ordered(gate):
     wid, _ = gate.admitted_work()
-    dem = gate.wi(wid, "/demand").json()["work_demand_envelope"]
+    dem = gate.wki(wid, "/demand").json()["work_demand_envelope"]
     for r in _R:
         assert dem["deterministic_floor"][r] <= dem["nominal"][r] <= \
             dem["safety_upper"][r]
@@ -141,7 +141,7 @@ def test_demcap_api_demand_subfield_ordered(gate):
 
 def test_demcap_api_demand_hash_present(gate):
     wid, _ = gate.admitted_work()
-    body = gate.wi(wid, "/demand").json()
+    body = gate.wki(wid, "/demand").json()
     assert body["demand_envelope_valid"] is True
     assert body["work_demand_envelope"]["demand_envelope_hash"]
 
@@ -149,7 +149,7 @@ def test_demcap_api_demand_hash_present(gate):
 def test_demcap_api_unknown_demand_never_zero(gate):
     wid, o = gate.admitted_work(demand_unknown=True)
     assert o["disposition"] == "ADMIT_READY"
-    dem = gate.wi(wid, "/demand").json()["work_demand_envelope"]
+    dem = gate.wki(wid, "/demand").json()["work_demand_envelope"]
     assert all(v > 0 for v in dem["safety_upper"].values())
 
 

@@ -125,7 +125,7 @@ def test_api_conflict(gate):
 
 def test_api_events_projection_rebuild(gate):
     wid, _ = gate.admitted_work()
-    ev = gate.wi(wid, "/events").json()
+    ev = gate.wki(wid, "/events").json()
     assert ev["projection_rebuild"]["result"] == "PROJECTION_REBUILD_IDENTICAL"
 
 

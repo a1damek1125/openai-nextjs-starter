@@ -157,7 +157,7 @@ def test_registry_split_policies_cover_expected_work_types():
 # --- API layer -------------------------------------------------------------
 def test_intent_api_subfield_returns_intent_shape(gate):
     wid, _ = gate.admitted_work()
-    r = gate.wi(wid, "/intent")
+    r = gate.wki(wid, "/intent")
     assert r.status_code == 200
     j = r.json()
     assert j["work_type"] == "case_summary"
@@ -169,6 +169,6 @@ def test_intent_api_subfield_missing_fields_for_reply_draft(gate):
     # A customer_reply_draft with no message_intent surfaces the missing field.
     wid, _ = gate.admitted_work(work_type="customer_reply_draft",
                                 canonical_parameters={"target": "case:E-1"})
-    r = gate.wi(wid, "/intent")
+    r = gate.wki(wid, "/intent")
     assert r.status_code == 200
     assert "message_intent" in (r.json()["missing_input_fields"] or [])

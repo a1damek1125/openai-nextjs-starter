@@ -203,13 +203,13 @@ def test_ordering_cannot_make_item_ready():
 # --- API layer -------------------------------------------------------------
 def test_api_priority_explanation_advisory(gate):
     wid, _ = gate.admitted_work()
-    pe = gate.wi(wid, "/priority-explanation").json()
+    pe = gate.wki(wid, "/priority-explanation").json()
     assert pe["priority_class"] == "NORMAL"
     assert "ORDER_RECOMMENDATION_ONLY" in pe["honesty_labels"]
 
 
 def test_api_admission_ready_no_execution(gate):
     wid, _ = gate.admitted_work()
-    adm = gate.wi(wid, "/admission").json()
+    adm = gate.wki(wid, "/admission").json()
     assert adm["work_item_state"] == "READY"
     assert "ORDER_RECOMMENDATION_ONLY" in adm["honesty_labels"]
