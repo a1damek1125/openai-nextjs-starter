@@ -1,0 +1,46 @@
+{
+  "adaptive_plan": {
+    "adaptive_root": "90fdb8684d70e0f4143a6e8f19b77f8f135c2319cf77fe125be08ba5a995bf75",
+    "all_probabilities_logged": true,
+    "critical_omitted": [],
+    "mandatory_coverage_complete": true,
+    "selections": [
+      {
+        "mandatory_critical": true,
+        "scenario_ref": "SCN-D3",
+        "selection_probability": 1.0
+      },
+      {
+        "mandatory_critical": false,
+        "scenario_ref": "SCN-D9",
+        "selection_probability": 0.4
+      }
+    ]
+  },
+  "fidelity_registry": {
+    "FIELD": {
+      "fidelity": "FIELD",
+      "grants_maturity": "M4"
+    },
+    "PRODUCTION": {
+      "fidelity": "PRODUCTION",
+      "grants_maturity": "M5"
+    },
+    "REPLAY": {
+      "fidelity": "REPLAY",
+      "grants_maturity": "M2"
+    },
+    "SANDBOX": {
+      "fidelity": "SANDBOX",
+      "grants_maturity": "M3"
+    },
+    "STATIC": {
+      "fidelity": "STATIC",
+      "grants_maturity": "M0"
+    },
+    "UNIT": {
+      "fidelity": "UNIT",
+      "grants_maturity": "M1"
+    }
+  }
+}

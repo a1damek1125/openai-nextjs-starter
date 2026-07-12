@@ -1,0 +1,10 @@
+{
+  "alternate_fixtures": {
+    "mock_notification": true,
+    "mock_telephony": true,
+    "technology_substitution": true
+  },
+  "comparisons": {},
+  "has_executable_evidence": true,
+  "replaceability_root": "4b86dcb497137e909678339fd3cbb1904337f393f8d6a455f2b7991def2e1f68"
+}

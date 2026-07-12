@@ -1,0 +1,10 @@
+{
+  "answer_key_root": "7e26efb4c34541904bbf822324ce363d2b4f2287f2e2689614c1a5755d070d9b",
+  "challenge_id": "CHAL-REPO-REF",
+  "created_before_run": true,
+  "generator_version": "1.0",
+  "release_policy": "SEALED_UNTIL_SCORED",
+  "scenario_root": "7d6dc89af27c664cf8e9f35e830cd828be6f06ccf09b31f1130c685605102ecf",
+  "secret_seed_commitment": "e3621ff70f2daa4c7c6d1c54b05d3f01348854ad659e7c7e693970226b041686",
+  "status": "SEALED"
+}

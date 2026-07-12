@@ -1,0 +1,126 @@
+{
+  "covering_array": [
+    {
+      "effect_class": "read",
+      "language": "PL",
+      "provider_account": "personal",
+      "risk_class": "low"
+    },
+    {
+      "effect_class": "read",
+      "language": "PL",
+      "provider_account": "personal",
+      "risk_class": "protected"
+    },
+    {
+      "effect_class": "read",
+      "language": "PL",
+      "provider_account": "shared",
+      "risk_class": "low"
+    },
+    {
+      "effect_class": "read",
+      "language": "PL",
+      "provider_account": "shared",
+      "risk_class": "protected"
+    },
+    {
+      "effect_class": "read",
+      "language": "EN",
+      "provider_account": "personal",
+      "risk_class": "low"
+    },
+    {
+      "effect_class": "read",
+      "language": "EN",
+      "provider_account": "personal",
+      "risk_class": "protected"
+    },
+    {
+      "effect_class": "read",
+      "language": "EN",
+      "provider_account": "shared",
+      "risk_class": "low"
+    },
+    {
+      "effect_class": "read",
+      "language": "DE",
+      "provider_account": "personal",
+      "risk_class": "low"
+    },
+    {
+      "effect_class": "read",
+      "language": "DE",
+      "provider_account": "personal",
+      "risk_class": "protected"
+    },
+    {
+      "effect_class": "read",
+      "language": "DE",
+      "provider_account": "shared",
+      "risk_class": "low"
+    },
+    {
+      "effect_class": "read",
+      "language": "ES",
+      "provider_account": "personal",
+      "risk_class": "low"
+    },
+    {
+      "effect_class": "read",
+      "language": "ES",
+      "provider_account": "personal",
+      "risk_class": "protected"
+    },
+    {
+      "effect_class": "read",
+      "language": "ES",
+      "provider_account": "shared",
+      "risk_class": "low"
+    },
+    {
+      "effect_class": "write",
+      "language": "PL",
+      "provider_account": "personal",
+      "risk_class": "low"
+    },
+    {
+      "effect_class": "write",
+      "language": "PL",
+      "provider_account": "personal",
+      "risk_class": "protected"
+    },
+    {
+      "effect_class": "write",
+      "language": "PL",
+      "provider_account": "shared",
+      "risk_class": "low"
+    },
+    {
+      "effect_class": "write",
+      "language": "EN",
+      "provider_account": "personal",
+      "risk_class": "low"
+    },
+    {
+      "effect_class": "write",
+      "language": "DE",
+      "provider_account": "personal",
+      "risk_class": "low"
+    },
+    {
+      "effect_class": "write",
+      "language": "ES",
+      "provider_account": "personal",
+      "risk_class": "low"
+    }
+  ],
+  "summary": {
+    "coverage_root": "fbe5be5ad1f8ed003276de5e6946f4b1baae08e2ebf82831c1c30f4e5e6c137b",
+    "covered": 200,
+    "critical_gaps": [],
+    "edges": 200,
+    "mandatory": 109,
+    "nodes": 200
+  }
+}

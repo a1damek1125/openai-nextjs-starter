@@ -1,0 +1,55 @@
+{
+  "complete": true,
+  "kernel_smaller_than_stack": true,
+  "member_count": 10,
+  "members": {
+    "admit.py": "3703a48f73d49dc587c501c3dff885d838a1019edddd21893439e22be2ee459f",
+    "canon.py": "9b3f64f2e7446b23713e110553dcf37f1cfd03248ba86be5e0bdf5422bcf50d6",
+    "configuration.py": "087f1e62b26977be2f4dff8d6d90cbeec1fc6584e227b6388aa0312f14620813",
+    "credits.py": "628a07f914b634cc6467bf46eeaec0d3cd2c906aa98e7995b7e43d818e1d3b3e",
+    "freeze.py": "3ad207d70195b0414094a47e7ff748111a8f8a9fe6f4ee056f0066bb8ee9e5db",
+    "genome.py": "90950e8c4d0ab62c76ced502493aa78fbad6ac67bcb584e1f69b31c31a3c670d",
+    "hardgates.py": "deb1a6737490f28ac044b0311f63fc6675f9e4f2db3ca393b7480128be17b587",
+    "kernel.py": "6b2d12779159b906e2b6e67f340f31e02c6b88c972d1b5ae07f1c14dfe756232",
+    "model.py": "55e70b7bf0d592bcaeb9e05fbd902b21b3e6bb5bf8bd1eb9b9a1c0983ed47181",
+    "score.py": "71d4d081a0f64cf53f3d585c18c65e0ee57f3411f80cb1742e8adfc34f5f6996"
+  },
+  "minimal_trusted_kernel": [
+    "canon.py",
+    "model.py",
+    "kernel.py",
+    "credits.py",
+    "hardgates.py",
+    "score.py"
+  ],
+  "missing_members": [],
+  "package": "tools/evaluation",
+  "seal_trusted_inputs": {
+    "configuration_root": "configuration.py:configuration_root",
+    "credit_certificate_root": "credits.py:credit_root",
+    "global_evaluation_root": "genome.py:build_genome",
+    "hard_gate_state": "hardgates.py:evaluate_hard_gates",
+    "scorecard_root": "score.py:scorecard",
+    "trusted_kernel_root": "tcb.py:tcb_root"
+  },
+  "tcb_root": "2453106b728f64c2e7c948b75fc08d3e5396460cc1e1f182412b62eb50268dc0",
+  "tcb_version": "1.0",
+  "untrusted_count": 15,
+  "untrusted_rechecked_modules": [
+    "scenarios.py",
+    "oracles.py",
+    "judges.py",
+    "statistics.py",
+    "robust.py",
+    "longhorizon.py",
+    "causal.py",
+    "calibration.py",
+    "invariance.py",
+    "providers.py",
+    "fidelity.py",
+    "drift.py",
+    "coverage.py",
+    "contamination.py",
+    "claims.py"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "capability": "PRESENT",
+  "judge_root": "bbb0bb953792cd75e7c1a1a6c5655147d1a2c40a283bb2d00187b12c115d0e09",
+  "may_close_critical_alone": false,
+  "note": "judge meta-evaluation machinery implemented + tested; no judge is a sole critical oracle (deterministic oracles used)",
+  "state": "NOT_EVALUATED"
+}

@@ -1,0 +1,76 @@
+{
+  "configuration_id": "CFG-FINALIS-REPO-REFERENCE",
+  "diagnostic_total_credits": 555,
+  "domain_scores": {
+    "D1": {
+      "credits": 55,
+      "max": 100,
+      "qualified_claims": 11
+    },
+    "D10": {
+      "credits": 100,
+      "max": 100,
+      "qualified_claims": 20
+    },
+    "D2": {
+      "credits": 35,
+      "max": 100,
+      "qualified_claims": 7
+    },
+    "D3": {
+      "credits": 80,
+      "max": 100,
+      "qualified_claims": 16
+    },
+    "D4": {
+      "credits": 55,
+      "max": 100,
+      "qualified_claims": 11
+    },
+    "D5": {
+      "credits": 90,
+      "max": 100,
+      "qualified_claims": 18
+    },
+    "D6": {
+      "credits": 40,
+      "max": 100,
+      "qualified_claims": 8
+    },
+    "D7": {
+      "credits": 65,
+      "max": 100,
+      "qualified_claims": 13
+    },
+    "D8": {
+      "credits": 15,
+      "max": 100,
+      "qualified_claims": 3
+    },
+    "D9": {
+      "credits": 20,
+      "max": 100,
+      "qualified_claims": 4
+    }
+  },
+  "evaluation_seal": "PENDING",
+  "hard_gate_state": "PASS",
+  "maturity": "M1",
+  "maturity_name": "REPOSITORY_EVIDENCED",
+  "maximum_credits": 1000,
+  "official_score_blocked_by_gate": false,
+  "open_blockers": [],
+  "open_production_gaps": [
+    "all-external-effects-mocked",
+    "no-field-evidence",
+    "no-production-evidence",
+    "single-node-sqlite"
+  ],
+  "program_seal": "f81b1b44c8c6c4453dbef3c38ccacb0359c92a29034823995095a7c2d47f2194",
+  "qualification_envelope_ref": "ENV-CFG-FINALIS-REPO-REFERENCE",
+  "scorecard_hash": "afb8db8ec28c9f67530f334e2c2d996ed44c91c8b162cbbf18909e680da4534b",
+  "scorecard_id": "SCORECARD-CFG-FINALIS-REPO-REFERENCE",
+  "total_credits": 555,
+  "valid_from": "2026-07-12",
+  "valid_until": null
+}

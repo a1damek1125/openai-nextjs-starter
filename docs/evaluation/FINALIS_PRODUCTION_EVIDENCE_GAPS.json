@@ -1,0 +1,14 @@
+{
+  "external_effects": "ALL_MOCKED",
+  "field_evidence": "ABSENT",
+  "gaps": [
+    "no field pilot",
+    "no production deployment",
+    "all providers mocked",
+    "no live customer data",
+    "perf/scale not benchmarked",
+    "multilingual behavioral invariance not run"
+  ],
+  "persistence": "SINGLE_NODE_SQLITE",
+  "production_evidence": "ABSENT"
+}

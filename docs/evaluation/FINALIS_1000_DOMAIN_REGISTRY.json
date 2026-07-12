@@ -1,0 +1,62 @@
+{
+  "D1": {
+    "claim_count": 20,
+    "credit_value": 100,
+    "domain_id": "D1",
+    "title": "OUTCOME CORRECTNESS AND COMPLETION"
+  },
+  "D10": {
+    "claim_count": 20,
+    "credit_value": 100,
+    "domain_id": "D10",
+    "title": "EVIDENCE, AUDITABILITY, OPERABILITY AND MAINTAINABILITY"
+  },
+  "D2": {
+    "claim_count": 20,
+    "credit_value": 100,
+    "domain_id": "D2",
+    "title": "LONG-HORIZON OWNERSHIP, CONTINUITY AND RECOVERY"
+  },
+  "D3": {
+    "claim_count": 20,
+    "credit_value": 100,
+    "domain_id": "D3",
+    "title": "SAFETY, AUTHORITY, CONSENT AND TENANT ISOLATION"
+  },
+  "D4": {
+    "claim_count": 20,
+    "credit_value": 100,
+    "domain_id": "D4",
+    "title": "TOOL, PROVIDER AND EXTERNAL-EFFECT CORRECTNESS"
+  },
+  "D5": {
+    "claim_count": 20,
+    "credit_value": 100,
+    "domain_id": "D5",
+    "title": "MEMORY, SEMANTICS AND LEARNING INTEGRITY"
+  },
+  "D6": {
+    "claim_count": 20,
+    "credit_value": 100,
+    "domain_id": "D6",
+    "title": "MULTILINGUAL AND MULTI-INDUSTRY INVARIANCE"
+  },
+  "D7": {
+    "claim_count": 20,
+    "credit_value": 100,
+    "domain_id": "D7",
+    "title": "SECURITY, ADVERSARIAL ROBUSTNESS AND EVALUATION INTEGRITY"
+  },
+  "D8": {
+    "claim_count": 20,
+    "credit_value": 100,
+    "domain_id": "D8",
+    "title": "CALIBRATION, UNCERTAINTY AND SAFE ABSTENTION"
+  },
+  "D9": {
+    "claim_count": 20,
+    "credit_value": 100,
+    "domain_id": "D9",
+    "title": "PERFORMANCE, COST, SCALABILITY AND RESOURCE EFFICIENCY"
+  }
+}

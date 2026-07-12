@@ -1,0 +1,6 @@
+{
+  "capability": "PRESENT",
+  "default_finding_state": "ASSOCIATIONAL_ONLY",
+  "reason": "no controlled configuration comparison runs at M1",
+  "state": "NOT_EVALUATED"
+}

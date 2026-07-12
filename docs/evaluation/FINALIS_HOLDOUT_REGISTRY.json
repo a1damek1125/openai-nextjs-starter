@@ -1,0 +1,5 @@
+{
+  "note": "repository-local reference evaluation uses deterministic fixtures; no public benchmark downloaded, no held-out answers exposed",
+  "private_holdouts": [],
+  "rotating_holdouts": []
+}

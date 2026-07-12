@@ -1,0 +1,13 @@
+{
+  "capability": "PRESENT",
+  "control_language": "PL",
+  "invariance_root": "bbb0bb953792cd75e7c1a1a6c5655147d1a2c40a283bb2d00187b12c115d0e09",
+  "labels_registry_present": true,
+  "state": "NOT_EVALUATED",
+  "strata_separate": true,
+  "work_languages": [
+    "EN",
+    "DE",
+    "ES"
+  ]
+}

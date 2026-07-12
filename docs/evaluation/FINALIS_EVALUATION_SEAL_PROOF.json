@@ -1,0 +1,13 @@
+{
+  "counts": {
+    "P0": 0,
+    "P1": 0,
+    "P2": 0
+  },
+  "evaluation_genome_root": "97331e5e4c2777b02ad64659e648d69723fa12ca9eaf0bc90f3b4ab36fd560fc",
+  "hard_gate_state": "PASS",
+  "maturity": "M1",
+  "seal_hash": "fe7a63c99af136f4e4b6ef2da9419f91d6370f11c6e73bb04202430542a84801",
+  "total_credits": 555,
+  "trusted_kernel_root": "17ec96c5ddc8c5bc8b58b4756706b095fa1b85e3f5e31fd18449c7ab4e16b5f7"
+}

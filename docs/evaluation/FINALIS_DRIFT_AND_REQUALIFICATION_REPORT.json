@@ -1,0 +1,85 @@
+{
+  "drift_registry": {
+    "calibration": {
+      "detector": "detect_calibration_drift",
+      "kind": "calibration",
+      "triggers_requalification": true
+    },
+    "harness": {
+      "detector": "detect_harness_drift",
+      "kind": "harness",
+      "triggers_requalification": true
+    },
+    "input": {
+      "detector": "detect_input_drift",
+      "kind": "input",
+      "triggers_requalification": true
+    },
+    "judge": {
+      "detector": "detect_judge_drift",
+      "kind": "judge",
+      "triggers_requalification": true
+    },
+    "memory": {
+      "detector": "detect_memory_drift",
+      "kind": "memory",
+      "triggers_requalification": true
+    },
+    "outcome": {
+      "detector": "detect_outcome_drift",
+      "kind": "outcome",
+      "triggers_requalification": true
+    },
+    "policy": {
+      "detector": "detect_policy_drift",
+      "kind": "policy",
+      "triggers_requalification": true
+    },
+    "provider": {
+      "detector": "detect_provider_drift",
+      "kind": "provider",
+      "triggers_requalification": true
+    },
+    "scenario_saturation": {
+      "detector": "detect_scenario_saturation_drift",
+      "kind": "scenario_saturation",
+      "triggers_requalification": true
+    },
+    "tool": {
+      "detector": "detect_tool_drift",
+      "kind": "tool",
+      "triggers_requalification": true
+    }
+  },
+  "requalification_cone": {
+    "affected_domains": [
+      "D4"
+    ],
+    "changed_fields": [
+      "provider_adapters"
+    ],
+    "stale_count": 20,
+    "stale_credits": [
+      "D4-C01-tool-selection",
+      "D4-C02-argument-correctness",
+      "D4-C03-provider-identity",
+      "D4-C04-account-identity",
+      "D4-C05-contract-conformance",
+      "D4-C06-adapter-replaceability",
+      "D4-C07-timeout-handling",
+      "D4-C08-provider-failure",
+      "D4-C09-idempotency",
+      "D4-C10-duplicate-effect-prevention",
+      "D4-C11-partial-provider-success",
+      "D4-C12-rate-limits",
+      "D4-C13-credential-revocation",
+      "D4-C14-reconnect-scope",
+      "D4-C15-read-only-mode",
+      "D4-C16-reusable-approval-scope",
+      "D4-C17-effect-evidence",
+      "D4-C18-result-verification",
+      "D4-C19-tool-output-poisoning",
+      "D4-C20-provider-independent-outcome"
+    ]
+  }
+}

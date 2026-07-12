@@ -1,0 +1,11 @@
+{
+  "note": "pack boundary machinery present; behavioral invariance requires integrated runs",
+  "packs": [
+    "role",
+    "vertical",
+    "country",
+    "language",
+    "company"
+  ],
+  "state": "NOT_EVALUATED"
+}
