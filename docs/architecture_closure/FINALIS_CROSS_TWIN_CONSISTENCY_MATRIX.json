@@ -1,71 +1,68 @@
 {
-  "matrix": {
-    "dimensions": [
-      "identity",
-      "semantic_epoch",
-      "valid_time",
-      "contract_version",
-      "ownership",
-      "authority",
-      "tenant_scope",
-      "effect_class"
-    ],
-    "twins": [
-      {
-        "artifact": "docs/roadmap/ROADMAP_LOCK_1_FINALIS_AI_EMPLOYEE_OS.md",
-        "identity_root": null,
-        "present": true,
-        "twin": "architecture"
-      },
-      {
-        "artifact": "docs/compatibility/FINALIS_CONTRACT_DESCRIPTORS.json",
-        "identity_root": null,
-        "present": true,
-        "twin": "compatibility"
-      },
-      {
-        "artifact": "docs/contracts_inventory/FINALIS_CONTRACT_GENOME.json",
-        "identity_root": "7269f08cd7d53679cae6ce3b134a00d6dd6146fde0c60e712a065a711be377b1",
-        "present": true,
-        "twin": "contract_inventory"
-      },
-      {
-        "artifact": "docs/governed_work",
-        "identity_root": null,
-        "present": true,
-        "twin": "governed_work"
-      },
-      {
-        "artifact": "docs/program/FINALIS_1000_PROGRAM_REGISTRY.json",
-        "identity_root": "FINALIS-1000",
-        "present": true,
-        "twin": "program"
-      },
-      {
-        "artifact": "docs/release/FINALIS_RELEASE_TWIN.json",
-        "identity_root": "916dd687ca4c473efdf5b77f1bd3d4d72fe365aaa5d89a520dab0b214fb5e794",
-        "present": true,
-        "twin": "release_assurance"
-      },
-      {
-        "artifact": "docs/safety",
-        "identity_root": null,
-        "present": true,
-        "twin": "safety"
-      },
-      {
-        "artifact": "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json",
-        "identity_root": null,
-        "present": true,
-        "twin": "semantic"
-      },
-      {
-        "artifact": "docs/technology",
-        "identity_root": null,
-        "present": true,
-        "twin": "technology"
-      }
-    ]
-  },
-  "schema_id": "CrossTwinConsistency"
+  "dimensions": [
+    "identity",
+    "semantic_epoch",
+    "valid_time",
+    "contract_version",
+    "ownership",
+    "authority",
+    "tenant_scope",
+    "effect_class"
+  ],
+  "twins": [
+    {
+      "artifact": "docs/roadmap/ROADMAP_LOCK_1_FINALIS_AI_EMPLOYEE_OS.md",
+      "identity_root": null,
+      "present": true,
+      "twin": "architecture"
+    },
+    {
+      "artifact": "docs/compatibility/FINALIS_CONTRACT_DESCRIPTORS.json",
+      "identity_root": null,
+      "present": true,
+      "twin": "compatibility"
+    },
+    {
+      "artifact": "docs/contracts_inventory/FINALIS_CONTRACT_GENOME.json",
+      "identity_root": "7269f08cd7d53679cae6ce3b134a00d6dd6146fde0c60e712a065a711be377b1",
+      "present": true,
+      "twin": "contract_inventory"
+    },
+    {
+      "artifact": "docs/governed_work",
+      "identity_root": null,
+      "present": true,
+      "twin": "governed_work"
+    },
+    {
+      "artifact": "docs/program/FINALIS_1000_PROGRAM_REGISTRY.json",
+      "identity_root": "FINALIS-1000",
+      "present": true,
+      "twin": "program"
+    },
+    {
+      "artifact": "docs/release/FINALIS_RELEASE_TWIN.json",
+      "identity_root": "916dd687ca4c473efdf5b77f1bd3d4d72fe365aaa5d89a520dab0b214fb5e794",
+      "present": true,
+      "twin": "release_assurance"
+    },
+    {
+      "artifact": "docs/safety",
+      "identity_root": null,
+      "present": true,
+      "twin": "safety"
+    },
+    {
+      "artifact": "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json",
+      "identity_root": null,
+      "present": true,
+      "twin": "semantic"
+    },
+    {
+      "artifact": "docs/technology",
+      "identity_root": null,
+      "present": true,
+      "twin": "technology"
+    }
+  ]
 }

@@ -2,16 +2,78 @@
 
 **Canonical id:** SP0010
 **Canonical title:** FINALIS Architecture Program Final Gate
-**Extended title:** Architecture Assurance Closure, Constitutional Coherence &
-Program Seal
+**Extended title (V5):** Proof-Carrying Architecture Assurance Closure,
+Compositional Coherence, Relational Noninterference & Cryptographic Program Seal
+**Classification target:** `FINALIS_ARCHITECTURE_ASSURANCE_CLOSURE_V4`
+**Spec revision:** SP0010 **V5 FINAL** (supersedes V2/V3/V4)
 **Mission class:** constitutional program closure + architecture description
 package + program seal (no evaluation, no score)
 **Execution date:** 2026-07-12
-**Baseline commit:** `1e29581`
+**Frozen baseline commit:** `1e29581` (SP0009); authoring successor `d3f2fd9`
+(SP0010 V3)
 
 This report states what SP0010 *is*, resolves the scope-labeling question
-transparently, records the frozen baseline it operated over, and documents the
-PROCEED decision.
+transparently, records the frozen baseline it operated over, documents the
+PROCEED decision, and (§0) records the V5 supersession — the new proof-carrying
+subsystems added on top of the V3 core and the elements deliberately excluded.
+
+---
+
+## 0. V5 supersession & scope decision (PROCEED, not BLOCKED)
+
+**Scope check first (spec FINAL EXECUTION COMMAND).** The V5 specification
+requires that, before any tracked file is modified, this report confirm whether
+the canonical SP0010 scope materially differs from the spec. It does **not**.
+The canonical scope — *Architecture Program Final Gate: prove SP0000–SP0009
+compose into one coherent, non-circular, evidence-grounded, replaceable,
+auditable architecture, then seal one snapshot and admit SP0011 with no score* —
+is **semantically identical** across V2/V3/V4/V5. V5 changes only the *depth of
+proof*, not the mission. Therefore the decision is **PROCEED**, not
+`BLOCKED_BY_SP0010_SCOPE_MISMATCH`. The stale program-registry label ("Global
+Brand Naming Sprint") is handled exactly as in §2 (documented non-silent
+reassignment, registry unedited, recorded as `ACCEPTED_FUTURE_ENHANCEMENT`).
+
+**Baseline reconciliation (repository truth overrides authoring-time text).**
+The V5 spec names SP0009 commit `1e29581` as the expected baseline but explicitly
+permits *an authorized successor* and states *repository truth overrides every
+authoring-time statement*. The repository HEAD is `d3f2fd9` — the committed
+SP0010 V3 gate, a direct authorized descendant of `1e29581`. The closure still
+**freezes and verifies the SP0000–SP0009 arc at SP0009 head `1e29581`, migration
+frontier v27** (that is the object under assurance); the V3/V5 gate commits are
+the *authoring* successors that carry the tooling. This is consistent, not a
+baseline violation: the frozen object is the predecessor arc; the tooling that
+proves it lives one commit later.
+
+**What V5 ADDS on top of the V3 core** (all deterministic, standard-library
+only, never imported by product code, zero product/runtime/migration/external
+effect — the V3 change boundary is unchanged and re-verified):
+
+| V5 subsystem | Module | What it proves |
+|---|---|---|
+| Dual-Graph conformance | `dual_graph.py` | Declared Architecture Description Graph vs an **independently-built** Repository Evidence Graph; every node classified MATCH / DECLARED_ONLY / IMPLEMENTATION_ONLY / CONFLICT / AMBIGUOUS. A CONFLICT is P0. |
+| Extraction Uncertainty Firewall | `extraction.py` | Every declared node must carry an on-disk **source span**; an ungrounded, agent-extracted node is quarantined UNGROUNDED and can never become hard truth (fail-closed). |
+| Trusted Computing Base manifest | `tcb.py` | Enumerates the minimal set of modules the verdict trusts; anything outside the TCB cannot silently affect the seal; TCB is content-hashed. |
+| Proof-Carrying Certificates + Independent Checker | `certificates.py` | Each critical closure claim carries a machine-checkable certificate; a **small independent checker** re-validates it. A solver verdict *without* a valid certificate is **advisory only**, never closing. |
+| Causal + counterfactual control verification | `causal.py` | Structural causal model per control; identifiability IDENTIFIED / PARTIALLY_IDENTIFIED / NOT_IDENTIFIED; only an IDENTIFIED necessary control counts. |
+| CEGAR | `cegar.py` | Sound abstraction, concretize counterexamples, classify spurious vs real, refine; `LIMIT_REACHED` is **not** PASS. |
+| Assurance Robustness Frontier | `robustness.py` | Per-domain **cut number** — how many independent supports must be removed to break each critical guarantee; a cut of 1 is a single point of assurance. |
+| Minimal Correction Sets + Repair Portfolios | `correction.py` | If anything were BLOCKED, the lexicographic minimal repair (hard constraints first) that **cannot weaken any invariant**; on a clean closure the portfolio is empty and that emptiness is itself certified. |
+| Federated N-Version verification | `federated.py` | Heterogeneous proof backends (canonical-JSON, Merkle-tree, sorted-fold) with a **convergence gate**; divergence blocks the seal. |
+| W3C PROV + LGGT+ projections | (docs) | The closure evidence re-expressed as W3C PROV provenance and an LGGT+ assurance-certification projection. |
+| Expanded gap taxonomy | `model.py` | `PROOF_HOLE`, `HYPERPROPERTY_GAP`, `CONTROL_EFFECTIVENESS_GAP`, `DUAL_GRAPH_CONFLICT`, `EXTRACTION_UNGROUNDED`, `CERTIFICATE_MISSING`, `CEGAR_LIMIT` — new blocking/advisory gap types. |
+
+**Retained V3 hardening** (all 7 red-team fixes R1–R7 remain regression-locked):
+fail-closed seal on the full P0/P1 set, genuine Phase-C construction diversity,
+hardcoded frozen-verifier constant, external-only cycle anchor, producer-quotient
+independence, on-disk-grounded counterfactuals, symbol-checked invariant controls.
+
+**Elements deliberately EXCLUDED** (recorded, not silently dropped): no external
+solver/SMT dependency is introduced (the "solver" is a deterministic
+standard-library reference reasoner, and its verdict is gated by the independent
+certificate checker exactly as the spec requires for an *untrusted* solver); no
+network proof backend; no change to the frozen product runtime; no 1000/1000
+score. These exclusions are logged as `ACCEPTED_FUTURE_ENHANCEMENT`, consistent
+with the standing change boundary.
 
 ---
 

@@ -23,7 +23,11 @@ from . import (freeze as freeze_mod, describe, interfaces as iface_mod,
                defeaters as def_mod, circularity, crosstwin, invariants as
                inv_mod, noninterference, counterfactual, resilience,
                gaps as gaps_mod, genome as genome_mod, seal as seal_mod,
-               bootstrap_verify, sp0011_admission, boundary, modelcheck)
+               bootstrap_verify, sp0011_admission, boundary, modelcheck,
+               dual_graph as dg_mod, tcb as tcb_mod, certificates as cert_mod,
+               causal as causal_mod, cegar as cegar_mod,
+               robustness as robust_mod, federated as fed_mod,
+               correction as corr_mod, extraction as extract_mod)
 from .canon import hash_obj
 from .model import SEVERITIES
 
@@ -70,6 +74,18 @@ def build_closure(root: Path) -> dict:
     # 2. architecture description
     desc = describe.build_description(root)
 
+    # 2b. V5 dual-graph conformance (declared ADG vs independently-built REG) +
+    #     extraction uncertainty firewall (source-span grounding) + TCB manifest
+    dual = dg_mod.build_dual_graph(root)
+    all_findings.extend(dg_mod.dual_graph_findings(dual))
+    # the extraction firewall's OWN independent signal (red-team P2-A): an
+    # ungrounded critical declared node raises its dedicated P0 here, not only
+    # the dual-graph MATCH->AMBIGUOUS downgrade.
+    all_findings.extend(extract_mod.extraction_findings(
+        dual["architecture_description_graph"]["firewall"]))
+    tcb_manifest = tcb_mod.build_manifest(root)
+    all_findings.extend(tcb_mod.tcb_findings(tcb_manifest))
+
     # 3. constitutional interfaces
     interfaces = iface_mod.build_interfaces(root)
     all_findings.extend(iface_mod.interface_findings(interfaces))
@@ -96,14 +112,22 @@ def build_closure(root: Path) -> dict:
     all_findings.extend(noninterference.noninterference_findings(hp_results))
     hp_status = noninterference.status_map(hp_results)
 
+    # 7b. V5 CEGAR — the same safety properties via a sound abstraction with
+    #     counterexample-guided refinement (LIMIT_REACHED is never a pass). Each
+    #     property's model is GROUNDED on a real repository control (P1-D).
+    cegar_results = cegar_mod.run_all(root)
+    all_findings.extend(cegar_mod.cegar_findings(cegar_results))
+
     # 8. global invariants (need hyperproperty status)
     inv_results = inv_mod.evaluate_invariants(root, supported,
                                               hyperproperty_status=hp_status)
     all_findings.extend(inv_mod.invariant_findings(inv_results))
 
-    # 9. counterfactual controls
+    # 9. counterfactual controls + V5 causal identifiability (SCM / backdoor)
     ctl_results = counterfactual.verify_all(root)
     all_findings.extend(counterfactual.control_findings(ctl_results))
+    causal_results = causal_mod.analyze_all(root)
+    all_findings.extend(causal_mod.causal_findings(causal_results))
 
     # 10. build the claim universe + refutation set + epistemic classification
     invariant_claims = {inv: rec for inv, rec in inv_results.items()}
@@ -138,6 +162,28 @@ def build_closure(root: Path) -> dict:
         atoms_by_id, support_sets, critical=critical, now=SEALED_AT))
     common_mode = ev_mod.common_mode_graph(list(atoms_by_id.values()))
 
+    # 11b. V5 proof-carrying certificates + INDEPENDENT checker. A guarantee's
+    # SUPPORTED_ONLY solver verdict closes ONLY if its certificate checks VALID;
+    # an uncertified critical guarantee is a PROOF_HOLE (advisory only).
+    independence_by_claim = {ss["claim_id"]: ss["independence_class"]
+                             for ss in support_sets}
+    certification = cert_mod.certify_closure(
+        critical_claims=set(guarantee_claims), states=states,
+        hyperedges=hg["edges"], supported_set=supported_all,
+        refuted_set=refuted_set,
+        support_sets_by_claim=support_sets_by_claim, atoms_by_id=atoms_by_id,
+        independence_by_claim=independence_by_claim)
+    all_findings.extend(cert_mod.certificate_findings(
+        certification, set(guarantee_claims), states))
+
+    # 11c. V5 assurance robustness frontier — the cut number (minimum producer
+    # domains to remove to break each guarantee) in producer-domain space.
+    producer_domain = {aid: atom["producer"]
+                       for aid, atom in atoms_by_id.items()}
+    frontier = robust_mod.robustness_frontier(
+        support_sets_by_claim, producer_domain, critical=set(guarantee_claims))
+    all_findings.extend(robust_mod.robustness_findings(frontier))
+
     # 12. defeaters (none open on a clean closure) + circularity
     defeater_resolution = def_mod.resolve([])
     all_findings.extend(def_mod.defeater_findings(defeater_resolution))
@@ -167,6 +213,17 @@ def build_closure(root: Path) -> dict:
     assurance_root = hash_obj({"support_sets": [s["support_set_id"]
                                                 for s in support_sets],
                                "states": epistemic.epistemic_root(states)})
+    # V5 class roots folded into the sealed architecture identity (§0)
+    v5_class_roots = {
+        "dual_graph": dg_mod.dual_graph_root(dual),
+        "extraction_firewall":
+            dual["architecture_description_graph"]["firewall"]["firewall_root"],
+        "tcb": tcb_mod.tcb_root(tcb_manifest),
+        "certificate": certification["certificate_root"],
+        "causal": causal_mod.causal_root(causal_results),
+        "cegar": cegar_mod.cegar_root(cegar_results),
+        "robustness": robust_mod.robustness_root(frontier),
+    }
     genome = genome_mod.build_genome(
         repository_commit=frz["head"],
         constitution_roots=constitution_roots,
@@ -178,7 +235,8 @@ def build_closure(root: Path) -> dict:
         assurance_root=assurance_root,
         gap_root=gaps_mod.gap_root(ledger),
         verifier_set_root="PENDING",   # filled after ceremony
-        closure_epoch=CLOSURE_EPOCH)
+        closure_epoch=CLOSURE_EPOCH,
+        extra_class_roots=v5_class_roots)
 
     # 16. 3-phase bootstrap ceremony
     ceremony = bootstrap_verify.run_ceremony(
@@ -189,6 +247,19 @@ def build_closure(root: Path) -> dict:
     genome["class_roots"]["verifier_set"] = genome["verifier_set_root"]
     from .canon import global_root as _gr
     genome["global_architecture_root"] = _gr(genome["class_roots"])
+
+    # 16b. V5 federated N-version convergence over the FINAL class roots — four
+    # heterogeneous proof backends must all be deterministic, sensitive, and
+    # agree on the shared anchor (the recorded global root). Divergence blocks.
+    federation = fed_mod.federate(genome["class_roots"],
+                                  genome["global_architecture_root"])
+    all_findings.extend(fed_mod.federation_findings(federation))
+
+    # 16c. V5 minimal correction sets / repair portfolio over every finding
+    # gathered so far. On a clean closure the portfolio is EMPTY and certified;
+    # a repair that would weaken an invariant is rejected (P0).
+    repair = corr_mod.repair_portfolio([f.as_dict() for f in all_findings])
+    all_findings.extend(corr_mod.correction_findings(repair))
 
     # 17. seal — computed from the FULL finding set gathered so far so it is
     # fail-closed on every P0/P1 (red-team P0-1), not four hand-picked counters.
@@ -235,7 +306,8 @@ def build_closure(root: Path) -> dict:
                       for s in SEVERITIES}
 
     twin = {
-        "twin_version": "finalis-architecture-closure-twin-v1",
+        "twin_version": "finalis-architecture-closure-twin-v2",
+        "spec_revision": "SP0010-V5-FINAL",
         "closure_epoch": CLOSURE_EPOCH,
         "freeze": frz,
         "architecture_description": desc,
@@ -260,6 +332,17 @@ def build_closure(root: Path) -> dict:
         "program_seal": seal,
         "sp0011_admission": admission,
         "model_checks": models["models"],
+        # --- V5 subsystems (§0) ---
+        "dual_graph": dual,
+        "extraction_firewall":
+            dual["architecture_description_graph"]["firewall"],
+        "tcb_manifest": tcb_manifest,
+        "certification": certification,
+        "causal_controls": causal_results,
+        "cegar": cegar_results,
+        "robustness_frontier": frontier,
+        "federation": federation,
+        "repair_portfolio": repair,
         "counts": {"findings": finding_counts},
         "findings": [f.as_dict() for f in all_findings],
     }

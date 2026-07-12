@@ -17,7 +17,7 @@ def build_genome(*, repository_commit: str, constitution_roots: dict,
                  twin_roots: dict, hypergraph_root: str, epistemic_root: str,
                  invariant_root: str, hyperproperty_root: str,
                  assurance_root: str, gap_root: str, verifier_set_root: str,
-                 closure_epoch: str) -> dict:
+                 closure_epoch: str, extra_class_roots: dict | None = None) -> dict:
     class_roots = {
         "constitution": hash_obj(constitution_roots),
         "twin": hash_obj(twin_roots),
@@ -29,6 +29,12 @@ def build_genome(*, repository_commit: str, constitution_roots: dict,
         "gap": gap_root,
         "verifier_set": verifier_set_root,
     }
+    # V5 (§0): fold the proof-carrying / dual-graph / causal / CEGAR / robustness
+    # / TCB / federation roots into the sealed architecture identity, so any of
+    # them moving moves the global architecture root.
+    if extra_class_roots:
+        for k, v in sorted(extra_class_roots.items()):
+            class_roots[k] = v
     g = {
         "genome_version": "1.0.0",
         "repository_commit": repository_commit,

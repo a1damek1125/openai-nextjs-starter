@@ -102,11 +102,53 @@ GAP_TYPES = (
     "PRODUCTION_INFRASTRUCTURE_GAP", "FIELD_VALIDATION_GAP",
     "SP0011_EVALUATION_GAP", "OPERATIONAL_GAP", "REGULATORY_REVIEW_GAP",
     "ACCEPTED_FUTURE_ENHANCEMENT",
+    # V5 additions (§0): proof-carrying / dual-graph / causal / CEGAR gaps
+    "PROOF_HOLE", "HYPERPROPERTY_GAP", "CONTROL_EFFECTIVENESS_GAP",
+    "DUAL_GRAPH_CONFLICT", "EXTRACTION_UNGROUNDED", "CERTIFICATE_MISSING",
+    "CEGAR_LIMIT", "CAUSAL_UNIDENTIFIED", "FEDERATION_DIVERGENCE",
 )
-# gap types that BLOCK architecture closure (the rest are production/future)
+# gap types that BLOCK architecture closure (the rest are production/future).
+# V5: a declared-vs-real CONFLICT, a critical claim with no valid certificate
+# (PROOF_HOLE / CERTIFICATE_MISSING), an ungrounded critical node, a not-
+# identified critical control, and verifier-backend divergence all block.
 BLOCKING_GAP_TYPES = frozenset({"CONSTITUTIONAL_BLOCKER",
                                 "CROSS_TWIN_CONTRADICTION",
-                                "GLOBAL_INVARIANT_GAP"})
+                                "GLOBAL_INVARIANT_GAP",
+                                "DUAL_GRAPH_CONFLICT", "PROOF_HOLE",
+                                "CERTIFICATE_MISSING", "EXTRACTION_UNGROUNDED",
+                                "CAUSAL_UNIDENTIFIED", "FEDERATION_DIVERGENCE"})
+
+# --- V5 classification alphabets ----------------------------------------------
+# Dual-Graph conformance classes (§0, FUNCTION S): how a node in the declared
+# Architecture Description Graph relates to the independently-built Repository
+# Evidence Graph. CONFLICT is a hard blocker; AMBIGUOUS is fail-closed (treated
+# as unresolved, never as MATCH).
+DUAL_GRAPH_CLASSES = ("MATCH", "DECLARED_ONLY", "IMPLEMENTATION_ONLY",
+                      "CONFLICT", "AMBIGUOUS")
+
+# Extraction grounding (§0, FUNCTION T): a declared node either has a verifiable
+# on-disk source span (GROUNDED), some spans that resolve and some that do not
+# (PARTIALLY_GROUNDED), or no resolvable span (UNGROUNDED — quarantined, can
+# never become hard truth).
+EXTRACTION_GROUNDING = ("GROUNDED", "PARTIALLY_GROUNDED", "UNGROUNDED")
+
+# Causal identifiability (§0, FUNCTION U): whether a control's effect on the
+# protected property is causally identifiable from the structural causal model.
+IDENTIFIABILITY = ("IDENTIFIED", "PARTIALLY_IDENTIFIED", "NOT_IDENTIFIED")
+
+# CEGAR outcomes (§0, FUNCTION V): an abstract counterexample is either
+# concretizable into a real violation (REAL), refuted as an abstraction artifact
+# (SPURIOUS), or the refinement budget was exhausted (LIMIT_REACHED — NOT a
+# pass). PROVED = the abstraction verified the property with no counterexample.
+CEGAR_OUTCOMES = ("PROVED", "REAL_COUNTEREXAMPLE", "SPURIOUS_REFINED",
+                  "LIMIT_REACHED")
+
+# Certificate lifecycle (§0, FUNCTION W): a proof-carrying closure certificate.
+# A solver verdict WITHOUT a VALID certificate is ADVISORY only (never closing).
+CERTIFICATE_STATES = ("ISSUED", "VALID", "INVALID", "ADVISORY_ONLY", "MISSING")
+
+# Federated backend convergence (§0, FUNCTION X)
+FEDERATION_STATES = ("CONVERGED", "DIVERGED", "INSUFFICIENT_BACKENDS")
 
 # --- cross-twin dimensions (FUNCTION I) ---------------------------------------
 CROSS_TWIN_DIMENSIONS = ("identity", "semantic_epoch", "valid_time",
@@ -162,6 +204,28 @@ REASON_CODES = frozenset({
     "SP0011_ADMISSION_READY", "SP0011_EVIDENCE_FABRICATION_REJECTED",
     # boundary / analysis
     "BOUNDARY_VIOLATION", "ANALYSIS_LIMIT_REACHED",
+    # --- V5: dual-graph conformance (FUNCTION S) ---
+    "DUAL_GRAPH_CONFLICT", "DUAL_GRAPH_DECLARED_ONLY",
+    "DUAL_GRAPH_IMPLEMENTATION_ONLY", "DUAL_GRAPH_AMBIGUOUS",
+    # --- V5: extraction uncertainty firewall (FUNCTION T) ---
+    "EXTRACTION_NODE_UNGROUNDED", "EXTRACTION_SPAN_MISSING",
+    "EXTRACTION_PARTIALLY_GROUNDED",
+    # --- V5: trusted computing base (FUNCTION Y) ---
+    "TCB_MEMBER_MISSING", "TCB_UNTRUSTED_INFLUENCE",
+    # --- V5: proof-carrying certificates (FUNCTION W) ---
+    "CERTIFICATE_MISSING", "CERTIFICATE_INVALID", "PROOF_HOLE",
+    "SOLVER_VERDICT_ADVISORY_ONLY", "CERTIFICATE_CHECKED",
+    # --- V5: causal control verification (FUNCTION U) ---
+    "CONTROL_EFFECT_NOT_IDENTIFIED", "CONTROL_EFFECT_PARTIALLY_IDENTIFIED",
+    # --- V5: CEGAR (FUNCTION V) ---
+    "CEGAR_REAL_COUNTEREXAMPLE", "CEGAR_LIMIT_REACHED",
+    # --- V5: robustness frontier (FUNCTION Z) ---
+    "ASSURANCE_CUT_SINGLE", "ROBUSTNESS_LIMIT_REACHED",
+    # --- V5: correction sets / repair portfolios ---
+    "CORRECTION_WOULD_WEAKEN_INVARIANT", "REPAIR_REQUIRED",
+    # --- V5: federated N-version verification (FUNCTION X) ---
+    "FEDERATION_DIVERGENCE", "FEDERATION_INSUFFICIENT_BACKENDS",
+    "FEDERATION_CONVERGED",
 })
 
 

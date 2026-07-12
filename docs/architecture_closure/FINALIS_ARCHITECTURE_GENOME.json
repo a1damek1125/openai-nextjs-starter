@@ -2,14 +2,21 @@
   "assurance_root": "d49d22848842ae41a377da4772cdbd29389d51d0c5991d3cb597f9e10e4be190",
   "class_roots": {
     "assurance": "d49d22848842ae41a377da4772cdbd29389d51d0c5991d3cb597f9e10e4be190",
+    "causal": "34c821831c3d4dd95f99a7bbf6094636d07dd5e56c7e3a730c24be1cc2782a43",
+    "cegar": "d2be79dea3fac9dfb1eb3093ee1a0f40dca1e5a25c2879e1895321b84c69da7e",
+    "certificate": "e5a5818299a3649848c3a7113e373cd375cc9a3171bb8b71a7b5e88b0bc229ca",
     "constitution": "a0e53e602ed1bd88dd597920345b3f045b909b0390c7951898ec459800b3d9b6",
+    "dual_graph": "07cb0ae6e5e1891a3f944b7f717a0e7fa691985535b8c30e55a711d200aa28af",
     "epistemic": "f4f21856f076011fe21cd051992e04b6d6a94c89b05ae99106fe15ba5530dba7",
+    "extraction_firewall": "0e102d687c7b5d7473705b908727b1e1978119f8158a00e7fe8f36b0be36428c",
     "gap": "94157d77e84fa184de02969c11b790d47058933594bec6ba06c32f355a92474d",
     "hypergraph": "d9465cffef53814c243b10a55344c2bca95d9dd3d07e4fdbb8634a717481b15a",
     "hyperproperty": "96993083a5002f0d49a0e9b6fb134b7fe50d75875c3b187caff9baaa5cd41190",
     "invariant": "7fee55825da11fc6690c4a259433a8945f6adbc3c14efac666fe47b21c2ae980",
+    "robustness": "29c937548536f2d57fc69a041022e7118fbc4678bad1e30bb3731110a34e0e56",
+    "tcb": "a2e52993036bcba7676c0e3e2264204a5ded0110bbb5e33be4629a3a74c2c405",
     "twin": "37a28d98029ec315e65147f82dcfaf8836eeb6a22689617dbb7f7eff8a534388",
-    "verifier_set": "82299c1d24e57cda5188835a11782c9689cda298f951029ae2b116ca4d6e98b8"
+    "verifier_set": "71c21042adac30223e21d09a3e6a44777168a9453629a9d15ba75635b1a21642"
   },
   "closure_epoch": "ACE-2026-07",
   "constitution_roots": {
@@ -27,16 +34,15 @@
   "epistemic_state_root": "f4f21856f076011fe21cd051992e04b6d6a94c89b05ae99106fe15ba5530dba7",
   "gap_ledger_root": "94157d77e84fa184de02969c11b790d47058933594bec6ba06c32f355a92474d",
   "genome_version": "1.0.0",
-  "global_architecture_root": "ee167b18786153be032a358679d289d232613ec47803f74b8438ded865563dd7",
+  "global_architecture_root": "9d0c5c83399d0b7f12db287a4699984aeff46b9e1c54d1d33ea9dd1773242263",
   "hypergraph_root": "d9465cffef53814c243b10a55344c2bca95d9dd3d07e4fdbb8634a717481b15a",
   "hyperproperty_root": "96993083a5002f0d49a0e9b6fb134b7fe50d75875c3b187caff9baaa5cd41190",
   "invariant_root": "7fee55825da11fc6690c4a259433a8945f6adbc3c14efac666fe47b21c2ae980",
   "repository_commit": "1e29581",
-  "schema_id": "ArchitectureGenome",
   "twin_roots": {
     "contract_genome": "7269f08cd7d53679cae6ce3b134a00d6dd6146fde0c60e712a065a711be377b1",
     "contract_inventory": "52c462f8306961623b1f4dda582fb28ef2c08664e840a1839975e855f8860330",
     "release_assurance": "916dd687ca4c473efdf5b77f1bd3d4d72fe365aaa5d89a520dab0b214fb5e794"
   },
-  "verifier_set_root": "82299c1d24e57cda5188835a11782c9689cda298f951029ae2b116ca4d6e98b8"
+  "verifier_set_root": "71c21042adac30223e21d09a3e6a44777168a9453629a9d15ba75635b1a21642"
 }

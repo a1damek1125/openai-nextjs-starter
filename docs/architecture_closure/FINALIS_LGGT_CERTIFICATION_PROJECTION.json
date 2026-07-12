@@ -1,0 +1,169 @@
+{
+  "admission_state": "ADMITTED_PENDING_EXECUTION",
+  "all_guarantees_certified": true,
+  "causal_controls": {
+    "CTL-APPROVAL-BINDING": "IDENTIFIED",
+    "CTL-AUTH-GATE": "IDENTIFIED",
+    "CTL-RBAC": "IDENTIFIED",
+    "CTL-RELEASE-PROOF-BOUNDARY": "IDENTIFIED",
+    "CTL-SAFETY-ADMISSION": "IDENTIFIED",
+    "CTL-TENANT-SCOPE": "IDENTIFIED"
+  },
+  "cegar_outcomes": {
+    "CEGAR-APPROVAL-ISOLATION": "PROVED",
+    "CEGAR-CONTROL-LANGUAGE-INVARIANCE": "PROVED",
+    "CEGAR-PROVIDER-ACCOUNT-SEPARATION": "PROVED",
+    "CEGAR-TENANT-NONINTERFERENCE": "PROVED"
+  },
+  "grants_production_authority": false,
+  "guarantee_tree": [
+    {
+      "admitted_closed": true,
+      "certificate_hash": "800a1919a8f7d3cd0c5870d79d15936a7a1a8807205fd2703c8ef0c22176d2fb",
+      "certificate_valid": true,
+      "cut_number": 1,
+      "epistemic_state": "SUPPORTED_ONLY",
+      "guarantee": "CL-SP0000-architecture-baseline-fixed",
+      "independence_class": "COMMON_MODE"
+    },
+    {
+      "admitted_closed": true,
+      "certificate_hash": "1aea2739d7d79ebd3ef4363496ea2ffa6c7918516bf59414c8d91ce05ebda3fd",
+      "certificate_valid": true,
+      "cut_number": 1,
+      "epistemic_state": "SUPPORTED_ONLY",
+      "guarantee": "CL-SP0001-architecture-conformance-checked",
+      "independence_class": "COMMON_MODE"
+    },
+    {
+      "admitted_closed": true,
+      "certificate_hash": "7c0abb32fa745ed7e654902c4956a707dd0fb1aec7d3e19c7fce910e9b094a84",
+      "certificate_valid": true,
+      "cut_number": 1,
+      "epistemic_state": "SUPPORTED_ONLY",
+      "guarantee": "CL-SP0002-historical-epoch-interpretable",
+      "independence_class": "COMMON_MODE"
+    },
+    {
+      "admitted_closed": true,
+      "certificate_hash": "eb54556d07c6a802fbbe9e7b655c0264566e609ab7fc40d3817bb1289dcab88b",
+      "certificate_valid": true,
+      "cut_number": 1,
+      "epistemic_state": "SUPPORTED_ONLY",
+      "guarantee": "CL-SP0002-semantics-versioned",
+      "independence_class": "COMMON_MODE"
+    },
+    {
+      "admitted_closed": true,
+      "certificate_hash": "29b68c509a08fe2acc472299ada134ccaa9365b9c7114b6db915b062f80cb909",
+      "certificate_valid": true,
+      "cut_number": 1,
+      "epistemic_state": "SUPPORTED_ONLY",
+      "guarantee": "CL-SP0003-program-admission-verified",
+      "independence_class": "COMMON_MODE"
+    },
+    {
+      "admitted_closed": true,
+      "certificate_hash": "898b17a49e2344a548dd625191d846a273d74ea8f7e19277c9b39e55245c46ca",
+      "certificate_valid": true,
+      "cut_number": 1,
+      "epistemic_state": "SUPPORTED_ONLY",
+      "guarantee": "CL-SP0004-provider-replaceable",
+      "independence_class": "COMMON_MODE"
+    },
+    {
+      "admitted_closed": true,
+      "certificate_hash": "2c4aefe8161d93af5cfe7d6965b7c042bc763bcfac6e1d8f3e5f3e28f816e0e3",
+      "certificate_valid": true,
+      "cut_number": 1,
+      "epistemic_state": "SUPPORTED_ONLY",
+      "guarantee": "CL-SP0005-safety-dominates-protected-effects",
+      "independence_class": "COMMON_MODE"
+    },
+    {
+      "admitted_closed": true,
+      "certificate_hash": "925cea375150d5d45da463ffc24b79b43c0cf0fa482bcbd7923d6f57e70c5446",
+      "certificate_valid": true,
+      "cut_number": 1,
+      "epistemic_state": "SUPPORTED_ONLY",
+      "guarantee": "CL-SP0006-approval-context-bound",
+      "independence_class": "COMMON_MODE"
+    },
+    {
+      "admitted_closed": true,
+      "certificate_hash": "097c58befab4fb578a724b144b4c955e1af27d466007efcd8e4d0f5152830cdf",
+      "certificate_valid": true,
+      "cut_number": 1,
+      "epistemic_state": "SUPPORTED_ONLY",
+      "guarantee": "CL-SP0006-authority-conserved",
+      "independence_class": "COMMON_MODE"
+    },
+    {
+      "admitted_closed": true,
+      "certificate_hash": "d0c575802fe973e0155a37bc6241208fabfb4c7754971f22606781adf24d6262",
+      "certificate_valid": true,
+      "cut_number": 1,
+      "epistemic_state": "SUPPORTED_ONLY",
+      "guarantee": "CL-SP0006-zero-lost-work",
+      "independence_class": "COMMON_MODE"
+    },
+    {
+      "admitted_closed": true,
+      "certificate_hash": "cd057e346b14bf26d44f1f1ca3cca801066e80c51d754b9f18e217beac3cc3b0",
+      "certificate_valid": true,
+      "cut_number": 1,
+      "epistemic_state": "SUPPORTED_ONLY",
+      "guarantee": "CL-SP0007-contract-evolution-directional",
+      "independence_class": "COMMON_MODE"
+    },
+    {
+      "admitted_closed": true,
+      "certificate_hash": "ad3f92c24830f916b022b9d3a455da9e2d4d9280fa3bfcee8fd555c2c3050b99",
+      "certificate_valid": true,
+      "cut_number": 1,
+      "epistemic_state": "SUPPORTED_ONLY",
+      "guarantee": "CL-SP0007-historical-envelope-epoch-bound",
+      "independence_class": "COMMON_MODE"
+    },
+    {
+      "admitted_closed": true,
+      "certificate_hash": "6726b7f5bc70566e8de49ac2200de3342b43d9666697a3f4bea85509edb26b36",
+      "certificate_valid": true,
+      "cut_number": 1,
+      "epistemic_state": "SUPPORTED_ONLY",
+      "guarantee": "CL-SP0008-contract-genome-sealed",
+      "independence_class": "COMMON_MODE"
+    },
+    {
+      "admitted_closed": true,
+      "certificate_hash": "3eae8df69ad17b2f6af5cd403e39903831a2c82466e057df927ccfd9632fc4bd",
+      "certificate_valid": true,
+      "cut_number": 1,
+      "epistemic_state": "SUPPORTED_ONLY",
+      "guarantee": "CL-SP0008-contract-surfaces-inventoried",
+      "independence_class": "COMMON_MODE"
+    },
+    {
+      "admitted_closed": true,
+      "certificate_hash": "cf933487a020e7d320d1486cbcfcfb907d6e5be5bc9b42d3a32f875d81d5bacf",
+      "certificate_valid": true,
+      "cut_number": 1,
+      "epistemic_state": "SUPPORTED_ONLY",
+      "guarantee": "CL-SP0009-non-compensatory-gates",
+      "independence_class": "COMMON_MODE"
+    },
+    {
+      "admitted_closed": true,
+      "certificate_hash": "3d2fa02392990e41c5aec26e48a9378dc267ccddbd32b214843ef9c3d3a5048a",
+      "certificate_valid": true,
+      "cut_number": 1,
+      "epistemic_state": "SUPPORTED_ONLY",
+      "guarantee": "CL-SP0009-release-proof-not-runtime-authority",
+      "independence_class": "COMMON_MODE"
+    }
+  ],
+  "lggt_version": "LGGT+-1.0-projection",
+  "program_seal": "f81b1b44c8c6c4453dbef3c38ccacb0359c92a29034823995095a7c2d47f2194",
+  "score": null,
+  "sealed_root": "9d0c5c83399d0b7f12db287a4699984aeff46b9e1c54d1d33ea9dd1773242263"
+}

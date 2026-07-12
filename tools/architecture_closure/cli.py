@@ -144,13 +144,51 @@ def cmd_assurance(args) -> int:
                   "common_mode": t["evidence_common_mode"]})
 
 
+def cmd_dual_graph(args) -> int:
+    return _emit(_closure(args)["dual_graph"])
+
+
+def cmd_extraction_firewall(args) -> int:
+    return _emit(_closure(args)["extraction_firewall"])
+
+
+def cmd_tcb(args) -> int:
+    return _emit(_closure(args)["tcb_manifest"])
+
+
+def cmd_certificates(args) -> int:
+    return _emit(_closure(args)["certification"])
+
+
+def cmd_causal(args) -> int:
+    return _emit(_closure(args)["causal_controls"])
+
+
+def cmd_cegar(args) -> int:
+    return _emit(_closure(args)["cegar"])
+
+
+def cmd_robustness_frontier(args) -> int:
+    return _emit(_closure(args)["robustness_frontier"])
+
+
+def cmd_federation(args) -> int:
+    return _emit(_closure(args)["federation"])
+
+
+def cmd_repair_portfolio(args) -> int:
+    return _emit(_closure(args)["repair_portfolio"])
+
+
 def cmd_dossier(args) -> int:
     t = _closure(args)
     return _emit({k: t[k] for k in (
         "closure_epoch", "epistemic_summary", "conformance_matrix",
         "global_invariants", "hyperproperties", "counterfactual_controls",
         "gap_ledger", "architecture_genome", "bootstrap_ceremony",
-        "program_seal", "sp0011_admission", "counts")})
+        "program_seal", "sp0011_admission", "counts",
+        "dual_graph", "tcb_manifest", "certification", "causal_controls",
+        "cegar", "robustness_frontier", "federation", "repair_portfolio")})
 
 
 def cmd_validate(args) -> int:
@@ -196,6 +234,16 @@ def build_parser() -> argparse.ArgumentParser:
     add("verify_seal", cmd_verify_seal)
     add("sp0011_admission", cmd_sp0011_admission)
     add("assurance", cmd_assurance)
+    # V5 subsystems
+    add("dual_graph", cmd_dual_graph)
+    add("extraction_firewall", cmd_extraction_firewall)
+    add("tcb", cmd_tcb)
+    add("certificates", cmd_certificates)
+    add("causal", cmd_causal)
+    add("cegar", cmd_cegar)
+    add("robustness_frontier", cmd_robustness_frontier)
+    add("federation", cmd_federation)
+    add("repair_portfolio", cmd_repair_portfolio)
     add("dossier", cmd_dossier)
     add("validate", cmd_validate)
     return p

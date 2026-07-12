@@ -1,0 +1,35 @@
+{
+  "complete": true,
+  "member_count": 11,
+  "members": {
+    "bootstrap_verify.py": "2feb90329cfa6cdc08f50892694ce9d8caf64d899649ac87a8d4f32c2243e4fa",
+    "canon.py": "b24c1493f676e8f288a01e9f6ce383c66a5911930a248c1833b1586ce082f90f",
+    "certificates.py": "6bfd0abdf849a840491ba3af47d2073135b53411b860815d37d0085e72e9e438",
+    "dual_graph.py": "1d956e567c5879507c7f6e0a36abe83ee640f050cab42cfda3f91060e2d979a5",
+    "epistemic.py": "8054031e03162aa3724f300405c88bee8fd9b639bf7ac1dfa64b9fc0e9745d3d",
+    "extraction.py": "e8304120efe5c081e8ee3675df54fd67a2e660d4917799f40edd6e41a13c87ac",
+    "federated.py": "1da489e68155a22e1c9bf83972d49fd71647d4a26de11a53e87a9a25f3babf12",
+    "freeze.py": "db590860be5b60826c01b01c6a1f5cde0cc7691d29b1bf4c784d850f14de3b51",
+    "hypergraph.py": "07fd3a34363e36f77b1d20949c79f495502a75e0346097605714f8b4671590fa",
+    "model.py": "2d021d548a4967b74185e087d32c3913daa5a86f50bcf6e35bd375f0671c977b",
+    "seal.py": "1ad19509f3a605969e3487bed5f1e27bfbfa9f6ba5f81fed8905ea77b3496bd8"
+  },
+  "minimal_trusted_kernel": [
+    "canon.py",
+    "model.py",
+    "certificates.py",
+    "seal.py"
+  ],
+  "missing_members": [],
+  "package": "tools/architecture_closure",
+  "seal_trusted_inputs": {
+    "architecture_genome_root": "canon.py:global_root",
+    "certificate_root": "certificates.py:certify_closure",
+    "closure_state": "seal.py:closure_state",
+    "dual_graph_root": "dual_graph.py:compare",
+    "federation_root": "federated.py:federate",
+    "verifier_set_root": "bootstrap_verify.py:verifier_set_root"
+  },
+  "tcb_root": "a2e52993036bcba7676c0e3e2264204a5ded0110bbb5e33be4629a3a74c2c405",
+  "tcb_version": "1.0"
+}

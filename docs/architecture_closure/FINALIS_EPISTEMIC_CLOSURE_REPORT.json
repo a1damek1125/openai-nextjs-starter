@@ -1,5 +1,4 @@
 {
-  "schema_id": "EpistemicClosureReport",
   "states": {
     "CL-SP0000-architecture-baseline-fixed": {
       "closure_admissible": true,

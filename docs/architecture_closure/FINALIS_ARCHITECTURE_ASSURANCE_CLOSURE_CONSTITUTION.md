@@ -514,4 +514,58 @@ production gaps**, one snapshot is sealed, and SP0011 is admitted
 **`BLOCKED_PENDING_SP0011`**, the seal **grants no production authority**, the
 noninterference results are **bounded, not universal**, and control necessity is
 **not** control sufficiency. Both halves of that statement are the constitution.
+
+---
+
+## V5 addendum — proof-carrying, dual-graph, causal closure
+
+SP0010 **V5** (supersedes V2/V3/V4) does not change the mission or the change
+boundary; it deepens the *proof*. The following reasoning rules are added to the
+constitution, each fail-closed:
+
+1. **Do not trust the description — check it against reality.** A declared
+   Architecture Description Graph is compared, node by node, against an
+   **independently scanned** Repository Evidence Graph. Each node is exactly one
+   of MATCH / DECLARED_ONLY / IMPLEMENTATION_ONLY / CONFLICT / AMBIGUOUS. A
+   CONFLICT (the description asserts what the tree contradicts) blocks; a
+   critical DECLARED_ONLY blocks; AMBIGUOUS is never rounded up to MATCH.
+
+2. **No ungrounded claim becomes hard truth.** Every declared node must resolve
+   an on-disk **source span**; an ungrounded, agent-extracted node is quarantined
+   and, if critical, blocks. Description is not evidence.
+
+3. **A solver verdict is advisory until an independent checker validates its
+   certificate.** Each critical guarantee carries a proof-carrying certificate;
+   a distinct checker re-derives every obligation. A SUPPORTED_ONLY verdict with
+   no VALID certificate is a **PROOF_HOLE** and cannot close.
+
+4. **Necessity must be causally identifiable.** A control counts only when its
+   effect on the protected property is identifiable (backdoor criterion) — an
+   unobserved confounder makes it NOT_IDENTIFIED, which blocks.
+
+5. **An exhausted search is not a proof.** CEGAR proves each safety property
+   through a sound abstraction; `LIMIT_REACHED` is never a pass, and a
+   concretized real counterexample blocks.
+
+6. **Diversity must be real, not nominal.** Federated N-version verification
+   requires heterogeneous backends that are each deterministic, **sensitive** to
+   a canary root change, and agreed on the anchor; a backend blind to a change
+   is common-mode and blocks.
+
+7. **You may not fix a closure by lowering the bar.** Any minimal correction set
+   is invariant-preserving by construction; a repair that would weaken an
+   invariant or disable a control is rejected, not selected.
+
+8. **Trust is pinned to exact bytes.** The Trusted Computing Base manifest
+   content-hashes the small set of modules the seal depends on; a change to any
+   trusted module (down to a comment) moves the TCB root and thus the global
+   architecture root. Everything outside the TCB is either re-checked by a TCB
+   member or non-load-bearing.
+
+On the sealed repository these eight rules all pass: 57/57 dual-graph nodes
+MATCH (0 CONFLICT), 16/16 guarantees certified by the independent checker, 6/6
+controls IDENTIFIED, 4/4 properties CEGAR-PROVED, federation CONVERGED across 4
+heterogeneous backends, the repair portfolio EMPTY (certified), the TCB complete
+— `P0 = 0, P1 = 0`. The V5 roots are folded into the Architecture Genome, so the
+Program Seal is fail-closed on the full finding set and pinned to exact bytes.
 ```

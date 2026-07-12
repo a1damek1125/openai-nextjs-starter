@@ -1,64 +1,60 @@
 {
-  "hyperproperties": {
-    "HP-APPROVAL-ISOLATION": {
-      "bound": {
-        "note": "bounded reference model; not universal proof (D-0010-41)",
-        "varying_domain": [
-          true,
-          false
-        ]
-      },
-      "counterexample": null,
-      "critical": true,
-      "hyperproperty_id": "HP-APPROVAL-ISOLATION",
-      "status": "PASS",
-      "world_pairs_checked": 2
+  "HP-APPROVAL-ISOLATION": {
+    "bound": {
+      "note": "bounded reference model; not universal proof (D-0010-41)",
+      "varying_domain": [
+        true,
+        false
+      ]
     },
-    "HP-CONTROL-LANGUAGE-INVARIANCE": {
-      "bound": {
-        "note": "bounded reference model; not universal proof (D-0010-41)",
-        "varying_domain": [
-          "EN",
-          "PL",
-          "DE",
-          "ES"
-        ]
-      },
-      "counterexample": null,
-      "critical": true,
-      "hyperproperty_id": "HP-CONTROL-LANGUAGE-INVARIANCE",
-      "status": "PASS",
-      "world_pairs_checked": 2
-    },
-    "HP-PROVIDER-ACCOUNT-SEPARATION": {
-      "bound": {
-        "note": "bounded reference model; not universal proof (D-0010-41)",
-        "varying_domain": [
-          "acctA1",
-          "acctA2"
-        ]
-      },
-      "counterexample": null,
-      "critical": true,
-      "hyperproperty_id": "HP-PROVIDER-ACCOUNT-SEPARATION",
-      "status": "PASS",
-      "world_pairs_checked": 1
-    },
-    "HP-TENANT-NONINTERFERENCE": {
-      "bound": {
-        "note": "bounded reference model; not universal proof (D-0010-41)",
-        "varying_domain": [
-          "s0",
-          "s1"
-        ]
-      },
-      "counterexample": null,
-      "critical": true,
-      "hyperproperty_id": "HP-TENANT-NONINTERFERENCE",
-      "status": "PASS",
-      "world_pairs_checked": 4
-    }
+    "counterexample": null,
+    "critical": true,
+    "hyperproperty_id": "HP-APPROVAL-ISOLATION",
+    "status": "PASS",
+    "world_pairs_checked": 2
   },
-  "note": "bounded reference models; not universal proof (D-0010-41)",
-  "schema_id": "NoninterferenceReport"
+  "HP-CONTROL-LANGUAGE-INVARIANCE": {
+    "bound": {
+      "note": "bounded reference model; not universal proof (D-0010-41)",
+      "varying_domain": [
+        "EN",
+        "PL",
+        "DE",
+        "ES"
+      ]
+    },
+    "counterexample": null,
+    "critical": true,
+    "hyperproperty_id": "HP-CONTROL-LANGUAGE-INVARIANCE",
+    "status": "PASS",
+    "world_pairs_checked": 2
+  },
+  "HP-PROVIDER-ACCOUNT-SEPARATION": {
+    "bound": {
+      "note": "bounded reference model; not universal proof (D-0010-41)",
+      "varying_domain": [
+        "acctA1",
+        "acctA2"
+      ]
+    },
+    "counterexample": null,
+    "critical": true,
+    "hyperproperty_id": "HP-PROVIDER-ACCOUNT-SEPARATION",
+    "status": "PASS",
+    "world_pairs_checked": 1
+  },
+  "HP-TENANT-NONINTERFERENCE": {
+    "bound": {
+      "note": "bounded reference model; not universal proof (D-0010-41)",
+      "varying_domain": [
+        "s0",
+        "s1"
+      ]
+    },
+    "counterexample": null,
+    "critical": true,
+    "hyperproperty_id": "HP-TENANT-NONINTERFERENCE",
+    "status": "PASS",
+    "world_pairs_checked": 4
+  }
 }

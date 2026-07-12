@@ -1,0 +1,90 @@
+{
+  "CEGAR-APPROVAL-ISOLATION": {
+    "final_observed": [
+      "low",
+      "out"
+    ],
+    "outcome": "PROVED",
+    "pass": true,
+    "property_id": "CEGAR-APPROVAL-ISOLATION",
+    "refinements": 2,
+    "trace": [
+      {
+        "observed": [],
+        "verdict": "SPURIOUS"
+      },
+      {
+        "observed": [
+          "out"
+        ],
+        "verdict": "SPURIOUS"
+      }
+    ]
+  },
+  "CEGAR-CONTROL-LANGUAGE-INVARIANCE": {
+    "final_observed": [
+      "low",
+      "out"
+    ],
+    "outcome": "PROVED",
+    "pass": true,
+    "property_id": "CEGAR-CONTROL-LANGUAGE-INVARIANCE",
+    "refinements": 2,
+    "trace": [
+      {
+        "observed": [],
+        "verdict": "SPURIOUS"
+      },
+      {
+        "observed": [
+          "out"
+        ],
+        "verdict": "SPURIOUS"
+      }
+    ]
+  },
+  "CEGAR-PROVIDER-ACCOUNT-SEPARATION": {
+    "final_observed": [
+      "low",
+      "out"
+    ],
+    "outcome": "PROVED",
+    "pass": true,
+    "property_id": "CEGAR-PROVIDER-ACCOUNT-SEPARATION",
+    "refinements": 2,
+    "trace": [
+      {
+        "observed": [],
+        "verdict": "SPURIOUS"
+      },
+      {
+        "observed": [
+          "out"
+        ],
+        "verdict": "SPURIOUS"
+      }
+    ]
+  },
+  "CEGAR-TENANT-NONINTERFERENCE": {
+    "final_observed": [
+      "low",
+      "out"
+    ],
+    "outcome": "PROVED",
+    "pass": true,
+    "property_id": "CEGAR-TENANT-NONINTERFERENCE",
+    "refinements": 2,
+    "trace": [
+      {
+        "observed": [],
+        "verdict": "SPURIOUS"
+      },
+      {
+        "observed": [
+          "out"
+        ],
+        "verdict": "SPURIOUS"
+      }
+    ]
+  }
+}

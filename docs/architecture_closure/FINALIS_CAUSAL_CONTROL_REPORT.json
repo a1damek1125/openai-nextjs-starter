@@ -1,0 +1,236 @@
+{
+  "CTL-APPROVAL-BINDING": {
+    "causally_necessary": true,
+    "control_id": "CTL-APPROVAL-BINDING",
+    "counterfactual_class": "NECESSARY_NOT_SUFFICIENT",
+    "critical": true,
+    "grounded": true,
+    "identifiability": "IDENTIFIED",
+    "identification": {
+      "adjustment_set": [
+        "U"
+      ],
+      "backdoor_paths": 1,
+      "identifiability": "IDENTIFIED",
+      "unblocked_backdoor_paths": 0
+    },
+    "scm": {
+      "edges": [
+        [
+          "U",
+          "C"
+        ],
+        [
+          "U",
+          "Y"
+        ],
+        [
+          "C",
+          "Y"
+        ]
+      ],
+      "observed": [
+        "C",
+        "U",
+        "Y"
+      ],
+      "outcome": "Y",
+      "treatment": "C"
+    }
+  },
+  "CTL-AUTH-GATE": {
+    "causally_necessary": true,
+    "control_id": "CTL-AUTH-GATE",
+    "counterfactual_class": "NECESSARY_NOT_SUFFICIENT",
+    "critical": true,
+    "grounded": true,
+    "identifiability": "IDENTIFIED",
+    "identification": {
+      "adjustment_set": [
+        "U"
+      ],
+      "backdoor_paths": 1,
+      "identifiability": "IDENTIFIED",
+      "unblocked_backdoor_paths": 0
+    },
+    "scm": {
+      "edges": [
+        [
+          "U",
+          "C"
+        ],
+        [
+          "U",
+          "Y"
+        ],
+        [
+          "C",
+          "Y"
+        ]
+      ],
+      "observed": [
+        "C",
+        "U",
+        "Y"
+      ],
+      "outcome": "Y",
+      "treatment": "C"
+    }
+  },
+  "CTL-RBAC": {
+    "causally_necessary": true,
+    "control_id": "CTL-RBAC",
+    "counterfactual_class": "NECESSARY_NOT_SUFFICIENT",
+    "critical": true,
+    "grounded": true,
+    "identifiability": "IDENTIFIED",
+    "identification": {
+      "adjustment_set": [
+        "U"
+      ],
+      "backdoor_paths": 1,
+      "identifiability": "IDENTIFIED",
+      "unblocked_backdoor_paths": 0
+    },
+    "scm": {
+      "edges": [
+        [
+          "U",
+          "C"
+        ],
+        [
+          "U",
+          "Y"
+        ],
+        [
+          "C",
+          "Y"
+        ]
+      ],
+      "observed": [
+        "C",
+        "U",
+        "Y"
+      ],
+      "outcome": "Y",
+      "treatment": "C"
+    }
+  },
+  "CTL-RELEASE-PROOF-BOUNDARY": {
+    "causally_necessary": true,
+    "control_id": "CTL-RELEASE-PROOF-BOUNDARY",
+    "counterfactual_class": "NECESSARY_NOT_SUFFICIENT",
+    "critical": true,
+    "grounded": true,
+    "identifiability": "IDENTIFIED",
+    "identification": {
+      "adjustment_set": [
+        "U"
+      ],
+      "backdoor_paths": 1,
+      "identifiability": "IDENTIFIED",
+      "unblocked_backdoor_paths": 0
+    },
+    "scm": {
+      "edges": [
+        [
+          "U",
+          "C"
+        ],
+        [
+          "U",
+          "Y"
+        ],
+        [
+          "C",
+          "Y"
+        ]
+      ],
+      "observed": [
+        "C",
+        "U",
+        "Y"
+      ],
+      "outcome": "Y",
+      "treatment": "C"
+    }
+  },
+  "CTL-SAFETY-ADMISSION": {
+    "causally_necessary": true,
+    "control_id": "CTL-SAFETY-ADMISSION",
+    "counterfactual_class": "NECESSARY_NOT_SUFFICIENT",
+    "critical": true,
+    "grounded": true,
+    "identifiability": "IDENTIFIED",
+    "identification": {
+      "adjustment_set": [
+        "U"
+      ],
+      "backdoor_paths": 1,
+      "identifiability": "IDENTIFIED",
+      "unblocked_backdoor_paths": 0
+    },
+    "scm": {
+      "edges": [
+        [
+          "U",
+          "C"
+        ],
+        [
+          "U",
+          "Y"
+        ],
+        [
+          "C",
+          "Y"
+        ]
+      ],
+      "observed": [
+        "C",
+        "U",
+        "Y"
+      ],
+      "outcome": "Y",
+      "treatment": "C"
+    }
+  },
+  "CTL-TENANT-SCOPE": {
+    "causally_necessary": true,
+    "control_id": "CTL-TENANT-SCOPE",
+    "counterfactual_class": "NECESSARY_NOT_SUFFICIENT",
+    "critical": true,
+    "grounded": true,
+    "identifiability": "IDENTIFIED",
+    "identification": {
+      "adjustment_set": [
+        "U"
+      ],
+      "backdoor_paths": 1,
+      "identifiability": "IDENTIFIED",
+      "unblocked_backdoor_paths": 0
+    },
+    "scm": {
+      "edges": [
+        [
+          "U",
+          "C"
+        ],
+        [
+          "U",
+          "Y"
+        ],
+        [
+          "C",
+          "Y"
+        ]
+      ],
+      "observed": [
+        "C",
+        "U",
+        "Y"
+      ],
+      "outcome": "Y",
+      "treatment": "C"
+    }
+  }
+}

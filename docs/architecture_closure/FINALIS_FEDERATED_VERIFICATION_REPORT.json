@@ -1,0 +1,47 @@
+{
+  "backend_count": 4,
+  "backends": [
+    {
+      "anchor_matches_genome": true,
+      "backend": "canonical-json-fold",
+      "blind_to_roots": [],
+      "deterministic": true,
+      "fingerprint": "9d0c5c83399d0b7f12db287a4699984aeff46b9e1c54d1d33ea9dd1773242263",
+      "ok": true,
+      "sensitive": true
+    },
+    {
+      "anchor_matches_genome": true,
+      "backend": "binary-merkle-tree",
+      "blind_to_roots": [],
+      "deterministic": true,
+      "fingerprint": "82463bd8acd07009a45d2eb2bb7d9ce3d1aeeaea8d4be21863970a210b1eca01",
+      "ok": true,
+      "sensitive": true
+    },
+    {
+      "anchor_matches_genome": true,
+      "backend": "polynomial-rolling",
+      "blind_to_roots": [],
+      "deterministic": true,
+      "fingerprint": "poly:247cb2607825f74c8900c94271e02eb2",
+      "ok": true,
+      "sensitive": true
+    },
+    {
+      "anchor_matches_genome": true,
+      "backend": "length-prefixed-stream",
+      "blind_to_roots": [],
+      "deterministic": true,
+      "fingerprint": "a6482cefcd0e70fd0aaed1d188024333c014b835fa5d25657efed870113be204",
+      "ok": true,
+      "sensitive": true
+    }
+  ],
+  "converged": true,
+  "converged_count": 4,
+  "disagreements": [],
+  "distinct_fingerprints": 4,
+  "federation_root": "c09e20c48cdbadfed1975ed76f48fbe678b710e4d467d0dc3ef15f492ec66b76",
+  "state": "CONVERGED"
+}

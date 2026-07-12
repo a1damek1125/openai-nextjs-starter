@@ -1,0 +1,184 @@
+{
+  "frontier_min_cut": 1,
+  "per_claim": {
+    "CL-SP0000-architecture-baseline-fixed": {
+      "claim_id": "CL-SP0000-architecture-baseline-fixed",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "critical": true,
+      "cut_number": 1,
+      "limit_reached": false,
+      "witness": [
+        "SP0000"
+      ]
+    },
+    "CL-SP0001-architecture-conformance-checked": {
+      "claim_id": "CL-SP0001-architecture-conformance-checked",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "critical": true,
+      "cut_number": 1,
+      "limit_reached": false,
+      "witness": [
+        "SP0001"
+      ]
+    },
+    "CL-SP0002-historical-epoch-interpretable": {
+      "claim_id": "CL-SP0002-historical-epoch-interpretable",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "critical": true,
+      "cut_number": 1,
+      "limit_reached": false,
+      "witness": [
+        "SP0002"
+      ]
+    },
+    "CL-SP0002-semantics-versioned": {
+      "claim_id": "CL-SP0002-semantics-versioned",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "critical": true,
+      "cut_number": 1,
+      "limit_reached": false,
+      "witness": [
+        "SP0002"
+      ]
+    },
+    "CL-SP0003-program-admission-verified": {
+      "claim_id": "CL-SP0003-program-admission-verified",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "critical": true,
+      "cut_number": 1,
+      "limit_reached": false,
+      "witness": [
+        "SP0003"
+      ]
+    },
+    "CL-SP0004-provider-replaceable": {
+      "claim_id": "CL-SP0004-provider-replaceable",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "critical": true,
+      "cut_number": 1,
+      "limit_reached": false,
+      "witness": [
+        "SP0004"
+      ]
+    },
+    "CL-SP0005-safety-dominates-protected-effects": {
+      "claim_id": "CL-SP0005-safety-dominates-protected-effects",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "critical": true,
+      "cut_number": 1,
+      "limit_reached": false,
+      "witness": [
+        "SP0005"
+      ]
+    },
+    "CL-SP0006-approval-context-bound": {
+      "claim_id": "CL-SP0006-approval-context-bound",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "critical": true,
+      "cut_number": 1,
+      "limit_reached": false,
+      "witness": [
+        "SP0006"
+      ]
+    },
+    "CL-SP0006-authority-conserved": {
+      "claim_id": "CL-SP0006-authority-conserved",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "critical": true,
+      "cut_number": 1,
+      "limit_reached": false,
+      "witness": [
+        "SP0006"
+      ]
+    },
+    "CL-SP0006-zero-lost-work": {
+      "claim_id": "CL-SP0006-zero-lost-work",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "critical": true,
+      "cut_number": 1,
+      "limit_reached": false,
+      "witness": [
+        "SP0006"
+      ]
+    },
+    "CL-SP0007-contract-evolution-directional": {
+      "claim_id": "CL-SP0007-contract-evolution-directional",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "critical": true,
+      "cut_number": 1,
+      "limit_reached": false,
+      "witness": [
+        "SP0007"
+      ]
+    },
+    "CL-SP0007-historical-envelope-epoch-bound": {
+      "claim_id": "CL-SP0007-historical-envelope-epoch-bound",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "critical": true,
+      "cut_number": 1,
+      "limit_reached": false,
+      "witness": [
+        "SP0007"
+      ]
+    },
+    "CL-SP0008-contract-genome-sealed": {
+      "claim_id": "CL-SP0008-contract-genome-sealed",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "critical": true,
+      "cut_number": 1,
+      "limit_reached": false,
+      "witness": [
+        "SP0008"
+      ]
+    },
+    "CL-SP0008-contract-surfaces-inventoried": {
+      "claim_id": "CL-SP0008-contract-surfaces-inventoried",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "critical": true,
+      "cut_number": 1,
+      "limit_reached": false,
+      "witness": [
+        "SP0008"
+      ]
+    },
+    "CL-SP0009-non-compensatory-gates": {
+      "claim_id": "CL-SP0009-non-compensatory-gates",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "critical": true,
+      "cut_number": 1,
+      "limit_reached": false,
+      "witness": [
+        "SP0009"
+      ]
+    },
+    "CL-SP0009-release-proof-not-runtime-authority": {
+      "claim_id": "CL-SP0009-release-proof-not-runtime-authority",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "critical": true,
+      "cut_number": 1,
+      "limit_reached": false,
+      "witness": [
+        "SP0009"
+      ]
+    }
+  },
+  "robustness_root": "29c937548536f2d57fc69a041022e7118fbc4678bad1e30bb3731110a34e0e56",
+  "single_points": [
+    "CL-SP0000-architecture-baseline-fixed",
+    "CL-SP0001-architecture-conformance-checked",
+    "CL-SP0002-historical-epoch-interpretable",
+    "CL-SP0002-semantics-versioned",
+    "CL-SP0003-program-admission-verified",
+    "CL-SP0004-provider-replaceable",
+    "CL-SP0005-safety-dominates-protected-effects",
+    "CL-SP0006-approval-context-bound",
+    "CL-SP0006-authority-conserved",
+    "CL-SP0006-zero-lost-work",
+    "CL-SP0007-contract-evolution-directional",
+    "CL-SP0007-historical-envelope-epoch-bound",
+    "CL-SP0008-contract-genome-sealed",
+    "CL-SP0008-contract-surfaces-inventoried",
+    "CL-SP0009-non-compensatory-gates",
+    "CL-SP0009-release-proof-not-runtime-authority"
+  ]
+}

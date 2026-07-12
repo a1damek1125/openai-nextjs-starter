@@ -25,10 +25,15 @@ from .canon import global_root, hash_obj, merkle_root, sha256_hex
 from .freeze import frozen_verifier_hash
 from .model import Finding, P0
 
-# the class roots every complete genome must carry (catches root omission)
+# the class roots every complete genome must carry (catches root omission). V5
+# (red-team P1-C): the 7 V5 subsystem roots are folded into the genome by
+# closure.build_closure, so they MUST be required here too — otherwise a V5
+# subsystem could be silently unwired from the sealed architecture identity.
 REQUIRED_CLASS_ROOTS = ("constitution", "twin", "hypergraph", "epistemic",
                         "invariant", "hyperproperty", "assurance", "gap",
-                        "verifier_set")
+                        "verifier_set",
+                        "dual_graph", "extraction_firewall", "tcb",
+                        "certificate", "causal", "cegar", "robustness")
 
 
 def phase_a(root: Path, recorded_frozen_hash: str) -> dict:

@@ -1,5 +1,80 @@
 {
   "blocking_gaps": [],
   "constitutional_blockers": [],
-  "schema_id": "ConstitutionalGapLedger"
+  "gaps": [
+    {
+      "blocks_closure": false,
+      "claim_refs": [],
+      "gap_id": "GAP-5172747fe430a069",
+      "gap_type": "PRODUCTION_INFRASTRUCTURE_GAP",
+      "next_action": "provision production storage + deployment controller (post-SP0011)",
+      "owner": "infra",
+      "source": "docs/audits/AUDIT_REPORT_1_FULL_SYSTEM_TRUTH_AND_SP_INVENTORY.md",
+      "statement": "single-node SQLite + local filesystem persistence; no production storage, no deployment/secrets/monitoring infra",
+      "status": "OPEN"
+    },
+    {
+      "blocks_closure": false,
+      "claim_refs": [],
+      "gap_id": "GAP-62caff8aa16fad65",
+      "gap_type": "PRODUCTION_INFRASTRUCTURE_GAP",
+      "next_action": "add provider-neutral CI + pinned lockfile when a runtime target exists",
+      "owner": "release",
+      "source": "docs/release/FINALIS_SWARM_REVIEW.md",
+      "statement": "no CI / lockfile / build backend exist; each absence is hashed explicitly into the SP0009 candidate genome",
+      "status": "OPEN"
+    },
+    {
+      "blocks_closure": false,
+      "claim_refs": [],
+      "gap_id": "GAP-bac0ba4fa0bd33ca",
+      "gap_type": "IMPLEMENTATION_GAP",
+      "next_action": "wire real providers behind the existing replaceable adapters (SP0004 exit strategies)",
+      "owner": "product",
+      "source": "docs/audits/AUDIT_REPORT_1_FULL_SYSTEM_TRUTH_AND_SP_INVENTORY.md",
+      "statement": "all external effects are mocks (telephony, email/SMS, calendar, video, PDF, e-signature, payment, AV, OCR, ASR/TTS, web fetch); no real provider wired",
+      "status": "OPEN"
+    },
+    {
+      "blocks_closure": false,
+      "claim_refs": [],
+      "gap_id": "GAP-8d8ea48b27aa6718",
+      "gap_type": "FIELD_VALIDATION_GAP",
+      "next_action": "stabilize module-scoped server/page fixtures + fixed-port allocation",
+      "owner": "release",
+      "source": "docs/release/FINALIS_SWARM_REVIEW.md",
+      "statement": "browser E2E file is environment-sensitive (live Chromium selector-render timeouts under parallel load); excluded from the deterministic release suite by convention",
+      "status": "OPEN"
+    },
+    {
+      "blocks_closure": false,
+      "claim_refs": [],
+      "gap_id": "GAP-4510176661652564",
+      "gap_type": "SP0011_EVALUATION_GAP",
+      "next_action": "execute SP0011 against this Program Seal + admission package",
+      "owner": "SP0011",
+      "source": "docs/release/FINALIS_SWARM_REVIEW.md",
+      "statement": "reliability/evaluation and the 1000/1000 score are not produced here; SP0011 interface is PENDING_SP0011 and cannot carry evidence",
+      "status": "OPEN"
+    },
+    {
+      "blocks_closure": false,
+      "claim_refs": [],
+      "gap_id": "GAP-57652f2e72c2c68c",
+      "gap_type": "OPERATIONAL_GAP",
+      "next_action": "production auth + anchored transparency (post-SP0011)",
+      "owner": "ops",
+      "source": "docs/audits/AUDIT_REPORT_1_FULL_SYSTEM_TRUTH_AND_SP_INVENTORY.md",
+      "statement": "auth is dev-grade; evidence is unanchored (no external transparency log deployed); no rollback infra",
+      "status": "OPEN"
+    }
+  ],
+  "production_gaps": [
+    "GAP-5172747fe430a069",
+    "GAP-62caff8aa16fad65",
+    "GAP-bac0ba4fa0bd33ca",
+    "GAP-8d8ea48b27aa6718",
+    "GAP-4510176661652564",
+    "GAP-57652f2e72c2c68c"
+  ]
 }

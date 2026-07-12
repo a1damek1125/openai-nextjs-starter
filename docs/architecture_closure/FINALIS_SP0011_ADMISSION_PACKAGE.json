@@ -1,6 +1,6 @@
 {
   "admission_state": "ADMITTED_PENDING_EXECUTION",
-  "architecture_genome_root": "ee167b18786153be032a358679d289d232613ec47803f74b8438ded865563dd7",
+  "architecture_genome_root": "9d0c5c83399d0b7f12db287a4699984aeff46b9e1c54d1d33ea9dd1773242263",
   "assumptions": [
     "CL-SP0000-architecture-baseline-fixed",
     "CL-SP0002-historical-epoch-interpretable",
@@ -65,7 +65,7 @@
       ]
     }
   },
-  "package_hash": "9099ddfcf19147a7f06c223ba1548d0e59c6e665f56f166351850b311dd7cccd",
+  "package_hash": "49c74db31e2ae30d74fb8482896609e419012b802cf38baa776812b48a8ef87d",
   "production_gaps": [
     "GAP-5172747fe430a069",
     "GAP-62caff8aa16fad65",
@@ -74,8 +74,7 @@
     "GAP-4510176661652564",
     "GAP-57652f2e72c2c68c"
   ],
-  "program_seal_hash": "7185652a9497741bc373a29632baee22f150037267ab994968d5b5c272c23301",
-  "schema_id": "SP0011AdmissionPackage",
+  "program_seal_hash": "f81b1b44c8c6c4453dbef3c38ccacb0359c92a29034823995095a7c2d47f2194",
   "score": null,
   "top_level_claims": [
     "CL-SP0000-architecture-baseline-fixed",

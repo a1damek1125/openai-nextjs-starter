@@ -1,0 +1,167 @@
+{
+  "@context": "http://www.w3.org/ns/prov#",
+  "activity": {
+    "act:bootstrap_ceremony": {
+      "prov:type": "n_version_ceremony"
+    },
+    "act:certification": {
+      "prov:type": "proof_carrying_check"
+    },
+    "act:dual_graph_conformance": {
+      "prov:type": "declared_vs_real"
+    },
+    "act:epistemic_closure": {
+      "prov:type": "four_valued_classification"
+    },
+    "act:federated_verification": {
+      "prov:type": "backend_convergence"
+    },
+    "act:freeze": {
+      "prov:type": "baseline_freeze"
+    },
+    "act:seal": {
+      "prov:type": "program_seal"
+    }
+  },
+  "agent": {
+    "agent:backend:binary-merkle-tree": {
+      "prov:type": "proof_backend"
+    },
+    "agent:backend:canonical-json-fold": {
+      "prov:type": "proof_backend"
+    },
+    "agent:backend:length-prefixed-stream": {
+      "prov:type": "proof_backend"
+    },
+    "agent:backend:polynomial-rolling": {
+      "prov:type": "proof_backend"
+    },
+    "agent:frozen_sp0009_verifier": {
+      "prov:type": "frozen_verifier"
+    },
+    "agent:sp0010_independent_verifier": {
+      "prov:type": "independent_verifier"
+    },
+    "agent:sp0010_reference_verifier": {
+      "prov:type": "reference_verifier"
+    }
+  },
+  "entity": {
+    "cert:certificate_root": {
+      "prov:value": "e5a5818299a3649848c3a7113e373cd375cc9a3171bb8b71a7b5e88b0bc229ca"
+    },
+    "classroot:assurance": {
+      "prov:value": "d49d22848842ae41a377da4772cdbd29389d51d0c5991d3cb597f9e10e4be190"
+    },
+    "classroot:causal": {
+      "prov:value": "34c821831c3d4dd95f99a7bbf6094636d07dd5e56c7e3a730c24be1cc2782a43"
+    },
+    "classroot:cegar": {
+      "prov:value": "d2be79dea3fac9dfb1eb3093ee1a0f40dca1e5a25c2879e1895321b84c69da7e"
+    },
+    "classroot:certificate": {
+      "prov:value": "e5a5818299a3649848c3a7113e373cd375cc9a3171bb8b71a7b5e88b0bc229ca"
+    },
+    "classroot:constitution": {
+      "prov:value": "a0e53e602ed1bd88dd597920345b3f045b909b0390c7951898ec459800b3d9b6"
+    },
+    "classroot:dual_graph": {
+      "prov:value": "07cb0ae6e5e1891a3f944b7f717a0e7fa691985535b8c30e55a711d200aa28af"
+    },
+    "classroot:epistemic": {
+      "prov:value": "f4f21856f076011fe21cd051992e04b6d6a94c89b05ae99106fe15ba5530dba7"
+    },
+    "classroot:extraction_firewall": {
+      "prov:value": "0e102d687c7b5d7473705b908727b1e1978119f8158a00e7fe8f36b0be36428c"
+    },
+    "classroot:gap": {
+      "prov:value": "94157d77e84fa184de02969c11b790d47058933594bec6ba06c32f355a92474d"
+    },
+    "classroot:hypergraph": {
+      "prov:value": "d9465cffef53814c243b10a55344c2bca95d9dd3d07e4fdbb8634a717481b15a"
+    },
+    "classroot:hyperproperty": {
+      "prov:value": "96993083a5002f0d49a0e9b6fb134b7fe50d75875c3b187caff9baaa5cd41190"
+    },
+    "classroot:invariant": {
+      "prov:value": "7fee55825da11fc6690c4a259433a8945f6adbc3c14efac666fe47b21c2ae980"
+    },
+    "classroot:robustness": {
+      "prov:value": "29c937548536f2d57fc69a041022e7118fbc4678bad1e30bb3731110a34e0e56"
+    },
+    "classroot:tcb": {
+      "prov:value": "a2e52993036bcba7676c0e3e2264204a5ded0110bbb5e33be4629a3a74c2c405"
+    },
+    "classroot:twin": {
+      "prov:value": "37a28d98029ec315e65147f82dcfaf8836eeb6a22689617dbb7f7eff8a534388"
+    },
+    "classroot:verifier_set": {
+      "prov:value": "71c21042adac30223e21d09a3e6a44777168a9453629a9d15ba75635b1a21642"
+    },
+    "closure:digest": {
+      "prov:value": "3a4715415f302cf498edbd27faccfe2e6cad0d07fec3584c7e2097ea152755f7"
+    },
+    "dualgraph:root": {
+      "prov:value": "07cb0ae6e5e1891a3f944b7f717a0e7fa691985535b8c30e55a711d200aa28af"
+    },
+    "genome:global_root": {
+      "prov:value": "9d0c5c83399d0b7f12db287a4699984aeff46b9e1c54d1d33ea9dd1773242263"
+    },
+    "seal:program_seal": {
+      "prov:value": "f81b1b44c8c6c4453dbef3c38ccacb0359c92a29034823995095a7c2d47f2194"
+    },
+    "tcb:root": {
+      "prov:value": "a2e52993036bcba7676c0e3e2264204a5ded0110bbb5e33be4629a3a74c2c405"
+    }
+  },
+  "prov_version": "PROV-DM-1.0-projection",
+  "used": {
+    "act:certification": [
+      "classroot:epistemic",
+      "classroot:hypergraph"
+    ],
+    "act:federated_verification": [
+      "classroot:assurance",
+      "classroot:causal",
+      "classroot:cegar",
+      "classroot:certificate",
+      "classroot:constitution",
+      "classroot:dual_graph",
+      "classroot:epistemic",
+      "classroot:extraction_firewall",
+      "classroot:gap",
+      "classroot:hypergraph",
+      "classroot:hyperproperty",
+      "classroot:invariant",
+      "classroot:robustness",
+      "classroot:tcb",
+      "classroot:twin",
+      "classroot:verifier_set"
+    ],
+    "act:seal": [
+      "genome:global_root",
+      "cert:certificate_root",
+      "dualgraph:root",
+      "tcb:root"
+    ]
+  },
+  "wasAssociatedWith": {
+    "act:bootstrap_ceremony": [
+      "agent:frozen_sp0009_verifier",
+      "agent:sp0010_reference_verifier",
+      "agent:sp0010_independent_verifier"
+    ],
+    "act:federated_verification": [
+      "agent:backend:canonical-json-fold",
+      "agent:backend:binary-merkle-tree",
+      "agent:backend:polynomial-rolling",
+      "agent:backend:length-prefixed-stream"
+    ]
+  },
+  "wasGeneratedBy": {
+    "cert:certificate_root": "act:certification",
+    "dualgraph:root": "act:dual_graph_conformance",
+    "genome:global_root": "act:bootstrap_ceremony",
+    "seal:program_seal": "act:seal"
+  }
+}

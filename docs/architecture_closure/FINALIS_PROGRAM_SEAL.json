@@ -1,5 +1,5 @@
 {
-  "architecture_genome_root": "ee167b18786153be032a358679d289d232613ec47803f74b8438ded865563dd7",
+  "architecture_genome_root": "9d0c5c83399d0b7f12db287a4699984aeff46b9e1c54d1d33ea9dd1773242263",
   "branch": "claude/finalis-ai-casewoker-blueprint-f1huse",
   "closure_state": "CONSTITUTIONAL_ARCHITECTURE_CLOSED_WITH_NONBLOCKING_PRODUCTION_GAPS",
   "constitutional_blockers": 0,
@@ -11,8 +11,7 @@
   "production_gap_count": 6,
   "release_assurance_root": "916dd687ca4c473efdf5b77f1bd3d4d72fe365aaa5d89a520dab0b214fb5e794",
   "repository_commit": "1e29581",
-  "schema_id": "ProgramSeal",
-  "seal_hash": "7185652a9497741bc373a29632baee22f150037267ab994968d5b5c272c23301",
+  "seal_hash": "f81b1b44c8c6c4453dbef3c38ccacb0359c92a29034823995095a7c2d47f2194",
   "seal_version": "1.0.0",
   "sealed_at": "2026-07-12",
   "sp0011_admission_state": "ADMITTED_PENDING_EXECUTION",
