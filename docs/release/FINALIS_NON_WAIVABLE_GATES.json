@@ -1,0 +1,16 @@
+{
+  "non_waivable_gates": [
+    "GATE_AGENTIC_INJECTION",
+    "GATE_ARTIFACT_INTEGRITY",
+    "GATE_MIGRATION",
+    "GATE_PROOF_INTEGRITY",
+    "GATE_RBAC_AUTHORITY",
+    "GATE_SAFETY",
+    "GATE_SECRET_EXPOSURE",
+    "GATE_TENANT_ISOLATION",
+    "GATE_UNIT_TESTS",
+    "GATE_UNKNOWN_OUTCOME"
+  ],
+  "rule": "a waiver can never apply to these; a WAIVED result is rejected",
+  "schema_id": "NonWaivableGates"
+}

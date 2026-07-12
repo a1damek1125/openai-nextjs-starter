@@ -1,0 +1,4 @@
+{
+  "rule": "co-occurrence (Jaccard) is association evidence, not causal proof (D-0009-20)",
+  "schema_id": "FlakeCluster"
+}

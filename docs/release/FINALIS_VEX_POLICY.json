@@ -1,0 +1,11 @@
+{
+  "openvex": "draft adapter only (AC-0009-185)",
+  "rule": "a not_affected claim requires justification+evidence; VEX never auto-waives policy (D-0009-37)",
+  "schema_id": "VEXPolicy",
+  "statuses": [
+    "not_affected",
+    "affected",
+    "fixed",
+    "under_investigation"
+  ]
+}

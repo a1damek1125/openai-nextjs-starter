@@ -1,0 +1,21 @@
+{
+  "applicability": [
+    "REQUIRED",
+    "NOT_APPLICABLE",
+    "REVIEW_REQUIRED"
+  ],
+  "results": [
+    "PASS",
+    "FAIL",
+    "UNKNOWN",
+    "STALE",
+    "INVALID",
+    "WAIVED"
+  ],
+  "rule": "applicability and result are SEPARATE dimensions (D-0009-07)",
+  "schema_id": "Gate",
+  "severities": [
+    "HARD",
+    "ADVISORY"
+  ]
+}

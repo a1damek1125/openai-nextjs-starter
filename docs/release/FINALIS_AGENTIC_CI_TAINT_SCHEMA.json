@@ -1,0 +1,35 @@
+{
+  "authority_sinks": [
+    "RELEASE_DECISION",
+    "REPOSITORY_WRITE"
+  ],
+  "rule": "untrusted content never grants release authority (D-0009-45)",
+  "schema_id": "AgenticCITaint",
+  "sinks": [
+    "AGENT_PROMPT",
+    "MODEL_CONTEXT",
+    "SHELL",
+    "GENERATED_COMMAND",
+    "FILE_WRITE",
+    "TOOL_CALL",
+    "REPOSITORY_WRITE",
+    "RELEASE_DECISION"
+  ],
+  "statuses": [
+    "UNRESOLVED",
+    "SAFE_TRANSFORMED",
+    "BLOCKED"
+  ],
+  "untrusted_sources": [
+    "ISSUE_BODY",
+    "PR_TITLE",
+    "PR_BODY",
+    "PR_COMMENT",
+    "COMMIT_MESSAGE",
+    "BRANCH_NAME",
+    "WORKFLOW_DISPATCH_INPUT",
+    "ARTIFACT_METADATA",
+    "TOOL_OUTPUT",
+    "MODEL_OUTPUT"
+  ]
+}

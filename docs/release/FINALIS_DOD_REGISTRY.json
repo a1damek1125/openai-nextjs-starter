@@ -1,0 +1,117 @@
+{
+  "obligation_types": [
+    "IMPLEMENTATION",
+    "CONTRACT",
+    "SEMANTICS",
+    "TESTS",
+    "COMPATIBILITY",
+    "SAFETY",
+    "AUTHORITY",
+    "TENANT_ISOLATION",
+    "MIGRATION",
+    "DOCUMENTATION",
+    "OBSERVABILITY",
+    "SUPPLY_CHAIN",
+    "ROLLBACK_OR_FORWARD_FIX",
+    "KNOWN_LIMITATIONS",
+    "OWNERSHIP",
+    "PROOF"
+  ],
+  "profiles": {
+    "AI_CLOSURE_CHANGE": [
+      "IMPLEMENTATION",
+      "TESTS",
+      "DOCUMENTATION",
+      "KNOWN_LIMITATIONS",
+      "OWNERSHIP",
+      "PROOF"
+    ],
+    "AUTHORITY_CHANGE": [
+      "IMPLEMENTATION",
+      "AUTHORITY",
+      "TENANT_ISOLATION",
+      "SAFETY",
+      "TESTS",
+      "DOCUMENTATION",
+      "OWNERSHIP",
+      "PROOF"
+    ],
+    "CI_WORKFLOW_CHANGE": [
+      "IMPLEMENTATION",
+      "SUPPLY_CHAIN",
+      "TESTS",
+      "OWNERSHIP",
+      "PROOF"
+    ],
+    "CONTRACT_CHANGE": [
+      "IMPLEMENTATION",
+      "CONTRACT",
+      "SEMANTICS",
+      "TESTS",
+      "COMPATIBILITY",
+      "DOCUMENTATION",
+      "ROLLBACK_OR_FORWARD_FIX",
+      "OWNERSHIP",
+      "PROOF"
+    ],
+    "DEPENDENCY_CHANGE": [
+      "IMPLEMENTATION",
+      "SUPPLY_CHAIN",
+      "TESTS",
+      "OWNERSHIP",
+      "PROOF"
+    ],
+    "DOCS_CHANGE": [
+      "DOCUMENTATION",
+      "OWNERSHIP"
+    ],
+    "GOVERNANCE_TOOLING_CHANGE": [
+      "IMPLEMENTATION",
+      "TESTS",
+      "DOCUMENTATION",
+      "OWNERSHIP",
+      "PROOF"
+    ],
+    "MIGRATION_CHANGE": [
+      "IMPLEMENTATION",
+      "MIGRATION",
+      "TESTS",
+      "ROLLBACK_OR_FORWARD_FIX",
+      "DOCUMENTATION",
+      "OWNERSHIP",
+      "PROOF"
+    ],
+    "SEMANTIC_CHANGE": [
+      "IMPLEMENTATION",
+      "SEMANTICS",
+      "TESTS",
+      "DOCUMENTATION",
+      "OWNERSHIP",
+      "PROOF"
+    ],
+    "TEST_CHANGE": [
+      "IMPLEMENTATION",
+      "TESTS",
+      "OWNERSHIP"
+    ],
+    "UNKNOWN_CHANGE": [
+      "IMPLEMENTATION",
+      "CONTRACT",
+      "SEMANTICS",
+      "TESTS",
+      "COMPATIBILITY",
+      "SAFETY",
+      "AUTHORITY",
+      "TENANT_ISOLATION",
+      "MIGRATION",
+      "DOCUMENTATION",
+      "OBSERVABILITY",
+      "SUPPLY_CHAIN",
+      "ROLLBACK_OR_FORWARD_FIX",
+      "KNOWN_LIMITATIONS",
+      "OWNERSHIP",
+      "PROOF"
+    ]
+  },
+  "schema_id": "DoDRegistry"
+}

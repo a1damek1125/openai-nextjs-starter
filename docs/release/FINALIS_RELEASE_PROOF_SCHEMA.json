@@ -1,0 +1,28 @@
+{
+  "envelope_kind": "finalis-release-proof-envelope-v1",
+  "hash_fields": [
+    "candidate_genome",
+    "impact_cone_hash",
+    "gate_registry_hash",
+    "gate_result_ledger_hash",
+    "dod_closure_hash",
+    "test_selection_hash",
+    "test_execution_ledger_hash",
+    "flake_cluster_hash",
+    "mutation_adequacy_hash",
+    "build_manifest_hash",
+    "artifact_closure_hash",
+    "provenance_hash",
+    "trust_root_hash",
+    "transparency_receipt_hash",
+    "sbom_hash",
+    "ai_ml_bom_hash",
+    "vex_hash",
+    "ai_release_closure_hash",
+    "waiver_hash",
+    "rollback_hash",
+    "defeater_hash"
+  ],
+  "rule": "structural allowlist; non_authoritative; creates no deployment authority (D-0009-64)",
+  "schema_id": "ReleaseProofEnvelope"
+}

@@ -1,0 +1,14 @@
+{
+  "rule": "sealed artifact immutable; build once/promote same bytes (D-0009-25)",
+  "schema_id": "ArtifactManifest",
+  "states": [
+    "BUILDING",
+    "BUILT",
+    "REPRODUCED",
+    "ATTESTED",
+    "CLOSURE_COMPLETE",
+    "SEALED",
+    "REJECTED",
+    "INVALIDATED"
+  ]
+}

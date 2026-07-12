@@ -1,0 +1,4 @@
+{
+  "definition": "SHA256(CanonicalJSON(source_commit + release_slice + Contract Genome root + dependency locks + CI workflow hash + toolchain + gate policy epoch + build inputs + AI Release Closure))",
+  "schema_id": "CandidateGenome"
+}

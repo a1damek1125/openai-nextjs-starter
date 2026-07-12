@@ -1,0 +1,11 @@
+{
+  "kill_rate": "killed_non_equivalent / total_non_equivalent; equivalents excluded",
+  "mutant_statuses": [
+    "KILLED",
+    "SURVIVED",
+    "EQUIVALENT",
+    "INVALID",
+    "SUBSUMED"
+  ],
+  "schema_id": "MutationAdequacy"
+}

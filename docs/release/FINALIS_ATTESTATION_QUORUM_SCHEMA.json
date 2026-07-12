@@ -1,0 +1,4 @@
+{
+  "rule": "distinct authorized signers in distinct trust domains; duplicates collapse (D-0009-32)",
+  "schema_id": "AttestationQuorum"
+}

@@ -1,0 +1,13 @@
+{
+  "rule": "flags cannot widen authority; missing data fails safe (D-0009-49/50)",
+  "schema_id": "FeatureFlag",
+  "states": [
+    "PROPOSED",
+    "VALIDATED",
+    "DORMANT",
+    "LIMITED",
+    "ACTIVE",
+    "RETIRING",
+    "REMOVED"
+  ]
+}

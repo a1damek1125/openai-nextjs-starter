@@ -1,0 +1,17 @@
+{
+  "known_predicates": [
+    "https://slsa.dev/provenance/v1",
+    "https://in-toto.io/attestation/v1",
+    "finalis/release-evidence/v1"
+  ],
+  "rule": "version monotonicity, expiry, revocation, rollback/freeze protection (D-0009-30/31)",
+  "schema_id": "TrustRoot",
+  "states": [
+    "PROPOSED",
+    "ACTIVE",
+    "ROTATING",
+    "SUPERSEDED",
+    "EXPIRED",
+    "REVOKED"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "dimensions": [
+    "tenant",
+    "authority",
+    "safety",
+    "privacy",
+    "compatibility",
+    "migration",
+    "supply_chain",
+    "externality",
+    "irreversibility",
+    "epistemic_unknown"
+  ],
+  "hard_dimensions": [
+    "authority",
+    "irreversibility",
+    "safety",
+    "supply_chain",
+    "tenant"
+  ],
+  "levels": [
+    "HIGH",
+    "ELEVATED",
+    "LOW",
+    "UNKNOWN"
+  ],
+  "rule": "never averaged; a hard flag is never offset (D-0009-05)",
+  "schema_id": "ReleaseRiskVector"
+}

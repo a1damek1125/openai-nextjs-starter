@@ -1,0 +1,1111 @@
+{
+  "ai_ml_bom": {
+    "configurations": [
+      "mock-providers-only"
+    ],
+    "datasets": [],
+    "format": "CycloneDX-1.7-MLBOM",
+    "kind": "AI_ML_BOM",
+    "models": [
+      "none"
+    ],
+    "policies": [],
+    "prompts": [],
+    "ref": "AB-da755242561356a3ec39",
+    "subject_digest": "54cbb79a90ef53fbed3d6b5908aa559e675889ac1b6f09a1f25772538183c70b"
+  },
+  "ai_release_closure": {
+    "ai_release_id": "AIR-258f3f2ef894b119471d",
+    "candidate_genome": "PENDING",
+    "closure_hash": "258f3f2ef894b119471d772a66d7f4287f3f8f7aca0bb05f8d8192d8c5190d96",
+    "closure_status": "COMPLETE",
+    "evaluation_set_hash": "none",
+    "fallback_chain": [
+      "none"
+    ],
+    "generation_parameters": {
+      "none": true
+    },
+    "known_limitations": [
+      "repository has zero live AI providers; all adapters are mocks"
+    ],
+    "missing_members": [],
+    "model_identity": {
+      "deployment": "none",
+      "name": "none",
+      "version": "none"
+    },
+    "policy_pack_hash": "none",
+    "prompt_hashes": [
+      "none"
+    ],
+    "provider_account_ref": "none",
+    "provider_identity": {
+      "note": "no AI provider integration exists in this repository (archaeology \u00a711)",
+      "provider": "none"
+    },
+    "retrieval_configuration_hash": "none",
+    "router_hash": "none",
+    "safety_configuration_hash": "none",
+    "skill_hashes": [
+      "none"
+    ],
+    "tool_contract_hashes": [
+      "e635748f38a2c88b2a90d9e937f28ad931afd9b98a8a90cc560a0bbff6da9149"
+    ]
+  },
+  "archaeology": {
+    "archaeology_hash": "b57c42168987834abafa0e303b8e236f99037466f0d21bed64049747a79617d5",
+    "browser_e2e_present": true,
+    "build_backend_declared": false,
+    "ci_workflow_hash": "ABSENT",
+    "ci_workflows_present": false,
+    "compatibility_claims_hash": "9062209198a8efaf8856e9f1de7bc7aee7dad32be6063041d143aff74f9a6afa",
+    "contract_genome_root": "7269f08cd7d53679cae6ce3b134a00d6dd6146fde0c60e712a065a711be377b1",
+    "dependency_lock_hash": "922345509ac3f5b6d45a277764d48bfe6acd5f5315645a088025303ce09bfbdc",
+    "known_flakes": [
+      {
+        "documented_in": [
+          "docs/compatibility/FINALIS_SWARM_REVIEW.md",
+          "docs/contracts_inventory/FINALIS_SWARM_REVIEW.md"
+        ],
+        "mechanism": "module-scoped shared server+page fixtures, fixed port 8765, stale-text waits under parallel load",
+        "passes_in_isolation": true,
+        "test_id": "test_browser_e2e.py::test_evidence_prompt_injection_flow_in_browser"
+      }
+    ],
+    "lockfile_pins_exact_versions": false,
+    "published_artifacts": [],
+    "release_mechanism_today": "full pytest suite in 4 file shards with tests/test_browser_e2e.py excluded, plus per-mission P0=0/P1=0 validators",
+    "test_file_count": 453,
+    "toolchain_hash": "01fe38895f0be39f316da380583893a1c18ace9751a986fe6d638a521311b3dd"
+  },
+  "artifact": {
+    "artifact_id": "AR-5bc3d18dde80dedaba35",
+    "artifact_type": "SOURCE_TREE",
+    "build_ref": "BM-529808418b5bc072b38d",
+    "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+    "digest": "54cbb79a90ef53fbed3d6b5908aa559e675889ac1b6f09a1f25772538183c70b",
+    "digest_algorithm": "sha256",
+    "seal_hash": "a34375654be47d6bf2f655751ad1c7b900ef952f39361f0c8aa7bfd016c1ef92",
+    "sealed": true,
+    "size_bytes": 264481
+  },
+  "artifact_closure": {
+    "ai_ml_bom_refs": [
+      "AB-da755242561356a3ec39"
+    ],
+    "artifact_id": "AR-5bc3d18dde80dedaba35",
+    "attestation_refs": [
+      "AT-76cc38279e61c47a0179"
+    ],
+    "closure_status": "COMPLETE",
+    "missing": [],
+    "required_relationships": [
+      "sbom_refs",
+      "attestation_refs",
+      "trust_root_refs",
+      "verification_summary_refs"
+    ],
+    "sbom_refs": [
+      "SB-65dfe9d4a00ffeff5317"
+    ],
+    "subject_digest": "54cbb79a90ef53fbed3d6b5908aa559e675889ac1b6f09a1f25772538183c70b",
+    "transparency_receipt_refs": [
+      "TR-fae5ff1e648991fa5a86"
+    ],
+    "trust_root_refs": [
+      "finalis-release-root-1"
+    ],
+    "verification_summary_refs": [
+      "VS-SP0009"
+    ],
+    "vex_refs": [],
+    "vulnerability_refs": []
+  },
+  "attestation_quorum": {
+    "counted_signers": [
+      "sp0009-release-verifier"
+    ],
+    "distinct_domains": [
+      "repository-local"
+    ],
+    "min_trust_domains": 1,
+    "quorum": true,
+    "required_threshold": 1
+  },
+  "attestations": [
+    {
+      "attestation_id": "AT-76cc38279e61c47a0179",
+      "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+      "predicate": {
+        "candidate": "RC-SP0009",
+        "kind": "release-verification"
+      },
+      "predicate_type": "finalis/release-evidence/v1",
+      "signer": "sp0009-release-verifier",
+      "signing_time": "2026-07-12",
+      "subject_digest": "54cbb79a90ef53fbed3d6b5908aa559e675889ac1b6f09a1f25772538183c70b"
+    }
+  ],
+  "build_manifest": {
+    "build_id": "BM-529808418b5bc072b38d",
+    "builder_identity": "sp0009-kernel-builder",
+    "builder_trust_domain": "repository-local",
+    "builder_version": "1",
+    "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+    "commands": [
+      "tree-digest tools/release tests/test_release_*"
+    ],
+    "declared_network_access": [],
+    "declared_time_inputs": [],
+    "dependency_lock_hash": "922345509ac3f5b6d45a277764d48bfe6acd5f5315645a088025303ce09bfbdc",
+    "environment_inputs": {
+      "PYTHONHASHSEED": "not-material"
+    },
+    "input_hash": "f677f253df2bc0dd9fd0ffa8ef2d7febfe785db1bb7116c1bc8d6235f28605ba",
+    "source_commit": "HEAD",
+    "toolchain": [
+      "01fe38895f0be39f316da380583893a1c18ace9751a986fe6d638a521311b3dd"
+    ]
+  },
+  "candidate": {
+    "ai_release_closure_hash": "258f3f2ef894b119471d772a66d7f4287f3f8f7aca0bb05f8d8192d8c5190d96",
+    "artifact_refs": [],
+    "build_input_hash": "210976909673106efac5214e243f99a648e766905e1d32bf9f2b4b03c3887c75",
+    "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+    "candidate_id": "RC-SP0009",
+    "change_intent_refs": [],
+    "ci_workflow_hash": "ABSENT",
+    "contract_genome_root": "7269f08cd7d53679cae6ce3b134a00d6dd6146fde0c60e712a065a711be377b1",
+    "dependency_lock_hash": "922345509ac3f5b6d45a277764d48bfe6acd5f5315645a088025303ce09bfbdc",
+    "history": [
+      {
+        "event": "TRANSITION",
+        "from": "DRAFT",
+        "to": "CLASSIFIED"
+      },
+      {
+        "event": "TRANSITION",
+        "from": "CLASSIFIED",
+        "to": "IMPACT_ANALYZED"
+      },
+      {
+        "event": "TRANSITION",
+        "from": "IMPACT_ANALYZED",
+        "to": "SLICE_CLOSED"
+      },
+      {
+        "event": "TRANSITION",
+        "from": "SLICE_CLOSED",
+        "to": "GATES_PLANNED"
+      },
+      {
+        "event": "TRANSITION",
+        "from": "GATES_PLANNED",
+        "to": "VERIFYING"
+      },
+      {
+        "event": "TRANSITION",
+        "from": "VERIFYING",
+        "to": "QUALIFIED"
+      },
+      {
+        "event": "TRANSITION",
+        "from": "QUALIFIED",
+        "to": "ARTIFACT_CLOSURE_SEALED"
+      },
+      {
+        "event": "TRANSITION",
+        "from": "ARTIFACT_CLOSURE_SEALED",
+        "to": "READY_FOR_LATER_PROMOTION"
+      }
+    ],
+    "release_policy_epoch": "RPE-2026-07",
+    "release_slice_ref": "RS-69af8082e2bbfe30bad8",
+    "source_commit": "HEAD",
+    "status": "READY_FOR_LATER_PROMOTION",
+    "superseded_by": null,
+    "toolchain_hash": "01fe38895f0be39f316da380583893a1c18ace9751a986fe6d638a521311b3dd"
+  },
+  "ci_security_posture": {
+    "note": "no CI workflow files exist in this repository; the gates operate on fixtures and future workflows (archaeology \u00a71)",
+    "scanner_diversity": {
+      "classification": "UNKNOWN",
+      "shared": {}
+    },
+    "taint_flows": [],
+    "workflow_findings": [],
+    "workflows_present": false
+  },
+  "classification": {
+    "classes": [
+      "DOCS_CHANGE",
+      "GOVERNANCE_TOOLING_CHANGE",
+      "TEST_CHANGE"
+    ],
+    "path_count": 76,
+    "triggers": {
+      "DOCS_CHANGE": [
+        "docs/release/FINALIS_AGENTIC_CI_TAINT_SCHEMA.json",
+        "docs/release/FINALIS_AI_ML_BOM_POLICY.json",
+        "docs/release/FINALIS_AI_RELEASE_CLOSURE_SCHEMA.json",
+        "docs/release/FINALIS_ARTIFACT_CLOSURE_SCHEMA.json",
+        "docs/release/FINALIS_ARTIFACT_MANIFEST_SCHEMA.json",
+        "docs/release/FINALIS_ATTESTATION_QUORUM_SCHEMA.json",
+        "docs/release/FINALIS_BUILD_MANIFEST_SCHEMA.json",
+        "docs/release/FINALIS_CANDIDATE_GENOME_SCHEMA.json",
+        "docs/release/FINALIS_DEFEATER_SCHEMA.json",
+        "docs/release/FINALIS_DOD_REGISTRY.json",
+        "docs/release/FINALIS_FEATURE_FLAG_SCHEMA.json",
+        "docs/release/FINALIS_FLAKE_CLUSTER_SCHEMA.json",
+        "docs/release/FINALIS_FLAKE_SCHEMA.json",
+        "docs/release/FINALIS_GATE_DEPENDENCY_DAG.json",
+        "docs/release/FINALIS_GATE_OBLIGATION_HYPERGRAPH.json",
+        "docs/release/FINALIS_GATE_REGISTRY.json",
+        "docs/release/FINALIS_GATE_SCHEMA.json",
+        "docs/release/FINALIS_MUTATION_ADEQUACY_SCHEMA.json",
+        "docs/release/FINALIS_NON_WAIVABLE_GATES.json",
+        "docs/release/FINALIS_PROGRESSIVE_DELIVERY_SCHEMA.json",
+        "docs/release/FINALIS_PROVENANCE_SCHEMA.json",
+        "docs/release/FINALIS_REASON_CODE_REGISTRY.json",
+        "docs/release/FINALIS_RELEASE_ASSURANCE_CONSTITUTION.md",
+        "docs/release/FINALIS_RELEASE_CANDIDATE_SCHEMA.json",
+        "docs/release/FINALIS_RELEASE_POLICY_EPOCHS.json",
+        "docs/release/FINALIS_RELEASE_PROOF_SCHEMA.json",
+        "docs/release/FINALIS_RELEASE_README.md",
+        "docs/release/FINALIS_RELEASE_RISK_VECTOR_SCHEMA.json",
+        "docs/release/FINALIS_RELEASE_SLICE_SCHEMA.json",
+        "docs/release/FINALIS_RESEARCH_REGISTER.md",
+        "docs/release/FINALIS_SBOM_POLICY.json",
+        "docs/release/FINALIS_SWARM_REVIEW.md",
+        "docs/release/FINALIS_TEST_COVERAGE_SCHEMA.json",
+        "docs/release/FINALIS_TEST_EVIDENCE.json",
+        "docs/release/FINALIS_TEST_EXECUTION_SCHEMA.json",
+        "docs/release/FINALIS_TRANSPARENCY_RECEIPT_SCHEMA.json",
+        "docs/release/FINALIS_TRUST_ROOT_SCHEMA.json",
+        "docs/release/FINALIS_VEX_POLICY.json",
+        "docs/release/SP0009_ROADMAP_IDENTITY_REPORT.md"
+      ],
+      "GOVERNANCE_TOOLING_CHANGE": [
+        "tools/release/__init__.py",
+        "tools/release/__main__.py",
+        "tools/release/ai_closure.py",
+        "tools/release/archaeology.py",
+        "tools/release/artifacts.py",
+        "tools/release/attempts.py",
+        "tools/release/bootstrap.py",
+        "tools/release/boundary.py",
+        "tools/release/build.py",
+        "tools/release/candidate.py",
+        "tools/release/canon.py",
+        "tools/release/ci_security.py",
+        "tools/release/classify.py",
+        "tools/release/cli.py",
+        "tools/release/defeaters.py",
+        "tools/release/delivery.py",
+        "tools/release/envelope.py",
+        "tools/release/evidence.py",
+        "tools/release/flags.py",
+        "tools/release/flakes.py",
+        "tools/release/gates.py",
+        "tools/release/impact.py",
+        "tools/release/model.py",
+        "tools/release/modelcheck.py",
+        "tools/release/mutation.py",
+        "tools/release/obligations.py",
+        "tools/release/qualify.py",
+        "tools/release/sbom.py",
+        "tools/release/select_tests.py",
+        "tools/release/transparency.py",
+        "tools/release/trust.py",
+        "tools/release/validate.py",
+        "tools/release/waivers.py"
+      ],
+      "TEST_CHANGE": [
+        "tests/test_release_core.py",
+        "tests/test_release_integration.py",
+        "tests/test_release_mutation.py",
+        "tests/test_release_supply_chain.py"
+      ]
+    }
+  },
+  "counts": {
+    "findings": {
+      "P0": 0,
+      "P1": 0,
+      "P2": 1
+    }
+  },
+  "dod_closure": {
+    "done": true,
+    "invalid_waivers": [],
+    "open": [],
+    "open_hard": []
+  },
+  "execution_ledger": [
+    {
+      "attempt_id": "TA-1013c3c4d84002c29cd2",
+      "attempt_number": 1,
+      "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+      "duration_ms": null,
+      "environment_fingerprint": "full-suite-parallel",
+      "failure_signature": "'450 EUR' assertion on shared agent-view panel",
+      "rerun_of": null,
+      "result": "FAIL",
+      "test_id": "test_browser_e2e.py::test_evidence_prompt_injection_flow_in_browser"
+    },
+    {
+      "attempt_id": "TA-6d4c214ce1d6f10238af",
+      "attempt_number": 2,
+      "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+      "duration_ms": null,
+      "environment_fingerprint": "isolation",
+      "failure_signature": null,
+      "rerun_of": null,
+      "result": "PASS",
+      "test_id": "test_browser_e2e.py::test_evidence_prompt_injection_flow_in_browser"
+    },
+    {
+      "attempt_id": "TA-3a7522ea3c740ba7f68b",
+      "attempt_number": 1,
+      "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+      "duration_ms": null,
+      "environment_fingerprint": "full-suite-parallel",
+      "failure_signature": "wait_for_selector #ev-list table 15000ms",
+      "rerun_of": null,
+      "result": "TIMEOUT",
+      "test_id": "test_browser_e2e.py::test_evidence_viewer_restricted_in_browser"
+    }
+  ],
+  "findings": [
+    {
+      "details": {},
+      "kind": "SBOM_INCOMPLETE",
+      "message": "SBOM explicitly declares INCOMPLETE_THIRD_PARTY: recorded, not hidden \u2014 an incomplete SBOM never masquerades as complete",
+      "severity": "P2",
+      "subject": "SB-65dfe9d4a00ffeff5317"
+    }
+  ],
+  "flake_classification": {
+    "classification": "ENVIRONMENT_INSTABILITY",
+    "environments": {
+      "EF-8bcb88125cfd455f1009": [
+        "FAIL",
+        "FAIL"
+      ],
+      "EF-c4b60bd1f9c4931bc075": [
+        "PASS",
+        "PASS"
+      ]
+    },
+    "reason": "fails consistently in ['EF-8bcb88125cfd455f1009'] but passes in other environments",
+    "test_id": "test_browser_e2e.py::test_evidence_prompt_injection_flow_in_browser"
+  },
+  "flake_clusters": [],
+  "flake_posterior": {
+    "advisory_only": true,
+    "alpha": 3,
+    "beta": 1,
+    "environment_fingerprint": "EF-8bcb88125cfd455f1009",
+    "failures": 2,
+    "note": "Beta(1+f,1+p) conditioned on one environment; not a product-correctness statement (D-0009-21)",
+    "passes": 0,
+    "posterior_mean": 0.75,
+    "samples": 2,
+    "test_id": "test_browser_e2e.py::test_evidence_prompt_injection_flow_in_browser"
+  },
+  "flake_registry": [
+    {
+      "environment_fingerprint": "EF-8bcb88125cfd455f1009",
+      "failure_signature": "'450 EUR' assertion",
+      "observation_id": "FO-53af057cae5ed3bcc376",
+      "result": "FAIL",
+      "test_id": "test_browser_e2e.py::test_evidence_prompt_injection_flow_in_browser"
+    },
+    {
+      "environment_fingerprint": "EF-8bcb88125cfd455f1009",
+      "failure_signature": "'450 EUR' assertion",
+      "observation_id": "FO-04dc3c6cbaecc37bcab5",
+      "result": "FAIL",
+      "test_id": "test_browser_e2e.py::test_evidence_prompt_injection_flow_in_browser"
+    },
+    {
+      "environment_fingerprint": "EF-c4b60bd1f9c4931bc075",
+      "failure_signature": null,
+      "observation_id": "FO-4a8de3c242d407127ff4",
+      "result": "PASS",
+      "test_id": "test_browser_e2e.py::test_evidence_prompt_injection_flow_in_browser"
+    },
+    {
+      "environment_fingerprint": "EF-c4b60bd1f9c4931bc075",
+      "failure_signature": null,
+      "observation_id": "FO-532f6fa7377bea7a8f86",
+      "result": "PASS",
+      "test_id": "test_browser_e2e.py::test_evidence_prompt_injection_flow_in_browser"
+    }
+  ],
+  "gate_ledger": [
+    {
+      "attempt_number": 1,
+      "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+      "configuration_fingerprint": "0674b87247172ab886d234ab222cd310cf4cbfaba64348557b424cd84d763136",
+      "entry_id": "GL-cce007a959682448c979",
+      "gate_id": "GATE_ARTIFACT_INTEGRITY",
+      "rerun_of": null,
+      "result": "PASS"
+    },
+    {
+      "attempt_number": 1,
+      "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+      "configuration_fingerprint": "a55344c50537eb385a09df8b4b07723442d5373c80d761db24b0045f5336c9f3",
+      "entry_id": "GL-58ffb9c87a5183e34518",
+      "gate_id": "GATE_BUILD_HERMETICITY",
+      "rerun_of": null,
+      "result": "PASS"
+    },
+    {
+      "attempt_number": 1,
+      "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+      "configuration_fingerprint": "0b6820bd9632b4d80f414b867ac91160be8c29855bd90ad1e40e25a891291d8e",
+      "entry_id": "GL-6fc310d047727043d7cc",
+      "gate_id": "GATE_DOCUMENTATION",
+      "rerun_of": null,
+      "result": "PASS"
+    },
+    {
+      "attempt_number": 1,
+      "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+      "configuration_fingerprint": "4945481579fef9c68dedbb7c4103187eecacaeaece2df84c10157c4022aeae42",
+      "entry_id": "GL-a0b6be512e024f6963ba",
+      "gate_id": "GATE_MUTATION_ADEQUACY",
+      "rerun_of": null,
+      "result": "PASS"
+    },
+    {
+      "attempt_number": 1,
+      "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+      "configuration_fingerprint": "2b46babc65ca653142f75687b637901a052efa5e3feff01c12545177305e7846",
+      "entry_id": "GL-29d5a716fd2cc0aafa6c",
+      "gate_id": "GATE_PROOF_INTEGRITY",
+      "rerun_of": null,
+      "result": "PASS"
+    },
+    {
+      "attempt_number": 1,
+      "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+      "configuration_fingerprint": "2eb2967d161ca980facfc7c58da332d3383a3c33d12ccc87d831742892483f92",
+      "entry_id": "GL-a67d7432db358a8feb48",
+      "gate_id": "GATE_REPRODUCIBILITY",
+      "rerun_of": null,
+      "result": "PASS"
+    },
+    {
+      "attempt_number": 1,
+      "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+      "configuration_fingerprint": "04ae736fb152cecae299fc7708a963cf6352c4bf99ff64959fae4db490ed4d5f",
+      "entry_id": "GL-ec6733af51eeed12f489",
+      "gate_id": "GATE_SECRET_EXPOSURE",
+      "rerun_of": null,
+      "result": "PASS"
+    },
+    {
+      "attempt_number": 1,
+      "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+      "configuration_fingerprint": "aafd032a8cdc684cffd01f8885bc1fe2c04b686e237f409366e92d152df04e07",
+      "entry_id": "GL-adf84c672d6ea7c65cb2",
+      "gate_id": "GATE_UNIT_TESTS",
+      "rerun_of": null,
+      "result": "PASS"
+    },
+    {
+      "attempt_number": 1,
+      "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+      "configuration_fingerprint": "76567a4f7ca65832d521560733f9bdb5a552250696c7470bdf566abd29f375c8",
+      "entry_id": "GL-4428ab222db3dc6c69ce",
+      "gate_id": "GATE_UNKNOWN_OUTCOME",
+      "rerun_of": null,
+      "result": "PASS"
+    }
+  ],
+  "gate_plan": {
+    "GATE_AGENTIC_INJECTION": "NOT_APPLICABLE",
+    "GATE_AI_CLOSURE": "NOT_APPLICABLE",
+    "GATE_ARTIFACT_INTEGRITY": "REQUIRED",
+    "GATE_BROWSER_E2E": "NOT_APPLICABLE",
+    "GATE_BUILD_HERMETICITY": "REQUIRED",
+    "GATE_CI_WORKFLOW_SECURITY": "NOT_APPLICABLE",
+    "GATE_COMPATIBILITY": "NOT_APPLICABLE",
+    "GATE_CONTRACT_INVENTORY": "NOT_APPLICABLE",
+    "GATE_DOCUMENTATION": "REQUIRED",
+    "GATE_FEATURE_FLAGS": "NOT_APPLICABLE",
+    "GATE_MIGRATION": "NOT_APPLICABLE",
+    "GATE_MUTATION_ADEQUACY": "REQUIRED",
+    "GATE_PROOF_INTEGRITY": "REQUIRED",
+    "GATE_RBAC_AUTHORITY": "NOT_APPLICABLE",
+    "GATE_REPRODUCIBILITY": "REQUIRED",
+    "GATE_ROLLBACK_OR_FORWARD_FIX": "NOT_APPLICABLE",
+    "GATE_SAFETY": "NOT_APPLICABLE",
+    "GATE_SECRET_EXPOSURE": "REQUIRED",
+    "GATE_SUPPLY_CHAIN": "NOT_APPLICABLE",
+    "GATE_TENANT_ISOLATION": "NOT_APPLICABLE",
+    "GATE_UNIT_TESTS": "REQUIRED",
+    "GATE_UNKNOWN_OUTCOME": "REQUIRED"
+  },
+  "gate_results": {
+    "GATE_ARTIFACT_INTEGRITY": "PASS",
+    "GATE_BUILD_HERMETICITY": "PASS",
+    "GATE_DOCUMENTATION": "PASS",
+    "GATE_MUTATION_ADEQUACY": "PASS",
+    "GATE_PROOF_INTEGRITY": "PASS",
+    "GATE_REPRODUCIBILITY": "PASS",
+    "GATE_SECRET_EXPOSURE": "PASS",
+    "GATE_UNIT_TESTS": "PASS",
+    "GATE_UNKNOWN_OUTCOME": "PASS"
+  },
+  "gate_verdict": {
+    "advisory": [],
+    "blocking": [],
+    "qualifiable": true
+  },
+  "impact_cone": {
+    "changed_paths": [
+      "docs/release/FINALIS_AGENTIC_CI_TAINT_SCHEMA.json",
+      "docs/release/FINALIS_AI_ML_BOM_POLICY.json",
+      "docs/release/FINALIS_AI_RELEASE_CLOSURE_SCHEMA.json",
+      "docs/release/FINALIS_ARTIFACT_CLOSURE_SCHEMA.json",
+      "docs/release/FINALIS_ARTIFACT_MANIFEST_SCHEMA.json",
+      "docs/release/FINALIS_ATTESTATION_QUORUM_SCHEMA.json",
+      "docs/release/FINALIS_BUILD_MANIFEST_SCHEMA.json",
+      "docs/release/FINALIS_CANDIDATE_GENOME_SCHEMA.json",
+      "docs/release/FINALIS_DEFEATER_SCHEMA.json",
+      "docs/release/FINALIS_DOD_REGISTRY.json",
+      "docs/release/FINALIS_FEATURE_FLAG_SCHEMA.json",
+      "docs/release/FINALIS_FLAKE_CLUSTER_SCHEMA.json",
+      "docs/release/FINALIS_FLAKE_SCHEMA.json",
+      "docs/release/FINALIS_GATE_DEPENDENCY_DAG.json",
+      "docs/release/FINALIS_GATE_OBLIGATION_HYPERGRAPH.json",
+      "docs/release/FINALIS_GATE_REGISTRY.json",
+      "docs/release/FINALIS_GATE_SCHEMA.json",
+      "docs/release/FINALIS_MUTATION_ADEQUACY_SCHEMA.json",
+      "docs/release/FINALIS_NON_WAIVABLE_GATES.json",
+      "docs/release/FINALIS_PROGRESSIVE_DELIVERY_SCHEMA.json",
+      "docs/release/FINALIS_PROVENANCE_SCHEMA.json",
+      "docs/release/FINALIS_REASON_CODE_REGISTRY.json",
+      "docs/release/FINALIS_RELEASE_ASSURANCE_CONSTITUTION.md",
+      "docs/release/FINALIS_RELEASE_CANDIDATE_SCHEMA.json",
+      "docs/release/FINALIS_RELEASE_POLICY_EPOCHS.json",
+      "docs/release/FINALIS_RELEASE_PROOF_SCHEMA.json",
+      "docs/release/FINALIS_RELEASE_README.md",
+      "docs/release/FINALIS_RELEASE_RISK_VECTOR_SCHEMA.json",
+      "docs/release/FINALIS_RELEASE_SLICE_SCHEMA.json",
+      "docs/release/FINALIS_RESEARCH_REGISTER.md",
+      "docs/release/FINALIS_SBOM_POLICY.json",
+      "docs/release/FINALIS_SWARM_REVIEW.md",
+      "docs/release/FINALIS_TEST_COVERAGE_SCHEMA.json",
+      "docs/release/FINALIS_TEST_EVIDENCE.json",
+      "docs/release/FINALIS_TEST_EXECUTION_SCHEMA.json",
+      "docs/release/FINALIS_TRANSPARENCY_RECEIPT_SCHEMA.json",
+      "docs/release/FINALIS_TRUST_ROOT_SCHEMA.json",
+      "docs/release/FINALIS_VEX_POLICY.json",
+      "docs/release/SP0009_ROADMAP_IDENTITY_REPORT.md",
+      "tests/test_release_core.py",
+      "tests/test_release_integration.py",
+      "tests/test_release_mutation.py",
+      "tests/test_release_supply_chain.py",
+      "tools/release/__init__.py",
+      "tools/release/__main__.py",
+      "tools/release/ai_closure.py",
+      "tools/release/archaeology.py",
+      "tools/release/artifacts.py",
+      "tools/release/attempts.py",
+      "tools/release/bootstrap.py",
+      "tools/release/boundary.py",
+      "tools/release/build.py",
+      "tools/release/candidate.py",
+      "tools/release/canon.py",
+      "tools/release/ci_security.py",
+      "tools/release/classify.py",
+      "tools/release/cli.py",
+      "tools/release/defeaters.py",
+      "tools/release/delivery.py",
+      "tools/release/envelope.py",
+      "tools/release/evidence.py",
+      "tools/release/flags.py",
+      "tools/release/flakes.py",
+      "tools/release/gates.py",
+      "tools/release/impact.py",
+      "tools/release/model.py",
+      "tools/release/modelcheck.py",
+      "tools/release/mutation.py",
+      "tools/release/obligations.py",
+      "tools/release/qualify.py",
+      "tools/release/sbom.py",
+      "tools/release/select_tests.py",
+      "tools/release/transparency.py",
+      "tools/release/trust.py",
+      "tools/release/validate.py",
+      "tools/release/waivers.py"
+    ],
+    "critical_impacts": [],
+    "direct_impacts": [],
+    "impact_cone_hash": "14e64efec6b179864d9f9bef75b053fc50805f6e904211251aa6bcc97bcdc201",
+    "impacted_contracts": [],
+    "unknown_impacts": []
+  },
+  "model_checks": {
+    "genome_sensitivity": "HOLD",
+    "lattice_fail_closed": "HOLD",
+    "ledger_append_only": "HOLD",
+    "quorum_diversity": "HOLD"
+  },
+  "mutation_adequacy": {
+    "adequacy_hash": "4e3fa6b817be99b1c34c7a78b75c86f2cea64e57d3930863313db4bce75f0c95",
+    "adequate": true,
+    "equivalent": [],
+    "invalid": [],
+    "kill_rate": 1.0,
+    "killed": 32,
+    "non_equivalent_total": 32,
+    "subsumed": [],
+    "survived": [],
+    "total": 32
+  },
+  "obligations": [
+    {
+      "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+      "closed_at": "2026-07-12",
+      "evidence_refs": [
+        "evidence:implementation",
+        "evidence:tests",
+        "evidence:documentation",
+        "evidence:ownership",
+        "evidence:proof"
+      ],
+      "evidence_requirements": [
+        "evidence:documentation"
+      ],
+      "obligation_id": "OB-DOCUMENTATION",
+      "obligation_type": "DOCUMENTATION",
+      "owner": "release",
+      "required_by": [
+        "DOCS_CHANGE",
+        "GOVERNANCE_TOOLING_CHANGE"
+      ],
+      "status": "CLOSED",
+      "waivable": true
+    },
+    {
+      "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+      "closed_at": "2026-07-12",
+      "evidence_refs": [
+        "evidence:implementation",
+        "evidence:tests",
+        "evidence:documentation",
+        "evidence:ownership",
+        "evidence:proof"
+      ],
+      "evidence_requirements": [
+        "evidence:implementation"
+      ],
+      "obligation_id": "OB-IMPLEMENTATION",
+      "obligation_type": "IMPLEMENTATION",
+      "owner": "release",
+      "required_by": [
+        "GOVERNANCE_TOOLING_CHANGE",
+        "TEST_CHANGE"
+      ],
+      "status": "CLOSED",
+      "waivable": true
+    },
+    {
+      "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+      "closed_at": "2026-07-12",
+      "evidence_refs": [
+        "evidence:implementation",
+        "evidence:tests",
+        "evidence:documentation",
+        "evidence:ownership",
+        "evidence:proof"
+      ],
+      "evidence_requirements": [
+        "evidence:ownership"
+      ],
+      "obligation_id": "OB-OWNERSHIP",
+      "obligation_type": "OWNERSHIP",
+      "owner": "release",
+      "required_by": [
+        "DOCS_CHANGE",
+        "GOVERNANCE_TOOLING_CHANGE",
+        "TEST_CHANGE"
+      ],
+      "status": "CLOSED",
+      "waivable": true
+    },
+    {
+      "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+      "closed_at": "2026-07-12",
+      "evidence_refs": [
+        "evidence:implementation",
+        "evidence:tests",
+        "evidence:documentation",
+        "evidence:ownership",
+        "evidence:proof"
+      ],
+      "evidence_requirements": [
+        "evidence:proof"
+      ],
+      "obligation_id": "OB-PROOF",
+      "obligation_type": "PROOF",
+      "owner": "release",
+      "required_by": [
+        "GOVERNANCE_TOOLING_CHANGE"
+      ],
+      "status": "CLOSED",
+      "waivable": false
+    },
+    {
+      "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+      "closed_at": "2026-07-12",
+      "evidence_refs": [
+        "evidence:implementation",
+        "evidence:tests",
+        "evidence:documentation",
+        "evidence:ownership",
+        "evidence:proof"
+      ],
+      "evidence_requirements": [
+        "evidence:tests"
+      ],
+      "obligation_id": "OB-TESTS",
+      "obligation_type": "TESTS",
+      "owner": "release",
+      "required_by": [
+        "GOVERNANCE_TOOLING_CHANGE",
+        "TEST_CHANGE"
+      ],
+      "status": "CLOSED",
+      "waivable": true
+    }
+  ],
+  "policy_epoch": "RPE-2026-07",
+  "progressive_delivery": {
+    "artifact_digest": "54cbb79a90ef53fbed3d6b5908aa559e675889ac1b6f09a1f25772538183c70b",
+    "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+    "cohorts": [
+      {
+        "cohort_id": "internal-1",
+        "kind": "INTERNAL"
+      }
+    ],
+    "configuration_hash": "c6d12e53dd0413409cb6cb4e4f81928a1c9fac30c7efa10b6aa2db8dc5259b86",
+    "executes_rollout": false,
+    "hard_abort_rules": [
+      "TENANT_VIOLATION",
+      "AUTHORITY_VIOLATION",
+      "SAFETY_VIOLATION",
+      "PROOF_INTEGRITY_VIOLATION"
+    ],
+    "interference_policy": {
+      "shared_state_domains": []
+    },
+    "metrics": [
+      {
+        "bounded": true,
+        "metric": "error_rate"
+      }
+    ],
+    "owner": "release",
+    "progressive_contract_id": "PD-40604039c5fbdfdf10e1",
+    "rollback_ref": "git-revert",
+    "sample_ratio_policy": {
+      "expected_ratio": 0.5,
+      "tolerance": 0.05
+    },
+    "sequential_policy": {
+      "alpha": 0.05,
+      "kind": "e-process",
+      "p0": 0.01,
+      "p1": 0.05,
+      "predeclared": true
+    },
+    "stages": [
+      "SHADOW",
+      "INTERNAL",
+      "LIMITED_CANARY",
+      "EXPANDED_CANARY"
+    ],
+    "status": "DRAFT"
+  },
+  "qualification": {
+    "conjuncts": {
+      "all_non_waivable_obligations_closed": true,
+      "all_required_hard_gates_pass": true,
+      "artifact_closure_complete": true,
+      "hard_scope_unknowns_zero": true,
+      "no_open_blocking_defeater": true
+    },
+    "qualifiable": true
+  },
+  "release_envelope": {
+    "ai_ml_bom_hash": "67432df62b3b62ea66cd162f759a092980216442c86e6b95b43acfc15449ff5b",
+    "ai_release_closure_hash": "258f3f2ef894b119471d772a66d7f4287f3f8f7aca0bb05f8d8192d8c5190d96",
+    "artifact_closure_hash": "fd7a1a01864110af0bb4946e318b80a0d20196beff80d92eb6f4db66e935a008",
+    "build_manifest_hash": "76a73b57536957c59b82aabd75e89d256640e443891661d786cd2f036a847fe0",
+    "candidate_genome": "32d20ef79d9c84531a4caf2edcad497cd771488788b518ade81b494fcb52083f",
+    "content_digest": "9a75b65b8ddf77c6e529450ca89ed4ed970da8f800363d211b6b596d24eb6120",
+    "defeater_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "dod_closure_hash": "0866615bc17ca4d6556c4dc39630fac8279638f187560c18804a9e4206b96ffd",
+    "envelope_kind": "finalis-release-proof-envelope-v1",
+    "envelope_version": "1.0.0",
+    "flake_cluster_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "gate_registry_hash": "a082beef8c19679adba18b36c85bb19adf4ff079f8696eca728e4f8c0c44921d",
+    "gate_result_ledger_hash": "70311ef0a4072474cdc16400b971a5386e4a2755fa0ffe3ad2ccca7334396b87",
+    "impact_cone_hash": "14e64efec6b179864d9f9bef75b053fc50805f6e904211251aa6bcc97bcdc201",
+    "mutation_adequacy_hash": "4e3fa6b817be99b1c34c7a78b75c86f2cea64e57d3930863313db4bce75f0c95",
+    "non_authoritative": true,
+    "provenance_hash": "75208e9d4138ea8b08e415b618fee92a73b9ecd658b98b3e0d14cdf121c66249",
+    "rollback_hash": "637726a449509eae109f02c32068927f5b54e9bfeca80b82f62cb1d6a0a41295",
+    "sbom_hash": "e24a8d4d92e088568774c4652f9346680d824b4682196ff2c2852ea43d43e097",
+    "test_execution_ledger_hash": "e06867e85e72f05bc7c5d7eee84c7bd730db3a4a6216063a92b420221353cc11",
+    "test_selection_hash": "56af5cf31358478602a8e45bb65baee5e6463eefd522f9ccd228ce8c2cdbc259",
+    "transparency_receipt_hash": "96e72c6964841372af97603f5792a7bddee20456130f048c0464a7bf14cc6925",
+    "trust_root_hash": "684f9ee70c2452448055e7b567192723cb324d255e773366b7a0686a68716c83",
+    "validator_version": "sp0009-release-validator-1",
+    "vex_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "waiver_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "release_slice": {
+    "closed": true,
+    "dependencies": {
+      "CHG-SP0009": [
+        "SP0008"
+      ]
+    },
+    "members": [
+      "CHG-SP0009"
+    ],
+    "missing_dependencies": {},
+    "release_slice_ref": "RS-69af8082e2bbfe30bad8",
+    "slice_id": "RS-SP0009"
+  },
+  "reproducibility": {
+    "byte_equal": true,
+    "equivalence_relation": null,
+    "normalized_equal": false,
+    "note": "one successful reproduction is evidence, not a standing REPRODUCIBLE property (D-0009-65)",
+    "reproducible": true,
+    "same_inputs": true
+  },
+  "rerun_accounting": {
+    "note": "a pass after failure is NOT proof of flakiness and does not erase the failure (D-0009-18/19)",
+    "reruns": 0,
+    "tests_with_failure_then_pass": [
+      "test_browser_e2e.py::test_evidence_prompt_injection_flow_in_browser"
+    ],
+    "total_attempts": 3
+  },
+  "risk_vector": {
+    "authority": "LOW",
+    "compatibility": "LOW",
+    "epistemic_unknown": "LOW",
+    "externality": "LOW",
+    "hard_flags": [],
+    "irreversibility": "LOW",
+    "migration": "LOW",
+    "privacy": "LOW",
+    "safety": "LOW",
+    "supply_chain": "LOW",
+    "tenant": "LOW"
+  },
+  "sbom": {
+    "completeness": "INCOMPLETE_THIRD_PARTY",
+    "components": [
+      "tests/test_release_core.py",
+      "tests/test_release_integration.py",
+      "tests/test_release_mutation.py",
+      "tests/test_release_supply_chain.py",
+      "tools/release/__init__.py",
+      "tools/release/__main__.py",
+      "tools/release/ai_closure.py",
+      "tools/release/archaeology.py",
+      "tools/release/artifacts.py",
+      "tools/release/attempts.py",
+      "tools/release/bootstrap.py",
+      "tools/release/boundary.py",
+      "tools/release/build.py",
+      "tools/release/candidate.py",
+      "tools/release/canon.py",
+      "tools/release/ci_security.py",
+      "tools/release/classify.py",
+      "tools/release/cli.py",
+      "tools/release/defeaters.py",
+      "tools/release/delivery.py",
+      "tools/release/envelope.py",
+      "tools/release/evidence.py",
+      "tools/release/flags.py",
+      "tools/release/flakes.py",
+      "tools/release/gates.py",
+      "tools/release/impact.py",
+      "tools/release/model.py",
+      "tools/release/modelcheck.py",
+      "tools/release/mutation.py",
+      "tools/release/obligations.py",
+      "tools/release/qualify.py",
+      "tools/release/sbom.py",
+      "tools/release/select_tests.py",
+      "tools/release/transparency.py",
+      "tools/release/trust.py",
+      "tools/release/validate.py",
+      "tools/release/waivers.py"
+    ],
+    "format": "CycloneDX-1.7",
+    "kind": "SBOM",
+    "ref": "SB-65dfe9d4a00ffeff5317",
+    "subject_digest": "54cbb79a90ef53fbed3d6b5908aa559e675889ac1b6f09a1f25772538183c70b"
+  },
+  "sp0011_qualification": {
+    "evidence": null,
+    "note": "SP0011 Evaluation has not run; no evaluation evidence exists and none may be fabricated (D-0009-61)",
+    "qualification": "PENDING_SP0011"
+  },
+  "test_selection": {
+    "inventory_count": 453,
+    "mandatory": [
+      "test_ai_tool_broker_release_gate.py",
+      "test_ai_tool_commit_simulation_release_gate.py",
+      "test_ai_tool_quality_gate_mutation.py",
+      "test_ai_tool_runtime_release_gate.py",
+      "test_ai_tool_write_intent_release_gate.py",
+      "test_architecture_mutation.py",
+      "test_architecture_redteam.py",
+      "test_compatibility_mutation.py",
+      "test_compatibility_redteam.py",
+      "test_contracts_inventory_mutation.py",
+      "test_governed_work_mutation.py",
+      "test_governed_work_redteam.py",
+      "test_program_graph_mutation.py",
+      "test_program_graph_redteam.py",
+      "test_release_core.py",
+      "test_release_integration.py",
+      "test_release_mutation.py",
+      "test_release_supply_chain.py",
+      "test_safety_mutation.py",
+      "test_safety_redteam.py",
+      "test_semantics_mutation.py",
+      "test_semantics_redteam.py",
+      "test_technology_mutation.py",
+      "test_technology_redteam.py"
+    ],
+    "proof": {
+      "gaps": [],
+      "mapping": {
+        "OB-IMPLEMENTATION": [
+          "test_ai_tool_broker_release_gate.py",
+          "test_ai_tool_commit_simulation_release_gate.py",
+          "test_ai_tool_runtime_release_gate.py",
+          "test_ai_tool_write_intent_release_gate.py",
+          "test_release_core.py",
+          "test_release_integration.py",
+          "test_release_mutation.py",
+          "test_release_supply_chain.py"
+        ],
+        "OB-PROOF": [
+          "test_ai_tool_broker_release_gate.py",
+          "test_ai_tool_commit_simulation_release_gate.py",
+          "test_ai_tool_runtime_release_gate.py",
+          "test_ai_tool_write_intent_release_gate.py",
+          "test_release_core.py",
+          "test_release_integration.py",
+          "test_release_mutation.py",
+          "test_release_supply_chain.py"
+        ],
+        "OB-TESTS": [
+          "test_ai_tool_broker_release_gate.py",
+          "test_ai_tool_commit_simulation_release_gate.py",
+          "test_ai_tool_runtime_release_gate.py",
+          "test_ai_tool_write_intent_release_gate.py",
+          "test_release_core.py",
+          "test_release_integration.py",
+          "test_release_mutation.py",
+          "test_release_supply_chain.py"
+        ]
+      },
+      "proof_hash": "56af5cf31358478602a8e45bb65baee5e6463eefd522f9ccd228ce8c2cdbc259"
+    },
+    "selected": [
+      "test_ai_tool_broker_release_gate.py",
+      "test_ai_tool_commit_simulation_release_gate.py",
+      "test_ai_tool_quality_gate_mutation.py",
+      "test_ai_tool_runtime_release_gate.py",
+      "test_ai_tool_write_intent_release_gate.py",
+      "test_architecture_mutation.py",
+      "test_architecture_redteam.py",
+      "test_compatibility_mutation.py",
+      "test_compatibility_redteam.py",
+      "test_contracts_inventory_mutation.py",
+      "test_governed_work_mutation.py",
+      "test_governed_work_redteam.py",
+      "test_program_graph_mutation.py",
+      "test_program_graph_redteam.py",
+      "test_release_core.py",
+      "test_release_integration.py",
+      "test_release_mutation.py",
+      "test_release_supply_chain.py",
+      "test_safety_mutation.py",
+      "test_safety_redteam.py",
+      "test_semantics_mutation.py",
+      "test_semantics_redteam.py",
+      "test_technology_mutation.py",
+      "test_technology_redteam.py"
+    ]
+  },
+  "transparency_receipts": [
+    {
+      "claim_kind": "release-evidence",
+      "inclusion_proof": [
+        [
+          "L",
+          "fdb8d29808fe340e44163700d1ae843f64ae2f31d3d2fd1fff3d05e91eb72e8c"
+        ],
+        [
+          "L",
+          "1043da797f66456c49a44266b831c1ce2a3efb591ffef5c3d8e71aab4d2181ea"
+        ]
+      ],
+      "log_checkpoint": {
+        "root": "f39e4c0d884cc363f746b6e2c2ece34926668ff037a640f91654188726dd7a72",
+        "size": 4
+      },
+      "log_identity": "finalis-release-log-1",
+      "log_index": 3,
+      "receipt_id": "TR-fae5ff1e648991fa5a86",
+      "status": "UNVERIFIED",
+      "subject_digest": "54cbb79a90ef53fbed3d6b5908aa559e675889ac1b6f09a1f25772538183c70b"
+    }
+  ],
+  "trust_roots": [
+    {
+      "authorized_signers": [
+        "sp0009-release-verifier"
+      ],
+      "expires_at": "2027-07-12",
+      "revoked_at": null,
+      "status": "ACTIVE",
+      "supersedes": null,
+      "threshold": 1,
+      "trust_domain": "repository-local",
+      "trust_root_id": "finalis-release-root-1",
+      "valid_from": "2026-07-12",
+      "version": 1
+    }
+  ],
+  "twin_digest": "916dd687ca4c473efdf5b77f1bd3d4d72fe365aaa5d89a520dab0b214fb5e794",
+  "twin_version": "finalis-release-assurance-twin-v1",
+  "unknown_budget": {
+    "by_class": {},
+    "hard_scope": {},
+    "hard_scope_count": 0,
+    "total": 0
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "completeness_states": [
+    "COMPLETE",
+    "INCOMPLETE",
+    "INCOMPLETE_FIRST_PARTY",
+    "INCOMPLETE_THIRD_PARTY",
+    "UNKNOWN"
+  ],
+  "rule": "SBOM binds exact artifact digest; completeness is explicit (D-0009-35)",
+  "schema_id": "SBOMPolicy"
+}

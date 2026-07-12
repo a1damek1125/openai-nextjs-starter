@@ -1,0 +1,13 @@
+{
+  "attempt_results": [
+    "PLANNED",
+    "STARTED",
+    "PASS",
+    "FAIL",
+    "TIMEOUT",
+    "ENVIRONMENT_INVALID",
+    "ABORTED"
+  ],
+  "rule": "append-only; rerun never erases failure (D-0009-18)",
+  "schema_id": "TestExecution"
+}
