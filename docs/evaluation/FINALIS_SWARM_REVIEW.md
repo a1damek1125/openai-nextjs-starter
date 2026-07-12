@@ -76,10 +76,35 @@ Red-team + independent-verifier outcomes are recorded in §6.
 
 ## 6. Red-team escapes and fixes
 
-_(pending SWARM-R/S + SWARM-T convergence — filled below)_
+**SWARM-T (independent final verifier)** returned all 10 audit items PASS —
+determinism, independent 555 recompute (111 awarded × 5, 10×20 claims), hard-gate
+conjunction, maturity truthfulness (all awarded M1, none required > M1), credit
+integrity, no fabrication (all behavioral subsystems `NOT_EVALUATED`, bounds
+null), the real SP0010 binding (not rewritten), boundary clean, genome
+completeness, 87 tests. It flagged one non-defect nuance (the checker re-derived
+only 4 of 8 obligations from cert fields given no external ground truth), which
+**SWARM-R/S then escalated into a demonstrated P0**.
+
+**SWARM-R/S (Goodhart + integrity red-team)** confirmed six attack classes have
+NO escape (hard-gate compensation, score arithmetic, outcome/oracle strictness,
+statistics honesty, determinism/seal, maturity-label/boundary) and found **five
+real escapes**, all fixed and regression-locked:
+
+| # | Sev | Escape | Fix | Lock |
+|---|---|---|---|---|
+| P0-1 | P0 | **The "independent" credit checker trusted the issuer.** `check_certificate` re-derived obligations from the certificate's OWN self-reported fields and authenticated only with the public `configuration_root`/`program_seal` — so a forged certificate set (inflated maturity, nonexistent evidence) drove a fabricated **1000/1000** through `check_credits`, the hard gates and `verify_all` with zero findings. | The Trusted Evaluation Kernel now re-derives an **independent ground truth per claim** (`kernel.build_ground_truth`) from the trusted claims registry + on-disk evidence resolution + its own hard-gate verdict, and `check_certificate` awards ONLY against that ground truth — rejecting any certificate whose claim/required/achieved maturity disagrees, or whose ground-truth obligations fail. The forged-1000 attack now awards **0**. | `test_forged_maturity_rejected_by_ground_truth`, `test_forged_certificate_cannot_beat_ground_truth`, `test_absent_evidence_in_ground_truth_awards_zero` |
+| P1-2 | P1 | **Evaluator immutability was never compared to a pinned hash** (`all_present` only tested `!= MISSING`), so a rewritten scorer/kernel passed the tamper gate. | Pinned committed SHA-256 for each of the 7 immutable evaluator assets; the gate compares live bytes to the pins and emits `EVALUATOR_TAMPERING` (P0) on any mismatch. | `test_pinned_asset_mismatch_detected` |
+| P1-3 | P1 | **UNKNOWN contamination silently passed the gate** — `contamination_findings` emitted only for answer exposures, and the gate input ignored `unknown_classes`. | `contamination_findings` now emits `CONTAMINATION_UNKNOWN` (P0) for any unknown class; the gate input is `not (answer_exposures or unknown_classes)` (fail-closed). | `test_unknown_contamination_blocks` |
+| P1-4 | P1 | **Hard gates that could not fail** — 7 literal `"PASS"` gates + 5 constant caller inputs, structurally incapable of failing. | Every gate is now DERIVED from a real artifact: proof/release-not-authority + owned-work-orphaning from the admitted SP0010 seal; fabrication/low-fidelity from the achieved-maturity set; oracle/judge from the critical-oracle findings; hidden-stratum from the robust state; critical-unknown from the registry (critical claims require ≥ M1); seal-valid from admission. | `test_literal_gates_now_derived` |
+| P2-5 | P2 | **The genome bound the hard-gate + contamination roots only transitively.** | Added `hard_gate_root` + `contamination_root` to `REQUIRED_ROOTS` (16 class roots); a change to either now moves the global evaluation root directly. | `test_omitted_credit_root_moves_genome` (+ 16-root check) |
+
+After the fixes the evaluation re-seals **555/1000, maturity M1, hard gates PASS,
+P0=0, P1=0**, deterministic; the forged-1000 attack is dead and the four
+previously-ceremonial checks now do real work.
 
 ## 7. Test status
 
-`tests/test_evaluation_core.py` (29), `_statistics.py` (16), `_subsystems.py`
-(21), `_mutation.py` (21 mutation/red-team locks) all pass. The evaluation is
-deterministic and re-validates against a fresh build.
+`tests/test_evaluation_core.py` (33), `_statistics.py` (16), `_subsystems.py`
+(21), `_mutation.py` (22 mutation/red-team locks incl. the P0-1/P1-2/P1-3/P1-4
+regression locks) — **92 total** — all pass. The evaluation is deterministic and
+re-validates against a fresh build.

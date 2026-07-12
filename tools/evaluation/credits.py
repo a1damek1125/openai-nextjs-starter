@@ -76,15 +76,29 @@ def _derive_obligations(*, evidence_present, evidence_current, evidence_refuted,
 
 
 def check_certificate(cert: dict, *, expected_configuration_root: str,
-                      expected_program_seal: str) -> dict:
-    """The INDEPENDENT checker (Trusted Evaluation Kernel). It re-derives every
-    obligation and binds the configuration + Program Seal; it never trusts the
-    issuer's self-reported award. AWARDED only when every obligation holds, the
-    hash recomputes, and the configuration/seal match."""
+                      expected_program_seal: str, ground_truth: dict) -> dict:
+    """The INDEPENDENT checker (Trusted Evaluation Kernel). Red-team P0-1: it does
+    NOT trust the certificate's self-reported obligations OR self-reported
+    maturity/evidence — those are attacker-set. Instead it is handed an
+    INDEPENDENT `ground_truth` the KERNEL re-derived (from the trusted claims
+    registry + on-disk evidence resolution + the kernel's own hard-gate
+    evaluation), and it awards ONLY when:
+
+      * the certificate hash recomputes and binds the exact configuration root +
+        Program Seal (integrity),
+      * the certificate's claim_id / required_maturity / achieved_maturity EQUAL
+        the kernel-derived ground truth (a forged M5/lowered-required cert is
+        rejected because the kernel recomputed the real values from disk), and
+      * the GROUND TRUTH itself satisfies every obligation (evidence present on
+        disk, current, unrefuted; achieved ≥ required; oracle valid; statistical
+        ok; hard gates pass; no defeater).
+
+    Public config_root/program_seal equality is integrity binding, not the award
+    basis — the award rests on the kernel's independent ground truth."""
     problems = []
-    if cert is None:
+    if cert is None or ground_truth is None:
         return {"valid": False, "awarded": False, "credits": 0,
-                "problems": ["no certificate"]}
+                "claim_id": None, "problems": ["no certificate or ground truth"]}
     if hash_obj({k: cert[k] for k in cert if k != "certificate_hash"}) \
             != cert.get("certificate_hash"):
         problems.append("certificate hash does not recompute")
@@ -92,22 +106,30 @@ def check_certificate(cert: dict, *, expected_configuration_root: str,
         problems.append("certificate configuration_root mismatch")
     if cert.get("program_seal") != expected_program_seal:
         problems.append("certificate program_seal mismatch")
-    ob = cert.get("obligations", {})
-    for name, ok in sorted(ob.items()):
-        if ok is not True:
-            problems.append(f"obligation not met: {name}")
-    # obligations must be internally consistent with the fields (no lying report)
-    rederived = {
-        "hard_gates_pass": all(bool(v) for v in
-                               cert.get("hard_gate_results", {}).values()),
-        "maturity_sufficient": maturity_meets(cert.get("achieved_maturity", ""),
-                                              cert.get("required_maturity", "")),
-        "no_blocking_defeater": len(cert.get("defeater_refs", [])) == 0,
-        "evidence_present": bool(cert.get("evidence_refs")),
+    # the certificate's identity + maturity claims MUST equal the kernel's
+    # independent ground truth (defeats forged maturity/required inflation)
+    if cert.get("claim_id") != ground_truth.get("claim_id"):
+        problems.append("certificate claim_id mismatch vs ground truth")
+    if cert.get("required_maturity") != ground_truth.get("required_maturity"):
+        problems.append("certificate required_maturity != kernel ground truth")
+    if cert.get("achieved_maturity") != ground_truth.get("achieved_maturity"):
+        problems.append("certificate achieved_maturity != kernel ground truth")
+    # the AWARD rests entirely on the KERNEL-DERIVED ground truth
+    gt_ok = {
+        "evidence_present": ground_truth.get("evidence_present") is True,
+        "evidence_current": ground_truth.get("evidence_current") is True,
+        "evidence_not_refuted": ground_truth.get("evidence_refuted") is False,
+        "maturity_sufficient": maturity_meets(
+            ground_truth.get("achieved_maturity", ""),
+            ground_truth.get("required_maturity", "")),
+        "oracle_valid": ground_truth.get("oracle_valid") is True,
+        "statistical_ok": ground_truth.get("statistical_ok") is True,
+        "hard_gates_pass": ground_truth.get("hard_gate_pass") is True,
+        "no_blocking_defeater": len(ground_truth.get("defeater_refs", [])) == 0,
     }
-    for k, v in rederived.items():
-        if ob.get(k) is True and v is not True:
-            problems.append(f"obligation {k} disagrees with certificate fields")
+    for name, ok in sorted(gt_ok.items()):
+        if ok is not True:
+            problems.append(f"ground-truth obligation not met: {name}")
     valid = not problems
     return {"valid": valid, "awarded": valid,
             "credits": CREDIT_PER_CLAIM if valid else 0,

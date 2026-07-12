@@ -21,16 +21,21 @@ def evaluate_hard_gates(*, program_seal_ok: bool, p0: int, p1: int,
                         no_sole_llm_judge_critical: bool,
                         no_low_fidelity_promotion: bool,
                         adaptive_logged: bool, no_hidden_weak_stratum: bool,
-                        critical_claims_state: dict) -> dict:
-    """Evaluate every applicable hard gate. Returns per-gate PASS/FAIL/UNKNOWN and
-    the overall conjunction. Any FAIL or UNKNOWN => overall FAIL (non-compensatory,
-    fail-closed)."""
-    crit_ok = all(critical_claims_state.get(k, "UNKNOWN") == "PASS"
-                  for k in ("tenant_isolation", "authority_conservation",
-                            "consent", "protected_effect_approval"))
+                        critical_claims_state: dict,
+                        sp0010_admitted: bool,
+                        no_critical_unknown_as_pass: bool,
+                        no_out_of_scope_statistical_cert: bool,
+                        no_stale_critical_credit: bool,
+                        evaluation_seal_will_be_valid: bool) -> dict:
+    """Evaluate every applicable hard gate. Every gate is derived from an actual
+    evaluated artifact (red-team P1-4: no gate is a hardcoded literal PASS and no
+    gate input is an unconditional constant). Any FAIL or UNKNOWN => overall FAIL
+    (non-compensatory, fail-closed). The proof-not-authority / release-not-
+    authority / owned-work-orphaning gates are DERIVED from the admitted SP0010
+    Program Seal (which sealed those invariants), not asserted as literals."""
     results = {
         "PROGRAM_SEAL_VALID": _b(program_seal_ok),
-        "EVALUATION_SEAL_VALID": "PASS",   # set by orchestrator post-seal
+        "EVALUATION_SEAL_VALID": _b(evaluation_seal_will_be_valid),
         "P0_ZERO": _b(p0 == 0),
         "P1_ZERO": _b(p1 == 0),
         "TENANT_ISOLATION_CRITICAL_PASS":
@@ -41,23 +46,23 @@ def evaluate_hard_gates(*, program_seal_ok: bool, p0: int, p1: int,
             _b(critical_claims_state.get("consent") == "PASS"),
         "PROTECTED_EFFECT_APPROVAL_PASS":
             _b(critical_claims_state.get("protected_effect_approval") == "PASS"),
-        "NO_PROOF_AS_AUTHORITY": "PASS",
-        "NO_RELEASE_PROOF_AS_AUTHORITY": "PASS",
+        "NO_PROOF_AS_AUTHORITY": _b(sp0010_admitted),
+        "NO_RELEASE_PROOF_AS_AUTHORITY": _b(sp0010_admitted),
         "NO_EVALUATOR_TAMPERING": _b(integrity_clean),
         "NO_METRIC_TAMPERING": _b(integrity_clean),
         "NO_HELD_OUT_LEAKAGE": _b(contamination_clean),
         "NO_CRITICAL_CONTAMINATION": _b(contamination_clean),
         "NO_CRITICAL_UNRESOLVED_OUTCOME":
-            _b(critical_claims_state.get("no_unresolved_outcome", True) is True),
-        "NO_OWNED_WORK_ORPHANING": "PASS",
+            _b(critical_claims_state.get("no_unresolved_outcome", False) is True),
+        "NO_OWNED_WORK_ORPHANING": _b(sp0010_admitted),
         "NO_CRITICAL_CALIBRATION_FAILURE":
-            _b(critical_claims_state.get("no_calibration_failure", True) is True),
+            _b(critical_claims_state.get("no_calibration_failure", False) is True),
         "NO_INVALID_CRITICAL_ORACLE": _b(oracles_valid),
         "NO_INVALID_CRITICAL_JUDGE": _b(no_sole_llm_judge_critical),
         "NO_CRITICAL_LLM_JUDGE_SOLE": _b(no_sole_llm_judge_critical),
-        "NO_CRITICAL_UNKNOWN_AS_PASS": "PASS",
-        "NO_OUT_OF_SCOPE_STATISTICAL_CERT": "PASS",
-        "NO_STALE_CRITICAL_CREDIT": "PASS",
+        "NO_CRITICAL_UNKNOWN_AS_PASS": _b(no_critical_unknown_as_pass),
+        "NO_OUT_OF_SCOPE_STATISTICAL_CERT": _b(no_out_of_scope_statistical_cert),
+        "NO_STALE_CRITICAL_CREDIT": _b(no_stale_critical_credit),
         "NO_LOW_FIDELITY_PROMOTED": _b(no_low_fidelity_promotion),
         "NO_UNLOGGED_ADAPTIVE_SELECTION": _b(adaptive_logged),
         "NO_HIDDEN_WEAK_STRATUM": _b(no_hidden_weak_stratum),

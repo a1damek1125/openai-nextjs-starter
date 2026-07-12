@@ -31,34 +31,45 @@ def _base_cert(**over):
     return credits.issue_certificate(**d)
 
 
-def _check(cert):
+def _gt(**over):
+    d = {"claim_id": "C", "required_maturity": "M1", "achieved_maturity": "M1",
+         "evidence_present": True, "evidence_current": True,
+         "evidence_refuted": False, "oracle_valid": True, "statistical_ok": True,
+         "hard_gate_pass": True, "defeater_refs": []}
+    d.update(over)
+    return d
+
+
+def _check(cert, gt=None):
     return credits.check_certificate(cert, expected_configuration_root="CFG",
-                                     expected_program_seal="SEAL")
+                                     expected_program_seal="SEAL",
+                                     ground_truth=gt or _gt())
 
 
-# 1-4: missing / stale / refuted / invalid evidence awards zero
+# 1-4: missing / stale / refuted / invalid evidence awards zero (ground truth)
 def test_missing_evidence_awards_zero():
-    assert not _check(_base_cert(evidence_present=False, evidence_refs=[]))["awarded"]
+    assert not _check(_base_cert(), _gt(evidence_present=False))["awarded"]
 
 
 def test_stale_evidence_awards_zero():
-    assert not _check(_base_cert(evidence_current=False))["awarded"]
+    assert not _check(_base_cert(), _gt(evidence_current=False))["awarded"]
 
 
 def test_refuted_evidence_awards_zero():
-    assert not _check(_base_cert(evidence_refuted=True))["awarded"]
+    assert not _check(_base_cert(), _gt(evidence_refuted=True))["awarded"]
 
 
-def test_forged_certificate_awards_zero():
-    c = _base_cert()
-    c["obligations"]["evidence_present"] = True
-    c["evidence_refs"] = []              # lie: obligation says present, fields empty
-    assert not _check(c)["awarded"]
+def test_forged_certificate_cannot_beat_ground_truth():
+    # P0-1: a cert with inflated self-reported fields is rejected because the
+    # kernel awards against its OWN ground truth, not the cert.
+    c = _base_cert(achieved_maturity="M5", required_maturity="M1")
+    assert not _check(c, _gt(achieved_maturity="M1", required_maturity="M3"))[
+        "awarded"]
 
 
 # 5: failed hard gate ignored
 def test_failed_hard_gate_blocks_credit():
-    assert not _check(_base_cert(hard_gate_results={"g": False}))["awarded"]
+    assert not _check(_base_cert(), _gt(hard_gate_pass=False))["awarded"]
 
 
 def test_failed_gate_blocks_official_score():
@@ -69,7 +80,12 @@ def test_failed_gate_blocks_official_score():
         adaptive_logged=True, no_hidden_weak_stratum=True,
         critical_claims_state={"tenant_isolation": "PASS",
                                "authority_conservation": "PASS", "consent": "PASS",
-                               "protected_effect_approval": "PASS"})
+                               "protected_effect_approval": "PASS",
+                               "no_unresolved_outcome": True,
+                               "no_calibration_failure": True},
+        sp0010_admitted=True, no_critical_unknown_as_pass=True,
+        no_out_of_scope_statistical_cert=True, no_stale_critical_credit=True,
+        evaluation_seal_will_be_valid=True)
     sc = score.compute_score(
         claims={"C": {"domain_id": "D1"}},
         awards={"C": {"awarded": True, "credits": 5}}, hard_gate_result=hg,
@@ -191,3 +207,25 @@ def test_evaluator_tampering_detected():
     m2["answer_exposures"] = []
     fs = contamination.contamination_findings(m2)
     assert any(f.kind == "EVALUATOR_TAMPERING" for f in fs)
+
+
+# P1-2: a rewritten scorer (pinned-hash mismatch) is detected, not just deletion
+def test_pinned_asset_mismatch_detected():
+    m = contamination.build_ledger(ROOT)
+    m2 = dict(m)
+    m2["evaluator_immutability"] = {"all_present": True,
+                                    "mismatched_pins": ["tools/evaluation/score.py"]}
+    m2["answer_exposures"] = []
+    assert any(f.kind == "EVALUATOR_TAMPERING"
+               for f in contamination.contamination_findings(m2))
+
+
+# P1-3: UNKNOWN contamination is fail-closed (does not silently pass)
+def test_unknown_contamination_blocks():
+    m = contamination.build_ledger(ROOT)
+    m2 = dict(m)
+    m2["answer_exposures"] = []
+    m2["unknown_classes"] = ["RUN-CRIT-1"]
+    fs = contamination.contamination_findings(m2)
+    assert any(f.kind == "CONTAMINATION_UNKNOWN" and f.severity == model.P0
+               for f in fs)

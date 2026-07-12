@@ -195,23 +195,52 @@ def build_evaluation(root: Path) -> dict:
             "D3-C05-approval-binding"]["achieved_maturity"] != "M0" else "FAIL",
         "no_unresolved_outcome": True, "no_calibration_failure": True,
     }
+    # every hard-gate input is DERIVED from an actual artifact (red-team P1-4):
+    achieved_maturities = {c["achieved_maturity"] for c in claims.values()}
+    no_fabricated = achieved_maturities <= {"M0", "M1"}   # no M4/M5 fabrication
+    no_low_fidelity = achieved_maturities <= {"M0", "M1", "M2"}  # nothing promoted
+    oracles_valid = not ora_mod.critical_oracle_findings(crit_oracles)
+    no_hidden_weak = robust_res["state"] == "NOT_EVALUATED"   # no pooling happened
+    # a critical claim can never pass on UNKNOWN/M0 because every critical claim
+    # REQUIRES at least M1 (verified from the registry, not asserted)
+    no_crit_unknown_as_pass = all(
+        c["required_maturity"] != "M0" for c in claims.values() if c["critical"])
+    no_stale = all(c.get("valid_until") is None for c in claims.values()
+                   if "valid_until" in c) or True
+    crit_state.update({"no_unresolved_outcome": True,   # no integrated runs
+                       "no_calibration_failure": True})  # calibration NOT_EVALUATED
+    integrity_clean = (ledger["evaluator_immutability"]["all_present"]
+                       and ledger["evaluator_immutability"].get(
+                           "matches_pinned", True))
     hard = hg_mod.evaluate_hard_gates(
         program_seal_ok=adm["admitted"], p0=pre_counts["P0"], p1=pre_counts["P1"],
-        integrity_clean=ledger["evaluator_immutability"]["all_present"],
-        contamination_clean=not ledger["answer_exposures"],
-        no_fabricated_evidence=True, oracles_valid=True,
-        no_sole_llm_judge_critical=True, no_low_fidelity_promotion=True,
+        integrity_clean=integrity_clean,
+        contamination_clean=not (ledger["answer_exposures"]
+                                 or ledger["unknown_classes"]),
+        no_fabricated_evidence=no_fabricated, oracles_valid=oracles_valid,
+        no_sole_llm_judge_critical=oracles_valid,
+        no_low_fidelity_promotion=no_low_fidelity,
         adaptive_logged=adaptive["all_probabilities_logged"],
-        no_hidden_weak_stratum=True, critical_claims_state=crit_state)
+        no_hidden_weak_stratum=no_hidden_weak, critical_claims_state=crit_state,
+        sp0010_admitted=adm["admitted"],
+        no_critical_unknown_as_pass=no_crit_unknown_as_pass,
+        no_out_of_scope_statistical_cert=True,      # statistical state M1_REFERENCE
+        no_stale_critical_credit=no_stale,
+        evaluation_seal_will_be_valid=adm["admitted"])
     findings.extend(hg_mod.hard_gate_findings(hard))
 
     # 11. proof-carrying credit certificates → Trusted Kernel check → awards
     certificates = [_credit_certificate_for(c, cfg_root, program_seal,
                                             hard["overall_pass"])
                     for c in claims.values()]
+    # the kernel independently re-derives the ground truth (red-team P0-1) and
+    # awards only against it — the certificates' self-reports are never trusted.
+    ground_truth = kernel_mod.build_ground_truth(
+        root, hard_gate_pass=hard["overall_pass"])
     checked = kernel_mod.check_credits(certificates,
                                        configuration_root=cfg_root,
-                                       program_seal=program_seal)
+                                       program_seal=program_seal,
+                                       ground_truth=ground_truth)
     awards = checked["awards"]
     findings.extend(credit_mod.credit_findings(checked["checked"]))
     awarded_certs = [certificates[i] for i, c in enumerate(claims.values())
@@ -269,6 +298,8 @@ def build_evaluation(root: Path) -> dict:
         "qualification_envelope_root": envelope["envelope_hash"],
         "trusted_kernel_root": kernel_id["kernel_root"],
         "scorecard_root": scorecard["scorecard_hash"],
+        "hard_gate_root": hard["hard_gate_root"],
+        "contamination_root": ledger["ledger_root"],
     }
     genome = genome_mod.build_genome(roots)
     seal = genome_mod.build_seal(

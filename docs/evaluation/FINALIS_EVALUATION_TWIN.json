@@ -3479,17 +3479,20 @@
       "all_present": true,
       "assets": {
         "tools/evaluation/canon.py": "9b3f64f2e7446b23713e110553dcf37f1cfd03248ba86be5e0bdf5422bcf50d6",
-        "tools/evaluation/credits.py": "628a07f914b634cc6467bf46eeaec0d3cd2c906aa98e7995b7e43d818e1d3b3e",
-        "tools/evaluation/genome.py": "90950e8c4d0ab62c76ced502493aa78fbad6ac67bcb584e1f69b31c31a3c670d",
-        "tools/evaluation/hardgates.py": "deb1a6737490f28ac044b0311f63fc6675f9e4f2db3ca393b7480128be17b587",
-        "tools/evaluation/kernel.py": "6b2d12779159b906e2b6e67f340f31e02c6b88c972d1b5ae07f1c14dfe756232",
+        "tools/evaluation/credits.py": "c7278fb3092c87ecc8d603c3677cb55e3d7904148fb1efaf16169c2feaba5ae4",
+        "tools/evaluation/genome.py": "4984fa7048f75cd241aa789372f83826c29e6f17ec5fbb10ec36ce8bf6774bac",
+        "tools/evaluation/hardgates.py": "84f184e84d85b459aff0d59681df126d9492e36f9490b06cd645ca1c3b60a6f2",
+        "tools/evaluation/kernel.py": "8d071761073c05afbaee0081c43db444c4a749ec11ff037f876d91eb6b6a9e9c",
         "tools/evaluation/model.py": "55e70b7bf0d592bcaeb9e05fbd902b21b3e6bb5bf8bd1eb9b9a1c0983ed47181",
         "tools/evaluation/score.py": "71d4d081a0f64cf53f3d585c18c65e0ee57f3411f80cb1742e8adfc34f5f6996"
       },
-      "manifest_root": "c21695fe6755b115c09691c6debd7f722fc4a6290c969b7d6de4ba351d6af6da"
+      "manifest_root": "1acae1c1dd37273631227a0b4e66a543e53d1609fb1909f7a2e5f1f412748bf4",
+      "matches_pinned": true,
+      "mismatched_pins": [],
+      "pinned_count": 7
     },
     "held_out_answers_exposed": false,
-    "ledger_root": "1b1e2ff67cf76484c81b43396f99ad56ebc6046a3785cca0150e85512ee3a94a",
+    "ledger_root": "a7502573a8fba78eb2563747e4ca373205414b741567b2fdee7f74b0afa19862",
     "memory_retains_eval_secrets": false,
     "public_benchmark_download": false,
     "run_classes": {},
@@ -12307,14 +12310,16 @@
       "triggers_requalification": true
     }
   },
-  "evaluation_digest": "64b60a3e10571c76e6041f8f37344e7d8a4add33b2d3914f7c9cd9d6f78e3258",
+  "evaluation_digest": "bc9de7e229c8ed7d11c52257cda15fb6af13dc52bcfc0a7276dfc2d9b753a0ca",
   "evaluation_genome": {
     "challenge_escrow_root": "7d6dc89af27c664cf8e9f35e830cd828be6f06ccf09b31f1130c685605102ecf",
     "class_roots": {
       "challenge_escrow_root": "7d6dc89af27c664cf8e9f35e830cd828be6f06ccf09b31f1130c685605102ecf",
       "configuration_root": "9dbadab0fa149c5c8d047a52dba2c097a65182c3faf25b1812bd1e08687949c0",
+      "contamination_root": "a7502573a8fba78eb2563747e4ca373205414b741567b2fdee7f74b0afa19862",
       "credit_certificate_root": "1ccaaa3832f034c2cecd393f072f5f28e4cf1c6a9e8e70cb86e1d2e39e5c5074",
       "dataset_root": "a02c15f6d0df9bf38936301f694d8c59550a1c9e613ec51d1a7d362d78011713",
+      "hard_gate_root": "cd222d3492607f3fb75ffa792181a7b75b8dd16e2b99eda4568ad967963a6873",
       "human_review_root": "bbb0bb953792cd75e7c1a1a6c5655147d1a2c40a283bb2d00187b12c115d0e09",
       "judge_root": "bbb0bb953792cd75e7c1a1a6c5655147d1a2c40a283bb2d00187b12c115d0e09",
       "metric_root": "7cf89ffdba5f0a760080113c740b47c34238f79b57cc8bc2e4a95c92bbdcb29c",
@@ -12324,13 +12329,15 @@
       "scenario_root": "266e7f6c0aff6958932601fdbd13f3e0c1b6e5a5a9b662ffdd4bcafbc86e6a63",
       "scorecard_root": "afb8db8ec28c9f67530f334e2c2d996ed44c91c8b162cbbf18909e680da4534b",
       "statistical_plan_root": "6ef3d92d4f926b731e2f728f07af82b46e9c5818b541d44774416814f6669454",
-      "trusted_kernel_root": "17ec96c5ddc8c5bc8b58b4756706b095fa1b85e3f5e31fd18449c7ab4e16b5f7"
+      "trusted_kernel_root": "48f6abfc5a6f2fad0998f444d5a7120644704806fdfdf336652dc751c3fd9cd1"
     },
     "configuration_root": "9dbadab0fa149c5c8d047a52dba2c097a65182c3faf25b1812bd1e08687949c0",
+    "contamination_root": "a7502573a8fba78eb2563747e4ca373205414b741567b2fdee7f74b0afa19862",
     "credit_certificate_root": "1ccaaa3832f034c2cecd393f072f5f28e4cf1c6a9e8e70cb86e1d2e39e5c5074",
     "dataset_root": "a02c15f6d0df9bf38936301f694d8c59550a1c9e613ec51d1a7d362d78011713",
     "genome_version": "1.0.0",
-    "global_evaluation_root": "97331e5e4c2777b02ad64659e648d69723fa12ca9eaf0bc90f3b4ab36fd560fc",
+    "global_evaluation_root": "1fbd275ff5507821781ebe69f9ace2d5d0d92c3c6f69f4477a1709cfb164082f",
+    "hard_gate_root": "cd222d3492607f3fb75ffa792181a7b75b8dd16e2b99eda4568ad967963a6873",
     "human_review_root": "bbb0bb953792cd75e7c1a1a6c5655147d1a2c40a283bb2d00187b12c115d0e09",
     "judge_root": "bbb0bb953792cd75e7c1a1a6c5655147d1a2c40a283bb2d00187b12c115d0e09",
     "metric_root": "7cf89ffdba5f0a760080113c740b47c34238f79b57cc8bc2e4a95c92bbdcb29c",
@@ -12340,12 +12347,12 @@
     "scenario_root": "266e7f6c0aff6958932601fdbd13f3e0c1b6e5a5a9b662ffdd4bcafbc86e6a63",
     "scorecard_root": "afb8db8ec28c9f67530f334e2c2d996ed44c91c8b162cbbf18909e680da4534b",
     "statistical_plan_root": "6ef3d92d4f926b731e2f728f07af82b46e9c5818b541d44774416814f6669454",
-    "trusted_kernel_root": "17ec96c5ddc8c5bc8b58b4756706b095fa1b85e3f5e31fd18449c7ab4e16b5f7"
+    "trusted_kernel_root": "48f6abfc5a6f2fad0998f444d5a7120644704806fdfdf336652dc751c3fd9cd1"
   },
   "evaluation_seal": {
     "configuration_id": "CFG-FINALIS-REPO-REFERENCE",
     "critical_blockers": 0,
-    "evaluation_genome_root": "97331e5e4c2777b02ad64659e648d69723fa12ca9eaf0bc90f3b4ab36fd560fc",
+    "evaluation_genome_root": "1fbd275ff5507821781ebe69f9ace2d5d0d92c3c6f69f4477a1709cfb164082f",
     "grants_runtime_authority": false,
     "hard_gate_state": "PASS",
     "independent_verifier_result": "PENDING",
@@ -12354,7 +12361,7 @@
     "qualification_envelope_id": "ENV-CFG-FINALIS-REPO-REFERENCE",
     "repository_commit": "3a5ee8b",
     "scorecard_id": "SCORECARD-CFG-FINALIS-REPO-REFERENCE",
-    "seal_hash": "fe7a63c99af136f4e4b6ef2da9419f91d6370f11c6e73bb04202430542a84801",
+    "seal_hash": "1b3b106191118659a1207bde8125ae8b917a1b1dc80a645a9584365b9f048e6f",
     "seal_version": "1.0.0",
     "sealed_at": "2026-07-12",
     "status": "CANDIDATE",
@@ -12485,14 +12492,14 @@
   "kernel_identity": {
     "files": {
       "canon.py": "9b3f64f2e7446b23713e110553dcf37f1cfd03248ba86be5e0bdf5422bcf50d6",
-      "credits.py": "628a07f914b634cc6467bf46eeaec0d3cd2c906aa98e7995b7e43d818e1d3b3e",
-      "genome.py": "90950e8c4d0ab62c76ced502493aa78fbad6ac67bcb584e1f69b31c31a3c670d",
-      "hardgates.py": "deb1a6737490f28ac044b0311f63fc6675f9e4f2db3ca393b7480128be17b587",
-      "kernel.py": "6b2d12779159b906e2b6e67f340f31e02c6b88c972d1b5ae07f1c14dfe756232",
+      "credits.py": "c7278fb3092c87ecc8d603c3677cb55e3d7904148fb1efaf16169c2feaba5ae4",
+      "genome.py": "4984fa7048f75cd241aa789372f83826c29e6f17ec5fbb10ec36ce8bf6774bac",
+      "hardgates.py": "84f184e84d85b459aff0d59681df126d9492e36f9490b06cd645ca1c3b60a6f2",
+      "kernel.py": "8d071761073c05afbaee0081c43db444c4a749ec11ff037f876d91eb6b6a9e9c",
       "model.py": "55e70b7bf0d592bcaeb9e05fbd902b21b3e6bb5bf8bd1eb9b9a1c0983ed47181",
       "score.py": "71d4d081a0f64cf53f3d585c18c65e0ee57f3411f80cb1742e8adfc34f5f6996"
     },
-    "kernel_root": "17ec96c5ddc8c5bc8b58b4756706b095fa1b85e3f5e31fd18449c7ab4e16b5f7",
+    "kernel_root": "48f6abfc5a6f2fad0998f444d5a7120644704806fdfdf336652dc751c3fd9cd1",
     "kernel_version": "sp0011-tek-1.0"
   },
   "long_horizon": {
@@ -12778,11 +12785,11 @@
       "admit.py": "3703a48f73d49dc587c501c3dff885d838a1019edddd21893439e22be2ee459f",
       "canon.py": "9b3f64f2e7446b23713e110553dcf37f1cfd03248ba86be5e0bdf5422bcf50d6",
       "configuration.py": "087f1e62b26977be2f4dff8d6d90cbeec1fc6584e227b6388aa0312f14620813",
-      "credits.py": "628a07f914b634cc6467bf46eeaec0d3cd2c906aa98e7995b7e43d818e1d3b3e",
+      "credits.py": "c7278fb3092c87ecc8d603c3677cb55e3d7904148fb1efaf16169c2feaba5ae4",
       "freeze.py": "3ad207d70195b0414094a47e7ff748111a8f8a9fe6f4ee056f0066bb8ee9e5db",
-      "genome.py": "90950e8c4d0ab62c76ced502493aa78fbad6ac67bcb584e1f69b31c31a3c670d",
-      "hardgates.py": "deb1a6737490f28ac044b0311f63fc6675f9e4f2db3ca393b7480128be17b587",
-      "kernel.py": "6b2d12779159b906e2b6e67f340f31e02c6b88c972d1b5ae07f1c14dfe756232",
+      "genome.py": "4984fa7048f75cd241aa789372f83826c29e6f17ec5fbb10ec36ce8bf6774bac",
+      "hardgates.py": "84f184e84d85b459aff0d59681df126d9492e36f9490b06cd645ca1c3b60a6f2",
+      "kernel.py": "8d071761073c05afbaee0081c43db444c4a749ec11ff037f876d91eb6b6a9e9c",
       "model.py": "55e70b7bf0d592bcaeb9e05fbd902b21b3e6bb5bf8bd1eb9b9a1c0983ed47181",
       "score.py": "71d4d081a0f64cf53f3d585c18c65e0ee57f3411f80cb1742e8adfc34f5f6996"
     },
@@ -12804,7 +12811,7 @@
       "scorecard_root": "score.py:scorecard",
       "trusted_kernel_root": "tcb.py:tcb_root"
     },
-    "tcb_root": "2453106b728f64c2e7c948b75fc08d3e5396460cc1e1f182412b62eb50268dc0",
+    "tcb_root": "2816c611f751e8fbd383ecd07a2e25888cb06ebda82f575f438264cd23d63b1e",
     "tcb_version": "1.0",
     "untrusted_count": 15,
     "untrusted_rechecked_modules": [

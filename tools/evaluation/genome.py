@@ -18,7 +18,10 @@ REQUIRED_ROOTS = ("configuration_root", "dataset_root", "challenge_escrow_root",
                   "statistical_plan_root", "judge_root", "human_review_root",
                   "outcome_evidence_root", "credit_certificate_root",
                   "qualification_envelope_root", "trusted_kernel_root",
-                  "scorecard_root")
+                  "scorecard_root",
+                  # red-team P2-5: bind the hard-gate + contamination roots
+                  # DIRECTLY, not only transitively via the scorecard/envelope
+                  "hard_gate_root", "contamination_root")
 
 
 def build_genome(roots: dict) -> dict:

@@ -101,85 +101,139 @@ def test_domain_grounding_gives_m1():
 
 
 # --- proof-carrying credit certificate + kernel checker ----------------------
-def _cert(claim, cfg_root, seal, gate_pass=True):
+def _cert(claim, cfg_root, seal, achieved=None):
     return credits.issue_certificate(
         claim_id=claim["claim_id"], configuration_root=cfg_root,
         program_seal=seal, evidence_refs=["repo:x"], evidence_domain_refs=["d"],
         oracle_certificate_refs=["ORA-DET-STATE"], statistical_certificate_ref=None,
         required_maturity=claim["required_maturity"],
-        achieved_maturity=claim["achieved_maturity"],
-        hard_gate_results={"applicable": gate_pass}, valid_from="t",
+        achieved_maturity=achieved or claim["achieved_maturity"],
+        hard_gate_results={"applicable": True}, valid_from="t",
         valid_until=None, defeater_refs=[], kernel_version="k",
         evidence_current=True, evidence_present=True, evidence_refuted=False,
         statistical_required=False, statistical_pass=True, oracle_valid=True)
 
 
+def _gt(claim, **over):
+    d = {"claim_id": claim["claim_id"],
+         "required_maturity": claim["required_maturity"],
+         "achieved_maturity": claim["achieved_maturity"],
+         "evidence_present": True, "evidence_current": True,
+         "evidence_refuted": False, "oracle_valid": True, "statistical_ok": True,
+         "hard_gate_pass": True, "defeater_refs": []}
+    d.update(over)
+    return d
+
+
 def test_valid_certificate_awards_five():
     c = claims.build_claims(ROOT)
     m1 = c["D10-C01-evidence-provenance"]
-    cert = _cert(m1, "CFG", "SEAL")
-    v = credits.check_certificate(cert, expected_configuration_root="CFG",
-                                  expected_program_seal="SEAL")
+    v = credits.check_certificate(_cert(m1, "CFG", "SEAL"),
+                                  expected_configuration_root="CFG",
+                                  expected_program_seal="SEAL",
+                                  ground_truth=_gt(m1))
     assert v["awarded"] and v["credits"] == 5
 
 
 def test_certificate_config_mismatch_awards_zero():
     c = claims.build_claims(ROOT)
-    cert = _cert(c["D10-C01-evidence-provenance"], "CFG", "SEAL")
-    v = credits.check_certificate(cert, expected_configuration_root="WRONG",
-                                  expected_program_seal="SEAL")
+    m1 = c["D10-C01-evidence-provenance"]
+    v = credits.check_certificate(_cert(m1, "CFG", "SEAL"),
+                                  expected_configuration_root="WRONG",
+                                  expected_program_seal="SEAL",
+                                  ground_truth=_gt(m1))
     assert not v["awarded"] and v["credits"] == 0
     assert any("configuration_root mismatch" in p for p in v["problems"])
 
 
 def test_certificate_forged_hash_rejected():
     c = claims.build_claims(ROOT)
-    cert = _cert(c["D10-C01-evidence-provenance"], "CFG", "SEAL")
+    m1 = c["D10-C01-evidence-provenance"]
+    cert = _cert(m1, "CFG", "SEAL")
     cert["achieved_maturity"] = "M5"    # tamper without re-hashing
     v = credits.check_certificate(cert, expected_configuration_root="CFG",
-                                  expected_program_seal="SEAL")
+                                  expected_program_seal="SEAL",
+                                  ground_truth=_gt(m1))
     assert not v["awarded"]
     assert any("hash" in p for p in v["problems"])
+
+
+def test_forged_maturity_rejected_by_ground_truth():
+    # red-team P0-1: a cert claiming inflated maturity is rejected because the
+    # kernel's ground truth (recomputed from disk) says M1, not M5.
+    c = claims.build_claims(ROOT)
+    m3 = c["D7-C01-prompt-injection"]   # required M3, achieved M1
+    cert = _cert(m3, "CFG", "SEAL", achieved="M5")  # forged achieved=M5
+    v = credits.check_certificate(
+        cert, expected_configuration_root="CFG", expected_program_seal="SEAL",
+        ground_truth=_gt(m3, required_maturity="M3", achieved_maturity="M1"))
+    assert not v["awarded"]
+    assert any("achieved_maturity != kernel ground truth" in p
+               for p in v["problems"])
 
 
 def test_unmet_maturity_awards_zero():
     c = claims.build_claims(ROOT)
     m3 = c["D3-C15-prompt-injection-resistance"]  # required M3, achieved M1
-    cert = _cert(m3, "CFG", "SEAL")
-    v = credits.check_certificate(cert, expected_configuration_root="CFG",
-                                  expected_program_seal="SEAL")
-    assert not v["awarded"]     # maturity insufficient
+    v = credits.check_certificate(_cert(m3, "CFG", "SEAL"),
+                                  expected_configuration_root="CFG",
+                                  expected_program_seal="SEAL",
+                                  ground_truth=_gt(m3))
+    assert not v["awarded"]     # maturity insufficient (ground truth)
 
 
-def test_failed_hard_gate_in_cert_awards_zero():
+def test_failed_hard_gate_in_ground_truth_awards_zero():
     c = claims.build_claims(ROOT)
-    cert = _cert(c["D10-C01-evidence-provenance"], "CFG", "SEAL",
-                 gate_pass=False)
-    v = credits.check_certificate(cert, expected_configuration_root="CFG",
-                                  expected_program_seal="SEAL")
+    m1 = c["D10-C01-evidence-provenance"]
+    v = credits.check_certificate(_cert(m1, "CFG", "SEAL"),
+                                  expected_configuration_root="CFG",
+                                  expected_program_seal="SEAL",
+                                  ground_truth=_gt(m1, hard_gate_pass=False))
     assert not v["awarded"]
 
 
+def test_absent_evidence_in_ground_truth_awards_zero():
+    c = claims.build_claims(ROOT)
+    m1 = c["D10-C01-evidence-provenance"]
+    v = credits.check_certificate(_cert(m1, "CFG", "SEAL"),
+                                  expected_configuration_root="CFG",
+                                  expected_program_seal="SEAL",
+                                  ground_truth=_gt(m1, evidence_present=False))
+    assert not v["awarded"]      # kernel-derived evidence absence blocks
+
+
 # --- hard gates --------------------------------------------------------------
+def _gates(**over):
+    d = dict(program_seal_ok=True, p0=0, p1=0, integrity_clean=True,
+             contamination_clean=True, no_fabricated_evidence=True,
+             oracles_valid=True, no_sole_llm_judge_critical=True,
+             no_low_fidelity_promotion=True, adaptive_logged=True,
+             no_hidden_weak_stratum=True,
+             critical_claims_state={"tenant_isolation": "PASS",
+                                    "authority_conservation": "PASS",
+                                    "consent": "PASS",
+                                    "protected_effect_approval": "PASS",
+                                    "no_unresolved_outcome": True,
+                                    "no_calibration_failure": True},
+             sp0010_admitted=True, no_critical_unknown_as_pass=True,
+             no_out_of_scope_statistical_cert=True, no_stale_critical_credit=True,
+             evaluation_seal_will_be_valid=True)
+    d.update(over)
+    return hardgates.evaluate_hard_gates(**d)
+
+
 def test_hard_gate_non_compensatory():
-    r = hardgates.evaluate_hard_gates(
-        program_seal_ok=True, p0=0, p1=0, integrity_clean=True,
-        contamination_clean=True, no_fabricated_evidence=True, oracles_valid=True,
-        no_sole_llm_judge_critical=True, no_low_fidelity_promotion=True,
-        adaptive_logged=True, no_hidden_weak_stratum=True,
-        critical_claims_state={"tenant_isolation": "PASS",
-                               "authority_conservation": "PASS", "consent": "PASS",
-                               "protected_effect_approval": "PASS"})
-    assert r["overall_pass"] is True
-    bad = hardgates.evaluate_hard_gates(
-        program_seal_ok=True, p0=1, p1=0, integrity_clean=True,
-        contamination_clean=True, no_fabricated_evidence=True, oracles_valid=True,
-        no_sole_llm_judge_critical=True, no_low_fidelity_promotion=True,
-        adaptive_logged=True, no_hidden_weak_stratum=True,
-        critical_claims_state={"tenant_isolation": "PASS",
-                               "authority_conservation": "PASS", "consent": "PASS",
-                               "protected_effect_approval": "PASS"})
+    assert _gates()["overall_pass"] is True
+    bad = _gates(p0=1)
     assert bad["overall_pass"] is False and "P0_ZERO" in bad["failed"]
+
+
+def test_literal_gates_now_derived():
+    # red-team P1-4: previously-literal gates now fail when their derived input is
+    # false (proof-not-authority derives from SP0010 admission)
+    assert "NO_PROOF_AS_AUTHORITY" in _gates(sp0010_admitted=False)["failed"]
+    assert "NO_CRITICAL_UNKNOWN_AS_PASS" in _gates(
+        no_critical_unknown_as_pass=False)["failed"]
 
 
 # --- oracle hierarchy --------------------------------------------------------

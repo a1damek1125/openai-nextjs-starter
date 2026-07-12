@@ -3,14 +3,17 @@
     "all_present": true,
     "assets": {
       "tools/evaluation/canon.py": "9b3f64f2e7446b23713e110553dcf37f1cfd03248ba86be5e0bdf5422bcf50d6",
-      "tools/evaluation/credits.py": "628a07f914b634cc6467bf46eeaec0d3cd2c906aa98e7995b7e43d818e1d3b3e",
-      "tools/evaluation/genome.py": "90950e8c4d0ab62c76ced502493aa78fbad6ac67bcb584e1f69b31c31a3c670d",
-      "tools/evaluation/hardgates.py": "deb1a6737490f28ac044b0311f63fc6675f9e4f2db3ca393b7480128be17b587",
-      "tools/evaluation/kernel.py": "6b2d12779159b906e2b6e67f340f31e02c6b88c972d1b5ae07f1c14dfe756232",
+      "tools/evaluation/credits.py": "c7278fb3092c87ecc8d603c3677cb55e3d7904148fb1efaf16169c2feaba5ae4",
+      "tools/evaluation/genome.py": "4984fa7048f75cd241aa789372f83826c29e6f17ec5fbb10ec36ce8bf6774bac",
+      "tools/evaluation/hardgates.py": "84f184e84d85b459aff0d59681df126d9492e36f9490b06cd645ca1c3b60a6f2",
+      "tools/evaluation/kernel.py": "8d071761073c05afbaee0081c43db444c4a749ec11ff037f876d91eb6b6a9e9c",
       "tools/evaluation/model.py": "55e70b7bf0d592bcaeb9e05fbd902b21b3e6bb5bf8bd1eb9b9a1c0983ed47181",
       "tools/evaluation/score.py": "71d4d081a0f64cf53f3d585c18c65e0ee57f3411f80cb1742e8adfc34f5f6996"
     },
-    "manifest_root": "c21695fe6755b115c09691c6debd7f722fc4a6290c969b7d6de4ba351d6af6da"
+    "manifest_root": "1acae1c1dd37273631227a0b4e66a543e53d1609fb1909f7a2e5f1f412748bf4",
+    "matches_pinned": true,
+    "mismatched_pins": [],
+    "pinned_count": 7
   },
   "held_out_answers_exposed": false,
   "search_enabled": false
