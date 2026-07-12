@@ -1,0 +1,29 @@
+{
+  "schema_id": "CanonicalContractSurfaceRecord",
+  "note": "Authoritative alphabets live in tools/contracts_inventory/model.py; this is a descriptive schema of one materialized surface record.",
+  "surface_record": {
+    "surface_id": "opaque stable id 'CS-'+sha256(kind|canonical_name)[:20] (D-0008-06); independent of label/location",
+    "surface_kind": "one of SURFACE_KINDS (HTTP_ROUTE, REQUEST_SHAPE, RESPONSE_SHAPE, AUDIT_EVENT, RUN_LEDGER_EVENT, DB_TABLE, DB_MIGRATION, STATE_MACHINE, STATE_TRANSITION, PROOF_ARTIFACT, UI_SURFACE, PROVIDER_BINDING, CONFIG_KEY, CLI_COMMAND, BACKGROUND_JOB)",
+    "canonical_name": "the surface's canonical name (e.g. 'GET /cases', a table name, an event type)",
+    "contract_kind": "SP0007 registry taxonomy (HTTP_API, EVENT_MESSAGE, DB_SCHEMA, WORKFLOW_HISTORY, PROOF_HASH, ...)",
+    "parent_contract_id": "the SP0007 CT-* descriptor this surface refines, or null for NEW_SURFACE (never a minted parallel id)",
+    "identity_outcome": "MATCHED_EXISTING | NEW_SURFACE | ALIAS_CANDIDATE | DUPLICATE_CANDIDATE | AMBIGUOUS_IDENTITY",
+    "state": "lifecycle state (DISCOVERED..SEALED, §13)",
+    "evidence": "[{path,line}] — every grounding source site (INV-0008-17)",
+    "detectors": "detector names that observed this surface",
+    "corroboration": "{detectors, corroboration: SINGLE_DETECTOR|REAL_CORROBORATION|PARTIAL_CORROBORATION|COMMON_MODE_ONLY, diversity}",
+    "criticality": {
+      "vector": "8 dims (authority, tenant, data, externality, irreversibility, centrality, proof, historical_obligation) each YES|NO|UNKNOWN — NEVER averaged",
+      "verdict": "CRITICAL (any hard flag YES) | ELEVATED (any hard flag UNKNOWN) | STANDARD"
+    },
+    "effect_reachability": "{reaches_effect, effect_sinks, self_sink, exactness: EXACT|UNKNOWN} — UNKNOWN is never 'proven absent'",
+    "producers": "[{path,line,certainty}] grounded creation sites",
+    "consumers": "{consumer_token, consumer_refs, consumer_count_observed, certainty: STATIC_CONFIRMED|TEST_CONFIRMED|DECLARED|HISTORICALLY_EVIDENCED|TRANSITIVE_INFERRED|UNKNOWN} — UNKNOWN is a dark-consumer risk, never zero",
+    "ownership": "{owner (capability tag CORE|TOOL|EMP-* or null), primary_source, resolved}",
+    "witnesses": "[witness_id] grounded behavioral witnesses",
+    "readiness": "{verdict: NOT_READY|NO_KNOWN_BLOCKER, hard_blockers, grants_authority: false}",
+    "claim_ids": "[EV-*] the bitemporal evidence claims for this surface",
+    "material_leaf": "the material Merkle leaf sealed into the Contract Genome (moves on material change, not on cosmetic change)",
+    "record_hash": "core_hash of the record"
+  }
+}

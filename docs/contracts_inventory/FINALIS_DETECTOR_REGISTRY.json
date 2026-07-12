@@ -1,0 +1,129 @@
+{
+  "blind_spots": [
+    {
+      "blind_to": "add_api_route paths built by string concatenation (e.g. '/ai-employee/work-inbox/' + path); only literal arg0 paths are recovered",
+      "detector": "http_routes",
+      "kind": "HTTP_ROUTE",
+      "under_reports": true
+    },
+    {
+      "blind_to": "transitions synthesized at runtime \u2014 lifecycle._build_edges universal edges, employee_work_inbox set-unions and dict-comprehension splats; only enum members are recovered",
+      "detector": "state_machines",
+      "kind": "STATE_TRANSITION",
+      "under_reports": true
+    },
+    {
+      "blind_to": "event_type values built from f-strings / variables rather than string literals",
+      "detector": "audit_events",
+      "kind": "AUDIT_EVENT",
+      "under_reports": true
+    },
+    {
+      "blind_to": "keys read via indirection or a settings object rather than a direct os.environ/os.getenv literal",
+      "detector": "config_keys",
+      "kind": "CONFIG_KEY",
+      "under_reports": true
+    },
+    {
+      "blind_to": "the product package finalis/ exposes no argparse CLI; only governance tooling under tools/ does (out of product scope)",
+      "detector": "cli_commands",
+      "kind": "CLI_COMMAND",
+      "under_reports": false
+    },
+    {
+      "blind_to": "routes are read only from finalis/portal/app.py and finalis/portal/ui.py; a route defined in any other module would not be seen (file-scoped detector)",
+      "detector": "http_routes",
+      "kind": "HTTP_ROUTE",
+      "under_reports": true
+    },
+    {
+      "blind_to": "migrations are read only from finalis/portal/db.py, and a migration whose version is a non-literal is skipped (its DDL is recorded as NON_LITERAL_SQL rather than dropped)",
+      "detector": "db_migrations",
+      "kind": "DB_MIGRATION",
+      "under_reports": true
+    },
+    {
+      "blind_to": "run-ledger events are read only from the EVENT_SCHEMA dict in finalis/ai_employee/run_ledger.py (file-scoped)",
+      "detector": "run_ledger_events",
+      "kind": "RUN_LEDGER_EVENT",
+      "under_reports": true
+    }
+  ],
+  "capability": {
+    "audit_events": {
+      "kinds": [
+        "AUDIT_EVENT"
+      ],
+      "method": "AST_CALL_KWARG_LITERAL"
+    },
+    "cli_commands": {
+      "kinds": [
+        "CLI_COMMAND"
+      ],
+      "method": "AST_ADD_PARSER"
+    },
+    "config_keys": {
+      "kinds": [
+        "CONFIG_KEY"
+      ],
+      "method": "AST_ENV_ACCESS"
+    },
+    "db_migrations": {
+      "kinds": [
+        "DB_MIGRATION",
+        "DB_TABLE"
+      ],
+      "method": "AST_LIST_PLUS_SQL_REGEX"
+    },
+    "declared_config": {
+      "kinds": [
+        "CONFIG_KEY"
+      ],
+      "method": "TEXT_ENV_FILE"
+    },
+    "http_routes": {
+      "kinds": [
+        "HTTP_ROUTE"
+      ],
+      "method": "AST_DECORATOR_AND_CALL"
+    },
+    "proof_artifacts": {
+      "kinds": [
+        "PROOF_ARTIFACT"
+      ],
+      "method": "AST_FUNCTION_NAME"
+    },
+    "proof_versions": {
+      "kinds": [
+        "PROOF_ARTIFACT"
+      ],
+      "method": "AST_ASSIGN_STRING_REGEX"
+    },
+    "run_ledger_events": {
+      "kinds": [
+        "RUN_LEDGER_EVENT"
+      ],
+      "method": "AST_DICT_KEYS"
+    },
+    "state_machines": {
+      "kinds": [
+        "STATE_MACHINE",
+        "STATE_TRANSITION"
+      ],
+      "method": "AST_ENUM_CLASS"
+    }
+  },
+  "detectors": [
+    "http_routes",
+    "db_migrations",
+    "run_ledger_events",
+    "audit_events",
+    "state_machines",
+    "proof_artifacts",
+    "proof_versions",
+    "config_keys",
+    "declared_config",
+    "cli_commands"
+  ],
+  "schema_id": "ContractDetectorRegistry"
+}

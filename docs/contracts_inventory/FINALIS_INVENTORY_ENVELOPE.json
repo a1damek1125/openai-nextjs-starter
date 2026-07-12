@@ -1,0 +1,38 @@
+{
+  "class_roots": {
+    "AUDIT_EVENT": "66a37f2987646f0700308229bb9869b68beb2986ae8206e62347508fcbee909f",
+    "CONFIG_KEY": "4c365cd7da3230dba3612c2f8b1dd77ad7ce137af30ce9d2132fc6eb1a2540e5",
+    "DB_MIGRATION": "2c42e01223ffb371a1f9eab857fd6c10d502d3c5e6c7ac7b147fa8e47c64c04f",
+    "DB_TABLE": "04e02ab0e9903e7ffe3c6688bfa1bb48fe6bb8929d1b50d0328cbe600f333e9c",
+    "HTTP_ROUTE": "b462e0845947b66eb54e6ddfcffb0c73318be1c8b0bd6be4443459ec451982ce",
+    "PROOF_ARTIFACT": "b93ea37ba0b10b3cbbdc6ec18374d4e594b95b0bb4cb9243f85a93a18bc73f03",
+    "RUN_LEDGER_EVENT": "5fc4d1af505157fe45125bfba2fa3024224e65286fa5ae6728667c0d13ece4e5",
+    "STATE_MACHINE": "976a60625185e2cc833ebcda24b3ee655aa83e4a734dc9a688e8461a8c186d40",
+    "STATE_TRANSITION": "66504e2abdf582085895f7387956366f9282a6d11ab0b29136c10e2edf1ffe44"
+  },
+  "content_digest": "a30eff9172f5a10b488fb264e9bde12eb1e80fda072b30f09ff08088ef608428",
+  "detector_names": [
+    "audit_events",
+    "cli_commands",
+    "config_keys",
+    "db_migrations",
+    "declared_config",
+    "http_routes",
+    "proof_artifacts",
+    "proof_versions",
+    "run_ledger_events",
+    "state_machines"
+  ],
+  "envelope_kind": "finalis-contract-inventory-envelope-v1",
+  "finding_counts": {
+    "P0": 0,
+    "P1": 0,
+    "P2": 4890
+  },
+  "global_root": "7269f08cd7d53679cae6ce3b134a00d6dd6146fde0c60e712a065a711be377b1",
+  "inventory_digest": "52c462f8306961623b1f4dda582fb28ef2c08664e840a1839975e855f8860330",
+  "inventory_version": "finalis-contract-inventory-v1",
+  "non_authoritative": true,
+  "schema_id": "InventoryProofEnvelope",
+  "surface_count": 1295
+}
