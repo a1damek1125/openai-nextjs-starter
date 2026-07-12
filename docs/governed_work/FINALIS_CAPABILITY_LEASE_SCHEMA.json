@@ -1,0 +1,73 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "allowed_operations": {
+      "type": "array"
+    },
+    "attenuation_delta": {
+      "type": "object"
+    },
+    "cost_ceiling": {
+      "type": "object"
+    },
+    "data_classes": {
+      "type": "array"
+    },
+    "effect_classes": {
+      "type": "array"
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "integrity_hash": {
+      "type": "string"
+    },
+    "lease_id": {
+      "type": "string"
+    },
+    "maximum_uses": {
+      "type": "integer"
+    },
+    "parent_lease_id": {
+      "type": "string"
+    },
+    "purpose": {
+      "type": "string"
+    },
+    "revocation_state": {
+      "type": "string"
+    },
+    "risk_ceiling": {
+      "type": "object"
+    },
+    "root_authority_ref": {
+      "type": "string"
+    },
+    "subject_identity": {
+      "type": "string"
+    },
+    "targets": {
+      "type": "array"
+    },
+    "tenant_id": {
+      "type": "string"
+    },
+    "work_order_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "lease_id",
+    "tenant_id",
+    "work_order_id",
+    "subject_identity",
+    "purpose",
+    "targets",
+    "allowed_operations",
+    "effect_classes",
+    "expires_at",
+    "maximum_uses"
+  ],
+  "schema_id": "CapabilityLease",
+  "type": "object"
+}

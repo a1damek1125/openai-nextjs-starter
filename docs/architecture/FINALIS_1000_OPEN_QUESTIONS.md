@@ -15,7 +15,7 @@
 | OQ-09 | A2A interoperability surface — which agents, which trust model. | P3 | SP0005 / Layer 8 | Locked: A2A is an interoperability boundary, never internal authority. |
 | OQ-10 | Observability vendor + content-capture policy (privacy/redaction). | P2 | SP0005 / Layer 10 | Locked: OpenTelemetry-compatible, correlation IDs enumerated, no default content capture. |
 | OQ-11 | Regulatory risk-classification taxonomy for HR/legal/finance domains (EU AI Act high-risk mapping). | P2 | SP0005 | SP0000 is not legal advice; it locks that risk classification lives in the architecture with human authority not bolted on. |
-| OQ-12 | Learning promotion criteria + eval thresholds (regression gates). | P2 | SP0006 | Locked: no direct production self-modification; candidate→eval→promotion pipeline mandatory. |
+| OQ-12 | Learning promotion criteria + eval thresholds (regression gates). | P2 | SP0011 | Locked: no direct production self-modification; candidate→eval→promotion pipeline mandatory. |
 | OQ-13 | Global brand naming (public product identity may change; "Finalis"/"ViktorAI" internal codenames). | P3 | SP0010 | Naming is independent of architecture; INV-0000 unaffected. |
 | OQ-14 | Model-router policy (which model for which task/risk/cost/latency band). | P2 | Layer 4 impl | Locked: models replaceable (D-0000-06); router is advisory, never authority. |
 | OQ-15 | Skill Genome representation + versioning + rollback semantics. | P2 | Layer 4/6 impl | Locked: skills are strategic Finalis IP; versioned; upgrades must be survivable (§FAILURE). |

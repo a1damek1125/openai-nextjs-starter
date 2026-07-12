@@ -798,6 +798,16 @@
     },
     {
       "distribution_family": null,
+      "duration_model_id": "dm-SP0011",
+      "mode": "UNKNOWN",
+      "model_version": "1",
+      "node_id": "SP0011",
+      "observations": [],
+      "parameters": {},
+      "similarity_class": null
+    },
+    {
+      "distribution_family": null,
       "duration_model_id": "dm-TELEPHONY",
       "mode": "UNKNOWN",
       "model_version": "1",
@@ -1971,7 +1981,7 @@
     },
     {
       "block": "PROGRAM",
-      "canonical_name": "Evaluation and 1000/1000 Score Charter",
+      "canonical_name": "Governed Work, Delegated Autonomy & Outcome Accountability Constitution",
       "completion_evidence": [],
       "duration_model_ref": null,
       "node_id": "SP0006",
@@ -2027,6 +2037,19 @@
       "completion_evidence": [],
       "duration_model_ref": null,
       "node_id": "SP0010",
+      "node_type": "SP",
+      "outputs": [],
+      "resource_keys": [],
+      "risk_tags": [],
+      "status": "NOT_STARTED",
+      "status_source": "DECLARED"
+    },
+    {
+      "block": "PROGRAM",
+      "canonical_name": "Evaluation and 1000/1000 Score Charter",
+      "completion_evidence": [],
+      "duration_model_ref": null,
+      "node_id": "SP0011",
       "node_type": "SP",
       "outputs": [],
       "resource_keys": [],

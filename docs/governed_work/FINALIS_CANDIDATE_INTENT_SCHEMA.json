@@ -1,0 +1,35 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "candidate_intent_id": {
+      "type": "string"
+    },
+    "interpretation_source": {
+      "type": "string"
+    },
+    "raw_content_hash": {
+      "type": "string"
+    },
+    "requester_id": {
+      "type": "string"
+    },
+    "source_surface": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "tenant_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "candidate_intent_id",
+    "tenant_id",
+    "requester_id",
+    "source_surface",
+    "status"
+  ],
+  "schema_id": "CandidateIntent",
+  "type": "object"
+}

@@ -1,0 +1,67 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "accountable_owner_id": {
+      "type": "string"
+    },
+    "allowed_scope": {
+      "type": "object"
+    },
+    "budget_vector": {
+      "type": "object"
+    },
+    "canonical_goal": {
+      "type": "object"
+    },
+    "capability_ceiling": {
+      "type": "object"
+    },
+    "constraints": {
+      "type": "array"
+    },
+    "forbidden_scope": {
+      "type": "object"
+    },
+    "outcome_contract": {
+      "type": "object"
+    },
+    "privacy_purpose": {
+      "type": "string"
+    },
+    "requester_id": {
+      "type": "string"
+    },
+    "semantic_work_hash": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "tenant_id": {
+      "type": "string"
+    },
+    "work_instance_hash": {
+      "type": "string"
+    },
+    "work_order_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "work_order_id",
+    "tenant_id",
+    "requester_id",
+    "accountable_owner_id",
+    "canonical_goal",
+    "allowed_scope",
+    "outcome_contract",
+    "capability_ceiling",
+    "budget_vector",
+    "privacy_purpose",
+    "semantic_work_hash",
+    "work_instance_hash",
+    "status"
+  ],
+  "schema_id": "CanonicalWorkOrder",
+  "type": "object"
+}

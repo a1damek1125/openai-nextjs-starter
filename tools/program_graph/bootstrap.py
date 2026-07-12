@@ -37,8 +37,15 @@ DEP_ALIASES = {
     "TOOL-B8": "TOOL-B8",
 }
 
-# program-architecture layer (SP0000..SP0010) — SP0000/1/2 COMPLETE, SP0003 in
-# progress, SP0004..SP0010 planned (§26 next dependencies).
+# program-architecture layer (SP0000..SP0011) — SP0000/1/2 COMPLETE, SP0003 in
+# progress, SP0004..SP0011 planned (§26 next dependencies).
+#
+# SP0006 reassignment (authorized, non-silent): SP0006 is the Governed Work,
+# Delegated Autonomy & Outcome Accountability Constitution. The Evaluation and
+# 1000/1000 Score Charter that previously held SP0006 moved to the next free
+# constitutional slot, SP0011 (SP0007..SP0010 are NOT renumbered). The
+# SP0009->SP0006 architecture dependency (release-train DoD needs the evaluation
+# bar) was redirected to SP0011; see docs/governed_work/SP0006_ROADMAP_IDENTITY_REPORT.md.
 PROGRAM_LAYER = [
     ("SP0000", "Finalis 1000 Master Architecture Lock", "COMPLETE", "e1b6b5c",
      []),
@@ -51,8 +58,8 @@ PROGRAM_LAYER = [
      "NOT_STARTED", "", ["SP0003"]),
     ("SP0005", "Threat, Safety, Regulatory & High-Risk Domain Taxonomy",
      "NOT_STARTED", "", ["SP0003"]),
-    ("SP0006", "Evaluation and 1000/1000 Score Charter", "NOT_STARTED", "",
-     ["SP0003"]),
+    ("SP0006", "Governed Work, Delegated Autonomy & Outcome Accountability "
+     "Constitution", "NOT_STARTED", "", ["SP0003"]),
     ("SP0007", "Compatibility, Migration and Versioning Policy", "NOT_STARTED",
      "", ["SP0003"]),
     ("SP0008", "Existing API/UI/Data Contract Inventory", "NOT_STARTED", "",
@@ -60,6 +67,8 @@ PROGRAM_LAYER = [
     ("SP0009", "Release Train, Quality Gates and Definition of Done",
      "NOT_STARTED", "", ["SP0003"]),
     ("SP0010", "Global Brand Naming Sprint", "NOT_STARTED", "", ["SP0003"]),
+    ("SP0011", "Evaluation and 1000/1000 Score Charter", "NOT_STARTED", "",
+     ["SP0003"]),
 ]
 
 # synthetic milestones that anchor dominator/cut-set resilience analysis

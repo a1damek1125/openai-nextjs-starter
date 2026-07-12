@@ -1,0 +1,51 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "acceptance_predicates": {
+      "type": "array"
+    },
+    "completion_rule": {
+      "type": "string"
+    },
+    "defeater_policy": {
+      "type": "object"
+    },
+    "dispute_policy": {
+      "type": "object"
+    },
+    "expected_outcomes": {
+      "type": "array"
+    },
+    "forbidden_outcomes": {
+      "type": "array"
+    },
+    "outcome_contract_id": {
+      "type": "string"
+    },
+    "required_artifacts": {
+      "type": "array"
+    },
+    "required_evidence": {
+      "type": "array"
+    },
+    "verification_mode": {
+      "type": "string"
+    },
+    "verifier_requirements": {
+      "type": "object"
+    },
+    "work_order_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "outcome_contract_id",
+    "work_order_id",
+    "expected_outcomes",
+    "acceptance_predicates",
+    "verification_mode",
+    "completion_rule"
+  ],
+  "schema_id": "OutcomeContract",
+  "type": "object"
+}

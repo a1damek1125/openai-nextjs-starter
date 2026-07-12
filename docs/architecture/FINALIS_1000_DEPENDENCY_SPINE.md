@@ -53,11 +53,12 @@ SP0000 unlocks the **architecture-program** SP0001–SP0010 (rules-first), NOT i
 | SP0003 | Dependency Graph & Critical Path Lock | SP0002 | SP0004 |
 | SP0004 | Technology Decision Records (durable engine, DB, frontend…) | SP0003 | impl SPs |
 | SP0005 | Threat/Safety/Regulatory & High-Risk Domain Taxonomy | SP0003 | L8 gate |
-| SP0006 | Finalis 1000 Evaluation Charter | SP0003 | L6 gate |
+| SP0006 | Governed Work, Delegated Autonomy & Outcome Accountability Constitution | SP0003 | impl SPs |
 | SP0007 | Compatibility, Migration & Versioning Policy | SP0003 | all impl |
 | SP0008 | API / UI / Data Contract Inventory | SP0002 | L1, portal |
-| SP0009 | Release Train & Definition of Done | SP0004..08 | all impl |
+| SP0009 | Release Train & Definition of Done | SP0004,05,07,08,**11** | all impl |
 | SP0010 | Global Brand Naming Sprint | SP0000 | product identity |
+| SP0011 | Finalis 1000 Evaluation Charter (reassigned from SP0006) | SP0003 | L6 gate |
 
 ## Implementation-block references (named, not scheduled here)
 
@@ -80,7 +81,7 @@ Each required layer maps to a future implementation-SP area. Exact SP *numbers* 
 | L3 Certified Intelligence (LGGT+) | LGGT source audit = **SP0021** → impl block | INV-0000-04, D-0000-10 |
 | L4 Adaptive Cognition | impl block; model-router TDR = SP0004 | INV-0000-02, INV-0000-06 |
 | L5 Outcome Intelligence | impl block | INV-0000-11 |
-| L6 Continuous Experience Intelligence | eval charter = **SP0006** → impl block | INV-0000-08, INV-0000-13 |
+| L6 Continuous Experience Intelligence | eval charter = **SP0011** → impl block | INV-0000-08, INV-0000-13 |
 | L7 Communication Cortex | impl block | INV-0000-07 |
 | L8 Real-World Effect Boundary | threat/regulatory taxonomy = **SP0005**; adapter TDRs = SP0004 → impl block (roadmap TOOL-B10) | INV-0000-10, INV-0000-14 |
 | L9 Role/Vertical Composition | impl block; contract inventory = SP0008 | D-0000-14 |

@@ -1,0 +1,35 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "budget_id": {
+      "type": "string"
+    },
+    "data_access_quota": {
+      "type": "object"
+    },
+    "external_effect_quota": {
+      "type": "object"
+    },
+    "financial_cost": {
+      "type": "object"
+    },
+    "model_cost": {
+      "type": "object"
+    },
+    "resource_capacity": {
+      "type": "object"
+    },
+    "tool_call_quota": {
+      "type": "object"
+    },
+    "work_order_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "budget_id",
+    "work_order_id"
+  ],
+  "schema_id": "BudgetLedger",
+  "type": "object"
+}

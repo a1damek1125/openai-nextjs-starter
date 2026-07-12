@@ -1,0 +1,82 @@
+{
+  "recurring_contracts": [
+    {
+      "active_from": "2026-01-01T00:00:00Z",
+      "approval_policy": {
+        "required_class": "A2"
+      },
+      "cadence": "MONTHLY",
+      "capability_ceiling": {
+        "effect_classes": [
+          "READ",
+          "DRAFT",
+          "COMMUNICATION"
+        ]
+      },
+      "expires_at": "2026-12-31T23:59:59Z",
+      "expiry": "2026-12-31T23:59:59Z",
+      "per_run_budget": {
+        "budget_id": "BV-0001",
+        "data_access_quota": {
+          "total": 100,
+          "unit": "records"
+        },
+        "deadline": "2026-03-31T23:59:59Z",
+        "external_effect_quota": {
+          "total": 1,
+          "unit": "sends"
+        },
+        "financial_cost": {
+          "total": 0,
+          "unit": "USD"
+        },
+        "model_cost": {
+          "total": 200000,
+          "unit": "tokens"
+        },
+        "resource_capacity": {
+          "total": 4,
+          "unit": "workers"
+        },
+        "risk_vector": {
+          "financial": "LOW",
+          "irreversibility": "MEDIUM",
+          "legal": "LOW",
+          "operational": "LOW",
+          "privacy": "MEDIUM",
+          "reputation": "LOW",
+          "rights": "LOW",
+          "security": "LOW"
+        },
+        "tool_call_quota": {
+          "total": 50,
+          "unit": "calls"
+        },
+        "work_order_id": "WO-0001"
+      },
+      "purpose": "billing_operations",
+      "reauthorization_requirements": [
+        "tenant",
+        "owner",
+        "policy",
+        "leases",
+        "approvals",
+        "technology",
+        "safety",
+        "purpose",
+        "budgets"
+      ],
+      "recurrence_contract_id": "RC-0001",
+      "scope_ceiling": {
+        "target": [
+          "invoice:*"
+        ]
+      },
+      "semantic_work_hash": "bbb0d5eaca7118dd372b4ca6572a22e6305284bd925bff17d3fc7dfdc9a7e62f",
+      "status": "ACTIVE",
+      "termination_policy": {
+        "on": "expiry_or_owner_revocation"
+      }
+    }
+  ]
+}

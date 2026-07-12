@@ -1,0 +1,22 @@
+{
+  "approval_tokens": [
+    {
+      "action_fingerprint": "",
+      "approval_token_id": "APT-0001",
+      "approver_class": "A2",
+      "approver_id": "owner-finance-lead",
+      "current_uses": 0,
+      "effect_class": "COMMUNICATION",
+      "expires_at": "2026-03-06T10:00:00Z",
+      "integrity_hash": "",
+      "issued_at": "2026-03-05T10:00:00Z",
+      "material_parameters_hash": "",
+      "maximum_uses": 1,
+      "required_class": "A2",
+      "risk_snapshot_hash": "",
+      "status": "ACTIVE",
+      "target_fingerprint": "",
+      "work_instance_hash": ""
+    }
+  ]
+}

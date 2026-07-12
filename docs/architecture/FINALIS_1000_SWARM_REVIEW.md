@@ -55,7 +55,7 @@ Full register: `FINALIS_1000_RESEARCH_REGISTER.md`.
 | 5 | Long-running run lost | P2 | COVERED — Zero-Lost-Work + durable wait-states + §12 survive restart |
 | 6 | Event processed twice | P2 | COVERED — §10 idempotent consumption + replay-safe; detail SP0014 |
 | 7 | Case orphaned | P2 | COVERED — Zero-Lost-Work formula + INV-0000-06 one ownership model |
-| 8 | Learning regression | P2 | COVERED — D-0000-09, INV-0000-08, L6 regression gates, SP0006 |
+| 8 | Learning regression | P2 | COVERED — D-0000-09, INV-0000-08, L6 regression gates, SP0011 |
 | 9 | Old rule/fact valid too long | P3 | COVERED — L2 temporal validity + L3 temporal KB snapshots |
 | **10** | **Tenant boundary crossed** | **P1** | **GAP → FIXED** — added **INV-0000-13** (tenant scope absolute, binds L2 memory + L6 learning) |
 | 11 | Portal second source of truth | P3 | COVERED — D-0000-15, INV-0000-05/07, strangler + parity gates |

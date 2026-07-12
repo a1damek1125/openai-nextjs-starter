@@ -115,11 +115,12 @@
     {"sp": "SP0003", "name": "Dependency Graph & Critical Path Lock", "depends_on": ["SP0002"]},
     {"sp": "SP0004", "name": "Technology Decision Records", "depends_on": ["SP0003"]},
     {"sp": "SP0005", "name": "Threat, Safety, Regulatory & High-Risk Domain Taxonomy", "depends_on": ["SP0003"]},
-    {"sp": "SP0006", "name": "Finalis 1000 Evaluation Charter", "depends_on": ["SP0003"]},
+    {"sp": "SP0006", "name": "Governed Work, Delegated Autonomy & Outcome Accountability Constitution", "depends_on": ["SP0003"]},
     {"sp": "SP0007", "name": "Compatibility, Migration & Versioning Policy", "depends_on": ["SP0003"]},
     {"sp": "SP0008", "name": "API / UI / Data Contract Inventory", "depends_on": ["SP0002"]},
-    {"sp": "SP0009", "name": "Release Train & Definition of Done", "depends_on": ["SP0004", "SP0005", "SP0006", "SP0007", "SP0008"]},
+    {"sp": "SP0009", "name": "Release Train & Definition of Done", "depends_on": ["SP0004", "SP0005", "SP0011", "SP0007", "SP0008"]},
     {"sp": "SP0010", "name": "Global Brand Naming Sprint", "depends_on": ["SP0000"]},
+    {"sp": "SP0011", "name": "Finalis 1000 Evaluation Charter", "depends_on": ["SP0003"]},
     {"sp": "SP0012", "name": "Authoritative Employee State Machine", "depends_on": ["SP0003"]},
     {"sp": "SP0014", "name": "Event Architecture", "depends_on": ["SP0003"]},
     {"sp": "SP0015", "name": "Zero-Lost-Work Formalization", "depends_on": ["SP0003"]},
@@ -191,7 +192,7 @@
     "OQ-04 state machine table (SP0012)", "OQ-05 event details (SP0014)", "OQ-06 zero-lost-work predicate (SP0015)",
     "OQ-07 current LGGT source truth (SP0021)", "OQ-08 MCP authz specifics (SP0005)", "OQ-09 A2A surface (SP0005)",
     "OQ-10 observability vendor + content policy (SP0005)", "OQ-11 regulatory risk taxonomy (SP0005)",
-    "OQ-12 learning promotion criteria (SP0006)", "OQ-13 brand naming (SP0010)", "OQ-14 model-router policy (L4 impl)",
+    "OQ-12 learning promotion criteria (SP0011)", "OQ-13 brand naming (SP0010)", "OQ-14 model-router policy (L4 impl)",
     "OQ-15 skill genome representation (L4/L6 impl)"
   ],
   "swarm_execution": {

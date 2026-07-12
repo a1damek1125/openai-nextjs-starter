@@ -1,0 +1,43 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "accountable_owner_id": {
+      "type": "string"
+    },
+    "attenuation_proof_hash": {
+      "type": "string"
+    },
+    "child_identity": {
+      "type": "string"
+    },
+    "child_lease_refs": {
+      "type": "array"
+    },
+    "delegation_id": {
+      "type": "string"
+    },
+    "parent_identity": {
+      "type": "string"
+    },
+    "parent_lease_refs": {
+      "type": "array"
+    },
+    "status": {
+      "type": "string"
+    },
+    "subtask_scope": {
+      "type": "object"
+    },
+    "work_order_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "delegation_id",
+    "work_order_id",
+    "parent_identity",
+    "child_identity"
+  ],
+  "schema_id": "DelegationEdge",
+  "type": "object"
+}

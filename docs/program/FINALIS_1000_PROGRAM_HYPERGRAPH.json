@@ -151,6 +151,24 @@
     },
     {
       "admitted_by": "ARCHITECTURE_REVIEW",
+      "dependency_id": "dep-2445ba91e073",
+      "dependency_type": "ARCHITECTURE_PRECONDITION",
+      "evidence_refs": [
+        "docs/architecture/FINALIS_1000_DEPENDENCY_SPINE.md"
+      ],
+      "failure_if_bypassed": "SP0011 would rest on an unverified foundation",
+      "head_node": "SP0011",
+      "logic": "ALL_OF",
+      "reason": "SP0011 builds on the frozen outputs of SP0003",
+      "required_output": "",
+      "scenario_condition": null,
+      "status": "ACTIVE",
+      "tail_nodes": [
+        "SP0003"
+      ]
+    },
+    {
+      "admitted_by": "ARCHITECTURE_REVIEW",
       "dependency_id": "dep-25e0b902a8e8",
       "dependency_type": "EVALUATION_PRECONDITION",
       "evidence_refs": [

@@ -1,0 +1,29 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "approval_topology_id": {
+      "type": "string"
+    },
+    "classes": {
+      "type": "array"
+    },
+    "independence_constraints": {
+      "type": "object"
+    },
+    "quorum": {
+      "type": "object"
+    },
+    "required_floor": {
+      "type": "string"
+    },
+    "work_order_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "approval_topology_id",
+    "required_floor"
+  ],
+  "schema_id": "ApprovalTopology",
+  "type": "object"
+}
