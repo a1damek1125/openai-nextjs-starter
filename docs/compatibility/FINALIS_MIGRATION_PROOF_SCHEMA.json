@@ -1,0 +1,50 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "checkpoint_manifest_hash": {
+      "type": "string"
+    },
+    "consumer_verification_hash": {
+      "type": "string"
+    },
+    "envelope_hash": {
+      "type": "string"
+    },
+    "envelope_version": {
+      "type": "string"
+    },
+    "loss_vector_hash": {
+      "type": "string"
+    },
+    "migration_plan_hash": {
+      "type": "string"
+    },
+    "replay_result_hash": {
+      "type": "string"
+    },
+    "rollback_result_hash": {
+      "type": "string"
+    },
+    "round_trip_result_hash": {
+      "type": "string"
+    },
+    "source_state_hash": {
+      "type": "string"
+    },
+    "target_state_hash": {
+      "type": "string"
+    },
+    "transformer_hash": {
+      "type": "string"
+    },
+    "validator_version": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "envelope_version",
+    "envelope_hash"
+  ],
+  "schema_id": "MigrationProofEnvelope",
+  "type": "object"
+}

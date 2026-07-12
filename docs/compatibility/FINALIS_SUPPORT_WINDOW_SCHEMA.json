@@ -1,0 +1,33 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "contract_id": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "review_due": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "support_window_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "waiver_expires_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "support_window_id",
+    "contract_id",
+    "status"
+  ],
+  "schema_id": "SupportWindow",
+  "type": "object"
+}

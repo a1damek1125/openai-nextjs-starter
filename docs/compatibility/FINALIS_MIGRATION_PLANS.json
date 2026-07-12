@@ -1,0 +1,55 @@
+{
+  "migration_plans": [
+    {
+      "approval_requirements": [
+        "A2"
+      ],
+      "change_intent_ref": "CI-HTTP-2",
+      "consumer_order": [
+        "portal-ui::ct-http-cases"
+      ],
+      "contract_phase": {
+        "gated": true
+      },
+      "expand_phase": {
+        "breaks_old_consumers": false
+      },
+      "forward_fix_plan_ref": "FF-HTTP-2",
+      "migrate_phase": {
+        "dual_read": true
+      },
+      "migration_plan_id": "MP-HTTP-2",
+      "rollback_plan_ref": "RB-HTTP-2",
+      "source_versions": [
+        "1.0.0"
+      ],
+      "status": "DRAFT",
+      "steps": [
+        {
+          "idempotency_key": "mp-http-2-expand",
+          "phase": "EXPAND",
+          "step_id": "S1"
+        },
+        {
+          "idempotency_key": "mp-http-2-migrate",
+          "phase": "MIGRATE",
+          "step_id": "S2"
+        },
+        {
+          "idempotency_key": "mp-http-2-verify",
+          "phase": "VERIFY",
+          "step_id": "S3"
+        },
+        {
+          "idempotency_key": "mp-http-2-contract",
+          "phase": "CONTRACT",
+          "step_id": "S4"
+        }
+      ],
+      "target_version": "2.0.0",
+      "verify_phase": {
+        "replay": true
+      }
+    }
+  ]
+}

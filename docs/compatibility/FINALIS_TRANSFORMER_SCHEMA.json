@@ -1,0 +1,30 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "from_version": {
+      "type": "string"
+    },
+    "inverse_verified": {
+      "type": "boolean"
+    },
+    "loss_vector": {
+      "type": "object"
+    },
+    "rules": {
+      "type": "object"
+    },
+    "to_version": {
+      "type": "string"
+    },
+    "transformer_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "transformer_id",
+    "from_version",
+    "to_version"
+  ],
+  "schema_id": "Transformer",
+  "type": "object"
+}

@@ -1,0 +1,204 @@
+{
+  "descriptors": [
+    {
+      "authority_class": "GOVERNANCE_REFERENCE",
+      "canonical_format": "fastapi-dict-v1",
+      "consumer_refs": [],
+      "contract_id": "CT-HTTP-CASES",
+      "contract_kind": "HTTP_API",
+      "criticality": "C3",
+      "current_version": "1.0.0",
+      "owner_capability": "case_services",
+      "producer_refs": [
+        "finalis/portal/app.py"
+      ],
+      "requires_corpus": true,
+      "semantic_concept_refs": [
+        "case",
+        "case_state"
+      ],
+      "source_paths": [
+        "finalis/portal/app.py"
+      ],
+      "stability": "STABLE"
+    },
+    {
+      "authority_class": "GOVERNANCE_REFERENCE",
+      "canonical_format": "finalis-run-event-v1",
+      "consumer_refs": [],
+      "contract_id": "CT-EVENT-RUN-LEDGER",
+      "contract_kind": "EVENT_MESSAGE",
+      "criticality": "C4",
+      "current_version": "1.0.0",
+      "owner_capability": "ai_employee.run_ledger",
+      "producer_refs": [
+        "finalis/ai_employee/run_ledger.py"
+      ],
+      "requires_corpus": true,
+      "semantic_concept_refs": [
+        "run",
+        "run_event"
+      ],
+      "source_paths": [
+        "finalis/ai_employee/run_ledger.py"
+      ],
+      "stability": "STABLE"
+    },
+    {
+      "authority_class": "GOVERNANCE_REFERENCE",
+      "canonical_format": "sqlite-migrations-v27",
+      "consumer_refs": [],
+      "contract_id": "CT-DB-SCHEMA",
+      "contract_kind": "DB_SCHEMA",
+      "criticality": "C4",
+      "current_version": "1.0.0",
+      "owner_capability": "portal.db",
+      "producer_refs": [
+        "finalis/portal/db.py"
+      ],
+      "requires_corpus": false,
+      "semantic_concept_refs": [],
+      "source_paths": [
+        "finalis/portal/db.py"
+      ],
+      "stability": "STABLE"
+    },
+    {
+      "authority_class": "GOVERNANCE_REFERENCE",
+      "canonical_format": "case-fsm-17-states",
+      "consumer_refs": [],
+      "contract_id": "CT-WF-CASE-FSM",
+      "contract_kind": "WORKFLOW_HISTORY",
+      "criticality": "C3",
+      "current_version": "1.0.0",
+      "owner_capability": "state_machine",
+      "producer_refs": [
+        "finalis/state_machine.py"
+      ],
+      "requires_corpus": false,
+      "semantic_concept_refs": [
+        "case_state"
+      ],
+      "source_paths": [
+        "finalis/state_machine.py"
+      ],
+      "stability": "STABLE"
+    },
+    {
+      "authority_class": "GOVERNANCE_REFERENCE",
+      "canonical_format": "sha256-canonical-json",
+      "consumer_refs": [],
+      "contract_id": "CT-PROOF-RUN-EVENT",
+      "contract_kind": "PROOF_HASH",
+      "criticality": "C4",
+      "current_version": "1.0.0",
+      "owner_capability": "ai_employee.run_ledger",
+      "producer_refs": [
+        "finalis/ai_employee/run_ledger.py"
+      ],
+      "requires_corpus": false,
+      "semantic_concept_refs": [],
+      "source_paths": [
+        "finalis/ai_employee/run_ledger.py"
+      ],
+      "stability": "STABLE"
+    },
+    {
+      "authority_class": "GOVERNANCE_REFERENCE",
+      "canonical_format": "evidence-object-v1",
+      "consumer_refs": [],
+      "contract_id": "CT-STORED-EVIDENCE",
+      "contract_kind": "STORED_DATA",
+      "criticality": "C2",
+      "current_version": "1.0.0",
+      "owner_capability": "evidence.storage",
+      "producer_refs": [
+        "finalis/evidence/storage.py"
+      ],
+      "requires_corpus": false,
+      "semantic_concept_refs": [],
+      "source_paths": [
+        "finalis/evidence/storage.py"
+      ],
+      "stability": "STABLE"
+    },
+    {
+      "authority_class": "GOVERNANCE_REFERENCE",
+      "canonical_format": "sp0002-meaning-hash",
+      "consumer_refs": [],
+      "contract_id": "CT-SEMANTIC-CASE",
+      "contract_kind": "SEMANTIC",
+      "criticality": "C3",
+      "current_version": "1.0.0",
+      "owner_capability": "semantics",
+      "producer_refs": [
+        "tools/semantics/canon.py"
+      ],
+      "requires_corpus": false,
+      "semantic_concept_refs": [
+        "case"
+      ],
+      "source_paths": [
+        "tools/semantics/canon.py"
+      ],
+      "stability": "STABLE"
+    },
+    {
+      "authority_class": "GOVERNANCE_REFERENCE",
+      "canonical_format": "python-protocol",
+      "consumer_refs": [],
+      "contract_id": "CT-PROVIDER-TELEPHONY",
+      "contract_kind": "PROVIDER",
+      "criticality": "C2",
+      "current_version": "1.0.0",
+      "owner_capability": "telephony.engine",
+      "producer_refs": [
+        "finalis/telephony/engine.py"
+      ],
+      "requires_corpus": false,
+      "semantic_concept_refs": [],
+      "source_paths": [
+        "finalis/telephony/engine.py"
+      ],
+      "stability": "STABLE"
+    },
+    {
+      "authority_class": "GOVERNANCE_REFERENCE",
+      "canonical_format": "argparse-json",
+      "consumer_refs": [],
+      "contract_id": "CT-CLI-GOVERNANCE",
+      "contract_kind": "CLI_CONFIG",
+      "criticality": "C1",
+      "current_version": "1.0.0",
+      "owner_capability": "tools.governance",
+      "producer_refs": [
+        "tools/semantics/cli.py"
+      ],
+      "requires_corpus": false,
+      "semantic_concept_refs": [],
+      "source_paths": [
+        "tools/semantics/cli.py"
+      ],
+      "stability": "BETA"
+    },
+    {
+      "authority_class": "GOVERNANCE_REFERENCE",
+      "canonical_format": "html-projection",
+      "consumer_refs": [],
+      "contract_id": "CT-UI-DASHBOARD",
+      "contract_kind": "UI_PROJECTION",
+      "criticality": "C1",
+      "current_version": "1.0.0",
+      "owner_capability": "portal.ui",
+      "producer_refs": [
+        "finalis/portal/ui.py"
+      ],
+      "requires_corpus": false,
+      "semantic_concept_refs": [],
+      "source_paths": [
+        "finalis/portal/ui.py"
+      ],
+      "stability": "BETA"
+    }
+  ]
+}

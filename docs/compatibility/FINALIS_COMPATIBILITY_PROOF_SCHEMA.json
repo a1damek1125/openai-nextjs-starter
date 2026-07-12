@@ -1,0 +1,47 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "behavioral_analysis_hash": {
+      "type": "string"
+    },
+    "compatibility_vector_hash": {
+      "type": "string"
+    },
+    "consumer_binding_hash": {
+      "type": "string"
+    },
+    "contract_descriptor_hash": {
+      "type": "string"
+    },
+    "envelope_hash": {
+      "type": "string"
+    },
+    "envelope_version": {
+      "type": "string"
+    },
+    "historical_corpus_hash": {
+      "type": "string"
+    },
+    "producer_version_hash": {
+      "type": "string"
+    },
+    "replay_result_hash": {
+      "type": "string"
+    },
+    "security_result_hash": {
+      "type": "string"
+    },
+    "semantic_analysis_hash": {
+      "type": "string"
+    },
+    "validator_version": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "envelope_version",
+    "envelope_hash"
+  ],
+  "schema_id": "CompatibilityProofEnvelope",
+  "type": "object"
+}

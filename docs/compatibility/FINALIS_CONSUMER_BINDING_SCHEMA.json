@@ -1,0 +1,40 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "accepted_outputs": {
+      "type": "object"
+    },
+    "consumer_id": {
+      "type": "string"
+    },
+    "contract_id": {
+      "type": "string"
+    },
+    "criticality": {
+      "type": "string"
+    },
+    "owner": {
+      "type": "string"
+    },
+    "required_fields": {
+      "type": "array"
+    },
+    "unknown_field_policy": {
+      "type": "string"
+    },
+    "usage_profile": {
+      "type": "object"
+    },
+    "version_range": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "consumer_id",
+    "contract_id",
+    "version_range",
+    "owner"
+  ],
+  "schema_id": "ConsumerBinding",
+  "type": "object"
+}

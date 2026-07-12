@@ -1,0 +1,12 @@
+{
+  "proof_readers": [
+    {
+      "proof_version": "finalis-run-event-v1",
+      "reader": "run_ledger.verify_events",
+      "reinterprets": false,
+      "supported_versions": [
+        "finalis-run-event-v1"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "approval_requirements": {
+      "type": "array"
+    },
+    "change_intent_ref": {
+      "type": "string"
+    },
+    "consumer_order": {
+      "type": "array"
+    },
+    "contract_phase": {
+      "type": "object"
+    },
+    "expand_phase": {
+      "type": "object"
+    },
+    "forward_fix_plan_ref": {
+      "type": "string"
+    },
+    "migrate_phase": {
+      "type": "object"
+    },
+    "migration_plan_id": {
+      "type": "string"
+    },
+    "rollback_plan_ref": {
+      "type": "string"
+    },
+    "source_versions": {
+      "type": "array"
+    },
+    "status": {
+      "type": "string"
+    },
+    "steps": {
+      "type": "array"
+    },
+    "target_version": {
+      "type": "string"
+    },
+    "verify_phase": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "migration_plan_id",
+    "source_versions",
+    "target_version",
+    "steps",
+    "status"
+  ],
+  "schema_id": "MigrationPlan",
+  "type": "object"
+}

@@ -1,0 +1,268 @@
+{
+  "versions": [
+    {
+      "behavior_contract": {},
+      "content_hash": "e1978929e8ed311ca649917de036c1c6f883b1281ed07a15121aad72603a6f7a",
+      "contract_id": "CT-HTTP-CASES",
+      "immutable": true,
+      "proof_contract": null,
+      "released_at": "2026-07-12",
+      "schema": {
+        "event_identity": {},
+        "fields": {
+          "actor": {
+            "constraints": {},
+            "default": null,
+            "enum": null,
+            "field_number": 3,
+            "nullable": false,
+            "required": true,
+            "security_relevant": true,
+            "type": "string"
+          },
+          "case_id": {
+            "constraints": {},
+            "default": null,
+            "enum": null,
+            "field_number": 1,
+            "nullable": false,
+            "required": true,
+            "security_relevant": false,
+            "type": "string"
+          },
+          "to_state": {
+            "constraints": {},
+            "default": null,
+            "enum": [
+              "QUALIFIED",
+              "OFFER_SENT",
+              "WON",
+              "LOST"
+            ],
+            "field_number": 2,
+            "nullable": false,
+            "required": true,
+            "security_relevant": false,
+            "type": "string"
+          }
+        },
+        "idempotency": {},
+        "ordering": [],
+        "temporal": {
+          "precision": "seconds",
+          "timezone": "UTC"
+        }
+      },
+      "security_contract": {
+        "auth": "bearer"
+      },
+      "semantic_epoch": "sem-epoch-1",
+      "status": "RELEASED",
+      "supersedes": null,
+      "version": "1.0.0"
+    },
+    {
+      "behavior_contract": {},
+      "content_hash": "06b5145cf1828b5f9d24af4a6392ac9f5509ce64c5242bbcbd4b946c134d50d6",
+      "contract_id": "CT-EVENT-RUN-LEDGER",
+      "immutable": true,
+      "proof_contract": null,
+      "released_at": "2026-07-12",
+      "schema": {
+        "event_identity": {
+          "causation": "causal_parent_event_ids",
+          "dedup_key": "event_id",
+          "event_id_meaning": "uuid-per-event",
+          "partition_key": "run_id"
+        },
+        "fields": {
+          "event_id": {
+            "constraints": {},
+            "default": null,
+            "enum": null,
+            "field_number": 1,
+            "nullable": false,
+            "required": true,
+            "security_relevant": false,
+            "type": "string"
+          },
+          "run_id": {
+            "constraints": {},
+            "default": null,
+            "enum": null,
+            "field_number": 2,
+            "nullable": false,
+            "required": true,
+            "security_relevant": false,
+            "type": "string"
+          },
+          "tenant_id": {
+            "constraints": {},
+            "default": null,
+            "enum": null,
+            "field_number": 3,
+            "nullable": false,
+            "required": true,
+            "security_relevant": true,
+            "type": "string"
+          }
+        },
+        "idempotency": {
+          "key": "event_id",
+          "scope": "run"
+        },
+        "ordering": [
+          "event_index"
+        ],
+        "temporal": {
+          "ordering": "event_index",
+          "precision": "seconds",
+          "timezone": "UTC"
+        }
+      },
+      "security_contract": {
+        "auth": "bearer"
+      },
+      "semantic_epoch": "sem-epoch-1",
+      "status": "RELEASED",
+      "supersedes": null,
+      "version": "1.0.0"
+    },
+    {
+      "behavior_contract": {},
+      "content_hash": "f3f9fadcca3acc7ecd5e650278a7e87abed38b035da0c108b50fcebc6b4ecd1d",
+      "contract_id": "CT-DB-SCHEMA",
+      "immutable": true,
+      "proof_contract": null,
+      "released_at": "2026-07-12",
+      "schema": {
+        "down_migrations": 0,
+        "forward_only": true,
+        "migration_frontier": 27
+      },
+      "security_contract": {
+        "auth": "bearer"
+      },
+      "semantic_epoch": "sem-epoch-1",
+      "status": "RELEASED",
+      "supersedes": null,
+      "version": "1.0.0"
+    },
+    {
+      "behavior_contract": {},
+      "content_hash": "82db97b4793977e0686ffd7ba2a948ebe086791b7a32a7471ce6b539ba274828",
+      "contract_id": "CT-WF-CASE-FSM",
+      "immutable": true,
+      "proof_contract": null,
+      "released_at": "2026-07-12",
+      "schema": {},
+      "security_contract": {
+        "auth": "bearer"
+      },
+      "semantic_epoch": "sem-epoch-1",
+      "status": "RELEASED",
+      "supersedes": null,
+      "version": "1.0.0"
+    },
+    {
+      "behavior_contract": {},
+      "content_hash": "30d7b044e156db685fbd27176337d213309f1bf24f9b6904dd29a92d03025ead",
+      "contract_id": "CT-PROOF-RUN-EVENT",
+      "immutable": true,
+      "proof_contract": {
+        "algorithm": "sha256",
+        "canonicalization": "sorted-compact-json",
+        "proof_version": "finalis-run-event-v1"
+      },
+      "released_at": "2026-07-12",
+      "schema": {},
+      "security_contract": {
+        "auth": "bearer"
+      },
+      "semantic_epoch": "sem-epoch-1",
+      "status": "RELEASED",
+      "supersedes": null,
+      "version": "1.0.0"
+    },
+    {
+      "behavior_contract": {},
+      "content_hash": "64505ec647d70376f0192633c24b76cf39ef7b629110722250f6e4adfb674ca6",
+      "contract_id": "CT-STORED-EVIDENCE",
+      "immutable": true,
+      "proof_contract": null,
+      "released_at": "2026-07-12",
+      "schema": {},
+      "security_contract": {
+        "auth": "bearer"
+      },
+      "semantic_epoch": "sem-epoch-1",
+      "status": "RELEASED",
+      "supersedes": null,
+      "version": "1.0.0"
+    },
+    {
+      "behavior_contract": {},
+      "content_hash": "82f737447e8d465cb6e59d3dca145ba888364bfdb2ac99a7ea5ff998a21e0d6a",
+      "contract_id": "CT-SEMANTIC-CASE",
+      "immutable": true,
+      "proof_contract": null,
+      "released_at": "2026-07-12",
+      "schema": {},
+      "security_contract": {
+        "auth": "bearer"
+      },
+      "semantic_epoch": "sem-epoch-1",
+      "status": "RELEASED",
+      "supersedes": null,
+      "version": "1.0.0"
+    },
+    {
+      "behavior_contract": {},
+      "content_hash": "2288a5e80dff4feab045713c9ab118b77f30ec43493798bca3b390860549c753",
+      "contract_id": "CT-PROVIDER-TELEPHONY",
+      "immutable": true,
+      "proof_contract": null,
+      "released_at": "2026-07-12",
+      "schema": {},
+      "security_contract": {
+        "auth": "bearer"
+      },
+      "semantic_epoch": "sem-epoch-1",
+      "status": "RELEASED",
+      "supersedes": null,
+      "version": "1.0.0"
+    },
+    {
+      "behavior_contract": {},
+      "content_hash": "b022a22d343bf172cf83a1733703b87fe31fff1aeb42bc22f26414a75c7525ce",
+      "contract_id": "CT-CLI-GOVERNANCE",
+      "immutable": true,
+      "proof_contract": null,
+      "released_at": "2026-07-12",
+      "schema": {},
+      "security_contract": {
+        "auth": "bearer"
+      },
+      "semantic_epoch": "sem-epoch-1",
+      "status": "RELEASED",
+      "supersedes": null,
+      "version": "1.0.0"
+    },
+    {
+      "behavior_contract": {},
+      "content_hash": "56e54dd14fc2f097b41302afb6f1a757c825ddc5ca260c44216ca1f2e1c78141",
+      "contract_id": "CT-UI-DASHBOARD",
+      "immutable": true,
+      "proof_contract": null,
+      "released_at": "2026-07-12",
+      "schema": {},
+      "security_contract": {
+        "auth": "bearer"
+      },
+      "semantic_epoch": "sem-epoch-1",
+      "status": "RELEASED",
+      "supersedes": null,
+      "version": "1.0.0"
+    }
+  ]
+}

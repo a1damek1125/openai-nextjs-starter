@@ -1,0 +1,26 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "edge_ids": {
+      "type": "array"
+    },
+    "forward_fix_plan_ref": {
+      "type": "string"
+    },
+    "last_safe_rollback_point": {
+      "type": "string"
+    },
+    "rollback_plan_id": {
+      "type": "string"
+    },
+    "step_order": {
+      "type": "array"
+    }
+  },
+  "required": [
+    "rollback_plan_id",
+    "edge_ids"
+  ],
+  "schema_id": "RollbackPlan",
+  "type": "object"
+}

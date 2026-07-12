@@ -1,0 +1,24 @@
+{
+  "deprecations": [
+    {
+      "active_consumer_refs": [
+        "portal-ui::ct-http-cases"
+      ],
+      "announced_in": "2.0.0",
+      "contract_id": "CT-HTTP-CASES",
+      "deprecation_id": "DEP-HTTP-V1",
+      "reason": "widened to_state enum needs v2 negotiation",
+      "replacement": "/cases/{id}/transition v2",
+      "replacement_required": true,
+      "status": "ANNOUNCED",
+      "sunset_conditions": [
+        "all known consumers migrated",
+        "no unknown critical consumer"
+      ],
+      "support_until": "2027-07-12",
+      "support_window_ref": "SW-HTTP-V1",
+      "surface": "/cases/{id}/transition v1",
+      "version": "1.0.0"
+    }
+  ]
+}

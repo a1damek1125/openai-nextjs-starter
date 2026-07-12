@@ -1,0 +1,10 @@
+{
+  "provider_pins": [
+    {
+      "contract_id": "CT-PROVIDER-TELEPHONY",
+      "protected": true,
+      "provider": "telephony",
+      "version": "mock-telephony-v1"
+    }
+  ]
+}
