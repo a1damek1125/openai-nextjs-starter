@@ -1,0 +1,4 @@
+{
+  "note": "incremental cone recompute must equal full recompute reference oracle (D-0010-25); see tests",
+  "schema_id": "IncrementalRequalification"
+}

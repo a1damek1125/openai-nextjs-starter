@@ -1,0 +1,23 @@
+{
+  "rules": [
+    {
+      "from": "AD-11",
+      "meaning": "tenant isolation view must agree with authority view",
+      "rule_id": "CR-1",
+      "to": "AD-10"
+    },
+    {
+      "from": "AD-16",
+      "meaning": "contract inventory must agree with contract evolution",
+      "rule_id": "CR-2",
+      "to": "AD-15"
+    },
+    {
+      "from": "AD-17",
+      "meaning": "release assurance references the contract inventory genome",
+      "rule_id": "CR-3",
+      "to": "AD-16"
+    }
+  ],
+  "schema_id": "ViewCorrespondence"
+}

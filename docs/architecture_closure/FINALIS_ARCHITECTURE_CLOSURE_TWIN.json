@@ -1,0 +1,3350 @@
+{
+  "architecture_description": {
+    "concerns": [
+      "authority_conservation",
+      "compositional_coherence",
+      "evidence_provenance",
+      "hazard_control",
+      "no_circular_assurance",
+      "observability",
+      "production_gaps",
+      "proof_not_authority",
+      "release_runtime_separation",
+      "reliability_admission",
+      "safety_dominance",
+      "tenant_isolation"
+    ],
+    "correspondence_rules": [
+      {
+        "from": "AD-11",
+        "meaning": "tenant isolation view must agree with authority view",
+        "rule_id": "CR-1",
+        "to": "AD-10"
+      },
+      {
+        "from": "AD-16",
+        "meaning": "contract inventory must agree with contract evolution",
+        "rule_id": "CR-2",
+        "to": "AD-15"
+      },
+      {
+        "from": "AD-17",
+        "meaning": "release assurance references the contract inventory genome",
+        "rule_id": "CR-3",
+        "to": "AD-16"
+      }
+    ],
+    "description_hash": "a6e272bb7b13ac9799dea389a38810a384367613cc1794c612eb085a78605042",
+    "entity_of_interest": "FINALIS AI Employee OS (governance kernel + mocked vertical SaaS)",
+    "known_inconsistencies": [
+      {
+        "id": "KI-1",
+        "note": "Contract Genome leaf_counts (routes 423, tables 107) differ from audit raw grep (routes 402, tables 108) \u2014 distinct enumeration provenance, not equated"
+      }
+    ],
+    "stakeholders": [
+      {
+        "concerns": [
+          "compositional_coherence",
+          "no_circular_assurance"
+        ],
+        "id": "architect"
+      },
+      {
+        "concerns": [
+          "safety_dominance",
+          "hazard_control"
+        ],
+        "id": "safety_owner"
+      },
+      {
+        "concerns": [
+          "tenant_isolation",
+          "authority_conservation"
+        ],
+        "id": "security_owner"
+      },
+      {
+        "concerns": [
+          "proof_not_authority",
+          "release_runtime_separation"
+        ],
+        "id": "release_owner"
+      },
+      {
+        "concerns": [
+          "reliability_admission",
+          "evidence_provenance"
+        ],
+        "id": "evaluator_sp0011"
+      },
+      {
+        "concerns": [
+          "production_gaps",
+          "observability"
+        ],
+        "id": "operator"
+      }
+    ],
+    "viewpoints": {
+      "VP-COMPOSITION": [
+        "AD-01",
+        "AD-03",
+        "AD-04",
+        "AD-08"
+      ],
+      "VP-EVOLUTION": [
+        "AD-15",
+        "AD-16",
+        "AD-17"
+      ],
+      "VP-OPERATIONS": [
+        "AD-18",
+        "AD-22",
+        "AD-23",
+        "AD-24"
+      ],
+      "VP-SAFETY": [
+        "AD-12"
+      ],
+      "VP-SECURITY": [
+        "AD-10",
+        "AD-11"
+      ]
+    },
+    "views": [
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "docs/roadmap/ROADMAP_LOCK_1_FINALIS_AI_EMPLOYEE_OS.md"
+          }
+        ],
+        "title": "Entity of Interest & Mission",
+        "view_id": "AD-01"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "docs/architecture"
+          }
+        ],
+        "title": "Stakeholders & Concerns",
+        "view_id": "AD-02"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "docs/architecture/FINALIS_1000_MASTER_ARCHITECTURE_LOCK.md"
+          }
+        ],
+        "title": "Constitutional Layers",
+        "view_id": "AD-03"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "docs/architecture"
+          }
+        ],
+        "title": "Capabilities",
+        "view_id": "AD-04"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "finalis/portal/app.py"
+          }
+        ],
+        "title": "Runtime Boundaries",
+        "view_id": "AD-05"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "tools/semantics"
+          },
+          {
+            "present": true,
+            "ref": "docs/semantics"
+          }
+        ],
+        "title": "Semantics",
+        "view_id": "AD-06"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "finalis/portal/db.py"
+          }
+        ],
+        "title": "Data & Memory",
+        "view_id": "AD-07"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "tools/program_graph"
+          },
+          {
+            "present": true,
+            "ref": "docs/program/FINALIS_1000_PROGRAM_REGISTRY.json"
+          }
+        ],
+        "title": "Program Dependencies",
+        "view_id": "AD-08"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "tools/technology"
+          },
+          {
+            "present": true,
+            "ref": "docs/technology"
+          }
+        ],
+        "title": "Technology & Providers",
+        "view_id": "AD-09"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "tools/governed_work"
+          },
+          {
+            "present": true,
+            "ref": "finalis/portal/app.py"
+          }
+        ],
+        "title": "Authority & Approvals",
+        "view_id": "AD-10"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "finalis/portal/app.py"
+          },
+          {
+            "present": true,
+            "ref": "finalis/portal/db.py"
+          }
+        ],
+        "title": "Tenant Isolation",
+        "view_id": "AD-11"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "tools/safety"
+          },
+          {
+            "present": true,
+            "ref": "docs/safety"
+          }
+        ],
+        "title": "Safety & Regulatory Truth",
+        "view_id": "AD-12"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "tools/governed_work"
+          },
+          {
+            "present": true,
+            "ref": "docs/governed_work"
+          }
+        ],
+        "title": "Governed Work",
+        "view_id": "AD-13"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "tools/governed_work"
+          }
+        ],
+        "title": "Outcomes & Evidence",
+        "view_id": "AD-14"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "tools/compatibility"
+          },
+          {
+            "present": true,
+            "ref": "docs/compatibility"
+          }
+        ],
+        "title": "Contract Evolution",
+        "view_id": "AD-15"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "tools/contracts_inventory"
+          },
+          {
+            "present": true,
+            "ref": "docs/contracts_inventory"
+          }
+        ],
+        "title": "Contract Inventory",
+        "view_id": "AD-16"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "tools/release"
+          },
+          {
+            "present": true,
+            "ref": "docs/release"
+          }
+        ],
+        "title": "Release Assurance",
+        "view_id": "AD-17"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "finalis"
+          }
+        ],
+        "title": "Failure & Recovery",
+        "view_id": "AD-18"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "tools/governed_work"
+          }
+        ],
+        "title": "Learning",
+        "view_id": "AD-19"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "tools/semantics"
+          }
+        ],
+        "title": "Multilingual Control",
+        "view_id": "AD-20"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "finalis"
+          }
+        ],
+        "title": "Pack Extensibility",
+        "view_id": "AD-21"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "finalis/audit.py"
+          }
+        ],
+        "title": "Observability",
+        "view_id": "AD-22"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "docs/architecture"
+          }
+        ],
+        "title": "Performance & Scale",
+        "view_id": "AD-23"
+      },
+      {
+        "conformance": "IMPLEMENTED",
+        "evidence": [
+          {
+            "present": true,
+            "ref": "docs/audits"
+          }
+        ],
+        "title": "Production Gaps",
+        "view_id": "AD-24"
+      }
+    ]
+  },
+  "architecture_genome": {
+    "assurance_root": "d49d22848842ae41a377da4772cdbd29389d51d0c5991d3cb597f9e10e4be190",
+    "class_roots": {
+      "assurance": "d49d22848842ae41a377da4772cdbd29389d51d0c5991d3cb597f9e10e4be190",
+      "constitution": "a0e53e602ed1bd88dd597920345b3f045b909b0390c7951898ec459800b3d9b6",
+      "epistemic": "f4f21856f076011fe21cd051992e04b6d6a94c89b05ae99106fe15ba5530dba7",
+      "gap": "94157d77e84fa184de02969c11b790d47058933594bec6ba06c32f355a92474d",
+      "hypergraph": "d9465cffef53814c243b10a55344c2bca95d9dd3d07e4fdbb8634a717481b15a",
+      "hyperproperty": "96993083a5002f0d49a0e9b6fb134b7fe50d75875c3b187caff9baaa5cd41190",
+      "invariant": "7fee55825da11fc6690c4a259433a8945f6adbc3c14efac666fe47b21c2ae980",
+      "twin": "37a28d98029ec315e65147f82dcfaf8836eeb6a22689617dbb7f7eff8a534388",
+      "verifier_set": "82299c1d24e57cda5188835a11782c9689cda298f951029ae2b116ca4d6e98b8"
+    },
+    "closure_epoch": "ACE-2026-07",
+    "constitution_roots": {
+      "SP0000": "9a3b941966217c42baf16ff9237eeed0a1ae2dfddbe0ec2121cbf8870746e3ca",
+      "SP0001": "8672d8bb2d79b69a353614c1478acc951f033a98f6b7303c0970eb7086467bdf",
+      "SP0002": "6e868e33459050f149d614eb3ffa0e3c74d7ddcb32bcbdfbb4cd508f6f828a45",
+      "SP0003": "f36ab5fa9abd2f280ac016131a738c492b3a6c7a87ebacbed3d27642e5fdf7cb",
+      "SP0004": "6de41eb300fbe2b0d19da2c68288f5d30a51414e057c006532cb6d1f98b944d8",
+      "SP0005": "d0aa9909ec7e89f6e9644239d80b1dfdb59d29f48f8f8b8e16a55cb98845cbf4",
+      "SP0006": "3f7a86c21476cc95d03ec73a56f573a2f2582a26ffd0f8eb778f2b25d09120b7",
+      "SP0007": "7bad59275793945d4c04def4beb43ae004228d81057eec83cb9dc42940b40b3c",
+      "SP0008": "b4ff371f77589103e49cd616019b6ff9b995d9d81cc68d941e37b0ae52f1e853",
+      "SP0009": "da092fd3459eb2e7a6f650f226d260a33ab7db8f9d2455f7e1e19845f3a5d92d"
+    },
+    "epistemic_state_root": "f4f21856f076011fe21cd051992e04b6d6a94c89b05ae99106fe15ba5530dba7",
+    "gap_ledger_root": "94157d77e84fa184de02969c11b790d47058933594bec6ba06c32f355a92474d",
+    "genome_version": "1.0.0",
+    "global_architecture_root": "ee167b18786153be032a358679d289d232613ec47803f74b8438ded865563dd7",
+    "hypergraph_root": "d9465cffef53814c243b10a55344c2bca95d9dd3d07e4fdbb8634a717481b15a",
+    "hyperproperty_root": "96993083a5002f0d49a0e9b6fb134b7fe50d75875c3b187caff9baaa5cd41190",
+    "invariant_root": "7fee55825da11fc6690c4a259433a8945f6adbc3c14efac666fe47b21c2ae980",
+    "repository_commit": "1e29581",
+    "twin_roots": {
+      "contract_genome": "7269f08cd7d53679cae6ce3b134a00d6dd6146fde0c60e712a065a711be377b1",
+      "contract_inventory": "52c462f8306961623b1f4dda582fb28ef2c08664e840a1839975e855f8860330",
+      "release_assurance": "916dd687ca4c473efdf5b77f1bd3d4d72fe365aaa5d89a520dab0b214fb5e794"
+    },
+    "verifier_set_root": "82299c1d24e57cda5188835a11782c9689cda298f951029ae2b116ca4d6e98b8"
+  },
+  "assurance_hypergraph": {
+    "anchored": [
+      "CL-SP0000-evidence-present",
+      "CL-SP0001-evidence-present",
+      "CL-SP0002-evidence-present",
+      "CL-SP0003-evidence-present",
+      "CL-SP0004-evidence-present",
+      "CL-SP0005-evidence-present",
+      "CL-SP0006-evidence-present",
+      "CL-SP0007-evidence-present",
+      "CL-SP0008-evidence-present",
+      "CL-SP0009-evidence-present"
+    ],
+    "edges": [
+      {
+        "conclusion_claim_ref": "CL-SP0000-architecture-baseline-fixed",
+        "conjunctive": true,
+        "edge_hash": "ad01dc9ae94212156a85918b240128ed887790ac1df5e3d68a37ef76a126d666",
+        "hyperedge_id": "HE-d25f36cf281b92cc",
+        "premise_claim_refs": [
+          "CL-SP0000-evidence-present"
+        ],
+        "source_refs": [
+          "SP0000"
+        ]
+      },
+      {
+        "conclusion_claim_ref": "CL-SP0001-architecture-conformance-checked",
+        "conjunctive": true,
+        "edge_hash": "7e2bfcb66d8da918f82a47e33ee8a96610cc9dcca0b01b559ec35b01561fc38d",
+        "hyperedge_id": "HE-9245731efb87e302",
+        "premise_claim_refs": [
+          "CL-SP0000-architecture-baseline-fixed",
+          "CL-SP0001-evidence-present"
+        ],
+        "source_refs": [
+          "SP0001"
+        ]
+      },
+      {
+        "conclusion_claim_ref": "CL-SP0002-semantics-versioned",
+        "conjunctive": true,
+        "edge_hash": "aae29c22b41c1540cfe498b211f959d7c39747e99bc28ca836aec479be23526b",
+        "hyperedge_id": "HE-8119dffcf29f9f08",
+        "premise_claim_refs": [
+          "CL-SP0000-architecture-baseline-fixed",
+          "CL-SP0002-evidence-present"
+        ],
+        "source_refs": [
+          "SP0002"
+        ]
+      },
+      {
+        "conclusion_claim_ref": "CL-SP0002-historical-epoch-interpretable",
+        "conjunctive": true,
+        "edge_hash": "087f2786418e9459b55cc3ff437c6b77ba47eae8bf824ddd535a657c9407afb9",
+        "hyperedge_id": "HE-319b5e97db46a4eb",
+        "premise_claim_refs": [
+          "CL-SP0000-architecture-baseline-fixed",
+          "CL-SP0002-evidence-present"
+        ],
+        "source_refs": [
+          "SP0002"
+        ]
+      },
+      {
+        "conclusion_claim_ref": "CL-SP0003-program-admission-verified",
+        "conjunctive": true,
+        "edge_hash": "ab214af96e2a3b8a52d2bdd378811ce3dac49b82296cc75733f8cea50379b5af",
+        "hyperedge_id": "HE-e843c2fa87218e23",
+        "premise_claim_refs": [
+          "CL-SP0000-architecture-baseline-fixed",
+          "CL-SP0003-evidence-present"
+        ],
+        "source_refs": [
+          "SP0003"
+        ]
+      },
+      {
+        "conclusion_claim_ref": "CL-SP0004-provider-replaceable",
+        "conjunctive": true,
+        "edge_hash": "c53b2545c40d0c01cfb0f4e72a160201361518e0f15e4e6019a223b52988e458",
+        "hyperedge_id": "HE-7390b3ccf8dc08c0",
+        "premise_claim_refs": [
+          "CL-SP0000-architecture-baseline-fixed",
+          "CL-SP0004-evidence-present"
+        ],
+        "source_refs": [
+          "SP0004"
+        ]
+      },
+      {
+        "conclusion_claim_ref": "CL-SP0005-safety-dominates-protected-effects",
+        "conjunctive": true,
+        "edge_hash": "43331a84a02f7471299efd1259244d26a6ec4008dd484a4971e13f5e18394541",
+        "hyperedge_id": "HE-b2f6b6041ae20256",
+        "premise_claim_refs": [
+          "CL-SP0000-architecture-baseline-fixed",
+          "CL-SP0002-semantics-versioned",
+          "CL-SP0005-evidence-present"
+        ],
+        "source_refs": [
+          "SP0005"
+        ]
+      },
+      {
+        "conclusion_claim_ref": "CL-SP0006-authority-conserved",
+        "conjunctive": true,
+        "edge_hash": "a3c739daeb8a97cb139d544f4f60030589e2032f088f7f389a3219db7c11c3f0",
+        "hyperedge_id": "HE-0e5a219eeb93365e",
+        "premise_claim_refs": [
+          "CL-SP0005-safety-dominates-protected-effects",
+          "CL-SP0006-evidence-present"
+        ],
+        "source_refs": [
+          "SP0006"
+        ]
+      },
+      {
+        "conclusion_claim_ref": "CL-SP0006-zero-lost-work",
+        "conjunctive": true,
+        "edge_hash": "40b3ce74318e3472f1a189f7998c323723bbb15ad2e5e0a7d8d23d08ae52a9a9",
+        "hyperedge_id": "HE-4f439b58ee6b91e1",
+        "premise_claim_refs": [
+          "CL-SP0005-safety-dominates-protected-effects",
+          "CL-SP0006-evidence-present"
+        ],
+        "source_refs": [
+          "SP0006"
+        ]
+      },
+      {
+        "conclusion_claim_ref": "CL-SP0006-approval-context-bound",
+        "conjunctive": true,
+        "edge_hash": "3c0e7eec9a5270714e4e501c7fdd25b5421992d5dbac22499d6a43932a6c0b18",
+        "hyperedge_id": "HE-6e4bf1895416f1c3",
+        "premise_claim_refs": [
+          "CL-SP0005-safety-dominates-protected-effects",
+          "CL-SP0006-evidence-present"
+        ],
+        "source_refs": [
+          "SP0006"
+        ]
+      },
+      {
+        "conclusion_claim_ref": "CL-SP0007-contract-evolution-directional",
+        "conjunctive": true,
+        "edge_hash": "1d92cca5ace46de29cc4b37f9c712c36af5ce17d065210ec3d8a6614d2c60470",
+        "hyperedge_id": "HE-fd8bacde369a5f39",
+        "premise_claim_refs": [
+          "CL-SP0002-historical-epoch-interpretable",
+          "CL-SP0007-evidence-present"
+        ],
+        "source_refs": [
+          "SP0007"
+        ]
+      },
+      {
+        "conclusion_claim_ref": "CL-SP0007-historical-envelope-epoch-bound",
+        "conjunctive": true,
+        "edge_hash": "c9bfaed978c7330366302d44641820b9e0ef52b31f99d376c73ae680efad1c80",
+        "hyperedge_id": "HE-d48114322505f605",
+        "premise_claim_refs": [
+          "CL-SP0002-historical-epoch-interpretable",
+          "CL-SP0007-evidence-present"
+        ],
+        "source_refs": [
+          "SP0007"
+        ]
+      },
+      {
+        "conclusion_claim_ref": "CL-SP0008-contract-surfaces-inventoried",
+        "conjunctive": true,
+        "edge_hash": "7ec945ef970c924f20303ca1c600337a9785a1e0a4a3e700ab2c5c3be33e54be",
+        "hyperedge_id": "HE-e54bcc9cab2d417d",
+        "premise_claim_refs": [
+          "CL-SP0007-contract-evolution-directional",
+          "CL-SP0008-evidence-present"
+        ],
+        "source_refs": [
+          "SP0008"
+        ]
+      },
+      {
+        "conclusion_claim_ref": "CL-SP0008-contract-genome-sealed",
+        "conjunctive": true,
+        "edge_hash": "ecd10382122bac2e00a0c8bbadbf7230a3dcedf968fc66e2ff076f6e1d55c128",
+        "hyperedge_id": "HE-688b0e31111a89ce",
+        "premise_claim_refs": [
+          "CL-SP0007-contract-evolution-directional",
+          "CL-SP0008-evidence-present"
+        ],
+        "source_refs": [
+          "SP0008"
+        ]
+      },
+      {
+        "conclusion_claim_ref": "CL-SP0009-release-proof-not-runtime-authority",
+        "conjunctive": true,
+        "edge_hash": "19514dffd712ff8bb6a726b5b5c64c3e7e02562b65e9f6b63687dcaa6a901d6a",
+        "hyperedge_id": "HE-32a3b9eed1d02613",
+        "premise_claim_refs": [
+          "CL-SP0006-approval-context-bound",
+          "CL-SP0008-contract-genome-sealed",
+          "CL-SP0009-evidence-present"
+        ],
+        "source_refs": [
+          "SP0009"
+        ]
+      },
+      {
+        "conclusion_claim_ref": "CL-SP0009-non-compensatory-gates",
+        "conjunctive": true,
+        "edge_hash": "4668bec6beb7a247f475f706c6f7d00b50cd701dc06a1f34ddf2876717a98346",
+        "hyperedge_id": "HE-4eec97375e2fe61a",
+        "premise_claim_refs": [
+          "CL-SP0006-approval-context-bound",
+          "CL-SP0008-contract-genome-sealed",
+          "CL-SP0009-evidence-present"
+        ],
+        "source_refs": [
+          "SP0009"
+        ]
+      }
+    ]
+  },
+  "assurance_resilience": [
+    {
+      "claim_id": "CL-SP0000-architecture-baseline-fixed",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0000",
+        "proof-SP0000"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0000"
+        ],
+        [
+          "proof-SP0000"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0001-architecture-conformance-checked",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0001",
+        "proof-SP0001"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0001"
+        ],
+        [
+          "proof-SP0001"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0002-historical-epoch-interpretable",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0002",
+        "proof-SP0002"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0002"
+        ],
+        [
+          "proof-SP0002"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0002-semantics-versioned",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0002",
+        "proof-SP0002"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0002"
+        ],
+        [
+          "proof-SP0002"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0003-program-admission-verified",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0003",
+        "proof-SP0003"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0003"
+        ],
+        [
+          "proof-SP0003"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0004-provider-replaceable",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0004",
+        "proof-SP0004"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0004"
+        ],
+        [
+          "proof-SP0004"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0005-safety-dominates-protected-effects",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0005",
+        "proof-SP0005"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0005"
+        ],
+        [
+          "proof-SP0005"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0006-approval-context-bound",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0006",
+        "proof-SP0006"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0006"
+        ],
+        [
+          "proof-SP0006"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0006-authority-conserved",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0006",
+        "proof-SP0006"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0006"
+        ],
+        [
+          "proof-SP0006"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0006-zero-lost-work",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0006",
+        "proof-SP0006"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0006"
+        ],
+        [
+          "proof-SP0006"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0007-contract-evolution-directional",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0007",
+        "proof-SP0007"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0007"
+        ],
+        [
+          "proof-SP0007"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0007-historical-envelope-epoch-bound",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0007",
+        "proof-SP0007"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0007"
+        ],
+        [
+          "proof-SP0007"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0008-contract-genome-sealed",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0008",
+        "proof-SP0008"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0008"
+        ],
+        [
+          "proof-SP0008"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0008-contract-surfaces-inventoried",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0008",
+        "proof-SP0008"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0008"
+        ],
+        [
+          "proof-SP0008"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0009-non-compensatory-gates",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0009",
+        "proof-SP0009"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0009"
+        ],
+        [
+          "proof-SP0009"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0009-release-proof-not-runtime-authority",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0009",
+        "proof-SP0009"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0009"
+        ],
+        [
+          "proof-SP0009"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    }
+  ],
+  "bootstrap_ceremony": {
+    "phase_a": {
+      "frozen_identity": "92d9590c09ec3f7d3b9eef21cfa87d9ac9be7aa6d6fc61e8a6f2520c93a1df0b",
+      "frozen_identity_matches": true,
+      "recorded_identity": "92d9590c09ec3f7d3b9eef21cfa87d9ac9be7aa6d6fc61e8a6f2520c93a1df0b",
+      "sp0009_twin_digest": "916dd687ca4c473efdf5b77f1bd3d4d72fe365aaa5d89a520dab0b214fb5e794",
+      "trust_domain": "release-frozen",
+      "verifier": "frozen_sp0009"
+    },
+    "phase_b": {
+      "global_root": "3fe0cc10c8bcf650374637bcf9225395639b8800653a1e163b6bad8c23d8effb",
+      "matches_genome": true,
+      "trust_domain": "closure-reference",
+      "verifier": "sp0010_reference"
+    },
+    "phase_c": {
+      "agree": true,
+      "canonical_recompute": "3fe0cc10c8bcf650374637bcf9225395639b8800653a1e163b6bad8c23d8effb",
+      "construction": "merkle-tree",
+      "disagreements": [],
+      "independent_merkle_root": "67a5e8a1d0dcff4ce07849e884ce4ac0138295a72ecaf974d89014d8c872ce5b",
+      "missing_class_roots": [],
+      "trust_domain": "closure-independent",
+      "verifier": "sp0010_independent"
+    },
+    "sealed_ok": true,
+    "verifier_diversity": {
+      "constructions": [
+        "canonical-json",
+        "file-content-hash",
+        "merkle-tree"
+      ],
+      "distinct_constructions": 3,
+      "distinct_domains": 3,
+      "diverse": true,
+      "trust_domains": [
+        "closure-independent",
+        "closure-reference",
+        "release-frozen"
+      ],
+      "verifiers": [
+        "frozen_sp0009",
+        "sp0010_independent",
+        "sp0010_reference"
+      ]
+    }
+  },
+  "circularity": {
+    "sccs": [],
+    "unsupported": []
+  },
+  "closure_digest": "f4108777cda78e83e4227853a0f03d7be1727d2eef1602216f5310bb58f38424",
+  "closure_epoch": "ACE-2026-07",
+  "conformance_matrix": {
+    "AD-01": "IMPLEMENTED",
+    "AD-02": "IMPLEMENTED",
+    "AD-03": "IMPLEMENTED",
+    "AD-04": "IMPLEMENTED",
+    "AD-05": "IMPLEMENTED",
+    "AD-06": "IMPLEMENTED",
+    "AD-07": "IMPLEMENTED",
+    "AD-08": "IMPLEMENTED",
+    "AD-09": "IMPLEMENTED",
+    "AD-10": "IMPLEMENTED",
+    "AD-11": "IMPLEMENTED",
+    "AD-12": "IMPLEMENTED",
+    "AD-13": "IMPLEMENTED",
+    "AD-14": "IMPLEMENTED",
+    "AD-15": "IMPLEMENTED",
+    "AD-16": "IMPLEMENTED",
+    "AD-17": "IMPLEMENTED",
+    "AD-18": "IMPLEMENTED",
+    "AD-19": "IMPLEMENTED",
+    "AD-20": "IMPLEMENTED",
+    "AD-21": "IMPLEMENTED",
+    "AD-22": "IMPLEMENTED",
+    "AD-23": "IMPLEMENTED",
+    "AD-24": "IMPLEMENTED"
+  },
+  "constitutional_interfaces": {
+    "SP0000": {
+      "assumption_refs": [],
+      "commit": "e1b6b5c",
+      "constitution_id": "SP0000",
+      "evidence_refs": [
+        {
+          "present": true,
+          "ref": "docs/roadmap/ROADMAP_LOCK_1_FINALIS_AI_EMPLOYEE_OS.md"
+        },
+        {
+          "present": true,
+          "ref": "docs/architecture"
+        }
+      ],
+      "failure_states": [
+        "ARCHITECTURE_DRIFT"
+      ],
+      "guarantee_refs": [
+        "CL-SP0000-architecture-baseline-fixed"
+      ],
+      "interface_hash": "9a3b941966217c42baf16ff9237eeed0a1ae2dfddbe0ec2121cbf8870746e3ca",
+      "invariant_refs": [
+        "repository_truth_authoritative"
+      ],
+      "owned_concepts": [
+        "entity_of_interest",
+        "architecture_baseline",
+        "capability_map"
+      ],
+      "valid_from": "e1b6b5c",
+      "valid_to": null,
+      "version": "e1b6b5c"
+    },
+    "SP0001": {
+      "assumption_refs": [
+        "CL-SP0000-architecture-baseline-fixed"
+      ],
+      "commit": "19413f2",
+      "constitution_id": "SP0001",
+      "evidence_refs": [
+        {
+          "present": true,
+          "ref": "tools/architecture"
+        },
+        {
+          "present": true,
+          "ref": "docs/architecture"
+        }
+      ],
+      "failure_states": [
+        "CONFORMANCE_VIOLATION"
+      ],
+      "guarantee_refs": [
+        "CL-SP0001-architecture-conformance-checked"
+      ],
+      "interface_hash": "8672d8bb2d79b69a353614c1478acc951f033a98f6b7303c0970eb7086467bdf",
+      "invariant_refs": [
+        "architecture_and_description_distinct"
+      ],
+      "owned_concepts": [
+        "architecture_conformance",
+        "drift_detection"
+      ],
+      "valid_from": "19413f2",
+      "valid_to": null,
+      "version": "19413f2"
+    },
+    "SP0002": {
+      "assumption_refs": [
+        "CL-SP0000-architecture-baseline-fixed"
+      ],
+      "commit": "3eacdb0",
+      "constitution_id": "SP0002",
+      "evidence_refs": [
+        {
+          "present": true,
+          "ref": "tools/semantics"
+        },
+        {
+          "present": true,
+          "ref": "docs/semantics"
+        }
+      ],
+      "failure_states": [
+        "SEMANTIC_EPOCH_BREAK"
+      ],
+      "guarantee_refs": [
+        "CL-SP0002-semantics-versioned",
+        "CL-SP0002-historical-epoch-interpretable"
+      ],
+      "interface_hash": "6e868e33459050f149d614eb3ffa0e3c74d7ddcb32bcbdfbb4cd508f6f828a45",
+      "invariant_refs": [
+        "semantic_changes_versioned",
+        "historical_interpretability"
+      ],
+      "owned_concepts": [
+        "semantic_epoch",
+        "canonical_identity",
+        "control_language"
+      ],
+      "valid_from": "3eacdb0",
+      "valid_to": null,
+      "version": "3eacdb0"
+    },
+    "SP0003": {
+      "assumption_refs": [
+        "CL-SP0000-architecture-baseline-fixed"
+      ],
+      "commit": "1ffb4e4",
+      "constitution_id": "SP0003",
+      "evidence_refs": [
+        {
+          "present": true,
+          "ref": "tools/program_graph"
+        },
+        {
+          "present": true,
+          "ref": "docs/program/FINALIS_1000_PROGRAM_REGISTRY.json"
+        }
+      ],
+      "failure_states": [
+        "PROGRAM_DEPENDENCY_BLOCKED"
+      ],
+      "guarantee_refs": [
+        "CL-SP0003-program-admission-verified"
+      ],
+      "interface_hash": "f36ab5fa9abd2f280ac016131a738c492b3a6c7a87ebacbed3d27642e5fdf7cb",
+      "invariant_refs": [
+        "no_parallel_authority"
+      ],
+      "owned_concepts": [
+        "program_digital_twin",
+        "dependency_admission",
+        "uncertainty"
+      ],
+      "valid_from": "1ffb4e4",
+      "valid_to": null,
+      "version": "1ffb4e4"
+    },
+    "SP0004": {
+      "assumption_refs": [
+        "CL-SP0000-architecture-baseline-fixed"
+      ],
+      "commit": "e82ca87",
+      "constitution_id": "SP0004",
+      "evidence_refs": [
+        {
+          "present": true,
+          "ref": "tools/technology"
+        },
+        {
+          "present": true,
+          "ref": "docs/technology"
+        }
+      ],
+      "failure_states": [
+        "TECHNOLOGY_LOCK_IN"
+      ],
+      "guarantee_refs": [
+        "CL-SP0004-provider-replaceable"
+      ],
+      "interface_hash": "6de41eb300fbe2b0d19da2c68288f5d30a51414e057c006532cb6d1f98b944d8",
+      "invariant_refs": [
+        "provider_replaceability_executable"
+      ],
+      "owned_concepts": [
+        "technology_registry",
+        "provider_replaceability"
+      ],
+      "valid_from": "e82ca87",
+      "valid_to": null,
+      "version": "e82ca87"
+    },
+    "SP0005": {
+      "assumption_refs": [
+        "CL-SP0002-semantics-versioned",
+        "CL-SP0000-architecture-baseline-fixed"
+      ],
+      "commit": "610e1e3",
+      "constitution_id": "SP0005",
+      "evidence_refs": [
+        {
+          "present": true,
+          "ref": "tools/safety"
+        },
+        {
+          "present": true,
+          "ref": "docs/safety"
+        }
+      ],
+      "failure_states": [
+        "SAFETY_ADMISSION_BYPASSED"
+      ],
+      "guarantee_refs": [
+        "CL-SP0005-safety-dominates-protected-effects"
+      ],
+      "interface_hash": "d0aa9909ec7e89f6e9644239d80b1dfdb59d29f48f8f8b8e16a55cb98845cbf4",
+      "invariant_refs": [
+        "safety_dominator",
+        "control_effectiveness_required"
+      ],
+      "owned_concepts": [
+        "safety_admission",
+        "safety_control",
+        "safety_dominator"
+      ],
+      "valid_from": "610e1e3",
+      "valid_to": null,
+      "version": "610e1e3"
+    },
+    "SP0006": {
+      "assumption_refs": [
+        "CL-SP0005-safety-dominates-protected-effects"
+      ],
+      "commit": "d6ac046",
+      "constitution_id": "SP0006",
+      "evidence_refs": [
+        {
+          "present": true,
+          "ref": "tools/governed_work"
+        },
+        {
+          "present": true,
+          "ref": "docs/governed_work"
+        }
+      ],
+      "failure_states": [
+        "AUTHORITY_AMPLIFICATION",
+        "ORPHANED_WORK"
+      ],
+      "guarantee_refs": [
+        "CL-SP0006-authority-conserved",
+        "CL-SP0006-zero-lost-work",
+        "CL-SP0006-approval-context-bound"
+      ],
+      "interface_hash": "3f7a86c21476cc95d03ec73a56f573a2f2582a26ffd0f8eb778f2b25d09120b7",
+      "invariant_refs": [
+        "authority_conservation",
+        "delegation_attenuation",
+        "approval_context_bound",
+        "zero_lost_work",
+        "outcome_evidence_required"
+      ],
+      "owned_concepts": [
+        "owned_work",
+        "approval_binding",
+        "delegation_attenuation",
+        "outcome_evidence"
+      ],
+      "valid_from": "d6ac046",
+      "valid_to": null,
+      "version": "d6ac046"
+    },
+    "SP0007": {
+      "assumption_refs": [
+        "CL-SP0002-historical-epoch-interpretable"
+      ],
+      "commit": "4eda536",
+      "constitution_id": "SP0007",
+      "evidence_refs": [
+        {
+          "present": true,
+          "ref": "tools/compatibility"
+        },
+        {
+          "present": true,
+          "ref": "docs/compatibility"
+        }
+      ],
+      "failure_states": [
+        "INCOMPATIBLE_CONTRACT_ADMITTED"
+      ],
+      "guarantee_refs": [
+        "CL-SP0007-contract-evolution-directional",
+        "CL-SP0007-historical-envelope-epoch-bound"
+      ],
+      "interface_hash": "7bad59275793945d4c04def4beb43ae004228d81057eec83cb9dc42940b40b3c",
+      "invariant_refs": [
+        "contract_evolution_directional",
+        "up_migration_not_rollback"
+      ],
+      "owned_concepts": [
+        "compatibility_twin",
+        "migration_directionality",
+        "contract_version"
+      ],
+      "valid_from": "4eda536",
+      "valid_to": null,
+      "version": "4eda536"
+    },
+    "SP0008": {
+      "assumption_refs": [
+        "CL-SP0007-contract-evolution-directional"
+      ],
+      "commit": "bb80912",
+      "constitution_id": "SP0008",
+      "evidence_refs": [
+        {
+          "present": true,
+          "ref": "tools/contracts_inventory"
+        },
+        {
+          "present": true,
+          "ref": "docs/contracts_inventory/FINALIS_CONTRACT_GENOME.json"
+        }
+      ],
+      "failure_states": [
+        "HIDDEN_CONTRACT_SURFACE"
+      ],
+      "guarantee_refs": [
+        "CL-SP0008-contract-surfaces-inventoried",
+        "CL-SP0008-contract-genome-sealed"
+      ],
+      "interface_hash": "b4ff371f77589103e49cd616019b6ff9b995d9d81cc68d941e37b0ae52f1e853",
+      "invariant_refs": [
+        "inventory_populates_registry_no_parallel"
+      ],
+      "owned_concepts": [
+        "contract_surface",
+        "contract_genome",
+        "effect_reachability"
+      ],
+      "valid_from": "bb80912",
+      "valid_to": null,
+      "version": "bb80912"
+    },
+    "SP0009": {
+      "assumption_refs": [
+        "CL-SP0008-contract-genome-sealed",
+        "CL-SP0006-approval-context-bound"
+      ],
+      "commit": "1e29581",
+      "constitution_id": "SP0009",
+      "evidence_refs": [
+        {
+          "present": true,
+          "ref": "tools/release"
+        },
+        {
+          "present": true,
+          "ref": "docs/release/FINALIS_RELEASE_TWIN.json"
+        }
+      ],
+      "failure_states": [
+        "RELEASE_PROOF_GRANTS_AUTHORITY"
+      ],
+      "guarantee_refs": [
+        "CL-SP0009-release-proof-not-runtime-authority",
+        "CL-SP0009-non-compensatory-gates"
+      ],
+      "interface_hash": "da092fd3459eb2e7a6f650f226d260a33ab7db8f9d2455f7e1e19845f3a5d92d",
+      "invariant_refs": [
+        "proof_not_authority",
+        "release_runtime_separation",
+        "non_compensatory_gates"
+      ],
+      "owned_concepts": [
+        "release_candidate",
+        "quality_gate",
+        "definition_of_done",
+        "release_proof"
+      ],
+      "valid_from": "1e29581",
+      "valid_to": null,
+      "version": "1e29581"
+    }
+  },
+  "counterfactual_controls": {
+    "CTL-APPROVAL-BINDING": {
+      "classification": "NECESSARY_NOT_SUFFICIENT",
+      "control_id": "CTL-APPROVAL-BINDING",
+      "critical": true,
+      "exercised": true,
+      "exercised_by": "approval binding",
+      "grounding": "tools/governed_work/approval.py",
+      "necessity_witness": {
+        "reachable_violation_on_removal": true
+      },
+      "present_model_result": "PROPERTY_HOLDS",
+      "protected_property": "no protected effect without bound approval",
+      "removed_model_result": "VIOLATION_REACHABLE",
+      "sufficiency_witness": null,
+      "symbol": ""
+    },
+    "CTL-AUTH-GATE": {
+      "classification": "NECESSARY_NOT_SUFFICIENT",
+      "control_id": "CTL-AUTH-GATE",
+      "critical": true,
+      "exercised": true,
+      "exercised_by": "Depends(current_user) (~400x)",
+      "grounding": "finalis/portal/app.py",
+      "necessity_witness": {
+        "reachable_violation_on_removal": true
+      },
+      "present_model_result": "PROPERTY_HOLDS",
+      "protected_property": "no unauthenticated protected effect",
+      "removed_model_result": "VIOLATION_REACHABLE",
+      "sufficiency_witness": null,
+      "symbol": "current_user"
+    },
+    "CTL-RBAC": {
+      "classification": "NECESSARY_NOT_SUFFICIENT",
+      "control_id": "CTL-RBAC",
+      "critical": true,
+      "exercised": true,
+      "exercised_by": "require_permission (~375x)",
+      "grounding": "finalis/portal/app.py",
+      "necessity_witness": {
+        "reachable_violation_on_removal": true
+      },
+      "present_model_result": "PROPERTY_HOLDS",
+      "protected_property": "no over-authority action",
+      "removed_model_result": "VIOLATION_REACHABLE",
+      "sufficiency_witness": null,
+      "symbol": "require_permission"
+    },
+    "CTL-RELEASE-PROOF-BOUNDARY": {
+      "classification": "NECESSARY_NOT_SUFFICIENT",
+      "control_id": "CTL-RELEASE-PROOF-BOUNDARY",
+      "critical": true,
+      "exercised": true,
+      "exercised_by": "envelope non_authoritative",
+      "grounding": "tools/release/envelope.py",
+      "necessity_witness": {
+        "reachable_violation_on_removal": true
+      },
+      "present_model_result": "PROPERTY_HOLDS",
+      "protected_property": "release proof grants no runtime authority",
+      "removed_model_result": "VIOLATION_REACHABLE",
+      "sufficiency_witness": null,
+      "symbol": "non_authoritative"
+    },
+    "CTL-SAFETY-ADMISSION": {
+      "classification": "NECESSARY_NOT_SUFFICIENT",
+      "control_id": "CTL-SAFETY-ADMISSION",
+      "critical": true,
+      "exercised": true,
+      "exercised_by": "safety admission gate",
+      "grounding": "tools/safety/admission.py",
+      "necessity_witness": {
+        "reachable_violation_on_removal": true
+      },
+      "present_model_result": "PROPERTY_HOLDS",
+      "protected_property": "no unsafe protected effect admitted",
+      "removed_model_result": "VIOLATION_REACHABLE",
+      "sufficiency_witness": null,
+      "symbol": "evaluate_action"
+    },
+    "CTL-TENANT-SCOPE": {
+      "classification": "NECESSARY_NOT_SUFFICIENT",
+      "control_id": "CTL-TENANT-SCOPE",
+      "critical": true,
+      "exercised": true,
+      "exercised_by": "tenant_id WHERE scoping (~279x)",
+      "grounding": "finalis/portal/db.py",
+      "necessity_witness": {
+        "reachable_violation_on_removal": true
+      },
+      "present_model_result": "PROPERTY_HOLDS",
+      "protected_property": "no cross-tenant row access",
+      "removed_model_result": "VIOLATION_REACHABLE",
+      "sufficiency_witness": null,
+      "symbol": "tenant_id"
+    }
+  },
+  "counts": {
+    "findings": {
+      "P0": 0,
+      "P1": 0,
+      "P2": 32
+    }
+  },
+  "cross_twin_matrix": {
+    "dimensions": [
+      "identity",
+      "semantic_epoch",
+      "valid_time",
+      "contract_version",
+      "ownership",
+      "authority",
+      "tenant_scope",
+      "effect_class"
+    ],
+    "twins": [
+      {
+        "artifact": "docs/roadmap/ROADMAP_LOCK_1_FINALIS_AI_EMPLOYEE_OS.md",
+        "identity_root": null,
+        "present": true,
+        "twin": "architecture"
+      },
+      {
+        "artifact": "docs/compatibility/FINALIS_CONTRACT_DESCRIPTORS.json",
+        "identity_root": null,
+        "present": true,
+        "twin": "compatibility"
+      },
+      {
+        "artifact": "docs/contracts_inventory/FINALIS_CONTRACT_GENOME.json",
+        "identity_root": "7269f08cd7d53679cae6ce3b134a00d6dd6146fde0c60e712a065a711be377b1",
+        "present": true,
+        "twin": "contract_inventory"
+      },
+      {
+        "artifact": "docs/governed_work",
+        "identity_root": null,
+        "present": true,
+        "twin": "governed_work"
+      },
+      {
+        "artifact": "docs/program/FINALIS_1000_PROGRAM_REGISTRY.json",
+        "identity_root": "FINALIS-1000",
+        "present": true,
+        "twin": "program"
+      },
+      {
+        "artifact": "docs/release/FINALIS_RELEASE_TWIN.json",
+        "identity_root": "916dd687ca4c473efdf5b77f1bd3d4d72fe365aaa5d89a520dab0b214fb5e794",
+        "present": true,
+        "twin": "release_assurance"
+      },
+      {
+        "artifact": "docs/safety",
+        "identity_root": null,
+        "present": true,
+        "twin": "safety"
+      },
+      {
+        "artifact": "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json",
+        "identity_root": null,
+        "present": true,
+        "twin": "semantic"
+      },
+      {
+        "artifact": "docs/technology",
+        "identity_root": null,
+        "present": true,
+        "twin": "technology"
+      }
+    ]
+  },
+  "defeater_resolution": {
+    "blocked_targets": [],
+    "blocking": [],
+    "defeaters": []
+  },
+  "epistemic_states": {
+    "CL-SP0000-architecture-baseline-fixed": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0000-evidence-present": {
+      "closure_admissible": true,
+      "critical": false,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0001-architecture-conformance-checked": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0001-evidence-present": {
+      "closure_admissible": true,
+      "critical": false,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0002-evidence-present": {
+      "closure_admissible": true,
+      "critical": false,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0002-historical-epoch-interpretable": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0002-semantics-versioned": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0003-evidence-present": {
+      "closure_admissible": true,
+      "critical": false,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0003-program-admission-verified": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0004-evidence-present": {
+      "closure_admissible": true,
+      "critical": false,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0004-provider-replaceable": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0005-evidence-present": {
+      "closure_admissible": true,
+      "critical": false,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0005-safety-dominates-protected-effects": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0006-approval-context-bound": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0006-authority-conserved": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0006-evidence-present": {
+      "closure_admissible": true,
+      "critical": false,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0006-zero-lost-work": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0007-contract-evolution-directional": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0007-evidence-present": {
+      "closure_admissible": true,
+      "critical": false,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0007-historical-envelope-epoch-bound": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0008-contract-genome-sealed": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0008-contract-surfaces-inventoried": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0008-evidence-present": {
+      "closure_admissible": true,
+      "critical": false,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0009-evidence-present": {
+      "closure_admissible": true,
+      "critical": false,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0009-non-compensatory-gates": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0009-release-proof-not-runtime-authority": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CT-architecture-identity": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CT-compatibility-identity": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CT-contract_inventory-identity": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CT-governed_work-identity": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CT-program-identity": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CT-release-genome-crosslink": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CT-release_assurance-identity": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CT-safety-identity": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CT-semantic-identity": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CT-technology-identity": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-APPROVAL-CONTEXT-BOUND": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-AUTHORITY-CONSERVATION": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-CONTROL-LANGUAGE-INVARIANCE": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-DELEGATION-ATTENUATION": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-HISTORICAL-INTERPRETABILITY": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-LEARNING-PROMOTION-GATED": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-OUTCOME-EVIDENCE": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-PROOF-NOT-AUTHORITY": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-PROVIDER-ACCOUNT-SEPARATION": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-RELEASE-RUNTIME-SEPARATION": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-SAFETY-DOMINATOR": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-TENANT-ISOLATION": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-ZERO-LOST-WORK": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    }
+  },
+  "epistemic_summary": {
+    "all": {
+      "BOTH": 0,
+      "NEITHER": 0,
+      "REFUTED_ONLY": 0,
+      "SUPPORTED_ONLY": 49
+    },
+    "critical": {
+      "BOTH": 0,
+      "NEITHER": 0,
+      "REFUTED_ONLY": 0,
+      "SUPPORTED_ONLY": 39
+    },
+    "critical_both": 0,
+    "critical_neither": 0
+  },
+  "evidence_common_mode": {
+    "parser_family": {
+      "ast": [
+        "EA-26c7eb925e6ffad2",
+        "EA-5c954940891bf86a",
+        "EA-8036ea70eab35676",
+        "EA-81d5ea5ea70da33f",
+        "EA-8b7b7a0121e6976b",
+        "EA-9e5114464528b12e",
+        "EA-a0423d64bc10ca60",
+        "EA-a23c36ed585733b1",
+        "EA-a76e6c28ccd22daf",
+        "EA-aafe94eb42eb8585",
+        "EA-b16cfd449e4e5230",
+        "EA-b5246d1da4147da5",
+        "EA-c4fdcb3d3680bacc",
+        "EA-d355ba30a239d38f",
+        "EA-d9084a7b1cb68f5b",
+        "EA-dc4cb4b8dc7221cf"
+      ],
+      "canonical-json": [
+        "EA-032bc1461e8e4b5f",
+        "EA-0783aab63c3974b8",
+        "EA-2e6e5863b8f2a588",
+        "EA-316db8c5d0f649ea",
+        "EA-3a5a2a5a885f6a50",
+        "EA-3ee580997f40ee13",
+        "EA-48cc1c635c344ec1",
+        "EA-6287e896ce369331",
+        "EA-660da2dc0205ef4f",
+        "EA-6f830afb3afee82b",
+        "EA-8e805b9bfa5ad9d1",
+        "EA-b6e7f6d30796c18c",
+        "EA-cdbe11af30a1c902",
+        "EA-f41261af721e9106",
+        "EA-fc60b8136ab2447d",
+        "EA-fd3acffd49d3cc30"
+      ]
+    },
+    "producer": {
+      "SP0000": [
+        "EA-5c954940891bf86a",
+        "EA-fd3acffd49d3cc30"
+      ],
+      "SP0001": [
+        "EA-6287e896ce369331",
+        "EA-b16cfd449e4e5230"
+      ],
+      "SP0002": [
+        "EA-660da2dc0205ef4f",
+        "EA-b5246d1da4147da5",
+        "EA-c4fdcb3d3680bacc",
+        "EA-cdbe11af30a1c902"
+      ],
+      "SP0003": [
+        "EA-316db8c5d0f649ea",
+        "EA-a76e6c28ccd22daf"
+      ],
+      "SP0004": [
+        "EA-3a5a2a5a885f6a50",
+        "EA-d9084a7b1cb68f5b"
+      ],
+      "SP0005": [
+        "EA-0783aab63c3974b8",
+        "EA-26c7eb925e6ffad2"
+      ],
+      "SP0006": [
+        "EA-032bc1461e8e4b5f",
+        "EA-8036ea70eab35676",
+        "EA-8e805b9bfa5ad9d1",
+        "EA-b6e7f6d30796c18c",
+        "EA-d355ba30a239d38f",
+        "EA-dc4cb4b8dc7221cf"
+      ],
+      "SP0007": [
+        "EA-2e6e5863b8f2a588",
+        "EA-6f830afb3afee82b",
+        "EA-a23c36ed585733b1",
+        "EA-aafe94eb42eb8585"
+      ],
+      "SP0008": [
+        "EA-48cc1c635c344ec1",
+        "EA-8b7b7a0121e6976b",
+        "EA-a0423d64bc10ca60",
+        "EA-f41261af721e9106"
+      ],
+      "SP0009": [
+        "EA-3ee580997f40ee13",
+        "EA-81d5ea5ea70da33f",
+        "EA-9e5114464528b12e",
+        "EA-fc60b8136ab2447d"
+      ]
+    },
+    "tool": {
+      "kernel": [
+        "EA-26c7eb925e6ffad2",
+        "EA-5c954940891bf86a",
+        "EA-8036ea70eab35676",
+        "EA-81d5ea5ea70da33f",
+        "EA-8b7b7a0121e6976b",
+        "EA-9e5114464528b12e",
+        "EA-a0423d64bc10ca60",
+        "EA-a23c36ed585733b1",
+        "EA-a76e6c28ccd22daf",
+        "EA-aafe94eb42eb8585",
+        "EA-b16cfd449e4e5230",
+        "EA-b5246d1da4147da5",
+        "EA-c4fdcb3d3680bacc",
+        "EA-d355ba30a239d38f",
+        "EA-d9084a7b1cb68f5b",
+        "EA-dc4cb4b8dc7221cf"
+      ],
+      "proof-artifact": [
+        "EA-032bc1461e8e4b5f",
+        "EA-0783aab63c3974b8",
+        "EA-2e6e5863b8f2a588",
+        "EA-316db8c5d0f649ea",
+        "EA-3a5a2a5a885f6a50",
+        "EA-3ee580997f40ee13",
+        "EA-48cc1c635c344ec1",
+        "EA-6287e896ce369331",
+        "EA-660da2dc0205ef4f",
+        "EA-6f830afb3afee82b",
+        "EA-8e805b9bfa5ad9d1",
+        "EA-b6e7f6d30796c18c",
+        "EA-cdbe11af30a1c902",
+        "EA-f41261af721e9106",
+        "EA-fc60b8136ab2447d",
+        "EA-fd3acffd49d3cc30"
+      ]
+    }
+  },
+  "findings": [
+    {
+      "details": {
+        "independence_class": "COMMON_MODE",
+        "trust_domains": [
+          "kernel-SP0000",
+          "proof-SP0000"
+        ]
+      },
+      "kind": "EVIDENCE_COMMON_MODE_RISK",
+      "message": "critical claim support is single-producer (common-mode): not independent quorum \u2014 recorded as assurance debt, not counted as independent corroboration (D-0010-10)",
+      "severity": "P2",
+      "subject": "CL-SP0000-architecture-baseline-fixed"
+    },
+    {
+      "details": {
+        "independence_class": "COMMON_MODE",
+        "trust_domains": [
+          "kernel-SP0001",
+          "proof-SP0001"
+        ]
+      },
+      "kind": "EVIDENCE_COMMON_MODE_RISK",
+      "message": "critical claim support is single-producer (common-mode): not independent quorum \u2014 recorded as assurance debt, not counted as independent corroboration (D-0010-10)",
+      "severity": "P2",
+      "subject": "CL-SP0001-architecture-conformance-checked"
+    },
+    {
+      "details": {
+        "independence_class": "COMMON_MODE",
+        "trust_domains": [
+          "kernel-SP0002",
+          "proof-SP0002"
+        ]
+      },
+      "kind": "EVIDENCE_COMMON_MODE_RISK",
+      "message": "critical claim support is single-producer (common-mode): not independent quorum \u2014 recorded as assurance debt, not counted as independent corroboration (D-0010-10)",
+      "severity": "P2",
+      "subject": "CL-SP0002-historical-epoch-interpretable"
+    },
+    {
+      "details": {
+        "independence_class": "COMMON_MODE",
+        "trust_domains": [
+          "kernel-SP0002",
+          "proof-SP0002"
+        ]
+      },
+      "kind": "EVIDENCE_COMMON_MODE_RISK",
+      "message": "critical claim support is single-producer (common-mode): not independent quorum \u2014 recorded as assurance debt, not counted as independent corroboration (D-0010-10)",
+      "severity": "P2",
+      "subject": "CL-SP0002-semantics-versioned"
+    },
+    {
+      "details": {
+        "independence_class": "COMMON_MODE",
+        "trust_domains": [
+          "kernel-SP0003",
+          "proof-SP0003"
+        ]
+      },
+      "kind": "EVIDENCE_COMMON_MODE_RISK",
+      "message": "critical claim support is single-producer (common-mode): not independent quorum \u2014 recorded as assurance debt, not counted as independent corroboration (D-0010-10)",
+      "severity": "P2",
+      "subject": "CL-SP0003-program-admission-verified"
+    },
+    {
+      "details": {
+        "independence_class": "COMMON_MODE",
+        "trust_domains": [
+          "kernel-SP0004",
+          "proof-SP0004"
+        ]
+      },
+      "kind": "EVIDENCE_COMMON_MODE_RISK",
+      "message": "critical claim support is single-producer (common-mode): not independent quorum \u2014 recorded as assurance debt, not counted as independent corroboration (D-0010-10)",
+      "severity": "P2",
+      "subject": "CL-SP0004-provider-replaceable"
+    },
+    {
+      "details": {
+        "independence_class": "COMMON_MODE",
+        "trust_domains": [
+          "kernel-SP0005",
+          "proof-SP0005"
+        ]
+      },
+      "kind": "EVIDENCE_COMMON_MODE_RISK",
+      "message": "critical claim support is single-producer (common-mode): not independent quorum \u2014 recorded as assurance debt, not counted as independent corroboration (D-0010-10)",
+      "severity": "P2",
+      "subject": "CL-SP0005-safety-dominates-protected-effects"
+    },
+    {
+      "details": {
+        "independence_class": "COMMON_MODE",
+        "trust_domains": [
+          "kernel-SP0006",
+          "proof-SP0006"
+        ]
+      },
+      "kind": "EVIDENCE_COMMON_MODE_RISK",
+      "message": "critical claim support is single-producer (common-mode): not independent quorum \u2014 recorded as assurance debt, not counted as independent corroboration (D-0010-10)",
+      "severity": "P2",
+      "subject": "CL-SP0006-approval-context-bound"
+    },
+    {
+      "details": {
+        "independence_class": "COMMON_MODE",
+        "trust_domains": [
+          "kernel-SP0006",
+          "proof-SP0006"
+        ]
+      },
+      "kind": "EVIDENCE_COMMON_MODE_RISK",
+      "message": "critical claim support is single-producer (common-mode): not independent quorum \u2014 recorded as assurance debt, not counted as independent corroboration (D-0010-10)",
+      "severity": "P2",
+      "subject": "CL-SP0006-authority-conserved"
+    },
+    {
+      "details": {
+        "independence_class": "COMMON_MODE",
+        "trust_domains": [
+          "kernel-SP0006",
+          "proof-SP0006"
+        ]
+      },
+      "kind": "EVIDENCE_COMMON_MODE_RISK",
+      "message": "critical claim support is single-producer (common-mode): not independent quorum \u2014 recorded as assurance debt, not counted as independent corroboration (D-0010-10)",
+      "severity": "P2",
+      "subject": "CL-SP0006-zero-lost-work"
+    },
+    {
+      "details": {
+        "independence_class": "COMMON_MODE",
+        "trust_domains": [
+          "kernel-SP0007",
+          "proof-SP0007"
+        ]
+      },
+      "kind": "EVIDENCE_COMMON_MODE_RISK",
+      "message": "critical claim support is single-producer (common-mode): not independent quorum \u2014 recorded as assurance debt, not counted as independent corroboration (D-0010-10)",
+      "severity": "P2",
+      "subject": "CL-SP0007-contract-evolution-directional"
+    },
+    {
+      "details": {
+        "independence_class": "COMMON_MODE",
+        "trust_domains": [
+          "kernel-SP0007",
+          "proof-SP0007"
+        ]
+      },
+      "kind": "EVIDENCE_COMMON_MODE_RISK",
+      "message": "critical claim support is single-producer (common-mode): not independent quorum \u2014 recorded as assurance debt, not counted as independent corroboration (D-0010-10)",
+      "severity": "P2",
+      "subject": "CL-SP0007-historical-envelope-epoch-bound"
+    },
+    {
+      "details": {
+        "independence_class": "COMMON_MODE",
+        "trust_domains": [
+          "kernel-SP0008",
+          "proof-SP0008"
+        ]
+      },
+      "kind": "EVIDENCE_COMMON_MODE_RISK",
+      "message": "critical claim support is single-producer (common-mode): not independent quorum \u2014 recorded as assurance debt, not counted as independent corroboration (D-0010-10)",
+      "severity": "P2",
+      "subject": "CL-SP0008-contract-genome-sealed"
+    },
+    {
+      "details": {
+        "independence_class": "COMMON_MODE",
+        "trust_domains": [
+          "kernel-SP0008",
+          "proof-SP0008"
+        ]
+      },
+      "kind": "EVIDENCE_COMMON_MODE_RISK",
+      "message": "critical claim support is single-producer (common-mode): not independent quorum \u2014 recorded as assurance debt, not counted as independent corroboration (D-0010-10)",
+      "severity": "P2",
+      "subject": "CL-SP0008-contract-surfaces-inventoried"
+    },
+    {
+      "details": {
+        "independence_class": "COMMON_MODE",
+        "trust_domains": [
+          "kernel-SP0009",
+          "proof-SP0009"
+        ]
+      },
+      "kind": "EVIDENCE_COMMON_MODE_RISK",
+      "message": "critical claim support is single-producer (common-mode): not independent quorum \u2014 recorded as assurance debt, not counted as independent corroboration (D-0010-10)",
+      "severity": "P2",
+      "subject": "CL-SP0009-non-compensatory-gates"
+    },
+    {
+      "details": {
+        "independence_class": "COMMON_MODE",
+        "trust_domains": [
+          "kernel-SP0009",
+          "proof-SP0009"
+        ]
+      },
+      "kind": "EVIDENCE_COMMON_MODE_RISK",
+      "message": "critical claim support is single-producer (common-mode): not independent quorum \u2014 recorded as assurance debt, not counted as independent corroboration (D-0010-10)",
+      "severity": "P2",
+      "subject": "CL-SP0009-release-proof-not-runtime-authority"
+    },
+    {
+      "details": {
+        "claim_id": "CL-SP0000-architecture-baseline-fixed",
+        "classification": "SINGLE_POINT_OF_ASSURANCE",
+        "configured_k": 1,
+        "elements": [
+          "kernel-SP0000",
+          "proof-SP0000"
+        ],
+        "exact": true,
+        "fragile_removals": [
+          [
+            "kernel-SP0000"
+          ],
+          [
+            "proof-SP0000"
+          ]
+        ],
+        "remove_class": "EVIDENCE_DOMAIN"
+      },
+      "kind": "ASSURANCE_SINGLE_POINT_OF_FAILURE",
+      "message": "claim support collapses on removing one EVIDENCE_DOMAIN: single point of assurance (diagnostic; redundancy is not correctness, D-0010-21)",
+      "severity": "P2",
+      "subject": "CL-SP0000-architecture-baseline-fixed"
+    },
+    {
+      "details": {
+        "claim_id": "CL-SP0001-architecture-conformance-checked",
+        "classification": "SINGLE_POINT_OF_ASSURANCE",
+        "configured_k": 1,
+        "elements": [
+          "kernel-SP0001",
+          "proof-SP0001"
+        ],
+        "exact": true,
+        "fragile_removals": [
+          [
+            "kernel-SP0001"
+          ],
+          [
+            "proof-SP0001"
+          ]
+        ],
+        "remove_class": "EVIDENCE_DOMAIN"
+      },
+      "kind": "ASSURANCE_SINGLE_POINT_OF_FAILURE",
+      "message": "claim support collapses on removing one EVIDENCE_DOMAIN: single point of assurance (diagnostic; redundancy is not correctness, D-0010-21)",
+      "severity": "P2",
+      "subject": "CL-SP0001-architecture-conformance-checked"
+    },
+    {
+      "details": {
+        "claim_id": "CL-SP0002-historical-epoch-interpretable",
+        "classification": "SINGLE_POINT_OF_ASSURANCE",
+        "configured_k": 1,
+        "elements": [
+          "kernel-SP0002",
+          "proof-SP0002"
+        ],
+        "exact": true,
+        "fragile_removals": [
+          [
+            "kernel-SP0002"
+          ],
+          [
+            "proof-SP0002"
+          ]
+        ],
+        "remove_class": "EVIDENCE_DOMAIN"
+      },
+      "kind": "ASSURANCE_SINGLE_POINT_OF_FAILURE",
+      "message": "claim support collapses on removing one EVIDENCE_DOMAIN: single point of assurance (diagnostic; redundancy is not correctness, D-0010-21)",
+      "severity": "P2",
+      "subject": "CL-SP0002-historical-epoch-interpretable"
+    },
+    {
+      "details": {
+        "claim_id": "CL-SP0002-semantics-versioned",
+        "classification": "SINGLE_POINT_OF_ASSURANCE",
+        "configured_k": 1,
+        "elements": [
+          "kernel-SP0002",
+          "proof-SP0002"
+        ],
+        "exact": true,
+        "fragile_removals": [
+          [
+            "kernel-SP0002"
+          ],
+          [
+            "proof-SP0002"
+          ]
+        ],
+        "remove_class": "EVIDENCE_DOMAIN"
+      },
+      "kind": "ASSURANCE_SINGLE_POINT_OF_FAILURE",
+      "message": "claim support collapses on removing one EVIDENCE_DOMAIN: single point of assurance (diagnostic; redundancy is not correctness, D-0010-21)",
+      "severity": "P2",
+      "subject": "CL-SP0002-semantics-versioned"
+    },
+    {
+      "details": {
+        "claim_id": "CL-SP0003-program-admission-verified",
+        "classification": "SINGLE_POINT_OF_ASSURANCE",
+        "configured_k": 1,
+        "elements": [
+          "kernel-SP0003",
+          "proof-SP0003"
+        ],
+        "exact": true,
+        "fragile_removals": [
+          [
+            "kernel-SP0003"
+          ],
+          [
+            "proof-SP0003"
+          ]
+        ],
+        "remove_class": "EVIDENCE_DOMAIN"
+      },
+      "kind": "ASSURANCE_SINGLE_POINT_OF_FAILURE",
+      "message": "claim support collapses on removing one EVIDENCE_DOMAIN: single point of assurance (diagnostic; redundancy is not correctness, D-0010-21)",
+      "severity": "P2",
+      "subject": "CL-SP0003-program-admission-verified"
+    },
+    {
+      "details": {
+        "claim_id": "CL-SP0004-provider-replaceable",
+        "classification": "SINGLE_POINT_OF_ASSURANCE",
+        "configured_k": 1,
+        "elements": [
+          "kernel-SP0004",
+          "proof-SP0004"
+        ],
+        "exact": true,
+        "fragile_removals": [
+          [
+            "kernel-SP0004"
+          ],
+          [
+            "proof-SP0004"
+          ]
+        ],
+        "remove_class": "EVIDENCE_DOMAIN"
+      },
+      "kind": "ASSURANCE_SINGLE_POINT_OF_FAILURE",
+      "message": "claim support collapses on removing one EVIDENCE_DOMAIN: single point of assurance (diagnostic; redundancy is not correctness, D-0010-21)",
+      "severity": "P2",
+      "subject": "CL-SP0004-provider-replaceable"
+    },
+    {
+      "details": {
+        "claim_id": "CL-SP0005-safety-dominates-protected-effects",
+        "classification": "SINGLE_POINT_OF_ASSURANCE",
+        "configured_k": 1,
+        "elements": [
+          "kernel-SP0005",
+          "proof-SP0005"
+        ],
+        "exact": true,
+        "fragile_removals": [
+          [
+            "kernel-SP0005"
+          ],
+          [
+            "proof-SP0005"
+          ]
+        ],
+        "remove_class": "EVIDENCE_DOMAIN"
+      },
+      "kind": "ASSURANCE_SINGLE_POINT_OF_FAILURE",
+      "message": "claim support collapses on removing one EVIDENCE_DOMAIN: single point of assurance (diagnostic; redundancy is not correctness, D-0010-21)",
+      "severity": "P2",
+      "subject": "CL-SP0005-safety-dominates-protected-effects"
+    },
+    {
+      "details": {
+        "claim_id": "CL-SP0006-approval-context-bound",
+        "classification": "SINGLE_POINT_OF_ASSURANCE",
+        "configured_k": 1,
+        "elements": [
+          "kernel-SP0006",
+          "proof-SP0006"
+        ],
+        "exact": true,
+        "fragile_removals": [
+          [
+            "kernel-SP0006"
+          ],
+          [
+            "proof-SP0006"
+          ]
+        ],
+        "remove_class": "EVIDENCE_DOMAIN"
+      },
+      "kind": "ASSURANCE_SINGLE_POINT_OF_FAILURE",
+      "message": "claim support collapses on removing one EVIDENCE_DOMAIN: single point of assurance (diagnostic; redundancy is not correctness, D-0010-21)",
+      "severity": "P2",
+      "subject": "CL-SP0006-approval-context-bound"
+    },
+    {
+      "details": {
+        "claim_id": "CL-SP0006-authority-conserved",
+        "classification": "SINGLE_POINT_OF_ASSURANCE",
+        "configured_k": 1,
+        "elements": [
+          "kernel-SP0006",
+          "proof-SP0006"
+        ],
+        "exact": true,
+        "fragile_removals": [
+          [
+            "kernel-SP0006"
+          ],
+          [
+            "proof-SP0006"
+          ]
+        ],
+        "remove_class": "EVIDENCE_DOMAIN"
+      },
+      "kind": "ASSURANCE_SINGLE_POINT_OF_FAILURE",
+      "message": "claim support collapses on removing one EVIDENCE_DOMAIN: single point of assurance (diagnostic; redundancy is not correctness, D-0010-21)",
+      "severity": "P2",
+      "subject": "CL-SP0006-authority-conserved"
+    },
+    {
+      "details": {
+        "claim_id": "CL-SP0006-zero-lost-work",
+        "classification": "SINGLE_POINT_OF_ASSURANCE",
+        "configured_k": 1,
+        "elements": [
+          "kernel-SP0006",
+          "proof-SP0006"
+        ],
+        "exact": true,
+        "fragile_removals": [
+          [
+            "kernel-SP0006"
+          ],
+          [
+            "proof-SP0006"
+          ]
+        ],
+        "remove_class": "EVIDENCE_DOMAIN"
+      },
+      "kind": "ASSURANCE_SINGLE_POINT_OF_FAILURE",
+      "message": "claim support collapses on removing one EVIDENCE_DOMAIN: single point of assurance (diagnostic; redundancy is not correctness, D-0010-21)",
+      "severity": "P2",
+      "subject": "CL-SP0006-zero-lost-work"
+    },
+    {
+      "details": {
+        "claim_id": "CL-SP0007-contract-evolution-directional",
+        "classification": "SINGLE_POINT_OF_ASSURANCE",
+        "configured_k": 1,
+        "elements": [
+          "kernel-SP0007",
+          "proof-SP0007"
+        ],
+        "exact": true,
+        "fragile_removals": [
+          [
+            "kernel-SP0007"
+          ],
+          [
+            "proof-SP0007"
+          ]
+        ],
+        "remove_class": "EVIDENCE_DOMAIN"
+      },
+      "kind": "ASSURANCE_SINGLE_POINT_OF_FAILURE",
+      "message": "claim support collapses on removing one EVIDENCE_DOMAIN: single point of assurance (diagnostic; redundancy is not correctness, D-0010-21)",
+      "severity": "P2",
+      "subject": "CL-SP0007-contract-evolution-directional"
+    },
+    {
+      "details": {
+        "claim_id": "CL-SP0007-historical-envelope-epoch-bound",
+        "classification": "SINGLE_POINT_OF_ASSURANCE",
+        "configured_k": 1,
+        "elements": [
+          "kernel-SP0007",
+          "proof-SP0007"
+        ],
+        "exact": true,
+        "fragile_removals": [
+          [
+            "kernel-SP0007"
+          ],
+          [
+            "proof-SP0007"
+          ]
+        ],
+        "remove_class": "EVIDENCE_DOMAIN"
+      },
+      "kind": "ASSURANCE_SINGLE_POINT_OF_FAILURE",
+      "message": "claim support collapses on removing one EVIDENCE_DOMAIN: single point of assurance (diagnostic; redundancy is not correctness, D-0010-21)",
+      "severity": "P2",
+      "subject": "CL-SP0007-historical-envelope-epoch-bound"
+    },
+    {
+      "details": {
+        "claim_id": "CL-SP0008-contract-genome-sealed",
+        "classification": "SINGLE_POINT_OF_ASSURANCE",
+        "configured_k": 1,
+        "elements": [
+          "kernel-SP0008",
+          "proof-SP0008"
+        ],
+        "exact": true,
+        "fragile_removals": [
+          [
+            "kernel-SP0008"
+          ],
+          [
+            "proof-SP0008"
+          ]
+        ],
+        "remove_class": "EVIDENCE_DOMAIN"
+      },
+      "kind": "ASSURANCE_SINGLE_POINT_OF_FAILURE",
+      "message": "claim support collapses on removing one EVIDENCE_DOMAIN: single point of assurance (diagnostic; redundancy is not correctness, D-0010-21)",
+      "severity": "P2",
+      "subject": "CL-SP0008-contract-genome-sealed"
+    },
+    {
+      "details": {
+        "claim_id": "CL-SP0008-contract-surfaces-inventoried",
+        "classification": "SINGLE_POINT_OF_ASSURANCE",
+        "configured_k": 1,
+        "elements": [
+          "kernel-SP0008",
+          "proof-SP0008"
+        ],
+        "exact": true,
+        "fragile_removals": [
+          [
+            "kernel-SP0008"
+          ],
+          [
+            "proof-SP0008"
+          ]
+        ],
+        "remove_class": "EVIDENCE_DOMAIN"
+      },
+      "kind": "ASSURANCE_SINGLE_POINT_OF_FAILURE",
+      "message": "claim support collapses on removing one EVIDENCE_DOMAIN: single point of assurance (diagnostic; redundancy is not correctness, D-0010-21)",
+      "severity": "P2",
+      "subject": "CL-SP0008-contract-surfaces-inventoried"
+    },
+    {
+      "details": {
+        "claim_id": "CL-SP0009-non-compensatory-gates",
+        "classification": "SINGLE_POINT_OF_ASSURANCE",
+        "configured_k": 1,
+        "elements": [
+          "kernel-SP0009",
+          "proof-SP0009"
+        ],
+        "exact": true,
+        "fragile_removals": [
+          [
+            "kernel-SP0009"
+          ],
+          [
+            "proof-SP0009"
+          ]
+        ],
+        "remove_class": "EVIDENCE_DOMAIN"
+      },
+      "kind": "ASSURANCE_SINGLE_POINT_OF_FAILURE",
+      "message": "claim support collapses on removing one EVIDENCE_DOMAIN: single point of assurance (diagnostic; redundancy is not correctness, D-0010-21)",
+      "severity": "P2",
+      "subject": "CL-SP0009-non-compensatory-gates"
+    },
+    {
+      "details": {
+        "claim_id": "CL-SP0009-release-proof-not-runtime-authority",
+        "classification": "SINGLE_POINT_OF_ASSURANCE",
+        "configured_k": 1,
+        "elements": [
+          "kernel-SP0009",
+          "proof-SP0009"
+        ],
+        "exact": true,
+        "fragile_removals": [
+          [
+            "kernel-SP0009"
+          ],
+          [
+            "proof-SP0009"
+          ]
+        ],
+        "remove_class": "EVIDENCE_DOMAIN"
+      },
+      "kind": "ASSURANCE_SINGLE_POINT_OF_FAILURE",
+      "message": "claim support collapses on removing one EVIDENCE_DOMAIN: single point of assurance (diagnostic; redundancy is not correctness, D-0010-21)",
+      "severity": "P2",
+      "subject": "CL-SP0009-release-proof-not-runtime-authority"
+    }
+  ],
+  "freeze": {
+    "branch": "claude/finalis-ai-casewoker-blueprint-f1huse",
+    "freeze_hash": "1384c36ae0a809d8402e63f6630d0dbdfae1e2b54b92fc073d5aa8a1e1281932",
+    "frozen_sp0009_verifier_hash": "92d9590c09ec3f7d3b9eef21cfa87d9ac9be7aa6d6fc61e8a6f2520c93a1df0b",
+    "frozen_verifier_matches_recorded": true,
+    "head": "1e29581",
+    "migration_frontier": 27,
+    "predecessor_commits": {
+      "SP0000": "e1b6b5c",
+      "SP0001": "19413f2",
+      "SP0002": "3eacdb0",
+      "SP0003": "1ffb4e4",
+      "SP0004": "e82ca87",
+      "SP0005": "610e1e3",
+      "SP0006": "d6ac046",
+      "SP0007": "4eda536",
+      "SP0008": "bb80912",
+      "SP0009": "1e29581"
+    },
+    "program_registry_present": true,
+    "recorded_frozen_sp0009_verifier_hash": "92d9590c09ec3f7d3b9eef21cfa87d9ac9be7aa6d6fc61e8a6f2520c93a1df0b",
+    "twin_roots": {
+      "contract_genome": "7269f08cd7d53679cae6ce3b134a00d6dd6146fde0c60e712a065a711be377b1",
+      "contract_inventory": "52c462f8306961623b1f4dda582fb28ef2c08664e840a1839975e855f8860330",
+      "release_assurance": "916dd687ca4c473efdf5b77f1bd3d4d72fe365aaa5d89a520dab0b214fb5e794"
+    }
+  },
+  "gap_ledger": {
+    "blocking_gaps": [],
+    "constitutional_blockers": [],
+    "gaps": [
+      {
+        "blocks_closure": false,
+        "claim_refs": [],
+        "gap_id": "GAP-5172747fe430a069",
+        "gap_type": "PRODUCTION_INFRASTRUCTURE_GAP",
+        "next_action": "provision production storage + deployment controller (post-SP0011)",
+        "owner": "infra",
+        "source": "docs/audits/AUDIT_REPORT_1_FULL_SYSTEM_TRUTH_AND_SP_INVENTORY.md",
+        "statement": "single-node SQLite + local filesystem persistence; no production storage, no deployment/secrets/monitoring infra",
+        "status": "OPEN"
+      },
+      {
+        "blocks_closure": false,
+        "claim_refs": [],
+        "gap_id": "GAP-62caff8aa16fad65",
+        "gap_type": "PRODUCTION_INFRASTRUCTURE_GAP",
+        "next_action": "add provider-neutral CI + pinned lockfile when a runtime target exists",
+        "owner": "release",
+        "source": "docs/release/FINALIS_SWARM_REVIEW.md",
+        "statement": "no CI / lockfile / build backend exist; each absence is hashed explicitly into the SP0009 candidate genome",
+        "status": "OPEN"
+      },
+      {
+        "blocks_closure": false,
+        "claim_refs": [],
+        "gap_id": "GAP-bac0ba4fa0bd33ca",
+        "gap_type": "IMPLEMENTATION_GAP",
+        "next_action": "wire real providers behind the existing replaceable adapters (SP0004 exit strategies)",
+        "owner": "product",
+        "source": "docs/audits/AUDIT_REPORT_1_FULL_SYSTEM_TRUTH_AND_SP_INVENTORY.md",
+        "statement": "all external effects are mocks (telephony, email/SMS, calendar, video, PDF, e-signature, payment, AV, OCR, ASR/TTS, web fetch); no real provider wired",
+        "status": "OPEN"
+      },
+      {
+        "blocks_closure": false,
+        "claim_refs": [],
+        "gap_id": "GAP-8d8ea48b27aa6718",
+        "gap_type": "FIELD_VALIDATION_GAP",
+        "next_action": "stabilize module-scoped server/page fixtures + fixed-port allocation",
+        "owner": "release",
+        "source": "docs/release/FINALIS_SWARM_REVIEW.md",
+        "statement": "browser E2E file is environment-sensitive (live Chromium selector-render timeouts under parallel load); excluded from the deterministic release suite by convention",
+        "status": "OPEN"
+      },
+      {
+        "blocks_closure": false,
+        "claim_refs": [],
+        "gap_id": "GAP-4510176661652564",
+        "gap_type": "SP0011_EVALUATION_GAP",
+        "next_action": "execute SP0011 against this Program Seal + admission package",
+        "owner": "SP0011",
+        "source": "docs/release/FINALIS_SWARM_REVIEW.md",
+        "statement": "reliability/evaluation and the 1000/1000 score are not produced here; SP0011 interface is PENDING_SP0011 and cannot carry evidence",
+        "status": "OPEN"
+      },
+      {
+        "blocks_closure": false,
+        "claim_refs": [],
+        "gap_id": "GAP-57652f2e72c2c68c",
+        "gap_type": "OPERATIONAL_GAP",
+        "next_action": "production auth + anchored transparency (post-SP0011)",
+        "owner": "ops",
+        "source": "docs/audits/AUDIT_REPORT_1_FULL_SYSTEM_TRUTH_AND_SP_INVENTORY.md",
+        "statement": "auth is dev-grade; evidence is unanchored (no external transparency log deployed); no rollback infra",
+        "status": "OPEN"
+      }
+    ],
+    "production_gaps": [
+      "GAP-5172747fe430a069",
+      "GAP-62caff8aa16fad65",
+      "GAP-bac0ba4fa0bd33ca",
+      "GAP-8d8ea48b27aa6718",
+      "GAP-4510176661652564",
+      "GAP-57652f2e72c2c68c"
+    ]
+  },
+  "global_invariants": {
+    "INV-APPROVAL-CONTEXT-BOUND": {
+      "claims_supported": true,
+      "controls_present": true,
+      "critical": true,
+      "hyperproperty": "HP-APPROVAL-ISOLATION",
+      "hyperproperty_ok": true,
+      "owner": "SP0006",
+      "status": "HOLD"
+    },
+    "INV-AUTHORITY-CONSERVATION": {
+      "claims_supported": true,
+      "controls_present": true,
+      "critical": true,
+      "hyperproperty": null,
+      "hyperproperty_ok": true,
+      "owner": "SP0006",
+      "status": "HOLD"
+    },
+    "INV-CONTROL-LANGUAGE-INVARIANCE": {
+      "claims_supported": true,
+      "controls_present": true,
+      "critical": true,
+      "hyperproperty": "HP-CONTROL-LANGUAGE-INVARIANCE",
+      "hyperproperty_ok": true,
+      "owner": "SP0002",
+      "status": "HOLD"
+    },
+    "INV-DELEGATION-ATTENUATION": {
+      "claims_supported": true,
+      "controls_present": true,
+      "critical": true,
+      "hyperproperty": null,
+      "hyperproperty_ok": true,
+      "owner": "SP0006",
+      "status": "HOLD"
+    },
+    "INV-HISTORICAL-INTERPRETABILITY": {
+      "claims_supported": true,
+      "controls_present": true,
+      "critical": true,
+      "hyperproperty": null,
+      "hyperproperty_ok": true,
+      "owner": "SP0002",
+      "status": "HOLD"
+    },
+    "INV-LEARNING-PROMOTION-GATED": {
+      "claims_supported": true,
+      "controls_present": true,
+      "critical": true,
+      "hyperproperty": null,
+      "hyperproperty_ok": true,
+      "owner": "SP0006",
+      "status": "HOLD"
+    },
+    "INV-OUTCOME-EVIDENCE": {
+      "claims_supported": true,
+      "controls_present": true,
+      "critical": true,
+      "hyperproperty": null,
+      "hyperproperty_ok": true,
+      "owner": "SP0006",
+      "status": "HOLD"
+    },
+    "INV-PROOF-NOT-AUTHORITY": {
+      "claims_supported": true,
+      "controls_present": true,
+      "critical": true,
+      "hyperproperty": null,
+      "hyperproperty_ok": true,
+      "owner": "SP0009",
+      "status": "HOLD"
+    },
+    "INV-PROVIDER-ACCOUNT-SEPARATION": {
+      "claims_supported": true,
+      "controls_present": true,
+      "critical": true,
+      "hyperproperty": "HP-PROVIDER-ACCOUNT-SEPARATION",
+      "hyperproperty_ok": true,
+      "owner": "SP0004",
+      "status": "HOLD"
+    },
+    "INV-RELEASE-RUNTIME-SEPARATION": {
+      "claims_supported": true,
+      "controls_present": true,
+      "critical": true,
+      "hyperproperty": null,
+      "hyperproperty_ok": true,
+      "owner": "SP0009",
+      "status": "HOLD"
+    },
+    "INV-SAFETY-DOMINATOR": {
+      "claims_supported": true,
+      "controls_present": true,
+      "critical": true,
+      "hyperproperty": null,
+      "hyperproperty_ok": true,
+      "owner": "SP0005",
+      "status": "HOLD"
+    },
+    "INV-TENANT-ISOLATION": {
+      "claims_supported": true,
+      "controls_present": true,
+      "critical": true,
+      "hyperproperty": "HP-TENANT-NONINTERFERENCE",
+      "hyperproperty_ok": true,
+      "owner": "SP0006",
+      "status": "HOLD"
+    },
+    "INV-ZERO-LOST-WORK": {
+      "claims_supported": true,
+      "controls_present": true,
+      "critical": true,
+      "hyperproperty": null,
+      "hyperproperty_ok": true,
+      "owner": "SP0006",
+      "status": "HOLD"
+    }
+  },
+  "hyperproperties": {
+    "HP-APPROVAL-ISOLATION": {
+      "bound": {
+        "note": "bounded reference model; not universal proof (D-0010-41)",
+        "varying_domain": [
+          true,
+          false
+        ]
+      },
+      "counterexample": null,
+      "critical": true,
+      "hyperproperty_id": "HP-APPROVAL-ISOLATION",
+      "status": "PASS",
+      "world_pairs_checked": 2
+    },
+    "HP-CONTROL-LANGUAGE-INVARIANCE": {
+      "bound": {
+        "note": "bounded reference model; not universal proof (D-0010-41)",
+        "varying_domain": [
+          "EN",
+          "PL",
+          "DE",
+          "ES"
+        ]
+      },
+      "counterexample": null,
+      "critical": true,
+      "hyperproperty_id": "HP-CONTROL-LANGUAGE-INVARIANCE",
+      "status": "PASS",
+      "world_pairs_checked": 2
+    },
+    "HP-PROVIDER-ACCOUNT-SEPARATION": {
+      "bound": {
+        "note": "bounded reference model; not universal proof (D-0010-41)",
+        "varying_domain": [
+          "acctA1",
+          "acctA2"
+        ]
+      },
+      "counterexample": null,
+      "critical": true,
+      "hyperproperty_id": "HP-PROVIDER-ACCOUNT-SEPARATION",
+      "status": "PASS",
+      "world_pairs_checked": 1
+    },
+    "HP-TENANT-NONINTERFERENCE": {
+      "bound": {
+        "note": "bounded reference model; not universal proof (D-0010-41)",
+        "varying_domain": [
+          "s0",
+          "s1"
+        ]
+      },
+      "counterexample": null,
+      "critical": true,
+      "hyperproperty_id": "HP-TENANT-NONINTERFERENCE",
+      "status": "PASS",
+      "world_pairs_checked": 4
+    }
+  },
+  "minimal_support_sets": [
+    {
+      "claim_id": "CL-SP0000-architecture-baseline-fixed",
+      "current": true,
+      "independence_class": "COMMON_MODE",
+      "limit_reached": false,
+      "sets": [
+        [
+          "EA-5c954940891bf86a",
+          "EA-fd3acffd49d3cc30"
+        ]
+      ],
+      "support_set_id": "SS-cb53c00919e9f629",
+      "trust_domains": [
+        "kernel-SP0000",
+        "proof-SP0000"
+      ]
+    },
+    {
+      "claim_id": "CL-SP0001-architecture-conformance-checked",
+      "current": true,
+      "independence_class": "COMMON_MODE",
+      "limit_reached": false,
+      "sets": [
+        [
+          "EA-6287e896ce369331",
+          "EA-b16cfd449e4e5230"
+        ]
+      ],
+      "support_set_id": "SS-88fe798be34a2855",
+      "trust_domains": [
+        "kernel-SP0001",
+        "proof-SP0001"
+      ]
+    },
+    {
+      "claim_id": "CL-SP0002-historical-epoch-interpretable",
+      "current": true,
+      "independence_class": "COMMON_MODE",
+      "limit_reached": false,
+      "sets": [
+        [
+          "EA-660da2dc0205ef4f",
+          "EA-c4fdcb3d3680bacc"
+        ]
+      ],
+      "support_set_id": "SS-841e7fa7219f39c3",
+      "trust_domains": [
+        "kernel-SP0002",
+        "proof-SP0002"
+      ]
+    },
+    {
+      "claim_id": "CL-SP0002-semantics-versioned",
+      "current": true,
+      "independence_class": "COMMON_MODE",
+      "limit_reached": false,
+      "sets": [
+        [
+          "EA-b5246d1da4147da5",
+          "EA-cdbe11af30a1c902"
+        ]
+      ],
+      "support_set_id": "SS-b07841fc4b158b86",
+      "trust_domains": [
+        "kernel-SP0002",
+        "proof-SP0002"
+      ]
+    },
+    {
+      "claim_id": "CL-SP0003-program-admission-verified",
+      "current": true,
+      "independence_class": "COMMON_MODE",
+      "limit_reached": false,
+      "sets": [
+        [
+          "EA-316db8c5d0f649ea",
+          "EA-a76e6c28ccd22daf"
+        ]
+      ],
+      "support_set_id": "SS-19dfa1ac98c3731b",
+      "trust_domains": [
+        "kernel-SP0003",
+        "proof-SP0003"
+      ]
+    },
+    {
+      "claim_id": "CL-SP0004-provider-replaceable",
+      "current": true,
+      "independence_class": "COMMON_MODE",
+      "limit_reached": false,
+      "sets": [
+        [
+          "EA-3a5a2a5a885f6a50",
+          "EA-d9084a7b1cb68f5b"
+        ]
+      ],
+      "support_set_id": "SS-9f4427dbdf8054f7",
+      "trust_domains": [
+        "kernel-SP0004",
+        "proof-SP0004"
+      ]
+    },
+    {
+      "claim_id": "CL-SP0005-safety-dominates-protected-effects",
+      "current": true,
+      "independence_class": "COMMON_MODE",
+      "limit_reached": false,
+      "sets": [
+        [
+          "EA-0783aab63c3974b8",
+          "EA-26c7eb925e6ffad2"
+        ]
+      ],
+      "support_set_id": "SS-c98977cef5b2b13c",
+      "trust_domains": [
+        "kernel-SP0005",
+        "proof-SP0005"
+      ]
+    },
+    {
+      "claim_id": "CL-SP0006-approval-context-bound",
+      "current": true,
+      "independence_class": "COMMON_MODE",
+      "limit_reached": false,
+      "sets": [
+        [
+          "EA-8036ea70eab35676",
+          "EA-b6e7f6d30796c18c"
+        ]
+      ],
+      "support_set_id": "SS-426c7300367a4fca",
+      "trust_domains": [
+        "kernel-SP0006",
+        "proof-SP0006"
+      ]
+    },
+    {
+      "claim_id": "CL-SP0006-authority-conserved",
+      "current": true,
+      "independence_class": "COMMON_MODE",
+      "limit_reached": false,
+      "sets": [
+        [
+          "EA-8e805b9bfa5ad9d1",
+          "EA-d355ba30a239d38f"
+        ]
+      ],
+      "support_set_id": "SS-4a29f309d56e7a7e",
+      "trust_domains": [
+        "kernel-SP0006",
+        "proof-SP0006"
+      ]
+    },
+    {
+      "claim_id": "CL-SP0006-zero-lost-work",
+      "current": true,
+      "independence_class": "COMMON_MODE",
+      "limit_reached": false,
+      "sets": [
+        [
+          "EA-032bc1461e8e4b5f",
+          "EA-dc4cb4b8dc7221cf"
+        ]
+      ],
+      "support_set_id": "SS-7af13d57ab6fec3d",
+      "trust_domains": [
+        "kernel-SP0006",
+        "proof-SP0006"
+      ]
+    },
+    {
+      "claim_id": "CL-SP0007-contract-evolution-directional",
+      "current": true,
+      "independence_class": "COMMON_MODE",
+      "limit_reached": false,
+      "sets": [
+        [
+          "EA-2e6e5863b8f2a588",
+          "EA-aafe94eb42eb8585"
+        ]
+      ],
+      "support_set_id": "SS-43e0cb0ded06a4e1",
+      "trust_domains": [
+        "kernel-SP0007",
+        "proof-SP0007"
+      ]
+    },
+    {
+      "claim_id": "CL-SP0007-historical-envelope-epoch-bound",
+      "current": true,
+      "independence_class": "COMMON_MODE",
+      "limit_reached": false,
+      "sets": [
+        [
+          "EA-6f830afb3afee82b",
+          "EA-a23c36ed585733b1"
+        ]
+      ],
+      "support_set_id": "SS-7ca5a28b54b968ca",
+      "trust_domains": [
+        "kernel-SP0007",
+        "proof-SP0007"
+      ]
+    },
+    {
+      "claim_id": "CL-SP0008-contract-genome-sealed",
+      "current": true,
+      "independence_class": "COMMON_MODE",
+      "limit_reached": false,
+      "sets": [
+        [
+          "EA-48cc1c635c344ec1",
+          "EA-8b7b7a0121e6976b"
+        ]
+      ],
+      "support_set_id": "SS-a9c9502a635f3032",
+      "trust_domains": [
+        "kernel-SP0008",
+        "proof-SP0008"
+      ]
+    },
+    {
+      "claim_id": "CL-SP0008-contract-surfaces-inventoried",
+      "current": true,
+      "independence_class": "COMMON_MODE",
+      "limit_reached": false,
+      "sets": [
+        [
+          "EA-a0423d64bc10ca60",
+          "EA-f41261af721e9106"
+        ]
+      ],
+      "support_set_id": "SS-636d316d21b0b21a",
+      "trust_domains": [
+        "kernel-SP0008",
+        "proof-SP0008"
+      ]
+    },
+    {
+      "claim_id": "CL-SP0009-non-compensatory-gates",
+      "current": true,
+      "independence_class": "COMMON_MODE",
+      "limit_reached": false,
+      "sets": [
+        [
+          "EA-81d5ea5ea70da33f",
+          "EA-fc60b8136ab2447d"
+        ]
+      ],
+      "support_set_id": "SS-5009a53c1c647448",
+      "trust_domains": [
+        "kernel-SP0009",
+        "proof-SP0009"
+      ]
+    },
+    {
+      "claim_id": "CL-SP0009-release-proof-not-runtime-authority",
+      "current": true,
+      "independence_class": "COMMON_MODE",
+      "limit_reached": false,
+      "sets": [
+        [
+          "EA-3ee580997f40ee13",
+          "EA-9e5114464528b12e"
+        ]
+      ],
+      "support_set_id": "SS-b596b954be592d43",
+      "trust_domains": [
+        "kernel-SP0009",
+        "proof-SP0009"
+      ]
+    }
+  ],
+  "model_checks": {
+    "four_valued": "HOLD",
+    "hyperedge_conjunctive": "HOLD",
+    "root_determinism": "HOLD",
+    "unsupported_cycle": "HOLD"
+  },
+  "positive_support": {
+    "iterations": 2,
+    "supported": [
+      "CL-SP0000-architecture-baseline-fixed",
+      "CL-SP0000-evidence-present",
+      "CL-SP0001-architecture-conformance-checked",
+      "CL-SP0001-evidence-present",
+      "CL-SP0002-evidence-present",
+      "CL-SP0002-historical-epoch-interpretable",
+      "CL-SP0002-semantics-versioned",
+      "CL-SP0003-evidence-present",
+      "CL-SP0003-program-admission-verified",
+      "CL-SP0004-evidence-present",
+      "CL-SP0004-provider-replaceable",
+      "CL-SP0005-evidence-present",
+      "CL-SP0005-safety-dominates-protected-effects",
+      "CL-SP0006-approval-context-bound",
+      "CL-SP0006-authority-conserved",
+      "CL-SP0006-evidence-present",
+      "CL-SP0006-zero-lost-work",
+      "CL-SP0007-contract-evolution-directional",
+      "CL-SP0007-evidence-present",
+      "CL-SP0007-historical-envelope-epoch-bound",
+      "CL-SP0008-contract-genome-sealed",
+      "CL-SP0008-contract-surfaces-inventoried",
+      "CL-SP0008-evidence-present",
+      "CL-SP0009-evidence-present",
+      "CL-SP0009-non-compensatory-gates",
+      "CL-SP0009-release-proof-not-runtime-authority"
+    ]
+  },
+  "program_seal": {
+    "architecture_genome_root": "ee167b18786153be032a358679d289d232613ec47803f74b8438ded865563dd7",
+    "branch": "claude/finalis-ai-casewoker-blueprint-f1huse",
+    "closure_state": "CONSTITUTIONAL_ARCHITECTURE_CLOSED_WITH_NONBLOCKING_PRODUCTION_GAPS",
+    "constitutional_blockers": 0,
+    "critical_both_count": 0,
+    "critical_neither_count": 0,
+    "grants_production_authority": false,
+    "hard_finding_count": 0,
+    "migration_frontier": 27,
+    "production_gap_count": 6,
+    "release_assurance_root": "916dd687ca4c473efdf5b77f1bd3d4d72fe365aaa5d89a520dab0b214fb5e794",
+    "repository_commit": "1e29581",
+    "seal_hash": "7185652a9497741bc373a29632baee22f150037267ab994968d5b5c272c23301",
+    "seal_version": "1.0.0",
+    "sealed_at": "2026-07-12",
+    "sp0011_admission_state": "ADMITTED_PENDING_EXECUTION",
+    "status": "CANDIDATE",
+    "test_evidence_root": "bc2015662be2f194935d0298f423d1831b43a76ce9a1b0f45084398dd7991d1b",
+    "twin_roots": {
+      "contract_genome": "7269f08cd7d53679cae6ce3b134a00d6dd6146fde0c60e712a065a711be377b1",
+      "contract_inventory": "52c462f8306961623b1f4dda582fb28ef2c08664e840a1839975e855f8860330",
+      "release_assurance": "916dd687ca4c473efdf5b77f1bd3d4d72fe365aaa5d89a520dab0b214fb5e794"
+    },
+    "verifier_results": [
+      "frozen_sp0009",
+      "sp0010_reference",
+      "sp0010_independent"
+    ]
+  },
+  "sp0011_admission": {
+    "admission_state": "ADMITTED_PENDING_EXECUTION",
+    "architecture_genome_root": "ee167b18786153be032a358679d289d232613ec47803f74b8438ded865563dd7",
+    "assumptions": [
+      "CL-SP0000-architecture-baseline-fixed",
+      "CL-SP0002-historical-epoch-interpretable",
+      "CL-SP0002-semantics-versioned",
+      "CL-SP0005-safety-dominates-protected-effects",
+      "CL-SP0006-approval-context-bound",
+      "CL-SP0007-contract-evolution-directional",
+      "CL-SP0008-contract-genome-sealed"
+    ],
+    "contradictions": [],
+    "critical_unknowns": [],
+    "evaluation_evidence": null,
+    "evidence_provenance_root": "84811cf08b5a5e40c128ea77d1c452d454ae7410423baaa781b337b4e0a62057",
+    "formal_bounds": {
+      "noninterference": "bounded reference model",
+      "resilience": "N-1 EVIDENCE_DOMAIN"
+    },
+    "global_invariants": {
+      "INV-APPROVAL-CONTEXT-BOUND": "HOLD",
+      "INV-AUTHORITY-CONSERVATION": "HOLD",
+      "INV-CONTROL-LANGUAGE-INVARIANCE": "HOLD",
+      "INV-DELEGATION-ATTENUATION": "HOLD",
+      "INV-HISTORICAL-INTERPRETABILITY": "HOLD",
+      "INV-LEARNING-PROMOTION-GATED": "HOLD",
+      "INV-OUTCOME-EVIDENCE": "HOLD",
+      "INV-PROOF-NOT-AUTHORITY": "HOLD",
+      "INV-PROVIDER-ACCOUNT-SEPARATION": "HOLD",
+      "INV-RELEASE-RUNTIME-SEPARATION": "HOLD",
+      "INV-SAFETY-DOMINATOR": "HOLD",
+      "INV-TENANT-ISOLATION": "HOLD",
+      "INV-ZERO-LOST-WORK": "HOLD"
+    },
+    "noninterference_limits": {
+      "HP-APPROVAL-ISOLATION": {
+        "note": "bounded reference model; not universal proof (D-0010-41)",
+        "varying_domain": [
+          true,
+          false
+        ]
+      },
+      "HP-CONTROL-LANGUAGE-INVARIANCE": {
+        "note": "bounded reference model; not universal proof (D-0010-41)",
+        "varying_domain": [
+          "EN",
+          "PL",
+          "DE",
+          "ES"
+        ]
+      },
+      "HP-PROVIDER-ACCOUNT-SEPARATION": {
+        "note": "bounded reference model; not universal proof (D-0010-41)",
+        "varying_domain": [
+          "acctA1",
+          "acctA2"
+        ]
+      },
+      "HP-TENANT-NONINTERFERENCE": {
+        "note": "bounded reference model; not universal proof (D-0010-41)",
+        "varying_domain": [
+          "s0",
+          "s1"
+        ]
+      }
+    },
+    "package_hash": "9099ddfcf19147a7f06c223ba1548d0e59c6e665f56f166351850b311dd7cccd",
+    "production_gaps": [
+      "GAP-5172747fe430a069",
+      "GAP-62caff8aa16fad65",
+      "GAP-bac0ba4fa0bd33ca",
+      "GAP-8d8ea48b27aa6718",
+      "GAP-4510176661652564",
+      "GAP-57652f2e72c2c68c"
+    ],
+    "program_seal_hash": "7185652a9497741bc373a29632baee22f150037267ab994968d5b5c272c23301",
+    "score": null,
+    "top_level_claims": [
+      "CL-SP0000-architecture-baseline-fixed",
+      "CL-SP0001-architecture-conformance-checked",
+      "CL-SP0002-historical-epoch-interpretable",
+      "CL-SP0002-semantics-versioned",
+      "CL-SP0003-program-admission-verified",
+      "CL-SP0004-provider-replaceable",
+      "CL-SP0005-safety-dominates-protected-effects",
+      "CL-SP0006-approval-context-bound",
+      "CL-SP0006-authority-conserved",
+      "CL-SP0006-zero-lost-work",
+      "CL-SP0007-contract-evolution-directional",
+      "CL-SP0007-historical-envelope-epoch-bound",
+      "CL-SP0008-contract-genome-sealed",
+      "CL-SP0008-contract-surfaces-inventoried",
+      "CL-SP0009-non-compensatory-gates",
+      "CL-SP0009-release-proof-not-runtime-authority"
+    ]
+  },
+  "twin_version": "finalis-architecture-closure-twin-v1"
+}

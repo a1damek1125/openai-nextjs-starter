@@ -1,0 +1,10 @@
+{
+  "rule": "critical claim closes only in SUPPORTED_ONLY; BOTH/NEITHER/REFUTED_ONLY block (D-0010-03)",
+  "schema_id": "EpistemicLattice",
+  "states": [
+    "SUPPORTED_ONLY",
+    "REFUTED_ONLY",
+    "BOTH",
+    "NEITHER"
+  ]
+}

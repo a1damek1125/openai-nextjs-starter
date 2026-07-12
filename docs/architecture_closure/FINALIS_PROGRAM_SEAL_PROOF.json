@@ -1,0 +1,53 @@
+{
+  "bootstrap_ceremony": {
+    "phase_a": {
+      "frozen_identity": "92d9590c09ec3f7d3b9eef21cfa87d9ac9be7aa6d6fc61e8a6f2520c93a1df0b",
+      "frozen_identity_matches": true,
+      "recorded_identity": "92d9590c09ec3f7d3b9eef21cfa87d9ac9be7aa6d6fc61e8a6f2520c93a1df0b",
+      "sp0009_twin_digest": "916dd687ca4c473efdf5b77f1bd3d4d72fe365aaa5d89a520dab0b214fb5e794",
+      "trust_domain": "release-frozen",
+      "verifier": "frozen_sp0009"
+    },
+    "phase_b": {
+      "global_root": "3fe0cc10c8bcf650374637bcf9225395639b8800653a1e163b6bad8c23d8effb",
+      "matches_genome": true,
+      "trust_domain": "closure-reference",
+      "verifier": "sp0010_reference"
+    },
+    "phase_c": {
+      "agree": true,
+      "canonical_recompute": "3fe0cc10c8bcf650374637bcf9225395639b8800653a1e163b6bad8c23d8effb",
+      "construction": "merkle-tree",
+      "disagreements": [],
+      "independent_merkle_root": "67a5e8a1d0dcff4ce07849e884ce4ac0138295a72ecaf974d89014d8c872ce5b",
+      "missing_class_roots": [],
+      "trust_domain": "closure-independent",
+      "verifier": "sp0010_independent"
+    },
+    "sealed_ok": true,
+    "verifier_diversity": {
+      "constructions": [
+        "canonical-json",
+        "file-content-hash",
+        "merkle-tree"
+      ],
+      "distinct_constructions": 3,
+      "distinct_domains": 3,
+      "diverse": true,
+      "trust_domains": [
+        "closure-independent",
+        "closure-reference",
+        "release-frozen"
+      ],
+      "verifiers": [
+        "frozen_sp0009",
+        "sp0010_independent",
+        "sp0010_reference"
+      ]
+    }
+  },
+  "closure_digest": "f4108777cda78e83e4227853a0f03d7be1727d2eef1602216f5310bb58f38424",
+  "global_architecture_root": "ee167b18786153be032a358679d289d232613ec47803f74b8438ded865563dd7",
+  "schema_id": "ProgramSealProof",
+  "seal_hash": "7185652a9497741bc373a29632baee22f150037267ab994968d5b5c272c23301"
+}

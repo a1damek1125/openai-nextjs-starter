@@ -1,0 +1,371 @@
+{
+  "interfaces": {
+    "SP0000": {
+      "assumption_refs": [],
+      "commit": "e1b6b5c",
+      "constitution_id": "SP0000",
+      "evidence_refs": [
+        {
+          "present": true,
+          "ref": "docs/roadmap/ROADMAP_LOCK_1_FINALIS_AI_EMPLOYEE_OS.md"
+        },
+        {
+          "present": true,
+          "ref": "docs/architecture"
+        }
+      ],
+      "failure_states": [
+        "ARCHITECTURE_DRIFT"
+      ],
+      "guarantee_refs": [
+        "CL-SP0000-architecture-baseline-fixed"
+      ],
+      "interface_hash": "9a3b941966217c42baf16ff9237eeed0a1ae2dfddbe0ec2121cbf8870746e3ca",
+      "invariant_refs": [
+        "repository_truth_authoritative"
+      ],
+      "owned_concepts": [
+        "entity_of_interest",
+        "architecture_baseline",
+        "capability_map"
+      ],
+      "valid_from": "e1b6b5c",
+      "valid_to": null,
+      "version": "e1b6b5c"
+    },
+    "SP0001": {
+      "assumption_refs": [
+        "CL-SP0000-architecture-baseline-fixed"
+      ],
+      "commit": "19413f2",
+      "constitution_id": "SP0001",
+      "evidence_refs": [
+        {
+          "present": true,
+          "ref": "tools/architecture"
+        },
+        {
+          "present": true,
+          "ref": "docs/architecture"
+        }
+      ],
+      "failure_states": [
+        "CONFORMANCE_VIOLATION"
+      ],
+      "guarantee_refs": [
+        "CL-SP0001-architecture-conformance-checked"
+      ],
+      "interface_hash": "8672d8bb2d79b69a353614c1478acc951f033a98f6b7303c0970eb7086467bdf",
+      "invariant_refs": [
+        "architecture_and_description_distinct"
+      ],
+      "owned_concepts": [
+        "architecture_conformance",
+        "drift_detection"
+      ],
+      "valid_from": "19413f2",
+      "valid_to": null,
+      "version": "19413f2"
+    },
+    "SP0002": {
+      "assumption_refs": [
+        "CL-SP0000-architecture-baseline-fixed"
+      ],
+      "commit": "3eacdb0",
+      "constitution_id": "SP0002",
+      "evidence_refs": [
+        {
+          "present": true,
+          "ref": "tools/semantics"
+        },
+        {
+          "present": true,
+          "ref": "docs/semantics"
+        }
+      ],
+      "failure_states": [
+        "SEMANTIC_EPOCH_BREAK"
+      ],
+      "guarantee_refs": [
+        "CL-SP0002-semantics-versioned",
+        "CL-SP0002-historical-epoch-interpretable"
+      ],
+      "interface_hash": "6e868e33459050f149d614eb3ffa0e3c74d7ddcb32bcbdfbb4cd508f6f828a45",
+      "invariant_refs": [
+        "semantic_changes_versioned",
+        "historical_interpretability"
+      ],
+      "owned_concepts": [
+        "semantic_epoch",
+        "canonical_identity",
+        "control_language"
+      ],
+      "valid_from": "3eacdb0",
+      "valid_to": null,
+      "version": "3eacdb0"
+    },
+    "SP0003": {
+      "assumption_refs": [
+        "CL-SP0000-architecture-baseline-fixed"
+      ],
+      "commit": "1ffb4e4",
+      "constitution_id": "SP0003",
+      "evidence_refs": [
+        {
+          "present": true,
+          "ref": "tools/program_graph"
+        },
+        {
+          "present": true,
+          "ref": "docs/program/FINALIS_1000_PROGRAM_REGISTRY.json"
+        }
+      ],
+      "failure_states": [
+        "PROGRAM_DEPENDENCY_BLOCKED"
+      ],
+      "guarantee_refs": [
+        "CL-SP0003-program-admission-verified"
+      ],
+      "interface_hash": "f36ab5fa9abd2f280ac016131a738c492b3a6c7a87ebacbed3d27642e5fdf7cb",
+      "invariant_refs": [
+        "no_parallel_authority"
+      ],
+      "owned_concepts": [
+        "program_digital_twin",
+        "dependency_admission",
+        "uncertainty"
+      ],
+      "valid_from": "1ffb4e4",
+      "valid_to": null,
+      "version": "1ffb4e4"
+    },
+    "SP0004": {
+      "assumption_refs": [
+        "CL-SP0000-architecture-baseline-fixed"
+      ],
+      "commit": "e82ca87",
+      "constitution_id": "SP0004",
+      "evidence_refs": [
+        {
+          "present": true,
+          "ref": "tools/technology"
+        },
+        {
+          "present": true,
+          "ref": "docs/technology"
+        }
+      ],
+      "failure_states": [
+        "TECHNOLOGY_LOCK_IN"
+      ],
+      "guarantee_refs": [
+        "CL-SP0004-provider-replaceable"
+      ],
+      "interface_hash": "6de41eb300fbe2b0d19da2c68288f5d30a51414e057c006532cb6d1f98b944d8",
+      "invariant_refs": [
+        "provider_replaceability_executable"
+      ],
+      "owned_concepts": [
+        "technology_registry",
+        "provider_replaceability"
+      ],
+      "valid_from": "e82ca87",
+      "valid_to": null,
+      "version": "e82ca87"
+    },
+    "SP0005": {
+      "assumption_refs": [
+        "CL-SP0002-semantics-versioned",
+        "CL-SP0000-architecture-baseline-fixed"
+      ],
+      "commit": "610e1e3",
+      "constitution_id": "SP0005",
+      "evidence_refs": [
+        {
+          "present": true,
+          "ref": "tools/safety"
+        },
+        {
+          "present": true,
+          "ref": "docs/safety"
+        }
+      ],
+      "failure_states": [
+        "SAFETY_ADMISSION_BYPASSED"
+      ],
+      "guarantee_refs": [
+        "CL-SP0005-safety-dominates-protected-effects"
+      ],
+      "interface_hash": "d0aa9909ec7e89f6e9644239d80b1dfdb59d29f48f8f8b8e16a55cb98845cbf4",
+      "invariant_refs": [
+        "safety_dominator",
+        "control_effectiveness_required"
+      ],
+      "owned_concepts": [
+        "safety_admission",
+        "safety_control",
+        "safety_dominator"
+      ],
+      "valid_from": "610e1e3",
+      "valid_to": null,
+      "version": "610e1e3"
+    },
+    "SP0006": {
+      "assumption_refs": [
+        "CL-SP0005-safety-dominates-protected-effects"
+      ],
+      "commit": "d6ac046",
+      "constitution_id": "SP0006",
+      "evidence_refs": [
+        {
+          "present": true,
+          "ref": "tools/governed_work"
+        },
+        {
+          "present": true,
+          "ref": "docs/governed_work"
+        }
+      ],
+      "failure_states": [
+        "AUTHORITY_AMPLIFICATION",
+        "ORPHANED_WORK"
+      ],
+      "guarantee_refs": [
+        "CL-SP0006-authority-conserved",
+        "CL-SP0006-zero-lost-work",
+        "CL-SP0006-approval-context-bound"
+      ],
+      "interface_hash": "3f7a86c21476cc95d03ec73a56f573a2f2582a26ffd0f8eb778f2b25d09120b7",
+      "invariant_refs": [
+        "authority_conservation",
+        "delegation_attenuation",
+        "approval_context_bound",
+        "zero_lost_work",
+        "outcome_evidence_required"
+      ],
+      "owned_concepts": [
+        "owned_work",
+        "approval_binding",
+        "delegation_attenuation",
+        "outcome_evidence"
+      ],
+      "valid_from": "d6ac046",
+      "valid_to": null,
+      "version": "d6ac046"
+    },
+    "SP0007": {
+      "assumption_refs": [
+        "CL-SP0002-historical-epoch-interpretable"
+      ],
+      "commit": "4eda536",
+      "constitution_id": "SP0007",
+      "evidence_refs": [
+        {
+          "present": true,
+          "ref": "tools/compatibility"
+        },
+        {
+          "present": true,
+          "ref": "docs/compatibility"
+        }
+      ],
+      "failure_states": [
+        "INCOMPATIBLE_CONTRACT_ADMITTED"
+      ],
+      "guarantee_refs": [
+        "CL-SP0007-contract-evolution-directional",
+        "CL-SP0007-historical-envelope-epoch-bound"
+      ],
+      "interface_hash": "7bad59275793945d4c04def4beb43ae004228d81057eec83cb9dc42940b40b3c",
+      "invariant_refs": [
+        "contract_evolution_directional",
+        "up_migration_not_rollback"
+      ],
+      "owned_concepts": [
+        "compatibility_twin",
+        "migration_directionality",
+        "contract_version"
+      ],
+      "valid_from": "4eda536",
+      "valid_to": null,
+      "version": "4eda536"
+    },
+    "SP0008": {
+      "assumption_refs": [
+        "CL-SP0007-contract-evolution-directional"
+      ],
+      "commit": "bb80912",
+      "constitution_id": "SP0008",
+      "evidence_refs": [
+        {
+          "present": true,
+          "ref": "tools/contracts_inventory"
+        },
+        {
+          "present": true,
+          "ref": "docs/contracts_inventory/FINALIS_CONTRACT_GENOME.json"
+        }
+      ],
+      "failure_states": [
+        "HIDDEN_CONTRACT_SURFACE"
+      ],
+      "guarantee_refs": [
+        "CL-SP0008-contract-surfaces-inventoried",
+        "CL-SP0008-contract-genome-sealed"
+      ],
+      "interface_hash": "b4ff371f77589103e49cd616019b6ff9b995d9d81cc68d941e37b0ae52f1e853",
+      "invariant_refs": [
+        "inventory_populates_registry_no_parallel"
+      ],
+      "owned_concepts": [
+        "contract_surface",
+        "contract_genome",
+        "effect_reachability"
+      ],
+      "valid_from": "bb80912",
+      "valid_to": null,
+      "version": "bb80912"
+    },
+    "SP0009": {
+      "assumption_refs": [
+        "CL-SP0008-contract-genome-sealed",
+        "CL-SP0006-approval-context-bound"
+      ],
+      "commit": "1e29581",
+      "constitution_id": "SP0009",
+      "evidence_refs": [
+        {
+          "present": true,
+          "ref": "tools/release"
+        },
+        {
+          "present": true,
+          "ref": "docs/release/FINALIS_RELEASE_TWIN.json"
+        }
+      ],
+      "failure_states": [
+        "RELEASE_PROOF_GRANTS_AUTHORITY"
+      ],
+      "guarantee_refs": [
+        "CL-SP0009-release-proof-not-runtime-authority",
+        "CL-SP0009-non-compensatory-gates"
+      ],
+      "interface_hash": "da092fd3459eb2e7a6f650f226d260a33ab7db8f9d2455f7e1e19845f3a5d92d",
+      "invariant_refs": [
+        "proof_not_authority",
+        "release_runtime_separation",
+        "non_compensatory_gates"
+      ],
+      "owned_concepts": [
+        "release_candidate",
+        "quality_gate",
+        "definition_of_done",
+        "release_proof"
+      ],
+      "valid_from": "1e29581",
+      "valid_to": null,
+      "version": "1e29581"
+    }
+  },
+  "schema_id": "ConstitutionalInterfaces"
+}

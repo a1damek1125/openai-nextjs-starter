@@ -1,0 +1,309 @@
+{
+  "schema_id": "ViewRegistry",
+  "views": [
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "docs/roadmap/ROADMAP_LOCK_1_FINALIS_AI_EMPLOYEE_OS.md"
+        }
+      ],
+      "title": "Entity of Interest & Mission",
+      "view_id": "AD-01"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "docs/architecture"
+        }
+      ],
+      "title": "Stakeholders & Concerns",
+      "view_id": "AD-02"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "docs/architecture/FINALIS_1000_MASTER_ARCHITECTURE_LOCK.md"
+        }
+      ],
+      "title": "Constitutional Layers",
+      "view_id": "AD-03"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "docs/architecture"
+        }
+      ],
+      "title": "Capabilities",
+      "view_id": "AD-04"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "finalis/portal/app.py"
+        }
+      ],
+      "title": "Runtime Boundaries",
+      "view_id": "AD-05"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "tools/semantics"
+        },
+        {
+          "present": true,
+          "ref": "docs/semantics"
+        }
+      ],
+      "title": "Semantics",
+      "view_id": "AD-06"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "finalis/portal/db.py"
+        }
+      ],
+      "title": "Data & Memory",
+      "view_id": "AD-07"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "tools/program_graph"
+        },
+        {
+          "present": true,
+          "ref": "docs/program/FINALIS_1000_PROGRAM_REGISTRY.json"
+        }
+      ],
+      "title": "Program Dependencies",
+      "view_id": "AD-08"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "tools/technology"
+        },
+        {
+          "present": true,
+          "ref": "docs/technology"
+        }
+      ],
+      "title": "Technology & Providers",
+      "view_id": "AD-09"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "tools/governed_work"
+        },
+        {
+          "present": true,
+          "ref": "finalis/portal/app.py"
+        }
+      ],
+      "title": "Authority & Approvals",
+      "view_id": "AD-10"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "finalis/portal/app.py"
+        },
+        {
+          "present": true,
+          "ref": "finalis/portal/db.py"
+        }
+      ],
+      "title": "Tenant Isolation",
+      "view_id": "AD-11"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "tools/safety"
+        },
+        {
+          "present": true,
+          "ref": "docs/safety"
+        }
+      ],
+      "title": "Safety & Regulatory Truth",
+      "view_id": "AD-12"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "tools/governed_work"
+        },
+        {
+          "present": true,
+          "ref": "docs/governed_work"
+        }
+      ],
+      "title": "Governed Work",
+      "view_id": "AD-13"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "tools/governed_work"
+        }
+      ],
+      "title": "Outcomes & Evidence",
+      "view_id": "AD-14"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "tools/compatibility"
+        },
+        {
+          "present": true,
+          "ref": "docs/compatibility"
+        }
+      ],
+      "title": "Contract Evolution",
+      "view_id": "AD-15"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "tools/contracts_inventory"
+        },
+        {
+          "present": true,
+          "ref": "docs/contracts_inventory"
+        }
+      ],
+      "title": "Contract Inventory",
+      "view_id": "AD-16"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "tools/release"
+        },
+        {
+          "present": true,
+          "ref": "docs/release"
+        }
+      ],
+      "title": "Release Assurance",
+      "view_id": "AD-17"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "finalis"
+        }
+      ],
+      "title": "Failure & Recovery",
+      "view_id": "AD-18"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "tools/governed_work"
+        }
+      ],
+      "title": "Learning",
+      "view_id": "AD-19"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "tools/semantics"
+        }
+      ],
+      "title": "Multilingual Control",
+      "view_id": "AD-20"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "finalis"
+        }
+      ],
+      "title": "Pack Extensibility",
+      "view_id": "AD-21"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "finalis/audit.py"
+        }
+      ],
+      "title": "Observability",
+      "view_id": "AD-22"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "docs/architecture"
+        }
+      ],
+      "title": "Performance & Scale",
+      "view_id": "AD-23"
+    },
+    {
+      "conformance": "IMPLEMENTED",
+      "evidence": [
+        {
+          "present": true,
+          "ref": "docs/audits"
+        }
+      ],
+      "title": "Production Gaps",
+      "view_id": "AD-24"
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "admission_state": "ADMITTED_PENDING_EXECUTION",
+  "architecture_genome_root": "ee167b18786153be032a358679d289d232613ec47803f74b8438ded865563dd7",
+  "assumptions": [
+    "CL-SP0000-architecture-baseline-fixed",
+    "CL-SP0002-historical-epoch-interpretable",
+    "CL-SP0002-semantics-versioned",
+    "CL-SP0005-safety-dominates-protected-effects",
+    "CL-SP0006-approval-context-bound",
+    "CL-SP0007-contract-evolution-directional",
+    "CL-SP0008-contract-genome-sealed"
+  ],
+  "contradictions": [],
+  "critical_unknowns": [],
+  "evaluation_evidence": null,
+  "evidence_provenance_root": "84811cf08b5a5e40c128ea77d1c452d454ae7410423baaa781b337b4e0a62057",
+  "formal_bounds": {
+    "noninterference": "bounded reference model",
+    "resilience": "N-1 EVIDENCE_DOMAIN"
+  },
+  "global_invariants": {
+    "INV-APPROVAL-CONTEXT-BOUND": "HOLD",
+    "INV-AUTHORITY-CONSERVATION": "HOLD",
+    "INV-CONTROL-LANGUAGE-INVARIANCE": "HOLD",
+    "INV-DELEGATION-ATTENUATION": "HOLD",
+    "INV-HISTORICAL-INTERPRETABILITY": "HOLD",
+    "INV-LEARNING-PROMOTION-GATED": "HOLD",
+    "INV-OUTCOME-EVIDENCE": "HOLD",
+    "INV-PROOF-NOT-AUTHORITY": "HOLD",
+    "INV-PROVIDER-ACCOUNT-SEPARATION": "HOLD",
+    "INV-RELEASE-RUNTIME-SEPARATION": "HOLD",
+    "INV-SAFETY-DOMINATOR": "HOLD",
+    "INV-TENANT-ISOLATION": "HOLD",
+    "INV-ZERO-LOST-WORK": "HOLD"
+  },
+  "noninterference_limits": {
+    "HP-APPROVAL-ISOLATION": {
+      "note": "bounded reference model; not universal proof (D-0010-41)",
+      "varying_domain": [
+        true,
+        false
+      ]
+    },
+    "HP-CONTROL-LANGUAGE-INVARIANCE": {
+      "note": "bounded reference model; not universal proof (D-0010-41)",
+      "varying_domain": [
+        "EN",
+        "PL",
+        "DE",
+        "ES"
+      ]
+    },
+    "HP-PROVIDER-ACCOUNT-SEPARATION": {
+      "note": "bounded reference model; not universal proof (D-0010-41)",
+      "varying_domain": [
+        "acctA1",
+        "acctA2"
+      ]
+    },
+    "HP-TENANT-NONINTERFERENCE": {
+      "note": "bounded reference model; not universal proof (D-0010-41)",
+      "varying_domain": [
+        "s0",
+        "s1"
+      ]
+    }
+  },
+  "package_hash": "9099ddfcf19147a7f06c223ba1548d0e59c6e665f56f166351850b311dd7cccd",
+  "production_gaps": [
+    "GAP-5172747fe430a069",
+    "GAP-62caff8aa16fad65",
+    "GAP-bac0ba4fa0bd33ca",
+    "GAP-8d8ea48b27aa6718",
+    "GAP-4510176661652564",
+    "GAP-57652f2e72c2c68c"
+  ],
+  "program_seal_hash": "7185652a9497741bc373a29632baee22f150037267ab994968d5b5c272c23301",
+  "schema_id": "SP0011AdmissionPackage",
+  "score": null,
+  "top_level_claims": [
+    "CL-SP0000-architecture-baseline-fixed",
+    "CL-SP0001-architecture-conformance-checked",
+    "CL-SP0002-historical-epoch-interpretable",
+    "CL-SP0002-semantics-versioned",
+    "CL-SP0003-program-admission-verified",
+    "CL-SP0004-provider-replaceable",
+    "CL-SP0005-safety-dominates-protected-effects",
+    "CL-SP0006-approval-context-bound",
+    "CL-SP0006-authority-conserved",
+    "CL-SP0006-zero-lost-work",
+    "CL-SP0007-contract-evolution-directional",
+    "CL-SP0007-historical-envelope-epoch-bound",
+    "CL-SP0008-contract-genome-sealed",
+    "CL-SP0008-contract-surfaces-inventoried",
+    "CL-SP0009-non-compensatory-gates",
+    "CL-SP0009-release-proof-not-runtime-authority"
+  ]
+}

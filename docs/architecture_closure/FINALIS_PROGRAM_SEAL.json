@@ -1,0 +1,31 @@
+{
+  "architecture_genome_root": "ee167b18786153be032a358679d289d232613ec47803f74b8438ded865563dd7",
+  "branch": "claude/finalis-ai-casewoker-blueprint-f1huse",
+  "closure_state": "CONSTITUTIONAL_ARCHITECTURE_CLOSED_WITH_NONBLOCKING_PRODUCTION_GAPS",
+  "constitutional_blockers": 0,
+  "critical_both_count": 0,
+  "critical_neither_count": 0,
+  "grants_production_authority": false,
+  "hard_finding_count": 0,
+  "migration_frontier": 27,
+  "production_gap_count": 6,
+  "release_assurance_root": "916dd687ca4c473efdf5b77f1bd3d4d72fe365aaa5d89a520dab0b214fb5e794",
+  "repository_commit": "1e29581",
+  "schema_id": "ProgramSeal",
+  "seal_hash": "7185652a9497741bc373a29632baee22f150037267ab994968d5b5c272c23301",
+  "seal_version": "1.0.0",
+  "sealed_at": "2026-07-12",
+  "sp0011_admission_state": "ADMITTED_PENDING_EXECUTION",
+  "status": "CANDIDATE",
+  "test_evidence_root": "bc2015662be2f194935d0298f423d1831b43a76ce9a1b0f45084398dd7991d1b",
+  "twin_roots": {
+    "contract_genome": "7269f08cd7d53679cae6ce3b134a00d6dd6146fde0c60e712a065a711be377b1",
+    "contract_inventory": "52c462f8306961623b1f4dda582fb28ef2c08664e840a1839975e855f8860330",
+    "release_assurance": "916dd687ca4c473efdf5b77f1bd3d4d72fe365aaa5d89a520dab0b214fb5e794"
+  },
+  "verifier_results": [
+    "frozen_sp0009",
+    "sp0010_reference",
+    "sp0010_independent"
+  ]
+}

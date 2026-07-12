@@ -1,0 +1,309 @@
+{
+  "results": [
+    {
+      "claim_id": "CL-SP0000-architecture-baseline-fixed",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0000",
+        "proof-SP0000"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0000"
+        ],
+        [
+          "proof-SP0000"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0001-architecture-conformance-checked",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0001",
+        "proof-SP0001"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0001"
+        ],
+        [
+          "proof-SP0001"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0002-historical-epoch-interpretable",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0002",
+        "proof-SP0002"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0002"
+        ],
+        [
+          "proof-SP0002"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0002-semantics-versioned",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0002",
+        "proof-SP0002"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0002"
+        ],
+        [
+          "proof-SP0002"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0003-program-admission-verified",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0003",
+        "proof-SP0003"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0003"
+        ],
+        [
+          "proof-SP0003"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0004-provider-replaceable",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0004",
+        "proof-SP0004"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0004"
+        ],
+        [
+          "proof-SP0004"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0005-safety-dominates-protected-effects",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0005",
+        "proof-SP0005"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0005"
+        ],
+        [
+          "proof-SP0005"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0006-approval-context-bound",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0006",
+        "proof-SP0006"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0006"
+        ],
+        [
+          "proof-SP0006"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0006-authority-conserved",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0006",
+        "proof-SP0006"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0006"
+        ],
+        [
+          "proof-SP0006"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0006-zero-lost-work",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0006",
+        "proof-SP0006"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0006"
+        ],
+        [
+          "proof-SP0006"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0007-contract-evolution-directional",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0007",
+        "proof-SP0007"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0007"
+        ],
+        [
+          "proof-SP0007"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0007-historical-envelope-epoch-bound",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0007",
+        "proof-SP0007"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0007"
+        ],
+        [
+          "proof-SP0007"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0008-contract-genome-sealed",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0008",
+        "proof-SP0008"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0008"
+        ],
+        [
+          "proof-SP0008"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0008-contract-surfaces-inventoried",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0008",
+        "proof-SP0008"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0008"
+        ],
+        [
+          "proof-SP0008"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0009-non-compensatory-gates",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0009",
+        "proof-SP0009"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0009"
+        ],
+        [
+          "proof-SP0009"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    },
+    {
+      "claim_id": "CL-SP0009-release-proof-not-runtime-authority",
+      "classification": "SINGLE_POINT_OF_ASSURANCE",
+      "configured_k": 1,
+      "elements": [
+        "kernel-SP0009",
+        "proof-SP0009"
+      ],
+      "exact": true,
+      "fragile_removals": [
+        [
+          "kernel-SP0009"
+        ],
+        [
+          "proof-SP0009"
+        ]
+      ],
+      "remove_class": "EVIDENCE_DOMAIN"
+    }
+  ],
+  "schema_id": "AssuranceResilience"
+}

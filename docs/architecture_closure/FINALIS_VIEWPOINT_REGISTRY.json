@@ -1,0 +1,29 @@
+{
+  "schema_id": "ViewpointRegistry",
+  "viewpoints": {
+    "VP-COMPOSITION": [
+      "AD-01",
+      "AD-03",
+      "AD-04",
+      "AD-08"
+    ],
+    "VP-EVOLUTION": [
+      "AD-15",
+      "AD-16",
+      "AD-17"
+    ],
+    "VP-OPERATIONS": [
+      "AD-18",
+      "AD-22",
+      "AD-23",
+      "AD-24"
+    ],
+    "VP-SAFETY": [
+      "AD-12"
+    ],
+    "VP-SECURITY": [
+      "AD-10",
+      "AD-11"
+    ]
+  }
+}
