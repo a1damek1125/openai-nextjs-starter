@@ -1,0 +1,2 @@
+{"schema_id":"FINALIS-NEAR-MISS","sp":"SP0005","required":["near_miss_id","status"],
+ "note":"A near miss (hazardous condition occurred, loss prevented) is safety evidence even without realized loss (INV-0005-24). Preventing factor may be control/human/provider-failure/timing/chance. It cannot directly mutate production policy (INV-0005-25): near miss -> analysis -> control-gap candidate -> test -> governed change (D-0005-71)."}

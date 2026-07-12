@@ -1,0 +1,3 @@
+{"schema_id":"FINALIS-SAFETY-DECISION-PROOF-ENVELOPE","sp":"SP0005","envelope_version":"2.0.0","classification":"EVIDENCE_NOT_AUTHORITY",
+ "fields":["action_fingerprint","context_fingerprint","trajectory_state_hash","authority_snapshot_hash","proof_obligation_result_hash","control_class_result","decision","reason_codes","policy_version","validator_version","envelope_hash","classification"],
+ "note":"A valid hash never grants automatic permission (INV-0005-26, D-0005-89)."}

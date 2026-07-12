@@ -1,0 +1,60 @@
+{
+  "evidence": [
+    {
+      "artifact_ref": "tests/test_ai_employee_*.py (TOOL-B/CORE-A/EMP-A green)",
+      "code_version": "e82ca87",
+      "environment": "repository",
+      "evidence_id": "EV-CONTROL-TESTS",
+      "evidence_type": "environment_state",
+      "oracle_version": "1",
+      "policy_version": "1",
+      "provider_version": null,
+      "semantic_epoch": "e1",
+      "status": "CURRENT",
+      "valid_from": "2026-07-11",
+      "valid_until": null
+    },
+    {
+      "artifact_ref": "tests/test_safety_admission.py",
+      "code_version": "e82ca87",
+      "environment": "repository",
+      "evidence_id": "EV-LEASE-TESTS",
+      "evidence_type": "artifact_crypto_evidence",
+      "oracle_version": "1",
+      "policy_version": "1",
+      "provider_version": null,
+      "semantic_epoch": "e1",
+      "status": "CURRENT",
+      "valid_from": "2026-07-11",
+      "valid_until": null
+    },
+    {
+      "artifact_ref": "tests/test_safety_trajectory.py",
+      "code_version": "e82ca87",
+      "environment": "repository",
+      "evidence_id": "EV-TRAJECTORY-TESTS",
+      "evidence_type": "environment_state",
+      "oracle_version": "1",
+      "policy_version": "1",
+      "provider_version": null,
+      "semantic_epoch": "e1",
+      "status": "CURRENT",
+      "valid_from": "2026-07-11",
+      "valid_until": null
+    },
+    {
+      "artifact_ref": "tests/test_safety_oversight.py",
+      "code_version": "e82ca87",
+      "environment": "repository",
+      "evidence_id": "EV-OVERSIGHT-TESTS",
+      "evidence_type": "environment_state",
+      "oracle_version": "1",
+      "policy_version": "1",
+      "provider_version": null,
+      "semantic_epoch": "e1",
+      "status": "CURRENT",
+      "valid_from": "2026-07-11",
+      "valid_until": null
+    }
+  ]
+}

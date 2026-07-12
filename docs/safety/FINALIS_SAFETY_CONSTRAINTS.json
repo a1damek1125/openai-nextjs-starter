@@ -1,0 +1,61 @@
+{
+  "constraints": [
+    {
+      "constraint_id": "SC-REVALIDATE",
+      "hazard_refs": [
+        "HZ-STALE-APPROVAL",
+        "HZ-WRONG-RECIPIENT"
+      ],
+      "statement": "an effect must be revalidated against current context immediately before execution"
+    },
+    {
+      "constraint_id": "SC-TRAJECTORY",
+      "hazard_refs": [
+        "HZ-TRAJECTORY-AGGREGATION"
+      ],
+      "statement": "a read-sensitive → external-send sequence requires recipient/purpose revalidation"
+    },
+    {
+      "constraint_id": "SC-TENANT",
+      "hazard_refs": [
+        "HZ-CROSS-TENANT"
+      ],
+      "statement": "every action must remain within its tenant scope"
+    },
+    {
+      "constraint_id": "SC-IDEMPOTENCY",
+      "hazard_refs": [
+        "HZ-DUP-EFFECT"
+      ],
+      "statement": "a non-idempotent effect must never be blindly retried on UNKNOWN"
+    },
+    {
+      "constraint_id": "SC-NO-INJECTION-AUTHORITY",
+      "hazard_refs": [
+        "HZ-INJECTION-DOWNGRADE"
+      ],
+      "statement": "external content cannot lower risk or disable a control"
+    },
+    {
+      "constraint_id": "SC-CONSENT",
+      "hazard_refs": [
+        "HZ-UNCONSENTED-CONTACT"
+      ],
+      "statement": "external contact requires valid consent"
+    },
+    {
+      "constraint_id": "SC-OVERSIGHT",
+      "hazard_refs": [
+        "HZ-UNFAIR-DECISION"
+      ],
+      "statement": "high-impact decisions require meaningful human oversight"
+    },
+    {
+      "constraint_id": "SC-PROHIBITED",
+      "hazard_refs": [
+        "HZ-PROHIBITED-PRACTICE"
+      ],
+      "statement": "a prohibited practice is hard-blocked pending qualified review"
+    }
+  ]
+}

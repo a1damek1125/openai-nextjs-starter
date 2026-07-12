@@ -1,0 +1,2 @@
+{"schema_id":"FINALIS-ASSURANCE-COVERAGE","sp":"SP0005",
+ "closure":"For each critical hazard: Loss != empty AND Constraint != empty AND (Control != empty OR HARD_BLOCK) AND test/evidence/claim linkage exists — else ASSURANCE_COVERAGE_GAP / UNCONTROLLED_CRITICAL_HAZARD (§11.9, INV-0005-14)."}

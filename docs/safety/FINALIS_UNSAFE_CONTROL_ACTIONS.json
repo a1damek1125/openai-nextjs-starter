@@ -1,0 +1,36 @@
+{
+  "unsafe_control_actions": [
+    {
+      "category": "NOT_PROVIDED_WHEN_REQUIRED",
+      "control_action": "revalidate_before_effect",
+      "hazard_refs": [
+        "HZ-STALE-APPROVAL"
+      ],
+      "uca_id": "UCA-1"
+    },
+    {
+      "category": "PROVIDED_WHEN_UNSAFE",
+      "control_action": "external_send",
+      "hazard_refs": [
+        "HZ-WRONG-RECIPIENT"
+      ],
+      "uca_id": "UCA-2"
+    },
+    {
+      "category": "WRONG_TIMING_OR_ORDER",
+      "control_action": "external_send",
+      "hazard_refs": [
+        "HZ-TRAJECTORY-AGGREGATION"
+      ],
+      "uca_id": "UCA-3"
+    },
+    {
+      "category": "STOPPED_TOO_SOON_OR_APPLIED_TOO_LONG",
+      "control_action": "containment_hold",
+      "hazard_refs": [
+        "HZ-DUP-EFFECT"
+      ],
+      "uca_id": "UCA-4"
+    }
+  ]
+}

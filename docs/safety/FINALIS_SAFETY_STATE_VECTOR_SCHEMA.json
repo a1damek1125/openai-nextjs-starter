@@ -1,0 +1,3 @@
+{"schema_id":"FINALIS-SAFETY-STATE-VECTOR","sp":"SP0005","dimensions":["consequence","authority_depth","irreversibility","affected_scope","rights_sensitivity","data_sensitivity","legal_sensitivity","observability","uncertainty","vulnerability_sensitivity"],
+ "risk_levels":["NONE","LOW","MEDIUM","HIGH","CRITICAL","UNKNOWN"],
+ "note":"Dimensions stay distinct (partial order, §12.1). UNKNOWN maps to HIGH control, never LOW (INV-0005-09)."}

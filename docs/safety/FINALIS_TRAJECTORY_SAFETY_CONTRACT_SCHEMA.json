@@ -1,0 +1,3 @@
+{"schema_id":"FINALIS-TRAJECTORY-SAFETY-CONTRACT","sp":"SP0005","required":["trajectory_contract_id","scope"],
+ "fields":["state_variables","allowed_transitions","forbidden_sequences","required_checkpoints","maximum_authority_conditions","required_postconditions"],
+ "note":"A safe action can participate in an unsafe trajectory (INV-0005-03). Local action safety != global trajectory safety."}

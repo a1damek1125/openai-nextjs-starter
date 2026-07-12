@@ -1,0 +1,4 @@
+{"schema_id":"FINALIS-DEFEATER","sp":"SP0005","required":["defeater_id","severity","status"],
+ "severity":["LOW","MEDIUM","HIGH","CRITICAL"],"status":["OPEN","MONITORED","RESOLVED"],
+ "examples":["new attack","new provider behavior","new authority","new jurisdiction","incident","failed test","new route bypass","changed data flow"],
+ "note":"A critical open defeater challenges its claim and propagates REASSESSMENT_REQUIRED to dependents (D-0005-44/45, §11.10)."}

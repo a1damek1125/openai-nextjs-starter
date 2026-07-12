@@ -1,0 +1,53 @@
+{
+  "threats": [
+    {
+      "external_taxonomy": "OWASP_ASI_2026",
+      "hazard_refs": [
+        "HZ-INJECTION-DOWNGRADE"
+      ],
+      "name": "Agent Goal Hijack",
+      "threat_id": "THREAT-OWASP-ASI01"
+    },
+    {
+      "external_taxonomy": "OWASP_ASI_2026",
+      "hazard_refs": [
+        "HZ-DUP-EFFECT"
+      ],
+      "name": "Tool Misuse & Exploitation",
+      "threat_id": "THREAT-OWASP-ASI02"
+    },
+    {
+      "external_taxonomy": "OWASP_ASI_2026",
+      "hazard_refs": [
+        "HZ-CROSS-TENANT"
+      ],
+      "name": "Agent Identity & Privilege Abuse",
+      "threat_id": "THREAT-OWASP-ASI03"
+    },
+    {
+      "external_taxonomy": "OWASP_ASI_2026",
+      "hazard_refs": [
+        "HZ-INJECTION-DOWNGRADE"
+      ],
+      "name": "Memory & Context Poisoning",
+      "threat_id": "THREAT-OWASP-ASI06"
+    },
+    {
+      "external_taxonomy": "OWASP_ASI_2026",
+      "hazard_refs": [
+        "HZ-UNFAIR-DECISION"
+      ],
+      "name": "Human-Agent Trust Exploitation",
+      "threat_id": "THREAT-OWASP-ASI09"
+    },
+    {
+      "external_taxonomy": "MITRE_ATLAS",
+      "hazard_refs": [
+        "HZ-CROSS-TENANT",
+        "HZ-TRAJECTORY-AGGREGATION"
+      ],
+      "name": "Exfiltration",
+      "threat_id": "THREAT-ATLAS-EXFIL"
+    }
+  ]
+}

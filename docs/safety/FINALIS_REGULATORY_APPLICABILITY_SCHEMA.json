@@ -1,0 +1,4 @@
+{"schema_id":"FINALIS-REGULATORY-APPLICABILITY","sp":"SP0005",
+ "results":["APPLIES","DOES_NOT_APPLY","POSSIBLY_APPLIES","NOT_YET_APPLICABLE","UNCERTAIN_REQUIRES_QUALIFIED_REVIEW","SUPERSEDED"],
+ "evaluates":["jurisdiction","actor_role","intended_purpose","actual_use","affected_subjects","system_capability","effective_time"],
+ "note":"SP0005 is not a legal oracle: ambiguity => UNCERTAIN_REQUIRES_QUALIFIED_REVIEW (D-0005-50). Internal high-impact class != legal classification (INV-0005-17)."}

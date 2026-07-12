@@ -1,0 +1,54 @@
+{
+  "use_cases": [
+    {
+      "actual_use": "schedule interview",
+      "affected_subject": "candidate",
+      "capability": "calendar_scheduling",
+      "finalis_impact_class": "FINALIS_IMPACT_1",
+      "legal_classification": null,
+      "legal_classification_source": "QUALIFIED_REVIEW_REQUIRED",
+      "purpose": "schedule interview",
+      "use_case_id": "UC-HR-SCHEDULING"
+    },
+    {
+      "actual_use": "rank candidates",
+      "affected_subject": "candidate",
+      "capability": "candidate_ranking",
+      "finalis_impact_class": "FINALIS_IMPACT_5",
+      "legal_classification": null,
+      "legal_classification_source": "QUALIFIED_REVIEW_REQUIRED",
+      "purpose": "rank candidates",
+      "use_case_id": "UC-HR-RANKING"
+    },
+    {
+      "actual_use": "collect receivable",
+      "affected_subject": "customer",
+      "capability": "payment_reminder",
+      "finalis_impact_class": "FINALIS_IMPACT_3",
+      "legal_classification": null,
+      "legal_classification_source": "QUALIFIED_REVIEW_REQUIRED",
+      "purpose": "collect receivable",
+      "use_case_id": "UC-FINANCE-AR"
+    },
+    {
+      "actual_use": "sales outreach",
+      "affected_subject": "customer",
+      "capability": "outbound_message",
+      "finalis_impact_class": "FINALIS_IMPACT_2",
+      "legal_classification": null,
+      "legal_classification_source": "QUALIFIED_REVIEW_REQUIRED",
+      "purpose": "sales outreach",
+      "use_case_id": "UC-SALES-OUTREACH"
+    },
+    {
+      "actual_use": "answer support ticket",
+      "affected_subject": "customer",
+      "capability": "support_reply",
+      "finalis_impact_class": "FINALIS_IMPACT_2",
+      "legal_classification": null,
+      "legal_classification_source": "QUALIFIED_REVIEW_REQUIRED",
+      "purpose": "answer support ticket",
+      "use_case_id": "UC-SUPPORT-REPLY"
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "proof_obligations": [
+    {
+      "action_contract_ref": "AC-EMAIL-SEND",
+      "evidence_refs": [
+        "EV-CONTROL-TESTS"
+      ],
+      "mandatory": true,
+      "obligation_id": "PO-PO-AUTHORITY",
+      "obligation_type": "PO-AUTHORITY",
+      "required_evidence_types": [
+        "environment_state"
+      ],
+      "status": "SATISFIED",
+      "validity_context": {}
+    },
+    {
+      "action_contract_ref": "AC-EMAIL-SEND",
+      "evidence_refs": [
+        "EV-CONTROL-TESTS"
+      ],
+      "mandatory": true,
+      "obligation_id": "PO-PO-TENANT",
+      "obligation_type": "PO-TENANT",
+      "required_evidence_types": [
+        "environment_state"
+      ],
+      "status": "SATISFIED",
+      "validity_context": {}
+    },
+    {
+      "action_contract_ref": "AC-EMAIL-SEND",
+      "evidence_refs": [
+        "EV-CONTROL-TESTS"
+      ],
+      "mandatory": true,
+      "obligation_id": "PO-PO-TARGET",
+      "obligation_type": "PO-TARGET",
+      "required_evidence_types": [
+        "environment_state"
+      ],
+      "status": "SATISFIED",
+      "validity_context": {}
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+{"schema_id":"FINALIS-CONTROL-CLASS-LATTICE","sp":"SP0005","control_classes":["CC0","CC1","CC2","CC3","CC4","CC5"],
+ "join":"ControlClass(x) = join_i g_i(x_i) = MAX per-dimension required class (non-compensatory, D-0005-19).",
+ "monotonicity":"y >=_risk x  =>  ControlClass(y) >= ControlClass(x) unless validated compensation (D-0005-20).",
+ "level_to_class":{"NONE":"CC0","LOW":"CC1","MEDIUM":"CC2","HIGH":"CC3","CRITICAL":"CC4","UNKNOWN":"CC3"},
+ "note":"A severe dimension cannot be averaged away (§12.2). Hard prohibition dominates all optimization (INV-0005-10)."}

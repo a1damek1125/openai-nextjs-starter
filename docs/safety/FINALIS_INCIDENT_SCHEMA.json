@@ -1,0 +1,3 @@
+{"schema_id":"FINALIS-INCIDENT","sp":"SP0005","required":["incident_id","status","internal_severity","legal_reportability_status"],
+ "lifecycle":["DETECTED","CONTAINING","CONTAINED","INVESTIGATING","REMEDIATING","VERIFYING","CLOSED"],
+ "note":"Internal severity is SEPARATE from legal reportability (D-0005-72). An incident cannot directly self-modify production policy (INV-0005-25)."}

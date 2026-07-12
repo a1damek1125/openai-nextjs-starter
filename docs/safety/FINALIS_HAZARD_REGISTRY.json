@@ -1,0 +1,142 @@
+{
+  "hazards": [
+    {
+      "affected_capabilities": [
+        "effect_send",
+        "effect_call"
+      ],
+      "context_conditions": [],
+      "criticality": "CRITICAL",
+      "hard_block": false,
+      "hazard_id": "HZ-STALE-APPROVAL",
+      "loss_refs": [
+        "LOSS-WRONG-RECIPIENT",
+        "LOSS-DUP-EFFECT"
+      ],
+      "status": "ACTIVE",
+      "system_state": "an effect executes under an approval whose context changed"
+    },
+    {
+      "affected_capabilities": [
+        "read",
+        "send"
+      ],
+      "context_conditions": [],
+      "criticality": "HIGH",
+      "hard_block": false,
+      "hazard_id": "HZ-TRAJECTORY-AGGREGATION",
+      "loss_refs": [
+        "LOSS-PRIVACY",
+        "LOSS-RIGHTS"
+      ],
+      "status": "ACTIVE",
+      "system_state": "individually-safe reads combine into a purpose-violating disclosure"
+    },
+    {
+      "affected_capabilities": [
+        "effect_send"
+      ],
+      "context_conditions": [],
+      "criticality": "CRITICAL",
+      "hard_block": false,
+      "hazard_id": "HZ-WRONG-RECIPIENT",
+      "loss_refs": [
+        "LOSS-WRONG-RECIPIENT"
+      ],
+      "status": "ACTIVE",
+      "system_state": "message sent to an unintended recipient after target change"
+    },
+    {
+      "affected_capabilities": [
+        "read",
+        "write"
+      ],
+      "context_conditions": [],
+      "criticality": "CRITICAL",
+      "hard_block": false,
+      "hazard_id": "HZ-CROSS-TENANT",
+      "loss_refs": [
+        "LOSS-CROSS-TENANT"
+      ],
+      "status": "ACTIVE",
+      "system_state": "action crosses tenant boundary"
+    },
+    {
+      "affected_capabilities": [
+        "effect_send",
+        "effect_call"
+      ],
+      "context_conditions": [],
+      "criticality": "CRITICAL",
+      "hard_block": false,
+      "hazard_id": "HZ-DUP-EFFECT",
+      "loss_refs": [
+        "LOSS-DUP-EFFECT"
+      ],
+      "status": "ACTIVE",
+      "system_state": "non-idempotent effect retried after UNKNOWN_OUTCOME"
+    },
+    {
+      "affected_capabilities": [
+        "planning",
+        "tool_use"
+      ],
+      "context_conditions": [],
+      "criticality": "CRITICAL",
+      "hard_block": false,
+      "hazard_id": "HZ-INJECTION-DOWNGRADE",
+      "loss_refs": [
+        "LOSS-PRIVACY",
+        "LOSS-FINANCIAL"
+      ],
+      "status": "ACTIVE",
+      "system_state": "prompt injection attempts to lower risk classification / disable a control"
+    },
+    {
+      "affected_capabilities": [
+        "effect_call",
+        "effect_send"
+      ],
+      "context_conditions": [],
+      "criticality": "HIGH",
+      "hard_block": false,
+      "hazard_id": "HZ-UNCONSENTED-CONTACT",
+      "loss_refs": [
+        "LOSS-UNCONSENTED-CONTACT"
+      ],
+      "status": "ACTIVE",
+      "system_state": "external contact without valid consent"
+    },
+    {
+      "affected_capabilities": [
+        "decision"
+      ],
+      "context_conditions": [],
+      "criticality": "CRITICAL",
+      "hard_block": false,
+      "hazard_id": "HZ-UNFAIR-DECISION",
+      "loss_refs": [
+        "LOSS-RIGHTS",
+        "LOSS-LEGAL"
+      ],
+      "status": "ACTIVE",
+      "system_state": "high-impact decision (e.g. candidate ranking) made without oversight"
+    },
+    {
+      "affected_capabilities": [
+        "decision",
+        "effect_send"
+      ],
+      "context_conditions": [],
+      "criticality": "CRITICAL",
+      "hard_block": true,
+      "hazard_id": "HZ-PROHIBITED-PRACTICE",
+      "loss_refs": [
+        "LOSS-LEGAL",
+        "LOSS-RIGHTS"
+      ],
+      "status": "ACTIVE",
+      "system_state": "an action matches an AI-Act prohibited practice"
+    }
+  ]
+}

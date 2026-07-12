@@ -1,0 +1,14 @@
+{
+  "near_misses": [
+    {
+      "direct_policy_mutation": false,
+      "hazard_refs": [
+        "HZ-STALE-APPROVAL"
+      ],
+      "near_miss_id": "NM-EXAMPLE",
+      "preventing_factor": "lease revalidation",
+      "reviewed": true,
+      "status": "REVIEWED"
+    }
+  ]
+}

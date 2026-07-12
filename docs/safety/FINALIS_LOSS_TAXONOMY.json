@@ -1,0 +1,89 @@
+{
+  "losses": [
+    {
+      "affected_subject_types": [
+        "customer",
+        "employee",
+        "third_party"
+      ],
+      "canonical_key": "loss.privacy",
+      "category": "PRIVACY",
+      "description": "unauthorized disclosure of personal data",
+      "loss_id": "LOSS-PRIVACY",
+      "owner": "safety"
+    },
+    {
+      "affected_subject_types": [
+        "customer",
+        "tenant"
+      ],
+      "canonical_key": "loss.financial",
+      "category": "FINANCIAL",
+      "description": "financial loss to a subject",
+      "loss_id": "LOSS-FINANCIAL",
+      "owner": "safety"
+    },
+    {
+      "affected_subject_types": [
+        "candidate",
+        "customer"
+      ],
+      "canonical_key": "loss.rights",
+      "category": "RIGHTS",
+      "description": "unfair/adverse decision affecting a person",
+      "loss_id": "LOSS-RIGHTS",
+      "owner": "safety"
+    },
+    {
+      "affected_subject_types": [
+        "tenant",
+        "customer"
+      ],
+      "canonical_key": "loss.legal",
+      "category": "LEGAL",
+      "description": "legal/regulatory violation harming a subject",
+      "loss_id": "LOSS-LEGAL",
+      "owner": "safety"
+    },
+    {
+      "affected_subject_types": [
+        "customer"
+      ],
+      "canonical_key": "loss.wrong.recipient",
+      "category": "PRIVACY",
+      "description": "information disclosed to the wrong recipient",
+      "loss_id": "LOSS-WRONG-RECIPIENT",
+      "owner": "safety"
+    },
+    {
+      "affected_subject_types": [
+        "customer"
+      ],
+      "canonical_key": "loss.unconsented.contact",
+      "category": "RIGHTS",
+      "description": "contact without consent / anti-harassment breach",
+      "loss_id": "LOSS-UNCONSENTED-CONTACT",
+      "owner": "safety"
+    },
+    {
+      "affected_subject_types": [
+        "customer"
+      ],
+      "canonical_key": "loss.dup.effect",
+      "category": "FINANCIAL",
+      "description": "duplicated external effect (double send/charge)",
+      "loss_id": "LOSS-DUP-EFFECT",
+      "owner": "safety"
+    },
+    {
+      "affected_subject_types": [
+        "tenant"
+      ],
+      "canonical_key": "loss.cross.tenant",
+      "category": "SECURITY",
+      "description": "cross-tenant data access",
+      "loss_id": "LOSS-CROSS-TENANT",
+      "owner": "safety"
+    }
+  ]
+}

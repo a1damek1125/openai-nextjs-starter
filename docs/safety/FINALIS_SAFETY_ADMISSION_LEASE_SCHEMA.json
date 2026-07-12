@@ -1,0 +1,3 @@
+{"schema_id":"FINALIS-SAFETY-ADMISSION-LEASE","sp":"SP0005","required":["lease_id","action_fingerprint","tenant_id","actor_id","target_fingerprint","authority_snapshot_hash","safety_context_hash","trajectory_state_hash","expires_at"],
+ "lifecycle":["PROPOSED","EVALUATING","ACTIVE","REVALIDATION_REQUIRED","REVOKED","EXPIRED","CONSUMED"],
+ "note":"A lease is context-bound + time-bound + non-transferable (INV-0005-04..08). It is EVIDENCE, not authority by itself (D-0005-84). Immediate pre-effect revalidation compares current material context to the lease; any mismatch or expiry blocks the effect (SAFETY_TOCTOU_MISMATCH)."}

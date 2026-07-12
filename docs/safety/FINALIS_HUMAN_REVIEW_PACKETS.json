@@ -1,0 +1,25 @@
+{
+  "review_packets": [
+    {
+      "authority_used": "write:email",
+      "consequence_approve": "email sent",
+      "consequence_reject": "no contact",
+      "constraints": [
+        "consent valid"
+      ],
+      "irreversibility": "IRREVERSIBLE",
+      "material_facts": [
+        "balance $500"
+      ],
+      "packet_id": "RP-EXAMPLE",
+      "proposal": "send collection email",
+      "rationale": "invoice overdue 30d",
+      "risk_class": "FINALIS_IMPACT_3",
+      "safe_alternative": "draft for review",
+      "target": "customer#123",
+      "uncertainties": [
+        "dispute unknown"
+      ]
+    }
+  ]
+}

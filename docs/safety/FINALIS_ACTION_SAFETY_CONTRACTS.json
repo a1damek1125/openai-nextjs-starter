@@ -1,0 +1,139 @@
+{
+  "action_contracts": [
+    {
+      "action_type": "email_send",
+      "authority_requirements": [
+        "write_authority"
+      ],
+      "contract_id": "AC-EMAIL-SEND",
+      "contract_version": "1.0",
+      "data_constraints": [
+        "minimized"
+      ],
+      "irreversibility_class": "IRREVERSIBLE",
+      "post_effect_verification": [
+        "outbox_state"
+      ],
+      "preconditions": [
+        "tenant_valid",
+        "authority_valid"
+      ],
+      "proof_obligations": [
+        "PO-AUTHORITY",
+        "PO-TENANT",
+        "PO-TARGET",
+        "PO-RECIPIENT",
+        "PO-CONSENT",
+        "PO-IDEMPOTENCY",
+        "PO-OUTCOME-OBSERVATION"
+      ],
+      "required_control_class": "CC4",
+      "revalidation_triggers": [
+        "target",
+        "recipient",
+        "authority",
+        "consent",
+        "policy_version"
+      ],
+      "safety_invariants": [
+        "target_verified",
+        "no_injection"
+      ],
+      "target_constraints": [
+        "verified_target"
+      ],
+      "trajectory_constraints": [
+        "recipient_revalidated_after_sensitive_read"
+      ]
+    },
+    {
+      "action_type": "place_call",
+      "authority_requirements": [
+        "write_authority"
+      ],
+      "contract_id": "AC-PLACE-CALL",
+      "contract_version": "1.0",
+      "data_constraints": [
+        "minimized"
+      ],
+      "irreversibility_class": "IRREVERSIBLE",
+      "post_effect_verification": [
+        "outbox_state"
+      ],
+      "preconditions": [
+        "tenant_valid",
+        "authority_valid"
+      ],
+      "proof_obligations": [
+        "PO-AUTHORITY",
+        "PO-TENANT",
+        "PO-TARGET",
+        "PO-RECIPIENT",
+        "PO-CONSENT",
+        "PO-IDEMPOTENCY",
+        "PO-OUTCOME-OBSERVATION"
+      ],
+      "required_control_class": "CC4",
+      "revalidation_triggers": [
+        "target",
+        "recipient",
+        "authority",
+        "consent",
+        "policy_version"
+      ],
+      "safety_invariants": [
+        "target_verified",
+        "no_injection"
+      ],
+      "target_constraints": [
+        "verified_target"
+      ],
+      "trajectory_constraints": [
+        "recipient_revalidated_after_sensitive_read"
+      ]
+    },
+    {
+      "action_type": "commit_write",
+      "authority_requirements": [
+        "write_authority"
+      ],
+      "contract_id": "AC-COMMIT-WRITE",
+      "contract_version": "1.0",
+      "data_constraints": [
+        "minimized"
+      ],
+      "irreversibility_class": "PARTIALLY_REVERSIBLE",
+      "post_effect_verification": [
+        "outbox_state"
+      ],
+      "preconditions": [
+        "tenant_valid",
+        "authority_valid"
+      ],
+      "proof_obligations": [
+        "PO-AUTHORITY",
+        "PO-TENANT",
+        "PO-IDEMPOTENCY",
+        "PO-REVERSIBILITY"
+      ],
+      "required_control_class": "CC3",
+      "revalidation_triggers": [
+        "target",
+        "recipient",
+        "authority",
+        "consent",
+        "policy_version"
+      ],
+      "safety_invariants": [
+        "target_verified",
+        "no_injection"
+      ],
+      "target_constraints": [
+        "verified_target"
+      ],
+      "trajectory_constraints": [
+        "recipient_revalidated_after_sensitive_read"
+      ]
+    }
+  ]
+}
