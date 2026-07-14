@@ -1,0 +1,22 @@
+{
+  "capability": "PRESENT",
+  "methods": [
+    "worst_stratum",
+    "robust_mixture",
+    "cvar",
+    "zero_failure_upper_bound"
+  ],
+  "reason": "no integrated behavioral runs at M1 maturity",
+  "robust_mixture": {
+    "robust_lower_bound": null
+  },
+  "robust_root": "bbb0bb953792cd75e7c1a1a6c5655147d1a2c40a283bb2d00187b12c115d0e09",
+  "state": "NOT_EVALUATED",
+  "tail_risk": {
+    "cvar": null
+  },
+  "worst_stratum": {
+    "stratum_lower_bounds": {},
+    "worst_lower_bound": null
+  }
+}

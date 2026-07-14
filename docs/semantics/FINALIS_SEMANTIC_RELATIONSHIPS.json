@@ -1,0 +1,30 @@
+{
+  "relationships": [
+    {
+      "from": "action.action",
+      "to": "effect.effect",
+      "type": "PRECEDES"
+    },
+    {
+      "from": "effect.effect",
+      "to": "outcome.business_outcome",
+      "type": "PRECEDES"
+    },
+    {
+      "from": "party.customer",
+      "to": "party.party",
+      "type": "IS_A"
+    },
+    {
+      "from": "run.run",
+      "to": "event.event",
+      "type": "PRODUCES"
+    },
+    {
+      "from": "work.task",
+      "to": "work.owned_work",
+      "type": "PRECEDES"
+    }
+  ],
+  "schema_version": "1.0.0"
+}

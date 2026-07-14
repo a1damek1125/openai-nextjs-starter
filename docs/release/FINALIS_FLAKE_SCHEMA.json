@@ -1,0 +1,12 @@
+{
+  "classes": [
+    "TEST_FLAKE_CONFIRMED",
+    "PRODUCT_NONDETERMINISM",
+    "ENVIRONMENT_INSTABILITY",
+    "DEPENDENCY_INSTABILITY",
+    "NOT_REPRODUCED",
+    "UNKNOWN"
+  ],
+  "rule": "environment-conditioned; a single rerun cannot confirm a flake (D-0009-19/21)",
+  "schema_id": "Flake"
+}

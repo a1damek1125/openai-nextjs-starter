@@ -1,0 +1,22 @@
+{
+  "claims": [
+    "CL-SP0000-architecture-baseline-fixed",
+    "CL-SP0001-architecture-conformance-checked",
+    "CL-SP0002-historical-epoch-interpretable",
+    "CL-SP0002-semantics-versioned",
+    "CL-SP0003-program-admission-verified",
+    "CL-SP0004-provider-replaceable",
+    "CL-SP0005-safety-dominates-protected-effects",
+    "CL-SP0006-approval-context-bound",
+    "CL-SP0006-authority-conserved",
+    "CL-SP0006-zero-lost-work",
+    "CL-SP0007-contract-evolution-directional",
+    "CL-SP0007-historical-envelope-epoch-bound",
+    "CL-SP0008-contract-genome-sealed",
+    "CL-SP0008-contract-surfaces-inventoried",
+    "CL-SP0009-non-compensatory-gates",
+    "CL-SP0009-release-proof-not-runtime-authority"
+  ],
+  "note": "OMG SACM 2.3 external projection (evidence exchange only; not Finalis authority)",
+  "schema_id": "SACMProjection"
+}

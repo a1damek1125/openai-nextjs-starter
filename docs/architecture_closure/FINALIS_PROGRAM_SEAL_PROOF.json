@@ -1,0 +1,106 @@
+{
+  "all_certified": true,
+  "bootstrap_ceremony": {
+    "phase_a": {
+      "frozen_identity": "92d9590c09ec3f7d3b9eef21cfa87d9ac9be7aa6d6fc61e8a6f2520c93a1df0b",
+      "frozen_identity_matches": true,
+      "recorded_identity": "92d9590c09ec3f7d3b9eef21cfa87d9ac9be7aa6d6fc61e8a6f2520c93a1df0b",
+      "sp0009_twin_digest": "916dd687ca4c473efdf5b77f1bd3d4d72fe365aaa5d89a520dab0b214fb5e794",
+      "trust_domain": "release-frozen",
+      "verifier": "frozen_sp0009"
+    },
+    "phase_b": {
+      "global_root": "d371cc4444b7212a31a5636ae400ef96489f23d97291b478c845d581881efc5e",
+      "matches_genome": true,
+      "trust_domain": "closure-reference",
+      "verifier": "sp0010_reference"
+    },
+    "phase_c": {
+      "agree": true,
+      "canonical_recompute": "d371cc4444b7212a31a5636ae400ef96489f23d97291b478c845d581881efc5e",
+      "construction": "merkle-tree",
+      "disagreements": [],
+      "independent_merkle_root": "4012124bf21f91dcc1e92feb79d9fda8f0431f808821a00faa79721b11ad3f78",
+      "missing_class_roots": [],
+      "trust_domain": "closure-independent",
+      "verifier": "sp0010_independent"
+    },
+    "sealed_ok": true,
+    "verifier_diversity": {
+      "constructions": [
+        "canonical-json",
+        "file-content-hash",
+        "merkle-tree"
+      ],
+      "distinct_constructions": 3,
+      "distinct_domains": 3,
+      "diverse": true,
+      "trust_domains": [
+        "closure-independent",
+        "closure-reference",
+        "release-frozen"
+      ],
+      "verifiers": [
+        "frozen_sp0009",
+        "sp0010_independent",
+        "sp0010_reference"
+      ]
+    }
+  },
+  "certificate_root": "e5a5818299a3649848c3a7113e373cd375cc9a3171bb8b71a7b5e88b0bc229ca",
+  "closure_state": "CONSTITUTIONAL_ARCHITECTURE_CLOSED_WITH_NONBLOCKING_PRODUCTION_GAPS",
+  "counts": {
+    "P0": 0,
+    "P1": 0,
+    "P2": 48
+  },
+  "federated_verification": {
+    "backend_count": 4,
+    "backends": [
+      {
+        "anchor_matches_genome": true,
+        "backend": "canonical-json-fold",
+        "blind_to_roots": [],
+        "deterministic": true,
+        "fingerprint": "9d0c5c83399d0b7f12db287a4699984aeff46b9e1c54d1d33ea9dd1773242263",
+        "ok": true,
+        "sensitive": true
+      },
+      {
+        "anchor_matches_genome": true,
+        "backend": "binary-merkle-tree",
+        "blind_to_roots": [],
+        "deterministic": true,
+        "fingerprint": "82463bd8acd07009a45d2eb2bb7d9ce3d1aeeaea8d4be21863970a210b1eca01",
+        "ok": true,
+        "sensitive": true
+      },
+      {
+        "anchor_matches_genome": true,
+        "backend": "polynomial-rolling",
+        "blind_to_roots": [],
+        "deterministic": true,
+        "fingerprint": "poly:247cb2607825f74c8900c94271e02eb2",
+        "ok": true,
+        "sensitive": true
+      },
+      {
+        "anchor_matches_genome": true,
+        "backend": "length-prefixed-stream",
+        "blind_to_roots": [],
+        "deterministic": true,
+        "fingerprint": "a6482cefcd0e70fd0aaed1d188024333c014b835fa5d25657efed870113be204",
+        "ok": true,
+        "sensitive": true
+      }
+    ],
+    "converged": true,
+    "converged_count": 4,
+    "disagreements": [],
+    "distinct_fingerprints": 4,
+    "federation_root": "c09e20c48cdbadfed1975ed76f48fbe678b710e4d467d0dc3ef15f492ec66b76",
+    "state": "CONVERGED"
+  },
+  "seal_hash": "f81b1b44c8c6c4453dbef3c38ccacb0359c92a29034823995095a7c2d47f2194",
+  "tcb_root": "a2e52993036bcba7676c0e3e2264204a5ded0110bbb5e33be4629a3a74c2c405"
+}

@@ -1,0 +1,62 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "claim_id": {
+      "type": "string"
+    },
+    "compatibility_vector": {
+      "type": "object"
+    },
+    "consumer_id": {
+      "type": "string"
+    },
+    "consumer_version": {
+      "type": "string"
+    },
+    "contract_id": {
+      "type": "string"
+    },
+    "direction": {
+      "type": "string"
+    },
+    "environment_hash": {
+      "type": "string"
+    },
+    "evidence_refs": {
+      "type": "array"
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "hard_gate_result": {
+      "type": "string"
+    },
+    "producer_version": {
+      "type": "string"
+    },
+    "scenario_scope": {
+      "type": "array"
+    },
+    "status": {
+      "type": "string"
+    },
+    "tested_at": {
+      "type": "string"
+    },
+    "validator_version": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "claim_id",
+    "producer_version",
+    "consumer_version",
+    "direction",
+    "scenario_scope",
+    "evidence_refs",
+    "validator_version",
+    "tested_at"
+  ],
+  "schema_id": "CompatibilityClaim",
+  "type": "object"
+}

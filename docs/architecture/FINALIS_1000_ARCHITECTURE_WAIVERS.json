@@ -1,0 +1,6 @@
+{
+  "schema_version": "1.0.0",
+  "program": "FINALIS_1000",
+  "note": "No permanent anonymous waiver (SP0001 §13.2). Every waiver needs an owner, reason, and expiry <= waiver_policy.max_lifetime_days. Scope strings match conformance signatures: 'forbidden:<cap>-><module>', 'effect:<module>:<target>', 'cycle:<cap>|<cap>|...'. The clean baseline needs zero waivers; this file exists so the mechanism is live and testable.",
+  "waivers": []
+}

@@ -1,0 +1,18 @@
+{
+  "fields": [
+    "constitution_id",
+    "version",
+    "commit",
+    "owned_concepts",
+    "assumption_refs",
+    "guarantee_refs",
+    "invariant_refs",
+    "failure_states",
+    "evidence_refs",
+    "valid_from",
+    "valid_to",
+    "interface_hash"
+  ],
+  "note": "schema per \u00a710.1; instances in FINALIS_CONSTITUTIONAL_INTERFACES.json",
+  "schema_id": "ConstitutionalInterface"
+}

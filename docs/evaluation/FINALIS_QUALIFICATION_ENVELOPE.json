@@ -1,0 +1,40 @@
+{
+  "configuration_id": "CFG-FINALIS-REPO-REFERENCE",
+  "contamination_state": "CLEAN",
+  "envelope_hash": "1f6d06cdcdbb2eb2f1fede6ca18355c0cc2628c2dd4c30f6a3a312283a4aa10c",
+  "envelope_id": "ENV-CFG-FINALIS-REPO-REFERENCE",
+  "evidence_robustness": {
+    "evidence_class": "M1_REPOSITORY_ONLY"
+  },
+  "hard_gate_state": "PASS",
+  "judge_reliability_state": "META_EVALUATED_NOT_SOLE_ORACLE",
+  "maturity": "M1",
+  "nominal_bounds": {
+    "repository_reference": null
+  },
+  "open_gaps": [
+    "FIELD_EVIDENCE_GAP",
+    "PRODUCTION_EVIDENCE_GAP",
+    "SANDBOX_INTEGRATION_GAP"
+  ],
+  "rare_failure_bounds": {
+    "capability": "PRESENT",
+    "method": "1 - alpha^(1/n)",
+    "state": "NOT_EVALUATED"
+  },
+  "robust_mixture_bounds": {
+    "robust_lower_bound": null
+  },
+  "scorecard_id": "SCORECARD-CFG-FINALIS-REPO-REFERENCE",
+  "tail_risk": {
+    "cvar": null
+  },
+  "valid_until": null,
+  "validity_scope": {
+    "external_effects": "MOCKED",
+    "field_evidence": "ABSENT",
+    "maturity": "M1",
+    "production_evidence": "ABSENT"
+  },
+  "worst_stratum_bounds": {}
+}

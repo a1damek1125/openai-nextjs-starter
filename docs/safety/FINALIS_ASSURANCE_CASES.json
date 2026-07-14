@@ -1,0 +1,174 @@
+{
+  "claims": [
+    {
+      "argument_refs": [
+        "ARG-1"
+      ],
+      "assumption_refs": [
+        "AS-NO-REAL-EFFECT"
+      ],
+      "claim_id": "CLAIM-REVALIDATE",
+      "critical": true,
+      "defeater_refs": [],
+      "evidence_refs": [
+        "EV-LEASE-TESTS"
+      ],
+      "hazard_refs": [
+        "HZ-STALE-APPROVAL",
+        "HZ-WRONG-RECIPIENT"
+      ],
+      "residual_uncertainties": [
+        "socio-technical claims not formally proven"
+      ],
+      "scope": "design_time",
+      "statement": "stale approvals cannot authorize a changed context",
+      "status": "SUPPORTED_CURRENT"
+    },
+    {
+      "argument_refs": [
+        "ARG-1"
+      ],
+      "assumption_refs": [
+        "AS-NO-REAL-EFFECT"
+      ],
+      "claim_id": "CLAIM-TENANT",
+      "critical": true,
+      "defeater_refs": [],
+      "evidence_refs": [
+        "EV-CONTROL-TESTS"
+      ],
+      "hazard_refs": [
+        "HZ-CROSS-TENANT"
+      ],
+      "residual_uncertainties": [
+        "socio-technical claims not formally proven"
+      ],
+      "scope": "design_time",
+      "statement": "cross-tenant access is prevented",
+      "status": "SUPPORTED_CURRENT"
+    },
+    {
+      "argument_refs": [
+        "ARG-1"
+      ],
+      "assumption_refs": [
+        "AS-NO-REAL-EFFECT"
+      ],
+      "claim_id": "CLAIM-IDEMPOTENCY",
+      "critical": true,
+      "defeater_refs": [],
+      "evidence_refs": [
+        "EV-CONTROL-TESTS"
+      ],
+      "hazard_refs": [
+        "HZ-DUP-EFFECT"
+      ],
+      "residual_uncertainties": [
+        "socio-technical claims not formally proven"
+      ],
+      "scope": "design_time",
+      "statement": "unknown-outcome effects are not blindly retried",
+      "status": "SUPPORTED_CURRENT"
+    },
+    {
+      "argument_refs": [
+        "ARG-1"
+      ],
+      "assumption_refs": [
+        "AS-NO-REAL-EFFECT"
+      ],
+      "claim_id": "CLAIM-INJECTION",
+      "critical": true,
+      "defeater_refs": [],
+      "evidence_refs": [
+        "EV-CONTROL-TESTS"
+      ],
+      "hazard_refs": [
+        "HZ-INJECTION-DOWNGRADE"
+      ],
+      "residual_uncertainties": [
+        "socio-technical claims not formally proven"
+      ],
+      "scope": "design_time",
+      "statement": "external content cannot lower risk / disable control",
+      "status": "SUPPORTED_CURRENT"
+    },
+    {
+      "argument_refs": [
+        "ARG-1"
+      ],
+      "assumption_refs": [
+        "AS-NO-REAL-EFFECT"
+      ],
+      "claim_id": "CLAIM-AGGREGATION",
+      "critical": true,
+      "defeater_refs": [],
+      "evidence_refs": [
+        "EV-TRAJECTORY-TESTS"
+      ],
+      "hazard_refs": [
+        "HZ-TRAJECTORY-AGGREGATION"
+      ],
+      "residual_uncertainties": [
+        "socio-technical claims not formally proven"
+      ],
+      "scope": "design_time",
+      "statement": "read-sensitive→send requires recipient revalidation",
+      "status": "SUPPORTED_CURRENT"
+    },
+    {
+      "argument_refs": [
+        "ARG-1"
+      ],
+      "assumption_refs": [
+        "AS-NO-REAL-EFFECT"
+      ],
+      "claim_id": "CLAIM-OVERSIGHT",
+      "critical": true,
+      "defeater_refs": [],
+      "evidence_refs": [
+        "EV-OVERSIGHT-TESTS"
+      ],
+      "hazard_refs": [
+        "HZ-UNFAIR-DECISION"
+      ],
+      "residual_uncertainties": [
+        "socio-technical claims not formally proven"
+      ],
+      "scope": "design_time",
+      "statement": "high-impact decisions require meaningful oversight",
+      "status": "SUPPORTED_CURRENT"
+    },
+    {
+      "argument_refs": [
+        "ARG-1"
+      ],
+      "assumption_refs": [
+        "AS-NO-REAL-EFFECT"
+      ],
+      "claim_id": "CLAIM-CONSENT",
+      "critical": true,
+      "defeater_refs": [],
+      "evidence_refs": [
+        "EV-CONTROL-TESTS"
+      ],
+      "hazard_refs": [
+        "HZ-UNCONSENTED-CONTACT"
+      ],
+      "residual_uncertainties": [
+        "socio-technical claims not formally proven"
+      ],
+      "scope": "design_time",
+      "statement": "external contact requires valid consent",
+      "status": "SUPPORTED_CURRENT"
+    }
+  ],
+  "defeaters": [
+    {
+      "defeater_id": "DEF-NEW-INJECTION",
+      "description": "new prompt-injection technique",
+      "severity": "MEDIUM",
+      "status": "MONITORED"
+    }
+  ]
+}

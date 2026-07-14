@@ -1,0 +1,130 @@
+{
+  "bindings": [
+    {
+      "accepted_outputs": {},
+      "active": true,
+      "consumer_id": "portal-ui::ct-http-cases",
+      "contract_id": "CT-HTTP-CASES",
+      "criticality": "C3",
+      "enum_world": "OPEN",
+      "last_observed": "2026-07-12",
+      "migrated": true,
+      "owner": "portal.ui",
+      "protected": true,
+      "required_fields": [],
+      "unknown_field_policy": "PRESERVE",
+      "usage_profile": {
+        "historical_reader": false,
+        "reads": true,
+        "writes": false
+      },
+      "version": "1.0.0",
+      "version_range": "1.0.0"
+    },
+    {
+      "accepted_outputs": {},
+      "active": true,
+      "consumer_id": "portal-ui::ct-event-run-ledger",
+      "contract_id": "CT-EVENT-RUN-LEDGER",
+      "criticality": "C3",
+      "enum_world": "OPEN",
+      "last_observed": "2026-07-12",
+      "migrated": true,
+      "owner": "portal.ui",
+      "protected": true,
+      "required_fields": [],
+      "unknown_field_policy": "PRESERVE",
+      "usage_profile": {
+        "historical_reader": false,
+        "reads": true,
+        "writes": false
+      },
+      "version": "1.0.0",
+      "version_range": "1.0.0"
+    },
+    {
+      "accepted_outputs": {},
+      "active": true,
+      "consumer_id": "portal-ui::ct-db-schema",
+      "contract_id": "CT-DB-SCHEMA",
+      "criticality": "C3",
+      "enum_world": "OPEN",
+      "last_observed": "2026-07-12",
+      "migrated": true,
+      "owner": "portal.ui",
+      "protected": true,
+      "required_fields": [],
+      "unknown_field_policy": "PRESERVE",
+      "usage_profile": {
+        "historical_reader": false,
+        "reads": true,
+        "writes": false
+      },
+      "version": "1.0.0",
+      "version_range": "1.0.0"
+    },
+    {
+      "accepted_outputs": {},
+      "active": true,
+      "consumer_id": "portal-ui::ct-wf-case-fsm",
+      "contract_id": "CT-WF-CASE-FSM",
+      "criticality": "C3",
+      "enum_world": "OPEN",
+      "last_observed": "2026-07-12",
+      "migrated": true,
+      "owner": "portal.ui",
+      "protected": true,
+      "required_fields": [],
+      "unknown_field_policy": "PRESERVE",
+      "usage_profile": {
+        "historical_reader": false,
+        "reads": true,
+        "writes": false
+      },
+      "version": "1.0.0",
+      "version_range": "1.0.0"
+    },
+    {
+      "accepted_outputs": {},
+      "active": true,
+      "consumer_id": "portal-ui::ct-proof-run-event",
+      "contract_id": "CT-PROOF-RUN-EVENT",
+      "criticality": "C3",
+      "enum_world": "OPEN",
+      "last_observed": "2026-07-12",
+      "migrated": true,
+      "owner": "portal.ui",
+      "protected": true,
+      "required_fields": [],
+      "unknown_field_policy": "PRESERVE",
+      "usage_profile": {
+        "historical_reader": true,
+        "reads": true,
+        "writes": false
+      },
+      "version": "1.0.0",
+      "version_range": "1.0.0"
+    },
+    {
+      "accepted_outputs": {},
+      "active": true,
+      "consumer_id": "portal-ui::ct-semantic-case",
+      "contract_id": "CT-SEMANTIC-CASE",
+      "criticality": "C3",
+      "enum_world": "OPEN",
+      "last_observed": "2026-07-12",
+      "migrated": true,
+      "owner": "portal.ui",
+      "protected": true,
+      "required_fields": [],
+      "unknown_field_policy": "PRESERVE",
+      "usage_profile": {
+        "historical_reader": false,
+        "reads": true,
+        "writes": false
+      },
+      "version": "1.0.0",
+      "version_range": "1.0.0"
+    }
+  ]
+}

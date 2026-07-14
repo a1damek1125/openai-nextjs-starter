@@ -1,0 +1,27 @@
+{
+  "reference_plan": {
+    "alpha": 0.05,
+    "confidence_method": "clopper-pearson",
+    "dependence_adjustment": "design-effect",
+    "design": "FIXED_SAMPLE",
+    "effect_size": null,
+    "estimand_ref": "EST-REF",
+    "multiple_testing_family": null,
+    "plan_hash": "f51f92907bcacd3755730878e9637d79b71b3cda04f56b3c0667772683c147a3",
+    "plan_id": "PLAN-f51f92907bcacd37",
+    "practical_threshold": null,
+    "preregistered": true,
+    "stopping_rule": "fixed-n"
+  },
+  "sequential": {
+    "capability": "PRESENT",
+    "method": "e-process (Ville)",
+    "reason": "no integrated runs at M1",
+    "state": "NOT_EVALUATED"
+  },
+  "zero_failure": {
+    "capability": "PRESENT",
+    "method": "1 - alpha^(1/n)",
+    "state": "NOT_EVALUATED"
+  }
+}

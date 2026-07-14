@@ -1,0 +1,140 @@
+{
+  "corpus_version": "1.0",
+  "workloads": [
+    {
+      "canonical_input": {
+        "intent": "model.structured_extraction",
+        "payload": {}
+      },
+      "contract_version": "1.0",
+      "effect_mode": "NO_EXTERNAL_EFFECT",
+      "effectful": false,
+      "forbidden_properties": [],
+      "provider_class": "model_provider",
+      "required_properties": [
+        "schema_valid"
+      ],
+      "workload_id": "model.structured_extraction"
+    },
+    {
+      "canonical_input": {
+        "intent": "model.tool_request",
+        "payload": {}
+      },
+      "contract_version": "1.0",
+      "effect_mode": "NO_EXTERNAL_EFFECT",
+      "effectful": false,
+      "forbidden_properties": [],
+      "provider_class": "model_provider",
+      "required_properties": [
+        "tool_call"
+      ],
+      "workload_id": "model.tool_request"
+    },
+    {
+      "canonical_input": {
+        "intent": "model.multilingual",
+        "payload": {}
+      },
+      "contract_version": "1.0",
+      "effect_mode": "NO_EXTERNAL_EFFECT",
+      "effectful": false,
+      "forbidden_properties": [],
+      "provider_class": "model_provider",
+      "required_properties": [
+        "language_preserved"
+      ],
+      "workload_id": "model.multilingual"
+    },
+    {
+      "canonical_input": {
+        "intent": "model.schema_compliance",
+        "payload": {}
+      },
+      "contract_version": "1.0",
+      "effect_mode": "NO_EXTERNAL_EFFECT",
+      "effectful": false,
+      "forbidden_properties": [],
+      "provider_class": "model_provider",
+      "required_properties": [
+        "schema_valid"
+      ],
+      "workload_id": "model.schema_compliance"
+    },
+    {
+      "canonical_input": {
+        "intent": "model.failure_case",
+        "payload": {}
+      },
+      "contract_version": "1.0",
+      "effect_mode": "NO_EXTERNAL_EFFECT",
+      "effectful": false,
+      "forbidden_properties": [],
+      "provider_class": "model_provider",
+      "required_properties": [
+        "error_translated"
+      ],
+      "workload_id": "model.failure_case"
+    },
+    {
+      "canonical_input": {
+        "intent": "email.read",
+        "payload": {}
+      },
+      "contract_version": "1.0",
+      "effect_mode": "NO_EXTERNAL_EFFECT",
+      "effectful": false,
+      "forbidden_properties": [],
+      "provider_class": "email_provider",
+      "required_properties": [
+        "message_list"
+      ],
+      "workload_id": "email.read"
+    },
+    {
+      "canonical_input": {
+        "intent": "email.draft",
+        "payload": {}
+      },
+      "contract_version": "1.0",
+      "effect_mode": "NO_EXTERNAL_EFFECT",
+      "effectful": false,
+      "forbidden_properties": [],
+      "provider_class": "email_provider",
+      "required_properties": [
+        "draft_created"
+      ],
+      "workload_id": "email.draft"
+    },
+    {
+      "canonical_input": {
+        "intent": "email.send_simulation",
+        "payload": {}
+      },
+      "contract_version": "1.0",
+      "effect_mode": "NO_EXTERNAL_EFFECT",
+      "effectful": true,
+      "forbidden_properties": [],
+      "provider_class": "email_provider",
+      "required_properties": [
+        "idempotent"
+      ],
+      "workload_id": "email.send_simulation"
+    },
+    {
+      "canonical_input": {
+        "intent": "email.unknown_outcome",
+        "payload": {}
+      },
+      "contract_version": "1.0",
+      "effect_mode": "NO_EXTERNAL_EFFECT",
+      "effectful": true,
+      "forbidden_properties": [],
+      "provider_class": "email_provider",
+      "required_properties": [
+        "unknown_outcome_handled"
+      ],
+      "workload_id": "email.unknown_outcome"
+    }
+  ]
+}

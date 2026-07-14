@@ -1,0 +1,3 @@
+{"schema_id":"FINALIS-HUMAN-REVIEW-PACKET","sp":"SP0005",
+ "required":["proposal","rationale","authority_used","target","material_facts","uncertainties","risk_class","irreversibility","constraints","safe_alternative","consequence_approve","consequence_reject"],
+ "note":"Minimum sufficient structured info; missing required material field => HUMAN_REVIEW_PACKET_INCOMPLETE (D-0005-55). Do not overload with irrelevant logs."}

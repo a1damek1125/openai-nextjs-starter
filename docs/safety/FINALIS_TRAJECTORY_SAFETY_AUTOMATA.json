@@ -1,0 +1,42 @@
+{
+  "automata": [
+    {
+      "automaton_id": "AUTO-EFFECT",
+      "forbidden_transitions": [
+        [
+          "UNVERIFIED_TARGET",
+          "effect"
+        ],
+        [
+          "PREPARED_EFFECT",
+          "effect"
+        ]
+      ],
+      "required_checkpoints": [
+        "REVALIDATED"
+      ],
+      "transitions": [
+        {
+          "action": "verify",
+          "from": "UNVERIFIED_TARGET",
+          "to": "APPROVED_TARGET"
+        },
+        {
+          "action": "prepare",
+          "from": "APPROVED_TARGET",
+          "to": "PREPARED_EFFECT"
+        },
+        {
+          "action": "revalidate",
+          "from": "PREPARED_EFFECT",
+          "to": "REVALIDATED"
+        },
+        {
+          "action": "effect",
+          "from": "REVALIDATED",
+          "to": "EFFECT"
+        }
+      ]
+    }
+  ]
+}

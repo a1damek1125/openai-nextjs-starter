@@ -1,0 +1,34 @@
+{
+  "acyclic": true,
+  "edges": {
+    "GATE_AGENTIC_INJECTION": [],
+    "GATE_AI_CLOSURE": [],
+    "GATE_ARTIFACT_INTEGRITY": [],
+    "GATE_BROWSER_E2E": [
+      "GATE_UNIT_TESTS"
+    ],
+    "GATE_BUILD_HERMETICITY": [],
+    "GATE_CI_WORKFLOW_SECURITY": [],
+    "GATE_COMPATIBILITY": [],
+    "GATE_CONTRACT_INVENTORY": [
+      "GATE_COMPATIBILITY"
+    ],
+    "GATE_DOCUMENTATION": [],
+    "GATE_FEATURE_FLAGS": [],
+    "GATE_MIGRATION": [],
+    "GATE_MUTATION_ADEQUACY": [],
+    "GATE_PROOF_INTEGRITY": [],
+    "GATE_RBAC_AUTHORITY": [],
+    "GATE_REPRODUCIBILITY": [
+      "GATE_BUILD_HERMETICITY"
+    ],
+    "GATE_ROLLBACK_OR_FORWARD_FIX": [],
+    "GATE_SAFETY": [],
+    "GATE_SECRET_EXPOSURE": [],
+    "GATE_SUPPLY_CHAIN": [],
+    "GATE_TENANT_ISOLATION": [],
+    "GATE_UNIT_TESTS": [],
+    "GATE_UNKNOWN_OUTCOME": []
+  },
+  "schema_id": "GateDependencyDAG"
+}

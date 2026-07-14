@@ -1,0 +1,58 @@
+{
+  "detector_diversity_ok": true,
+  "residual": {
+    "advisory_only": true,
+    "doubletons_q2": 1,
+    "estimable": false,
+    "estimated_residual_unseen": null,
+    "note": "NOT ESTIMABLE: detector fleet is kind-partitioned with effective recapture 0.1% < 5%; residual is UNKNOWN, not zero",
+    "recapture_fraction": 0.0008,
+    "recaptured_surfaces": 1,
+    "s_hat_lower_bound": null,
+    "s_observed": 1295,
+    "singletons_q1": 1294
+  },
+  "saturation_curve": [
+    {
+      "cumulative_surfaces": 423,
+      "detector": "http_routes"
+    },
+    {
+      "cumulative_surfaces": 557,
+      "detector": "db_migrations"
+    },
+    {
+      "cumulative_surfaces": 592,
+      "detector": "run_ledger_events"
+    },
+    {
+      "cumulative_surfaces": 766,
+      "detector": "audit_events"
+    },
+    {
+      "cumulative_surfaces": 856,
+      "detector": "state_machines"
+    },
+    {
+      "cumulative_surfaces": 923,
+      "detector": "proof_artifacts"
+    },
+    {
+      "cumulative_surfaces": 1285,
+      "detector": "proof_versions"
+    },
+    {
+      "cumulative_surfaces": 1286,
+      "detector": "config_keys"
+    },
+    {
+      "cumulative_surfaces": 1295,
+      "detector": "declared_config"
+    },
+    {
+      "cumulative_surfaces": 1295,
+      "detector": "cli_commands"
+    }
+  ],
+  "schema_id": "ResidualEstimate"
+}

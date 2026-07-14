@@ -1,0 +1,4 @@
+{
+  "rule": "Merkle inclusion proof; proves registered existence+ordering, not truth (D-0009-33)",
+  "schema_id": "TransparencyReceipt"
+}

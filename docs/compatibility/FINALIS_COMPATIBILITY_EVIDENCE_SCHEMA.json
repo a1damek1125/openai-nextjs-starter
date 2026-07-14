@@ -1,0 +1,26 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "evidence_id": {
+      "type": "string"
+    },
+    "fixture_refs": {
+      "type": "array"
+    },
+    "kind": {
+      "type": "string"
+    },
+    "produced_by": {
+      "type": "string"
+    },
+    "result": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "evidence_id",
+    "kind"
+  ],
+  "schema_id": "CompatibilityEvidence",
+  "type": "object"
+}

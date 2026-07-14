@@ -1,0 +1,35 @@
+{
+  "conformance": {
+    "AD-01": "IMPLEMENTED",
+    "AD-02": "IMPLEMENTED",
+    "AD-03": "IMPLEMENTED",
+    "AD-04": "IMPLEMENTED",
+    "AD-05": "IMPLEMENTED",
+    "AD-06": "IMPLEMENTED",
+    "AD-07": "IMPLEMENTED",
+    "AD-08": "IMPLEMENTED",
+    "AD-09": "IMPLEMENTED",
+    "AD-10": "IMPLEMENTED",
+    "AD-11": "IMPLEMENTED",
+    "AD-12": "IMPLEMENTED",
+    "AD-13": "IMPLEMENTED",
+    "AD-14": "IMPLEMENTED",
+    "AD-15": "IMPLEMENTED",
+    "AD-16": "IMPLEMENTED",
+    "AD-17": "IMPLEMENTED",
+    "AD-18": "IMPLEMENTED",
+    "AD-19": "IMPLEMENTED",
+    "AD-20": "IMPLEMENTED",
+    "AD-21": "IMPLEMENTED",
+    "AD-22": "IMPLEMENTED",
+    "AD-23": "IMPLEMENTED",
+    "AD-24": "IMPLEMENTED"
+  },
+  "known_inconsistencies": [
+    {
+      "id": "KI-1",
+      "note": "Contract Genome leaf_counts (routes 423, tables 107) differ from audit raw grep (routes 402, tables 108) \u2014 distinct enumeration provenance, not equated"
+    }
+  ],
+  "schema_id": "RepositoryConformance"
+}

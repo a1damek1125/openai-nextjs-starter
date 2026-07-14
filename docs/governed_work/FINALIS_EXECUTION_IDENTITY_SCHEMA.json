@@ -1,0 +1,37 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "delegation_depth": {
+      "type": "integer"
+    },
+    "execution_identity_id": {
+      "type": "string"
+    },
+    "lease_refs": {
+      "type": "array"
+    },
+    "parent_identity_id": {
+      "type": "string"
+    },
+    "responsibility_scope": {
+      "type": "object"
+    },
+    "role": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "work_order_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "execution_identity_id",
+    "work_order_id",
+    "role",
+    "delegation_depth"
+  ],
+  "schema_id": "ExecutionIdentity",
+  "type": "object"
+}

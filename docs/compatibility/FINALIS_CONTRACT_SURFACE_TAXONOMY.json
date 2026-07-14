@@ -1,0 +1,16 @@
+{
+  "contract_kinds": [
+    "HTTP_API",
+    "EVENT_MESSAGE",
+    "STORED_DATA",
+    "DB_SCHEMA",
+    "WORKFLOW_HISTORY",
+    "SEMANTIC",
+    "PROVIDER",
+    "PROOF_HASH",
+    "CLI_CONFIG",
+    "UI_PROJECTION"
+  ],
+  "note": "authoritative alphabets live in tools/compatibility/model.py",
+  "schema_id": "ContractSurfaceTaxonomy"
+}

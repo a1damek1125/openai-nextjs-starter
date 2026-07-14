@@ -1,0 +1,19 @@
+{
+  "configuration_id": "CFG-FINALIS-REPO-REFERENCE",
+  "critical_blockers": 0,
+  "evaluation_genome_root": "1fbd275ff5507821781ebe69f9ace2d5d0d92c3c6f69f4477a1709cfb164082f",
+  "grants_runtime_authority": false,
+  "hard_gate_state": "PASS",
+  "independent_verifier_result": "PENDING",
+  "maturity": "M1",
+  "program_seal": "f81b1b44c8c6c4453dbef3c38ccacb0359c92a29034823995095a7c2d47f2194",
+  "qualification_envelope_id": "ENV-CFG-FINALIS-REPO-REFERENCE",
+  "repository_commit": "3a5ee8b",
+  "scorecard_id": "SCORECARD-CFG-FINALIS-REPO-REFERENCE",
+  "seal_hash": "1b3b106191118659a1207bde8125ae8b917a1b1dc80a645a9584365b9f048e6f",
+  "seal_version": "1.0.0",
+  "sealed_at": "2026-07-12",
+  "status": "CANDIDATE",
+  "total_credits": 555,
+  "valid_until": null
+}

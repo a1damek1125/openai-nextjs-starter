@@ -1,0 +1,250 @@
+{
+  "fixtures": [
+    {
+      "contract_id": "CT-HTTP-CASES",
+      "contract_version": "1.0.0",
+      "corpus_class": "COMMON",
+      "expected_behavior": {
+        "status": 200
+      },
+      "fixture_hash": "244718d15473ea2e9c290b869428c1955b00f70589a3316ef5b684a45aa0726e",
+      "fixture_id": "FX-CT-HTTP-CASES-COMMON",
+      "fixture_kind": "REQUEST",
+      "payload": {
+        "actor": "ops",
+        "case_id": "case-0001",
+        "to_state": "QUALIFIED"
+      },
+      "provenance": {
+        "derived_from": "repository-contract-truth",
+        "source": "synthetic-bootstrap"
+      },
+      "semantic_epoch": "sem-epoch-1",
+      "sensitivity": "NON_SENSITIVE",
+      "tenant_class": "SYNTHETIC"
+    },
+    {
+      "contract_id": "CT-HTTP-CASES",
+      "contract_version": "1.0.0",
+      "corpus_class": "EDGE",
+      "expected_behavior": {
+        "status": 200
+      },
+      "fixture_hash": "14cf24aafa1dbd70251abc252a2546e43eb1f00dc46e201eacb05681130dccc4",
+      "fixture_id": "FX-CT-HTTP-CASES-EDGE",
+      "fixture_kind": "REQUEST",
+      "payload": {
+        "actor": "ops",
+        "case_id": "case-0001",
+        "to_state": "WON"
+      },
+      "provenance": {
+        "derived_from": "repository-contract-truth",
+        "source": "synthetic-bootstrap"
+      },
+      "semantic_epoch": "sem-epoch-1",
+      "sensitivity": "NON_SENSITIVE",
+      "tenant_class": "SYNTHETIC"
+    },
+    {
+      "contract_id": "CT-HTTP-CASES",
+      "contract_version": "1.0.0",
+      "corpus_class": "ADVERSARIAL",
+      "expected_behavior": {
+        "rejected": true,
+        "status": 422
+      },
+      "fixture_hash": "e25a4bdfb852d21517c05ca98d50917d70ea5f84df400b1dd082b4c5f23788c1",
+      "fixture_id": "FX-CT-HTTP-CASES-ADVERSARIAL",
+      "fixture_kind": "REQUEST",
+      "payload": {
+        "actor": "ops",
+        "case_id": "case-0001",
+        "to_state": "'; DROP--"
+      },
+      "provenance": {
+        "derived_from": "repository-contract-truth",
+        "source": "synthetic-bootstrap"
+      },
+      "semantic_epoch": "sem-epoch-1",
+      "sensitivity": "NON_SENSITIVE",
+      "tenant_class": "SYNTHETIC"
+    },
+    {
+      "contract_id": "CT-HTTP-CASES",
+      "contract_version": "1.0.0",
+      "corpus_class": "RARE_CRITICAL",
+      "expected_behavior": {
+        "rejected": true,
+        "status": 409
+      },
+      "fixture_hash": "e40e3fb9e6343e0b2094c00bf0ed17575780ed03619ca0857f62105aa6f1505e",
+      "fixture_id": "FX-CT-HTTP-CASES-RARE_CRITICAL",
+      "fixture_kind": "REQUEST",
+      "payload": {
+        "actor": "ops",
+        "case_id": "case-terminal-reopen",
+        "to_state": "QUALIFIED"
+      },
+      "provenance": {
+        "derived_from": "repository-contract-truth",
+        "source": "synthetic-bootstrap"
+      },
+      "semantic_epoch": "sem-epoch-1",
+      "sensitivity": "NON_SENSITIVE",
+      "tenant_class": "SYNTHETIC"
+    },
+    {
+      "contract_id": "CT-HTTP-CASES",
+      "contract_version": "1.0.0",
+      "corpus_class": "INCIDENT_REPRODUCTION",
+      "expected_behavior": {
+        "rejected": true,
+        "status": 422
+      },
+      "fixture_hash": "83e9bbe10d7542be5c832026d80b6da42ec856f5958e13429b404d5a44967b2b",
+      "fixture_id": "FX-CT-HTTP-CASES-INCIDENT_REPRODUCTION",
+      "fixture_kind": "REQUEST",
+      "payload": {
+        "actor": "",
+        "case_id": "case-0001",
+        "to_state": "QUALIFIED"
+      },
+      "provenance": {
+        "derived_from": "repository-contract-truth",
+        "source": "synthetic-bootstrap"
+      },
+      "semantic_epoch": "sem-epoch-1",
+      "sensitivity": "NON_SENSITIVE",
+      "tenant_class": "SYNTHETIC"
+    },
+    {
+      "contract_id": "CT-EVENT-RUN-LEDGER",
+      "contract_version": "1.0.0",
+      "corpus_class": "COMMON",
+      "expected_behavior": {
+        "accepted": true
+      },
+      "fixture_hash": "47eab0d402d941a379c08ee67c9c4013fcb3e14a82928238f0a617d4e1af842c",
+      "fixture_id": "FX-CT-EVENT-RUN-LEDGER-COMMON",
+      "fixture_kind": "EVENT",
+      "payload": {
+        "event_id": "evt-0001",
+        "event_index": 1,
+        "previous_event_hash": "GENESIS",
+        "run_id": "run-0001",
+        "tenant_id": "tenant-synthetic"
+      },
+      "provenance": {
+        "derived_from": "repository-contract-truth",
+        "source": "synthetic-bootstrap"
+      },
+      "semantic_epoch": "sem-epoch-1",
+      "sensitivity": "NON_SENSITIVE",
+      "tenant_class": "SYNTHETIC"
+    },
+    {
+      "contract_id": "CT-EVENT-RUN-LEDGER",
+      "contract_version": "1.0.0",
+      "corpus_class": "EDGE",
+      "expected_behavior": {
+        "accepted": true
+      },
+      "fixture_hash": "f584a897a7028e8329c18017d858c7873d0e39200f0b63010d669a2c4e0884e0",
+      "fixture_id": "FX-CT-EVENT-RUN-LEDGER-EDGE",
+      "fixture_kind": "EVENT",
+      "payload": {
+        "event_id": "evt-0001",
+        "event_index": 2,
+        "previous_event_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "run_id": "run-0001",
+        "tenant_id": "tenant-synthetic"
+      },
+      "provenance": {
+        "derived_from": "repository-contract-truth",
+        "source": "synthetic-bootstrap"
+      },
+      "semantic_epoch": "sem-epoch-1",
+      "sensitivity": "NON_SENSITIVE",
+      "tenant_class": "SYNTHETIC"
+    },
+    {
+      "contract_id": "CT-EVENT-RUN-LEDGER",
+      "contract_version": "1.0.0",
+      "corpus_class": "ADVERSARIAL",
+      "expected_behavior": {
+        "accepted": false,
+        "reason": "cross-tenant"
+      },
+      "fixture_hash": "777d5ba0ec780381fa93849652c7a6eda576fc9712d4918c806fb0ccad510ca3",
+      "fixture_id": "FX-CT-EVENT-RUN-LEDGER-ADVERSARIAL",
+      "fixture_kind": "EVENT",
+      "payload": {
+        "event_id": "evt-0001",
+        "event_index": 1,
+        "previous_event_hash": "GENESIS",
+        "run_id": "run-0001",
+        "tenant_id": "tenant-OTHER"
+      },
+      "provenance": {
+        "derived_from": "repository-contract-truth",
+        "source": "synthetic-bootstrap"
+      },
+      "semantic_epoch": "sem-epoch-1",
+      "sensitivity": "NON_SENSITIVE",
+      "tenant_class": "SYNTHETIC"
+    },
+    {
+      "contract_id": "CT-EVENT-RUN-LEDGER",
+      "contract_version": "1.0.0",
+      "corpus_class": "RARE_CRITICAL",
+      "expected_behavior": {
+        "accepted": false,
+        "reason": "index-contiguity"
+      },
+      "fixture_hash": "8d6e160e41ccb87506b0f6850ef3891eb167be1e11f1fde50948f1500fa8eed0",
+      "fixture_id": "FX-CT-EVENT-RUN-LEDGER-RARE_CRITICAL",
+      "fixture_kind": "EVENT",
+      "payload": {
+        "event_id": "evt-0001",
+        "event_index": 0,
+        "previous_event_hash": "GENESIS",
+        "run_id": "run-0001",
+        "tenant_id": "tenant-synthetic"
+      },
+      "provenance": {
+        "derived_from": "repository-contract-truth",
+        "source": "synthetic-bootstrap"
+      },
+      "semantic_epoch": "sem-epoch-1",
+      "sensitivity": "NON_SENSITIVE",
+      "tenant_class": "SYNTHETIC"
+    },
+    {
+      "contract_id": "CT-EVENT-RUN-LEDGER",
+      "contract_version": "1.0.0",
+      "corpus_class": "INCIDENT_REPRODUCTION",
+      "expected_behavior": {
+        "accepted": false,
+        "reason": "broken-chain"
+      },
+      "fixture_hash": "781677ef4be9d6606b839e8d1d79abdc84701c626774a2a12f5a70415604d60e",
+      "fixture_id": "FX-CT-EVENT-RUN-LEDGER-INCIDENT_REPRODUCTION",
+      "fixture_kind": "EVENT",
+      "payload": {
+        "event_id": "evt-0001",
+        "event_index": 1,
+        "previous_event_hash": "",
+        "run_id": "run-0001",
+        "tenant_id": "tenant-synthetic"
+      },
+      "provenance": {
+        "derived_from": "repository-contract-truth",
+        "source": "synthetic-bootstrap"
+      },
+      "semantic_epoch": "sem-epoch-1",
+      "sensitivity": "NON_SENSITIVE",
+      "tenant_class": "SYNTHETIC"
+    }
+  ]
+}

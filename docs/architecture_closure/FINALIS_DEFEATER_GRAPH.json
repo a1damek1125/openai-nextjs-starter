@@ -1,0 +1,8 @@
+{
+  "resolution": {
+    "blocked_targets": [],
+    "blocking": [],
+    "defeaters": []
+  },
+  "schema_id": "DefeaterGraph"
+}

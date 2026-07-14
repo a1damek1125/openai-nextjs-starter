@@ -1,0 +1,50 @@
+{
+  "outcome_contracts": [
+    {
+      "acceptance_predicates": [
+        {
+          "artifact_ref": "invoice:INV-2026-03",
+          "predicate_id": "P1",
+          "predicate_type": "ARTIFACT_EXISTS"
+        },
+        {
+          "predicate_id": "P2",
+          "predicate_type": "EXTERNAL_ACKNOWLEDGMENT",
+          "source": "billing@acme.example"
+        },
+        {
+          "predicate_id": "P3",
+          "predicate_type": "NO_FORBIDDEN_EFFECT"
+        }
+      ],
+      "completion_rule": "ALL",
+      "defeater_policy": {
+        "reopen_on_new_evidence": true
+      },
+      "dispute_policy": {
+        "window_days": 30
+      },
+      "expected_outcomes": [
+        "invoice INV-2026-03 delivered and acknowledged"
+      ],
+      "forbidden_outcomes": [
+        "duplicate payment",
+        "cross-tenant disclosure"
+      ],
+      "outcome_contract_id": "OC-0001",
+      "required_artifacts": [
+        "invoice:INV-2026-03"
+      ],
+      "required_evidence": [
+        "delivery_receipt",
+        "ack_event"
+      ],
+      "verification_mode": "INDEPENDENT_QUALIFIED",
+      "verifier_requirements": {
+        "independent": true,
+        "not_the_acting_agent": true
+      },
+      "work_order_id": "WO-0001"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "rule": "build inputs closed; undeclared network/env/time fails hermeticity (D-0009-24)",
+  "schema_id": "BuildManifest"
+}

@@ -1,0 +1,4 @@
+{"schema_id":"FINALIS-ASSURANCE-CASE","sp":"SP0005","required":["claim_id","statement","status"],
+ "claim_states":["UNSUPPORTED","PARTIALLY_SUPPORTED","SUPPORTED_CURRENT","CHALLENGED","STALE","INVALIDATED"],
+ "elements":["claim","argument","evidence","context","assumption","defeater","residual_uncertainty"],
+ "note":"A claim cannot be SUPPORTED_CURRENT while a blocking critical defeater is open (INV-0005-15) or its critical evidence is stale (INV-0005-16)."}

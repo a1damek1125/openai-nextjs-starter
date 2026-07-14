@@ -1,0 +1,31 @@
+{
+  "change_intents": [
+    {
+      "architecture_refs": [
+        "L7"
+      ],
+      "change_intent_id": "CI-HTTP-2",
+      "changed_surface": "CT-HTTP-CASES",
+      "compatibility_directions": [
+        "NEW_PRODUCER_TO_OLD_CONSUMER",
+        "OLD_PRODUCER_TO_NEW_CONSUMER"
+      ],
+      "consumers": [
+        "portal-ui::ct-http-cases"
+      ],
+      "deprecation_ref": "DEP-HTTP-V1",
+      "forward_fix_ref": "FF-HTTP-2",
+      "intent_id": "CI-HTTP-2",
+      "migration_plan_ref": "MP-HTTP-2",
+      "new_version": "2.0.0",
+      "old_version": "1.0.0",
+      "proof_impact": "no proof-contract change",
+      "rollback_ref": "RB-HTTP-2",
+      "security_impact": "none — actor field unchanged",
+      "semantic_refs": [
+        "case_state"
+      ],
+      "surface": "CT-HTTP-CASES"
+    }
+  ]
+}

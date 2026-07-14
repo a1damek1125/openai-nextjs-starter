@@ -1,0 +1,14 @@
+{
+  "achieved": "M1",
+  "field_evidence": "ABSENT",
+  "levels": {
+    "M0": "DEFINITION_ONLY",
+    "M1": "REPOSITORY_EVIDENCED",
+    "M2": "CONTROLLED_REPLAY_QUALIFIED",
+    "M3": "SANDBOX_SYSTEM_QUALIFIED",
+    "M4": "FIELD_PILOT_QUALIFIED",
+    "M5": "PRODUCTION_QUALIFIED"
+  },
+  "maturity": "M1",
+  "production_evidence": "ABSENT"
+}

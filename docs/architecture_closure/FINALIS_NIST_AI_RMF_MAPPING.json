@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "GOVERN": "governed_work + safety",
+    "MANAGE": "defeaters + requalification",
+    "MAP": "contract inventory + semantics",
+    "MEASURE": "release assurance + SP0011 (pending)"
+  },
+  "schema_id": "NISTAIRMFMapping",
+  "snapshot": "AI RMF 1.0 + Playbook (revising 2026); mapping is snapshot-versioned (D-0010-40)"
+}

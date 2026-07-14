@@ -1,0 +1,50 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "authority_class": {
+      "type": "string"
+    },
+    "canonical_format": {
+      "type": "string"
+    },
+    "consumer_refs": {
+      "type": "array"
+    },
+    "contract_id": {
+      "type": "string"
+    },
+    "contract_kind": {
+      "type": "string"
+    },
+    "criticality": {
+      "type": "string"
+    },
+    "current_version": {
+      "type": "string"
+    },
+    "owner_capability": {
+      "type": "string"
+    },
+    "producer_refs": {
+      "type": "array"
+    },
+    "semantic_concept_refs": {
+      "type": "array"
+    },
+    "source_paths": {
+      "type": "array"
+    },
+    "stability": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "contract_id",
+    "contract_kind",
+    "owner_capability",
+    "stability",
+    "criticality"
+  ],
+  "schema_id": "ContractDescriptor",
+  "type": "object"
+}

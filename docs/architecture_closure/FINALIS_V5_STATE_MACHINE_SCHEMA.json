@@ -1,0 +1,59 @@
+{
+  "blocking_gap_types": [
+    "CAUSAL_UNIDENTIFIED",
+    "CERTIFICATE_MISSING",
+    "CONSTITUTIONAL_BLOCKER",
+    "CROSS_TWIN_CONTRADICTION",
+    "DUAL_GRAPH_CONFLICT",
+    "EXTRACTION_UNGROUNDED",
+    "FEDERATION_DIVERGENCE",
+    "GLOBAL_INVARIANT_GAP",
+    "PROOF_HOLE"
+  ],
+  "cegar_outcomes": [
+    "PROVED",
+    "REAL_COUNTEREXAMPLE",
+    "SPURIOUS_REFINED",
+    "LIMIT_REACHED"
+  ],
+  "certificate_states": [
+    "ISSUED",
+    "VALID",
+    "INVALID",
+    "ADVISORY_ONLY",
+    "MISSING"
+  ],
+  "dual_graph_classes": [
+    "MATCH",
+    "DECLARED_ONLY",
+    "IMPLEMENTATION_ONLY",
+    "CONFLICT",
+    "AMBIGUOUS"
+  ],
+  "extraction_grounding": [
+    "GROUNDED",
+    "PARTIALLY_GROUNDED",
+    "UNGROUNDED"
+  ],
+  "federation_states": [
+    "CONVERGED",
+    "DIVERGED",
+    "INSUFFICIENT_BACKENDS"
+  ],
+  "identifiability": [
+    "IDENTIFIED",
+    "PARTIALLY_IDENTIFIED",
+    "NOT_IDENTIFIED"
+  ],
+  "new_gap_types": [
+    "PROOF_HOLE",
+    "HYPERPROPERTY_GAP",
+    "CONTROL_EFFECTIVENESS_GAP",
+    "DUAL_GRAPH_CONFLICT",
+    "EXTRACTION_UNGROUNDED",
+    "CERTIFICATE_MISSING",
+    "CEGAR_LIMIT",
+    "CAUSAL_UNIDENTIFIED",
+    "FEDERATION_DIVERGENCE"
+  ]
+}

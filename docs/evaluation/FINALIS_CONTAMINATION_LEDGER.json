@@ -1,0 +1,27 @@
+{
+  "answer_exposures": [],
+  "default_class": "CLEAN",
+  "evaluator_immutability": {
+    "all_present": true,
+    "assets": {
+      "tools/evaluation/canon.py": "9b3f64f2e7446b23713e110553dcf37f1cfd03248ba86be5e0bdf5422bcf50d6",
+      "tools/evaluation/credits.py": "c7278fb3092c87ecc8d603c3677cb55e3d7904148fb1efaf16169c2feaba5ae4",
+      "tools/evaluation/genome.py": "4984fa7048f75cd241aa789372f83826c29e6f17ec5fbb10ec36ce8bf6774bac",
+      "tools/evaluation/hardgates.py": "84f184e84d85b459aff0d59681df126d9492e36f9490b06cd645ca1c3b60a6f2",
+      "tools/evaluation/kernel.py": "8d071761073c05afbaee0081c43db444c4a749ec11ff037f876d91eb6b6a9e9c",
+      "tools/evaluation/model.py": "55e70b7bf0d592bcaeb9e05fbd902b21b3e6bb5bf8bd1eb9b9a1c0983ed47181",
+      "tools/evaluation/score.py": "71d4d081a0f64cf53f3d585c18c65e0ee57f3411f80cb1742e8adfc34f5f6996"
+    },
+    "manifest_root": "1acae1c1dd37273631227a0b4e66a543e53d1609fb1909f7a2e5f1f412748bf4",
+    "matches_pinned": true,
+    "mismatched_pins": [],
+    "pinned_count": 7
+  },
+  "held_out_answers_exposed": false,
+  "ledger_root": "a7502573a8fba78eb2563747e4ca373205414b741567b2fdee7f74b0afa19862",
+  "memory_retains_eval_secrets": false,
+  "public_benchmark_download": false,
+  "run_classes": {},
+  "search_enabled": false,
+  "unknown_classes": []
+}

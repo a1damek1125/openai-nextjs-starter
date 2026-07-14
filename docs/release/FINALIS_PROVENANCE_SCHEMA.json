@@ -1,0 +1,8 @@
+{
+  "projections": [
+    "SLSA-v1",
+    "in-toto-v1"
+  ],
+  "rule": "signature alone insufficient; verify subject+identity+root+time+predicate (D-0009-29)",
+  "schema_id": "Provenance"
+}

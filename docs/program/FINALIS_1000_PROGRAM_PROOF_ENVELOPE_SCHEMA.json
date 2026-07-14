@@ -1,0 +1,8 @@
+{
+  "schema_id": "FINALIS-1000-PROGRAM-PROOF-ENVELOPE",
+  "sp": "SP0003",
+  "envelope_version": "2.0.0",
+  "classification": "EVIDENCE_NOT_AUTHORITY",
+  "fields": ["envelope_version", "base_commit", "scenario", "program_registry_hash", "dependency_hypergraph_hash", "scenario_hash", "gate_graph_hash", "conflict_graph_hash", "rework_graph_hash", "risk_graph_hash", "temporal_constraint_hash", "completion_evidence_hash", "duration_model_hash", "critical_path_hash", "criticality_hash", "dominator_hash", "cut_set_hash", "voi_model_hash", "validator_version", "envelope_hash", "classification"],
+  "note": "Deterministic over canonical inputs, excludes volatile display metadata. Proves WHICH program model + analyses were validated together (INV-0003-20). It does NOT prove the future will occur as forecast."
+}

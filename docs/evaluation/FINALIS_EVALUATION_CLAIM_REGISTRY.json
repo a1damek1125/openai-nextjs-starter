@@ -1,0 +1,3362 @@
+{
+  "D1-C01-outcome-definition": {
+    "achieved_maturity": "M1",
+    "claim_id": "D1-C01-outcome-definition",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D1",
+    "domain_title": "OUTCOME CORRECTNESS AND COMPLETION",
+    "estimand_ref": "EST-D1-C01",
+    "grounding": [
+      "tools/governed_work/outcome.py:verify_outcome",
+      "finalis/completion_loop.py",
+      "docs/governed_work"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "outcome-definition"
+  },
+  "D1-C02-completion-definition": {
+    "achieved_maturity": "M1",
+    "claim_id": "D1-C02-completion-definition",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D1",
+    "domain_title": "OUTCOME CORRECTNESS AND COMPLETION",
+    "estimand_ref": "EST-D1-C02",
+    "grounding": [
+      "tools/governed_work/outcome.py:verify_outcome",
+      "finalis/completion_loop.py",
+      "docs/governed_work"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "completion-definition"
+  },
+  "D1-C03-outcome-evidence": {
+    "achieved_maturity": "M1",
+    "claim_id": "D1-C03-outcome-evidence",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D1",
+    "domain_title": "OUTCOME CORRECTNESS AND COMPLETION",
+    "estimand_ref": "EST-D1-C03",
+    "grounding": [
+      "tools/governed_work/outcome.py:verify_outcome",
+      "finalis/completion_loop.py",
+      "docs/governed_work"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "outcome-evidence"
+  },
+  "D1-C04-activity-outcome-separation": {
+    "achieved_maturity": "M1",
+    "claim_id": "D1-C04-activity-outcome-separation",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D1",
+    "domain_title": "OUTCOME CORRECTNESS AND COMPLETION",
+    "estimand_ref": "EST-D1-C04",
+    "grounding": [
+      "tools/governed_work/outcome.py:verify_outcome",
+      "finalis/completion_loop.py",
+      "docs/governed_work"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "activity-outcome-separation"
+  },
+  "D1-C05-effect-outcome-separation": {
+    "achieved_maturity": "M1",
+    "claim_id": "D1-C05-effect-outcome-separation",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D1",
+    "domain_title": "OUTCOME CORRECTNESS AND COMPLETION",
+    "estimand_ref": "EST-D1-C05",
+    "grounding": [
+      "tools/governed_work/outcome.py:verify_outcome",
+      "finalis/completion_loop.py",
+      "docs/governed_work"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "effect-outcome-separation"
+  },
+  "D1-C06-partial-outcome": {
+    "achieved_maturity": "M1",
+    "claim_id": "D1-C06-partial-outcome",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D1",
+    "domain_title": "OUTCOME CORRECTNESS AND COMPLETION",
+    "estimand_ref": "EST-D1-C06",
+    "grounding": [
+      "tools/governed_work/outcome.py:verify_outcome",
+      "finalis/completion_loop.py",
+      "docs/governed_work"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "partial-outcome"
+  },
+  "D1-C07-unknown-outcome": {
+    "achieved_maturity": "M1",
+    "claim_id": "D1-C07-unknown-outcome",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D1",
+    "domain_title": "OUTCOME CORRECTNESS AND COMPLETION",
+    "estimand_ref": "EST-D1-C07",
+    "grounding": [
+      "tools/governed_work/outcome.py:verify_outcome",
+      "finalis/completion_loop.py",
+      "docs/governed_work"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "unknown-outcome"
+  },
+  "D1-C08-contradiction-handling": {
+    "achieved_maturity": "M1",
+    "claim_id": "D1-C08-contradiction-handling",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D1",
+    "domain_title": "OUTCOME CORRECTNESS AND COMPLETION",
+    "estimand_ref": "EST-D1-C08",
+    "grounding": [
+      "tools/governed_work/outcome.py:verify_outcome",
+      "finalis/completion_loop.py",
+      "docs/governed_work"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "contradiction-handling"
+  },
+  "D1-C09-correction-handling": {
+    "achieved_maturity": "M1",
+    "claim_id": "D1-C09-correction-handling",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D1",
+    "domain_title": "OUTCOME CORRECTNESS AND COMPLETION",
+    "estimand_ref": "EST-D1-C09",
+    "grounding": [
+      "tools/governed_work/outcome.py:verify_outcome",
+      "finalis/completion_loop.py",
+      "docs/governed_work"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "correction-handling"
+  },
+  "D1-C10-irreversible-effect-verify": {
+    "achieved_maturity": "M1",
+    "claim_id": "D1-C10-irreversible-effect-verify",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D1",
+    "domain_title": "OUTCOME CORRECTNESS AND COMPLETION",
+    "estimand_ref": "EST-D1-C10",
+    "grounding": [
+      "tools/governed_work/outcome.py:verify_outcome",
+      "finalis/completion_loop.py",
+      "docs/governed_work"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "irreversible-effect-verify"
+  },
+  "D1-C11-outcome-durability": {
+    "achieved_maturity": "M1",
+    "claim_id": "D1-C11-outcome-durability",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D1",
+    "domain_title": "OUTCOME CORRECTNESS AND COMPLETION",
+    "estimand_ref": "EST-D1-C11",
+    "grounding": [
+      "tools/governed_work/outcome.py:verify_outcome",
+      "finalis/completion_loop.py",
+      "docs/governed_work"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "outcome-durability"
+  },
+  "D1-C12-outcome-provenance": {
+    "achieved_maturity": "M1",
+    "claim_id": "D1-C12-outcome-provenance",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D1",
+    "domain_title": "OUTCOME CORRECTNESS AND COMPLETION",
+    "estimand_ref": "EST-D1-C12",
+    "grounding": [
+      "tools/governed_work/outcome.py:verify_outcome",
+      "finalis/completion_loop.py",
+      "docs/governed_work"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "outcome-provenance"
+  },
+  "D1-C13-oracle-validity": {
+    "achieved_maturity": "M1",
+    "claim_id": "D1-C13-oracle-validity",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D1",
+    "domain_title": "OUTCOME CORRECTNESS AND COMPLETION",
+    "estimand_ref": "EST-D1-C13",
+    "grounding": [
+      "tools/governed_work/outcome.py:verify_outcome",
+      "finalis/completion_loop.py",
+      "docs/governed_work"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "oracle-validity"
+  },
+  "D1-C14-oracle-independence": {
+    "achieved_maturity": "M1",
+    "claim_id": "D1-C14-oracle-independence",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D1",
+    "domain_title": "OUTCOME CORRECTNESS AND COMPLETION",
+    "estimand_ref": "EST-D1-C14",
+    "grounding": [
+      "tools/governed_work/outcome.py:verify_outcome",
+      "finalis/completion_loop.py",
+      "docs/governed_work"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "oracle-independence"
+  },
+  "D1-C15-oracle-disagreement": {
+    "achieved_maturity": "M1",
+    "claim_id": "D1-C15-oracle-disagreement",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D1",
+    "domain_title": "OUTCOME CORRECTNESS AND COMPLETION",
+    "estimand_ref": "EST-D1-C15",
+    "grounding": [
+      "tools/governed_work/outcome.py:verify_outcome",
+      "finalis/completion_loop.py",
+      "docs/governed_work"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "oracle-disagreement"
+  },
+  "D1-C16-outcome-replay": {
+    "achieved_maturity": "M1",
+    "claim_id": "D1-C16-outcome-replay",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D1",
+    "domain_title": "OUTCOME CORRECTNESS AND COMPLETION",
+    "estimand_ref": "EST-D1-C16",
+    "grounding": [
+      "tools/governed_work/outcome.py:verify_outcome",
+      "finalis/completion_loop.py",
+      "docs/governed_work"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "outcome-replay"
+  },
+  "D1-C17-human-acceptance": {
+    "achieved_maturity": "M1",
+    "claim_id": "D1-C17-human-acceptance",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D1",
+    "domain_title": "OUTCOME CORRECTNESS AND COMPLETION",
+    "estimand_ref": "EST-D1-C17",
+    "grounding": [
+      "tools/governed_work/outcome.py:verify_outcome",
+      "finalis/completion_loop.py",
+      "docs/governed_work"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M4",
+    "slug": "human-acceptance"
+  },
+  "D1-C18-outcome-latency": {
+    "achieved_maturity": "M1",
+    "claim_id": "D1-C18-outcome-latency",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D1",
+    "domain_title": "OUTCOME CORRECTNESS AND COMPLETION",
+    "estimand_ref": "EST-D1-C18",
+    "grounding": [
+      "tools/governed_work/outcome.py:verify_outcome",
+      "finalis/completion_loop.py",
+      "docs/governed_work"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "outcome-latency"
+  },
+  "D1-C19-outcome-regression-resistance": {
+    "achieved_maturity": "M1",
+    "claim_id": "D1-C19-outcome-regression-resistance",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D1",
+    "domain_title": "OUTCOME CORRECTNESS AND COMPLETION",
+    "estimand_ref": "EST-D1-C19",
+    "grounding": [
+      "tools/governed_work/outcome.py:verify_outcome",
+      "finalis/completion_loop.py",
+      "docs/governed_work"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "outcome-regression-resistance"
+  },
+  "D1-C20-action-outcome-causal-boundary": {
+    "achieved_maturity": "M1",
+    "claim_id": "D1-C20-action-outcome-causal-boundary",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D1",
+    "domain_title": "OUTCOME CORRECTNESS AND COMPLETION",
+    "estimand_ref": "EST-D1-C20",
+    "grounding": [
+      "tools/governed_work/outcome.py:verify_outcome",
+      "finalis/completion_loop.py",
+      "docs/governed_work"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "action-outcome-causal-boundary"
+  },
+  "D10-C01-evidence-provenance": {
+    "achieved_maturity": "M1",
+    "claim_id": "D10-C01-evidence-provenance",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D10",
+    "domain_title": "EVIDENCE, AUDITABILITY, OPERABILITY AND MAINTAINABILITY",
+    "estimand_ref": "EST-D10-C01",
+    "grounding": [
+      "finalis/audit.py",
+      "finalis/ai_employee/run_ledger.py",
+      "docs/architecture_closure/FINALIS_EVIDENCE_PROVENANCE_ALGEBRA.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "evidence-provenance"
+  },
+  "D10-C02-evidence-freshness": {
+    "achieved_maturity": "M1",
+    "claim_id": "D10-C02-evidence-freshness",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D10",
+    "domain_title": "EVIDENCE, AUDITABILITY, OPERABILITY AND MAINTAINABILITY",
+    "estimand_ref": "EST-D10-C02",
+    "grounding": [
+      "finalis/audit.py",
+      "finalis/ai_employee/run_ledger.py",
+      "docs/architecture_closure/FINALIS_EVIDENCE_PROVENANCE_ALGEBRA.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "evidence-freshness"
+  },
+  "D10-C03-evidence-independence": {
+    "achieved_maturity": "M1",
+    "claim_id": "D10-C03-evidence-independence",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D10",
+    "domain_title": "EVIDENCE, AUDITABILITY, OPERABILITY AND MAINTAINABILITY",
+    "estimand_ref": "EST-D10-C03",
+    "grounding": [
+      "finalis/audit.py",
+      "finalis/ai_employee/run_ledger.py",
+      "docs/architecture_closure/FINALIS_EVIDENCE_PROVENANCE_ALGEBRA.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "evidence-independence"
+  },
+  "D10-C04-trace-completeness": {
+    "achieved_maturity": "M1",
+    "claim_id": "D10-C04-trace-completeness",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D10",
+    "domain_title": "EVIDENCE, AUDITABILITY, OPERABILITY AND MAINTAINABILITY",
+    "estimand_ref": "EST-D10-C04",
+    "grounding": [
+      "finalis/audit.py",
+      "finalis/ai_employee/run_ledger.py",
+      "docs/architecture_closure/FINALIS_EVIDENCE_PROVENANCE_ALGEBRA.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "trace-completeness"
+  },
+  "D10-C05-reason-codes": {
+    "achieved_maturity": "M1",
+    "claim_id": "D10-C05-reason-codes",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D10",
+    "domain_title": "EVIDENCE, AUDITABILITY, OPERABILITY AND MAINTAINABILITY",
+    "estimand_ref": "EST-D10-C05",
+    "grounding": [
+      "finalis/audit.py",
+      "finalis/ai_employee/run_ledger.py",
+      "docs/architecture_closure/FINALIS_EVIDENCE_PROVENANCE_ALGEBRA.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "reason-codes"
+  },
+  "D10-C06-logs": {
+    "achieved_maturity": "M1",
+    "claim_id": "D10-C06-logs",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D10",
+    "domain_title": "EVIDENCE, AUDITABILITY, OPERABILITY AND MAINTAINABILITY",
+    "estimand_ref": "EST-D10-C06",
+    "grounding": [
+      "finalis/audit.py",
+      "finalis/ai_employee/run_ledger.py",
+      "docs/architecture_closure/FINALIS_EVIDENCE_PROVENANCE_ALGEBRA.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "logs"
+  },
+  "D10-C07-metrics": {
+    "achieved_maturity": "M1",
+    "claim_id": "D10-C07-metrics",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D10",
+    "domain_title": "EVIDENCE, AUDITABILITY, OPERABILITY AND MAINTAINABILITY",
+    "estimand_ref": "EST-D10-C07",
+    "grounding": [
+      "finalis/audit.py",
+      "finalis/ai_employee/run_ledger.py",
+      "docs/architecture_closure/FINALIS_EVIDENCE_PROVENANCE_ALGEBRA.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "metrics"
+  },
+  "D10-C08-traces": {
+    "achieved_maturity": "M1",
+    "claim_id": "D10-C08-traces",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D10",
+    "domain_title": "EVIDENCE, AUDITABILITY, OPERABILITY AND MAINTAINABILITY",
+    "estimand_ref": "EST-D10-C08",
+    "grounding": [
+      "finalis/audit.py",
+      "finalis/ai_employee/run_ledger.py",
+      "docs/architecture_closure/FINALIS_EVIDENCE_PROVENANCE_ALGEBRA.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "traces"
+  },
+  "D10-C09-reproducibility": {
+    "achieved_maturity": "M1",
+    "claim_id": "D10-C09-reproducibility",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D10",
+    "domain_title": "EVIDENCE, AUDITABILITY, OPERABILITY AND MAINTAINABILITY",
+    "estimand_ref": "EST-D10-C09",
+    "grounding": [
+      "finalis/audit.py",
+      "finalis/ai_employee/run_ledger.py",
+      "docs/architecture_closure/FINALIS_EVIDENCE_PROVENANCE_ALGEBRA.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "reproducibility"
+  },
+  "D10-C10-replay": {
+    "achieved_maturity": "M1",
+    "claim_id": "D10-C10-replay",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D10",
+    "domain_title": "EVIDENCE, AUDITABILITY, OPERABILITY AND MAINTAINABILITY",
+    "estimand_ref": "EST-D10-C10",
+    "grounding": [
+      "finalis/audit.py",
+      "finalis/ai_employee/run_ledger.py",
+      "docs/architecture_closure/FINALIS_EVIDENCE_PROVENANCE_ALGEBRA.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "replay"
+  },
+  "D10-C11-configuration-identity": {
+    "achieved_maturity": "M1",
+    "claim_id": "D10-C11-configuration-identity",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D10",
+    "domain_title": "EVIDENCE, AUDITABILITY, OPERABILITY AND MAINTAINABILITY",
+    "estimand_ref": "EST-D10-C11",
+    "grounding": [
+      "finalis/audit.py",
+      "finalis/ai_employee/run_ledger.py",
+      "docs/architecture_closure/FINALIS_EVIDENCE_PROVENANCE_ALGEBRA.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "configuration-identity"
+  },
+  "D10-C12-credit-certificates": {
+    "achieved_maturity": "M1",
+    "claim_id": "D10-C12-credit-certificates",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D10",
+    "domain_title": "EVIDENCE, AUDITABILITY, OPERABILITY AND MAINTAINABILITY",
+    "estimand_ref": "EST-D10-C12",
+    "grounding": [
+      "finalis/audit.py",
+      "finalis/ai_employee/run_ledger.py",
+      "docs/architecture_closure/FINALIS_EVIDENCE_PROVENANCE_ALGEBRA.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "credit-certificates"
+  },
+  "D10-C13-score-explanation": {
+    "achieved_maturity": "M1",
+    "claim_id": "D10-C13-score-explanation",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D10",
+    "domain_title": "EVIDENCE, AUDITABILITY, OPERABILITY AND MAINTAINABILITY",
+    "estimand_ref": "EST-D10-C13",
+    "grounding": [
+      "finalis/audit.py",
+      "finalis/ai_employee/run_ledger.py",
+      "docs/architecture_closure/FINALIS_EVIDENCE_PROVENANCE_ALGEBRA.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "score-explanation"
+  },
+  "D10-C14-historical-score-verification": {
+    "achieved_maturity": "M1",
+    "claim_id": "D10-C14-historical-score-verification",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D10",
+    "domain_title": "EVIDENCE, AUDITABILITY, OPERABILITY AND MAINTAINABILITY",
+    "estimand_ref": "EST-D10-C14",
+    "grounding": [
+      "finalis/audit.py",
+      "finalis/ai_employee/run_ledger.py",
+      "docs/architecture_closure/FINALIS_EVIDENCE_PROVENANCE_ALGEBRA.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "historical-score-verification"
+  },
+  "D10-C15-drift-detection": {
+    "achieved_maturity": "M1",
+    "claim_id": "D10-C15-drift-detection",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D10",
+    "domain_title": "EVIDENCE, AUDITABILITY, OPERABILITY AND MAINTAINABILITY",
+    "estimand_ref": "EST-D10-C15",
+    "grounding": [
+      "finalis/audit.py",
+      "finalis/ai_employee/run_ledger.py",
+      "docs/architecture_closure/FINALIS_EVIDENCE_PROVENANCE_ALGEBRA.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "drift-detection"
+  },
+  "D10-C16-requalification": {
+    "achieved_maturity": "M1",
+    "claim_id": "D10-C16-requalification",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D10",
+    "domain_title": "EVIDENCE, AUDITABILITY, OPERABILITY AND MAINTAINABILITY",
+    "estimand_ref": "EST-D10-C16",
+    "grounding": [
+      "finalis/audit.py",
+      "finalis/ai_employee/run_ledger.py",
+      "docs/architecture_closure/FINALIS_EVIDENCE_PROVENANCE_ALGEBRA.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "requalification"
+  },
+  "D10-C17-provider-replaceability-evidence": {
+    "achieved_maturity": "M1",
+    "claim_id": "D10-C17-provider-replaceability-evidence",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D10",
+    "domain_title": "EVIDENCE, AUDITABILITY, OPERABILITY AND MAINTAINABILITY",
+    "estimand_ref": "EST-D10-C17",
+    "grounding": [
+      "finalis/audit.py",
+      "finalis/ai_employee/run_ledger.py",
+      "docs/architecture_closure/FINALIS_EVIDENCE_PROVENANCE_ALGEBRA.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "provider-replaceability-evidence"
+  },
+  "D10-C18-test-maintainability": {
+    "achieved_maturity": "M1",
+    "claim_id": "D10-C18-test-maintainability",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D10",
+    "domain_title": "EVIDENCE, AUDITABILITY, OPERABILITY AND MAINTAINABILITY",
+    "estimand_ref": "EST-D10-C18",
+    "grounding": [
+      "finalis/audit.py",
+      "finalis/ai_employee/run_ledger.py",
+      "docs/architecture_closure/FINALIS_EVIDENCE_PROVENANCE_ALGEBRA.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "test-maintainability"
+  },
+  "D10-C19-schema-evolution": {
+    "achieved_maturity": "M1",
+    "claim_id": "D10-C19-schema-evolution",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D10",
+    "domain_title": "EVIDENCE, AUDITABILITY, OPERABILITY AND MAINTAINABILITY",
+    "estimand_ref": "EST-D10-C19",
+    "grounding": [
+      "finalis/audit.py",
+      "finalis/ai_employee/run_ledger.py",
+      "docs/architecture_closure/FINALIS_EVIDENCE_PROVENANCE_ALGEBRA.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "schema-evolution"
+  },
+  "D10-C20-independent-verifier-evidence": {
+    "achieved_maturity": "M1",
+    "claim_id": "D10-C20-independent-verifier-evidence",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D10",
+    "domain_title": "EVIDENCE, AUDITABILITY, OPERABILITY AND MAINTAINABILITY",
+    "estimand_ref": "EST-D10-C20",
+    "grounding": [
+      "finalis/audit.py",
+      "finalis/ai_employee/run_ledger.py",
+      "docs/architecture_closure/FINALIS_EVIDENCE_PROVENANCE_ALGEBRA.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "independent-verifier-evidence"
+  },
+  "D2-C01-owner-continuity": {
+    "achieved_maturity": "M1",
+    "claim_id": "D2-C01-owner-continuity",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D2",
+    "domain_title": "LONG-HORIZON OWNERSHIP, CONTINUITY AND RECOVERY",
+    "estimand_ref": "EST-D2-C01",
+    "grounding": [
+      "finalis/ai_employee/tool_local_recovery.py",
+      "finalis/state_machine.py:transition",
+      "tools/governed_work/lease.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "owner-continuity"
+  },
+  "D2-C02-next-action-continuity": {
+    "achieved_maturity": "M1",
+    "claim_id": "D2-C02-next-action-continuity",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D2",
+    "domain_title": "LONG-HORIZON OWNERSHIP, CONTINUITY AND RECOVERY",
+    "estimand_ref": "EST-D2-C02",
+    "grounding": [
+      "finalis/ai_employee/tool_local_recovery.py",
+      "finalis/state_machine.py:transition",
+      "tools/governed_work/lease.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "next-action-continuity"
+  },
+  "D2-C03-waiting": {
+    "achieved_maturity": "M1",
+    "claim_id": "D2-C03-waiting",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D2",
+    "domain_title": "LONG-HORIZON OWNERSHIP, CONTINUITY AND RECOVERY",
+    "estimand_ref": "EST-D2-C03",
+    "grounding": [
+      "finalis/ai_employee/tool_local_recovery.py",
+      "finalis/state_machine.py:transition",
+      "tools/governed_work/lease.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "waiting"
+  },
+  "D2-C04-resumption": {
+    "achieved_maturity": "M1",
+    "claim_id": "D2-C04-resumption",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D2",
+    "domain_title": "LONG-HORIZON OWNERSHIP, CONTINUITY AND RECOVERY",
+    "estimand_ref": "EST-D2-C04",
+    "grounding": [
+      "finalis/ai_employee/tool_local_recovery.py",
+      "finalis/state_machine.py:transition",
+      "tools/governed_work/lease.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "resumption"
+  },
+  "D2-C05-replanning": {
+    "achieved_maturity": "M1",
+    "claim_id": "D2-C05-replanning",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D2",
+    "domain_title": "LONG-HORIZON OWNERSHIP, CONTINUITY AND RECOVERY",
+    "estimand_ref": "EST-D2-C05",
+    "grounding": [
+      "finalis/ai_employee/tool_local_recovery.py",
+      "finalis/state_machine.py:transition",
+      "tools/governed_work/lease.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "replanning"
+  },
+  "D2-C06-checkpointing": {
+    "achieved_maturity": "M1",
+    "claim_id": "D2-C06-checkpointing",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D2",
+    "domain_title": "LONG-HORIZON OWNERSHIP, CONTINUITY AND RECOVERY",
+    "estimand_ref": "EST-D2-C06",
+    "grounding": [
+      "finalis/ai_employee/tool_local_recovery.py",
+      "finalis/state_machine.py:transition",
+      "tools/governed_work/lease.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "checkpointing"
+  },
+  "D2-C07-crash-recovery": {
+    "achieved_maturity": "M1",
+    "claim_id": "D2-C07-crash-recovery",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D2",
+    "domain_title": "LONG-HORIZON OWNERSHIP, CONTINUITY AND RECOVERY",
+    "estimand_ref": "EST-D2-C07",
+    "grounding": [
+      "finalis/ai_employee/tool_local_recovery.py",
+      "finalis/state_machine.py:transition",
+      "tools/governed_work/lease.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "crash-recovery"
+  },
+  "D2-C08-duplicate-handling": {
+    "achieved_maturity": "M1",
+    "claim_id": "D2-C08-duplicate-handling",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D2",
+    "domain_title": "LONG-HORIZON OWNERSHIP, CONTINUITY AND RECOVERY",
+    "estimand_ref": "EST-D2-C08",
+    "grounding": [
+      "finalis/ai_employee/tool_local_recovery.py",
+      "finalis/state_machine.py:transition",
+      "tools/governed_work/lease.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "duplicate-handling"
+  },
+  "D2-C09-out-of-order-handling": {
+    "achieved_maturity": "M1",
+    "claim_id": "D2-C09-out-of-order-handling",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D2",
+    "domain_title": "LONG-HORIZON OWNERSHIP, CONTINUITY AND RECOVERY",
+    "estimand_ref": "EST-D2-C09",
+    "grounding": [
+      "finalis/ai_employee/tool_local_recovery.py",
+      "finalis/state_machine.py:transition",
+      "tools/governed_work/lease.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "out-of-order-handling"
+  },
+  "D2-C10-retry-safety": {
+    "achieved_maturity": "M1",
+    "claim_id": "D2-C10-retry-safety",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D2",
+    "domain_title": "LONG-HORIZON OWNERSHIP, CONTINUITY AND RECOVERY",
+    "estimand_ref": "EST-D2-C10",
+    "grounding": [
+      "finalis/ai_employee/tool_local_recovery.py",
+      "finalis/state_machine.py:transition",
+      "tools/governed_work/lease.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "retry-safety"
+  },
+  "D2-C11-partial-success": {
+    "achieved_maturity": "M1",
+    "claim_id": "D2-C11-partial-success",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D2",
+    "domain_title": "LONG-HORIZON OWNERSHIP, CONTINUITY AND RECOVERY",
+    "estimand_ref": "EST-D2-C11",
+    "grounding": [
+      "finalis/ai_employee/tool_local_recovery.py",
+      "finalis/state_machine.py:transition",
+      "tools/governed_work/lease.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "partial-success"
+  },
+  "D2-C12-unknown-outcome-continuity": {
+    "achieved_maturity": "M1",
+    "claim_id": "D2-C12-unknown-outcome-continuity",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D2",
+    "domain_title": "LONG-HORIZON OWNERSHIP, CONTINUITY AND RECOVERY",
+    "estimand_ref": "EST-D2-C12",
+    "grounding": [
+      "finalis/ai_employee/tool_local_recovery.py",
+      "finalis/state_machine.py:transition",
+      "tools/governed_work/lease.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "unknown-outcome-continuity"
+  },
+  "D2-C13-recurring-work": {
+    "achieved_maturity": "M1",
+    "claim_id": "D2-C13-recurring-work",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D2",
+    "domain_title": "LONG-HORIZON OWNERSHIP, CONTINUITY AND RECOVERY",
+    "estimand_ref": "EST-D2-C13",
+    "grounding": [
+      "finalis/ai_employee/tool_local_recovery.py",
+      "finalis/state_machine.py:transition",
+      "tools/governed_work/lease.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "recurring-work"
+  },
+  "D2-C14-deadline-handling": {
+    "achieved_maturity": "M1",
+    "claim_id": "D2-C14-deadline-handling",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D2",
+    "domain_title": "LONG-HORIZON OWNERSHIP, CONTINUITY AND RECOVERY",
+    "estimand_ref": "EST-D2-C14",
+    "grounding": [
+      "finalis/ai_employee/tool_local_recovery.py",
+      "finalis/state_machine.py:transition",
+      "tools/governed_work/lease.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "deadline-handling"
+  },
+  "D2-C15-blocker-handling": {
+    "achieved_maturity": "M1",
+    "claim_id": "D2-C15-blocker-handling",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D2",
+    "domain_title": "LONG-HORIZON OWNERSHIP, CONTINUITY AND RECOVERY",
+    "estimand_ref": "EST-D2-C15",
+    "grounding": [
+      "finalis/ai_employee/tool_local_recovery.py",
+      "finalis/state_machine.py:transition",
+      "tools/governed_work/lease.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "blocker-handling"
+  },
+  "D2-C16-pause": {
+    "achieved_maturity": "M1",
+    "claim_id": "D2-C16-pause",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D2",
+    "domain_title": "LONG-HORIZON OWNERSHIP, CONTINUITY AND RECOVERY",
+    "estimand_ref": "EST-D2-C16",
+    "grounding": [
+      "finalis/ai_employee/tool_local_recovery.py",
+      "finalis/state_machine.py:transition",
+      "tools/governed_work/lease.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "pause"
+  },
+  "D2-C17-termination": {
+    "achieved_maturity": "M1",
+    "claim_id": "D2-C17-termination",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D2",
+    "domain_title": "LONG-HORIZON OWNERSHIP, CONTINUITY AND RECOVERY",
+    "estimand_ref": "EST-D2-C17",
+    "grounding": [
+      "finalis/ai_employee/tool_local_recovery.py",
+      "finalis/state_machine.py:transition",
+      "tools/governed_work/lease.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "termination"
+  },
+  "D2-C18-time-to-failure": {
+    "achieved_maturity": "M1",
+    "claim_id": "D2-C18-time-to-failure",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D2",
+    "domain_title": "LONG-HORIZON OWNERSHIP, CONTINUITY AND RECOVERY",
+    "estimand_ref": "EST-D2-C18",
+    "grounding": [
+      "finalis/ai_employee/tool_local_recovery.py",
+      "finalis/state_machine.py:transition",
+      "tools/governed_work/lease.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "time-to-failure"
+  },
+  "D2-C19-competing-failure-risks": {
+    "achieved_maturity": "M1",
+    "claim_id": "D2-C19-competing-failure-risks",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D2",
+    "domain_title": "LONG-HORIZON OWNERSHIP, CONTINUITY AND RECOVERY",
+    "estimand_ref": "EST-D2-C19",
+    "grounding": [
+      "finalis/ai_employee/tool_local_recovery.py",
+      "finalis/state_machine.py:transition",
+      "tools/governed_work/lease.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "competing-failure-risks"
+  },
+  "D2-C20-recovery-evidence": {
+    "achieved_maturity": "M1",
+    "claim_id": "D2-C20-recovery-evidence",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D2",
+    "domain_title": "LONG-HORIZON OWNERSHIP, CONTINUITY AND RECOVERY",
+    "estimand_ref": "EST-D2-C20",
+    "grounding": [
+      "finalis/ai_employee/tool_local_recovery.py",
+      "finalis/state_machine.py:transition",
+      "tools/governed_work/lease.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "recovery-evidence"
+  },
+  "D3-C01-tenant-isolation": {
+    "achieved_maturity": "M1",
+    "claim_id": "D3-C01-tenant-isolation",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D3",
+    "domain_title": "SAFETY, AUTHORITY, CONSENT AND TENANT ISOLATION",
+    "estimand_ref": "EST-D3-C01",
+    "grounding": [
+      "finalis/portal/app.py:require_permission",
+      "finalis/portal/db.py:tenant_id",
+      "tools/governed_work/approval.py",
+      "tools/safety/admission.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "tenant-isolation"
+  },
+  "D3-C02-rbac": {
+    "achieved_maturity": "M1",
+    "claim_id": "D3-C02-rbac",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D3",
+    "domain_title": "SAFETY, AUTHORITY, CONSENT AND TENANT ISOLATION",
+    "estimand_ref": "EST-D3-C02",
+    "grounding": [
+      "finalis/portal/app.py:require_permission",
+      "finalis/portal/db.py:tenant_id",
+      "tools/governed_work/approval.py",
+      "tools/safety/admission.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "rbac"
+  },
+  "D3-C03-capability-attenuation": {
+    "achieved_maturity": "M1",
+    "claim_id": "D3-C03-capability-attenuation",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D3",
+    "domain_title": "SAFETY, AUTHORITY, CONSENT AND TENANT ISOLATION",
+    "estimand_ref": "EST-D3-C03",
+    "grounding": [
+      "finalis/portal/app.py:require_permission",
+      "finalis/portal/db.py:tenant_id",
+      "tools/governed_work/approval.py",
+      "tools/safety/admission.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "capability-attenuation"
+  },
+  "D3-C04-exact-authority": {
+    "achieved_maturity": "M1",
+    "claim_id": "D3-C04-exact-authority",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D3",
+    "domain_title": "SAFETY, AUTHORITY, CONSENT AND TENANT ISOLATION",
+    "estimand_ref": "EST-D3-C04",
+    "grounding": [
+      "finalis/portal/app.py:require_permission",
+      "finalis/portal/db.py:tenant_id",
+      "tools/governed_work/approval.py",
+      "tools/safety/admission.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "exact-authority"
+  },
+  "D3-C05-approval-binding": {
+    "achieved_maturity": "M1",
+    "claim_id": "D3-C05-approval-binding",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D3",
+    "domain_title": "SAFETY, AUTHORITY, CONSENT AND TENANT ISOLATION",
+    "estimand_ref": "EST-D3-C05",
+    "grounding": [
+      "finalis/portal/app.py:require_permission",
+      "finalis/portal/db.py:tenant_id",
+      "tools/governed_work/approval.py",
+      "tools/safety/admission.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "approval-binding"
+  },
+  "D3-C06-consent": {
+    "achieved_maturity": "M1",
+    "claim_id": "D3-C06-consent",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D3",
+    "domain_title": "SAFETY, AUTHORITY, CONSENT AND TENANT ISOLATION",
+    "estimand_ref": "EST-D3-C06",
+    "grounding": [
+      "finalis/portal/app.py:require_permission",
+      "finalis/portal/db.py:tenant_id",
+      "tools/governed_work/approval.py",
+      "tools/safety/admission.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "consent"
+  },
+  "D3-C07-budget": {
+    "achieved_maturity": "M1",
+    "claim_id": "D3-C07-budget",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D3",
+    "domain_title": "SAFETY, AUTHORITY, CONSENT AND TENANT ISOLATION",
+    "estimand_ref": "EST-D3-C07",
+    "grounding": [
+      "finalis/portal/app.py:require_permission",
+      "finalis/portal/db.py:tenant_id",
+      "tools/governed_work/approval.py",
+      "tools/safety/admission.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "budget"
+  },
+  "D3-C08-legal-eligibility": {
+    "achieved_maturity": "M1",
+    "claim_id": "D3-C08-legal-eligibility",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D3",
+    "domain_title": "SAFETY, AUTHORITY, CONSENT AND TENANT ISOLATION",
+    "estimand_ref": "EST-D3-C08",
+    "grounding": [
+      "finalis/portal/app.py:require_permission",
+      "finalis/portal/db.py:tenant_id",
+      "tools/governed_work/approval.py",
+      "tools/safety/admission.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "legal-eligibility"
+  },
+  "D3-C09-proof-not-authority": {
+    "achieved_maturity": "M1",
+    "claim_id": "D3-C09-proof-not-authority",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D3",
+    "domain_title": "SAFETY, AUTHORITY, CONSENT AND TENANT ISOLATION",
+    "estimand_ref": "EST-D3-C09",
+    "grounding": [
+      "finalis/portal/app.py:require_permission",
+      "finalis/portal/db.py:tenant_id",
+      "tools/governed_work/approval.py",
+      "tools/safety/admission.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "proof-not-authority"
+  },
+  "D3-C10-release-not-authority": {
+    "achieved_maturity": "M1",
+    "claim_id": "D3-C10-release-not-authority",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D3",
+    "domain_title": "SAFETY, AUTHORITY, CONSENT AND TENANT ISOLATION",
+    "estimand_ref": "EST-D3-C10",
+    "grounding": [
+      "finalis/portal/app.py:require_permission",
+      "finalis/portal/db.py:tenant_id",
+      "tools/governed_work/approval.py",
+      "tools/safety/admission.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "release-not-authority"
+  },
+  "D3-C11-provider-account-isolation": {
+    "achieved_maturity": "M1",
+    "claim_id": "D3-C11-provider-account-isolation",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D3",
+    "domain_title": "SAFETY, AUTHORITY, CONSENT AND TENANT ISOLATION",
+    "estimand_ref": "EST-D3-C11",
+    "grounding": [
+      "finalis/portal/app.py:require_permission",
+      "finalis/portal/db.py:tenant_id",
+      "tools/governed_work/approval.py",
+      "tools/safety/admission.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "provider-account-isolation"
+  },
+  "D3-C12-personal-shared-separation": {
+    "achieved_maturity": "M1",
+    "claim_id": "D3-C12-personal-shared-separation",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D3",
+    "domain_title": "SAFETY, AUTHORITY, CONSENT AND TENANT ISOLATION",
+    "estimand_ref": "EST-D3-C12",
+    "grounding": [
+      "finalis/portal/app.py:require_permission",
+      "finalis/portal/db.py:tenant_id",
+      "tools/governed_work/approval.py",
+      "tools/safety/admission.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "personal-shared-separation"
+  },
+  "D3-C13-cross-channel-authority-continuity": {
+    "achieved_maturity": "M1",
+    "claim_id": "D3-C13-cross-channel-authority-continuity",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D3",
+    "domain_title": "SAFETY, AUTHORITY, CONSENT AND TENANT ISOLATION",
+    "estimand_ref": "EST-D3-C13",
+    "grounding": [
+      "finalis/portal/app.py:require_permission",
+      "finalis/portal/db.py:tenant_id",
+      "tools/governed_work/approval.py",
+      "tools/safety/admission.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "cross-channel-authority-continuity"
+  },
+  "D3-C14-external-content-authority-firewall": {
+    "achieved_maturity": "M1",
+    "claim_id": "D3-C14-external-content-authority-firewall",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D3",
+    "domain_title": "SAFETY, AUTHORITY, CONSENT AND TENANT ISOLATION",
+    "estimand_ref": "EST-D3-C14",
+    "grounding": [
+      "finalis/portal/app.py:require_permission",
+      "finalis/portal/db.py:tenant_id",
+      "tools/governed_work/approval.py",
+      "tools/safety/admission.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "external-content-authority-firewall"
+  },
+  "D3-C15-prompt-injection-resistance": {
+    "achieved_maturity": "M1",
+    "claim_id": "D3-C15-prompt-injection-resistance",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D3",
+    "domain_title": "SAFETY, AUTHORITY, CONSENT AND TENANT ISOLATION",
+    "estimand_ref": "EST-D3-C15",
+    "grounding": [
+      "finalis/portal/app.py:require_permission",
+      "finalis/portal/db.py:tenant_id",
+      "tools/governed_work/approval.py",
+      "tools/safety/admission.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "prompt-injection-resistance"
+  },
+  "D3-C16-replay-protection": {
+    "achieved_maturity": "M1",
+    "claim_id": "D3-C16-replay-protection",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D3",
+    "domain_title": "SAFETY, AUTHORITY, CONSENT AND TENANT ISOLATION",
+    "estimand_ref": "EST-D3-C16",
+    "grounding": [
+      "finalis/portal/app.py:require_permission",
+      "finalis/portal/db.py:tenant_id",
+      "tools/governed_work/approval.py",
+      "tools/safety/admission.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "replay-protection"
+  },
+  "D3-C17-emergency-abort": {
+    "achieved_maturity": "M1",
+    "claim_id": "D3-C17-emergency-abort",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D3",
+    "domain_title": "SAFETY, AUTHORITY, CONSENT AND TENANT ISOLATION",
+    "estimand_ref": "EST-D3-C17",
+    "grounding": [
+      "finalis/portal/app.py:require_permission",
+      "finalis/portal/db.py:tenant_id",
+      "tools/governed_work/approval.py",
+      "tools/safety/admission.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "emergency-abort"
+  },
+  "D3-C18-safe-abstention": {
+    "achieved_maturity": "M1",
+    "claim_id": "D3-C18-safe-abstention",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D3",
+    "domain_title": "SAFETY, AUTHORITY, CONSENT AND TENANT ISOLATION",
+    "estimand_ref": "EST-D3-C18",
+    "grounding": [
+      "finalis/portal/app.py:require_permission",
+      "finalis/portal/db.py:tenant_id",
+      "tools/governed_work/approval.py",
+      "tools/safety/admission.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "safe-abstention"
+  },
+  "D3-C19-critical-unknown-handling": {
+    "achieved_maturity": "M1",
+    "claim_id": "D3-C19-critical-unknown-handling",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D3",
+    "domain_title": "SAFETY, AUTHORITY, CONSENT AND TENANT ISOLATION",
+    "estimand_ref": "EST-D3-C19",
+    "grounding": [
+      "finalis/portal/app.py:require_permission",
+      "finalis/portal/db.py:tenant_id",
+      "tools/governed_work/approval.py",
+      "tools/safety/admission.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "critical-unknown-handling"
+  },
+  "D3-C20-independent-safety-verification": {
+    "achieved_maturity": "M1",
+    "claim_id": "D3-C20-independent-safety-verification",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D3",
+    "domain_title": "SAFETY, AUTHORITY, CONSENT AND TENANT ISOLATION",
+    "estimand_ref": "EST-D3-C20",
+    "grounding": [
+      "finalis/portal/app.py:require_permission",
+      "finalis/portal/db.py:tenant_id",
+      "tools/governed_work/approval.py",
+      "tools/safety/admission.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "independent-safety-verification"
+  },
+  "D4-C01-tool-selection": {
+    "achieved_maturity": "M1",
+    "claim_id": "D4-C01-tool-selection",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D4",
+    "domain_title": "TOOL, PROVIDER AND EXTERNAL-EFFECT CORRECTNESS",
+    "estimand_ref": "EST-D4-C01",
+    "grounding": [
+      "finalis/ai_employee/tool_broker.py",
+      "finalis/actions/adapters.py",
+      "finalis/telephony/engine.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "tool-selection"
+  },
+  "D4-C02-argument-correctness": {
+    "achieved_maturity": "M1",
+    "claim_id": "D4-C02-argument-correctness",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D4",
+    "domain_title": "TOOL, PROVIDER AND EXTERNAL-EFFECT CORRECTNESS",
+    "estimand_ref": "EST-D4-C02",
+    "grounding": [
+      "finalis/ai_employee/tool_broker.py",
+      "finalis/actions/adapters.py",
+      "finalis/telephony/engine.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "argument-correctness"
+  },
+  "D4-C03-provider-identity": {
+    "achieved_maturity": "M1",
+    "claim_id": "D4-C03-provider-identity",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D4",
+    "domain_title": "TOOL, PROVIDER AND EXTERNAL-EFFECT CORRECTNESS",
+    "estimand_ref": "EST-D4-C03",
+    "grounding": [
+      "finalis/ai_employee/tool_broker.py",
+      "finalis/actions/adapters.py",
+      "finalis/telephony/engine.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "provider-identity"
+  },
+  "D4-C04-account-identity": {
+    "achieved_maturity": "M1",
+    "claim_id": "D4-C04-account-identity",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D4",
+    "domain_title": "TOOL, PROVIDER AND EXTERNAL-EFFECT CORRECTNESS",
+    "estimand_ref": "EST-D4-C04",
+    "grounding": [
+      "finalis/ai_employee/tool_broker.py",
+      "finalis/actions/adapters.py",
+      "finalis/telephony/engine.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "account-identity"
+  },
+  "D4-C05-contract-conformance": {
+    "achieved_maturity": "M1",
+    "claim_id": "D4-C05-contract-conformance",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D4",
+    "domain_title": "TOOL, PROVIDER AND EXTERNAL-EFFECT CORRECTNESS",
+    "estimand_ref": "EST-D4-C05",
+    "grounding": [
+      "finalis/ai_employee/tool_broker.py",
+      "finalis/actions/adapters.py",
+      "finalis/telephony/engine.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "contract-conformance"
+  },
+  "D4-C06-adapter-replaceability": {
+    "achieved_maturity": "M1",
+    "claim_id": "D4-C06-adapter-replaceability",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D4",
+    "domain_title": "TOOL, PROVIDER AND EXTERNAL-EFFECT CORRECTNESS",
+    "estimand_ref": "EST-D4-C06",
+    "grounding": [
+      "finalis/ai_employee/tool_broker.py",
+      "finalis/actions/adapters.py",
+      "finalis/telephony/engine.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "adapter-replaceability"
+  },
+  "D4-C07-timeout-handling": {
+    "achieved_maturity": "M1",
+    "claim_id": "D4-C07-timeout-handling",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D4",
+    "domain_title": "TOOL, PROVIDER AND EXTERNAL-EFFECT CORRECTNESS",
+    "estimand_ref": "EST-D4-C07",
+    "grounding": [
+      "finalis/ai_employee/tool_broker.py",
+      "finalis/actions/adapters.py",
+      "finalis/telephony/engine.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "timeout-handling"
+  },
+  "D4-C08-provider-failure": {
+    "achieved_maturity": "M1",
+    "claim_id": "D4-C08-provider-failure",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D4",
+    "domain_title": "TOOL, PROVIDER AND EXTERNAL-EFFECT CORRECTNESS",
+    "estimand_ref": "EST-D4-C08",
+    "grounding": [
+      "finalis/ai_employee/tool_broker.py",
+      "finalis/actions/adapters.py",
+      "finalis/telephony/engine.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "provider-failure"
+  },
+  "D4-C09-idempotency": {
+    "achieved_maturity": "M1",
+    "claim_id": "D4-C09-idempotency",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D4",
+    "domain_title": "TOOL, PROVIDER AND EXTERNAL-EFFECT CORRECTNESS",
+    "estimand_ref": "EST-D4-C09",
+    "grounding": [
+      "finalis/ai_employee/tool_broker.py",
+      "finalis/actions/adapters.py",
+      "finalis/telephony/engine.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "idempotency"
+  },
+  "D4-C10-duplicate-effect-prevention": {
+    "achieved_maturity": "M1",
+    "claim_id": "D4-C10-duplicate-effect-prevention",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D4",
+    "domain_title": "TOOL, PROVIDER AND EXTERNAL-EFFECT CORRECTNESS",
+    "estimand_ref": "EST-D4-C10",
+    "grounding": [
+      "finalis/ai_employee/tool_broker.py",
+      "finalis/actions/adapters.py",
+      "finalis/telephony/engine.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "duplicate-effect-prevention"
+  },
+  "D4-C11-partial-provider-success": {
+    "achieved_maturity": "M1",
+    "claim_id": "D4-C11-partial-provider-success",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D4",
+    "domain_title": "TOOL, PROVIDER AND EXTERNAL-EFFECT CORRECTNESS",
+    "estimand_ref": "EST-D4-C11",
+    "grounding": [
+      "finalis/ai_employee/tool_broker.py",
+      "finalis/actions/adapters.py",
+      "finalis/telephony/engine.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "partial-provider-success"
+  },
+  "D4-C12-rate-limits": {
+    "achieved_maturity": "M1",
+    "claim_id": "D4-C12-rate-limits",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D4",
+    "domain_title": "TOOL, PROVIDER AND EXTERNAL-EFFECT CORRECTNESS",
+    "estimand_ref": "EST-D4-C12",
+    "grounding": [
+      "finalis/ai_employee/tool_broker.py",
+      "finalis/actions/adapters.py",
+      "finalis/telephony/engine.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "rate-limits"
+  },
+  "D4-C13-credential-revocation": {
+    "achieved_maturity": "M1",
+    "claim_id": "D4-C13-credential-revocation",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D4",
+    "domain_title": "TOOL, PROVIDER AND EXTERNAL-EFFECT CORRECTNESS",
+    "estimand_ref": "EST-D4-C13",
+    "grounding": [
+      "finalis/ai_employee/tool_broker.py",
+      "finalis/actions/adapters.py",
+      "finalis/telephony/engine.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "credential-revocation"
+  },
+  "D4-C14-reconnect-scope": {
+    "achieved_maturity": "M1",
+    "claim_id": "D4-C14-reconnect-scope",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D4",
+    "domain_title": "TOOL, PROVIDER AND EXTERNAL-EFFECT CORRECTNESS",
+    "estimand_ref": "EST-D4-C14",
+    "grounding": [
+      "finalis/ai_employee/tool_broker.py",
+      "finalis/actions/adapters.py",
+      "finalis/telephony/engine.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "reconnect-scope"
+  },
+  "D4-C15-read-only-mode": {
+    "achieved_maturity": "M1",
+    "claim_id": "D4-C15-read-only-mode",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D4",
+    "domain_title": "TOOL, PROVIDER AND EXTERNAL-EFFECT CORRECTNESS",
+    "estimand_ref": "EST-D4-C15",
+    "grounding": [
+      "finalis/ai_employee/tool_broker.py",
+      "finalis/actions/adapters.py",
+      "finalis/telephony/engine.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "read-only-mode"
+  },
+  "D4-C16-reusable-approval-scope": {
+    "achieved_maturity": "M1",
+    "claim_id": "D4-C16-reusable-approval-scope",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D4",
+    "domain_title": "TOOL, PROVIDER AND EXTERNAL-EFFECT CORRECTNESS",
+    "estimand_ref": "EST-D4-C16",
+    "grounding": [
+      "finalis/ai_employee/tool_broker.py",
+      "finalis/actions/adapters.py",
+      "finalis/telephony/engine.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "reusable-approval-scope"
+  },
+  "D4-C17-effect-evidence": {
+    "achieved_maturity": "M1",
+    "claim_id": "D4-C17-effect-evidence",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D4",
+    "domain_title": "TOOL, PROVIDER AND EXTERNAL-EFFECT CORRECTNESS",
+    "estimand_ref": "EST-D4-C17",
+    "grounding": [
+      "finalis/ai_employee/tool_broker.py",
+      "finalis/actions/adapters.py",
+      "finalis/telephony/engine.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "effect-evidence"
+  },
+  "D4-C18-result-verification": {
+    "achieved_maturity": "M1",
+    "claim_id": "D4-C18-result-verification",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D4",
+    "domain_title": "TOOL, PROVIDER AND EXTERNAL-EFFECT CORRECTNESS",
+    "estimand_ref": "EST-D4-C18",
+    "grounding": [
+      "finalis/ai_employee/tool_broker.py",
+      "finalis/actions/adapters.py",
+      "finalis/telephony/engine.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "result-verification"
+  },
+  "D4-C19-tool-output-poisoning": {
+    "achieved_maturity": "M1",
+    "claim_id": "D4-C19-tool-output-poisoning",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D4",
+    "domain_title": "TOOL, PROVIDER AND EXTERNAL-EFFECT CORRECTNESS",
+    "estimand_ref": "EST-D4-C19",
+    "grounding": [
+      "finalis/ai_employee/tool_broker.py",
+      "finalis/actions/adapters.py",
+      "finalis/telephony/engine.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "tool-output-poisoning"
+  },
+  "D4-C20-provider-independent-outcome": {
+    "achieved_maturity": "M1",
+    "claim_id": "D4-C20-provider-independent-outcome",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D4",
+    "domain_title": "TOOL, PROVIDER AND EXTERNAL-EFFECT CORRECTNESS",
+    "estimand_ref": "EST-D4-C20",
+    "grounding": [
+      "finalis/ai_employee/tool_broker.py",
+      "finalis/actions/adapters.py",
+      "finalis/telephony/engine.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "provider-independent-outcome"
+  },
+  "D5-C01-episodic-memory": {
+    "achieved_maturity": "M1",
+    "claim_id": "D5-C01-episodic-memory",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D5",
+    "domain_title": "MEMORY, SEMANTICS AND LEARNING INTEGRITY",
+    "estimand_ref": "EST-D5-C01",
+    "grounding": [
+      "tools/semantics/registry.py",
+      "tools/semantics/epochs.py",
+      "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "episodic-memory"
+  },
+  "D5-C02-semantic-memory": {
+    "achieved_maturity": "M1",
+    "claim_id": "D5-C02-semantic-memory",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D5",
+    "domain_title": "MEMORY, SEMANTICS AND LEARNING INTEGRITY",
+    "estimand_ref": "EST-D5-C02",
+    "grounding": [
+      "tools/semantics/registry.py",
+      "tools/semantics/epochs.py",
+      "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "semantic-memory"
+  },
+  "D5-C03-relationship-memory": {
+    "achieved_maturity": "M1",
+    "claim_id": "D5-C03-relationship-memory",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D5",
+    "domain_title": "MEMORY, SEMANTICS AND LEARNING INTEGRITY",
+    "estimand_ref": "EST-D5-C03",
+    "grounding": [
+      "tools/semantics/registry.py",
+      "tools/semantics/epochs.py",
+      "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "relationship-memory"
+  },
+  "D5-C04-case-memory": {
+    "achieved_maturity": "M1",
+    "claim_id": "D5-C04-case-memory",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D5",
+    "domain_title": "MEMORY, SEMANTICS AND LEARNING INTEGRITY",
+    "estimand_ref": "EST-D5-C04",
+    "grounding": [
+      "tools/semantics/registry.py",
+      "tools/semantics/epochs.py",
+      "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "case-memory"
+  },
+  "D5-C05-procedural-memory": {
+    "achieved_maturity": "M1",
+    "claim_id": "D5-C05-procedural-memory",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D5",
+    "domain_title": "MEMORY, SEMANTICS AND LEARNING INTEGRITY",
+    "estimand_ref": "EST-D5-C05",
+    "grounding": [
+      "tools/semantics/registry.py",
+      "tools/semantics/epochs.py",
+      "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "procedural-memory"
+  },
+  "D5-C06-decision-memory": {
+    "achieved_maturity": "M1",
+    "claim_id": "D5-C06-decision-memory",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D5",
+    "domain_title": "MEMORY, SEMANTICS AND LEARNING INTEGRITY",
+    "estimand_ref": "EST-D5-C06",
+    "grounding": [
+      "tools/semantics/registry.py",
+      "tools/semantics/epochs.py",
+      "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "decision-memory"
+  },
+  "D5-C07-failure-memory": {
+    "achieved_maturity": "M1",
+    "claim_id": "D5-C07-failure-memory",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D5",
+    "domain_title": "MEMORY, SEMANTICS AND LEARNING INTEGRITY",
+    "estimand_ref": "EST-D5-C07",
+    "grounding": [
+      "tools/semantics/registry.py",
+      "tools/semantics/epochs.py",
+      "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "failure-memory"
+  },
+  "D5-C08-experience-memory": {
+    "achieved_maturity": "M1",
+    "claim_id": "D5-C08-experience-memory",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D5",
+    "domain_title": "MEMORY, SEMANTICS AND LEARNING INTEGRITY",
+    "estimand_ref": "EST-D5-C08",
+    "grounding": [
+      "tools/semantics/registry.py",
+      "tools/semantics/epochs.py",
+      "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "experience-memory"
+  },
+  "D5-C09-provenance": {
+    "achieved_maturity": "M1",
+    "claim_id": "D5-C09-provenance",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D5",
+    "domain_title": "MEMORY, SEMANTICS AND LEARNING INTEGRITY",
+    "estimand_ref": "EST-D5-C09",
+    "grounding": [
+      "tools/semantics/registry.py",
+      "tools/semantics/epochs.py",
+      "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "provenance"
+  },
+  "D5-C10-contradiction": {
+    "achieved_maturity": "M1",
+    "claim_id": "D5-C10-contradiction",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D5",
+    "domain_title": "MEMORY, SEMANTICS AND LEARNING INTEGRITY",
+    "estimand_ref": "EST-D5-C10",
+    "grounding": [
+      "tools/semantics/registry.py",
+      "tools/semantics/epochs.py",
+      "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "contradiction"
+  },
+  "D5-C11-supersession": {
+    "achieved_maturity": "M1",
+    "claim_id": "D5-C11-supersession",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D5",
+    "domain_title": "MEMORY, SEMANTICS AND LEARNING INTEGRITY",
+    "estimand_ref": "EST-D5-C11",
+    "grounding": [
+      "tools/semantics/registry.py",
+      "tools/semantics/epochs.py",
+      "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "supersession"
+  },
+  "D5-C12-privacy": {
+    "achieved_maturity": "M1",
+    "claim_id": "D5-C12-privacy",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D5",
+    "domain_title": "MEMORY, SEMANTICS AND LEARNING INTEGRITY",
+    "estimand_ref": "EST-D5-C12",
+    "grounding": [
+      "tools/semantics/registry.py",
+      "tools/semantics/epochs.py",
+      "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "privacy"
+  },
+  "D5-C13-scope": {
+    "achieved_maturity": "M1",
+    "claim_id": "D5-C13-scope",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D5",
+    "domain_title": "MEMORY, SEMANTICS AND LEARNING INTEGRITY",
+    "estimand_ref": "EST-D5-C13",
+    "grounding": [
+      "tools/semantics/registry.py",
+      "tools/semantics/epochs.py",
+      "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "scope"
+  },
+  "D5-C14-retrieval-correctness": {
+    "achieved_maturity": "M1",
+    "claim_id": "D5-C14-retrieval-correctness",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D5",
+    "domain_title": "MEMORY, SEMANTICS AND LEARNING INTEGRITY",
+    "estimand_ref": "EST-D5-C14",
+    "grounding": [
+      "tools/semantics/registry.py",
+      "tools/semantics/epochs.py",
+      "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "retrieval-correctness"
+  },
+  "D5-C15-retrieval-abstention": {
+    "achieved_maturity": "M1",
+    "claim_id": "D5-C15-retrieval-abstention",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D5",
+    "domain_title": "MEMORY, SEMANTICS AND LEARNING INTEGRITY",
+    "estimand_ref": "EST-D5-C15",
+    "grounding": [
+      "tools/semantics/registry.py",
+      "tools/semantics/epochs.py",
+      "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "retrieval-abstention"
+  },
+  "D5-C16-semantic-epoch-continuity": {
+    "achieved_maturity": "M1",
+    "claim_id": "D5-C16-semantic-epoch-continuity",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D5",
+    "domain_title": "MEMORY, SEMANTICS AND LEARNING INTEGRITY",
+    "estimand_ref": "EST-D5-C16",
+    "grounding": [
+      "tools/semantics/registry.py",
+      "tools/semantics/epochs.py",
+      "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "semantic-epoch-continuity"
+  },
+  "D5-C17-historical-interpretation": {
+    "achieved_maturity": "M1",
+    "claim_id": "D5-C17-historical-interpretation",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D5",
+    "domain_title": "MEMORY, SEMANTICS AND LEARNING INTEGRITY",
+    "estimand_ref": "EST-D5-C17",
+    "grounding": [
+      "tools/semantics/registry.py",
+      "tools/semantics/epochs.py",
+      "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "historical-interpretation"
+  },
+  "D5-C18-lesson-candidacy": {
+    "achieved_maturity": "M1",
+    "claim_id": "D5-C18-lesson-candidacy",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D5",
+    "domain_title": "MEMORY, SEMANTICS AND LEARNING INTEGRITY",
+    "estimand_ref": "EST-D5-C18",
+    "grounding": [
+      "tools/semantics/registry.py",
+      "tools/semantics/epochs.py",
+      "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "lesson-candidacy"
+  },
+  "D5-C19-promotion-gating": {
+    "achieved_maturity": "M1",
+    "claim_id": "D5-C19-promotion-gating",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D5",
+    "domain_title": "MEMORY, SEMANTICS AND LEARNING INTEGRITY",
+    "estimand_ref": "EST-D5-C19",
+    "grounding": [
+      "tools/semantics/registry.py",
+      "tools/semantics/epochs.py",
+      "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "promotion-gating"
+  },
+  "D5-C20-evaluation-secret-non-retention": {
+    "achieved_maturity": "M1",
+    "claim_id": "D5-C20-evaluation-secret-non-retention",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D5",
+    "domain_title": "MEMORY, SEMANTICS AND LEARNING INTEGRITY",
+    "estimand_ref": "EST-D5-C20",
+    "grounding": [
+      "tools/semantics/registry.py",
+      "tools/semantics/epochs.py",
+      "docs/semantics/FINALIS_SEMANTIC_EPOCHS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "evaluation-secret-non-retention"
+  },
+  "D6-C01-pl-control-language": {
+    "achieved_maturity": "M1",
+    "claim_id": "D6-C01-pl-control-language",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D6",
+    "domain_title": "MULTILINGUAL AND MULTI-INDUSTRY INVARIANCE",
+    "estimand_ref": "EST-D6-C01",
+    "grounding": [
+      "tools/semantics/multilingual.py",
+      "docs/semantics/FINALIS_MULTILINGUAL_LABELS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "pl-control-language"
+  },
+  "D6-C02-en-work-language": {
+    "achieved_maturity": "M1",
+    "claim_id": "D6-C02-en-work-language",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D6",
+    "domain_title": "MULTILINGUAL AND MULTI-INDUSTRY INVARIANCE",
+    "estimand_ref": "EST-D6-C02",
+    "grounding": [
+      "tools/semantics/multilingual.py",
+      "docs/semantics/FINALIS_MULTILINGUAL_LABELS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "en-work-language"
+  },
+  "D6-C03-de-work-language": {
+    "achieved_maturity": "M1",
+    "claim_id": "D6-C03-de-work-language",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D6",
+    "domain_title": "MULTILINGUAL AND MULTI-INDUSTRY INVARIANCE",
+    "estimand_ref": "EST-D6-C03",
+    "grounding": [
+      "tools/semantics/multilingual.py",
+      "docs/semantics/FINALIS_MULTILINGUAL_LABELS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "de-work-language"
+  },
+  "D6-C04-es-work-language": {
+    "achieved_maturity": "M1",
+    "claim_id": "D6-C04-es-work-language",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D6",
+    "domain_title": "MULTILINGUAL AND MULTI-INDUSTRY INVARIANCE",
+    "estimand_ref": "EST-D6-C04",
+    "grounding": [
+      "tools/semantics/multilingual.py",
+      "docs/semantics/FINALIS_MULTILINGUAL_LABELS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "es-work-language"
+  },
+  "D6-C05-cross-language-semantics": {
+    "achieved_maturity": "M1",
+    "claim_id": "D6-C05-cross-language-semantics",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D6",
+    "domain_title": "MULTILINGUAL AND MULTI-INDUSTRY INVARIANCE",
+    "estimand_ref": "EST-D6-C05",
+    "grounding": [
+      "tools/semantics/multilingual.py",
+      "docs/semantics/FINALIS_MULTILINGUAL_LABELS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "cross-language-semantics"
+  },
+  "D6-C06-authority-invariance": {
+    "achieved_maturity": "M1",
+    "claim_id": "D6-C06-authority-invariance",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D6",
+    "domain_title": "MULTILINGUAL AND MULTI-INDUSTRY INVARIANCE",
+    "estimand_ref": "EST-D6-C06",
+    "grounding": [
+      "tools/semantics/multilingual.py",
+      "docs/semantics/FINALIS_MULTILINGUAL_LABELS.json"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "authority-invariance"
+  },
+  "D6-C07-monetary-invariance": {
+    "achieved_maturity": "M1",
+    "claim_id": "D6-C07-monetary-invariance",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D6",
+    "domain_title": "MULTILINGUAL AND MULTI-INDUSTRY INVARIANCE",
+    "estimand_ref": "EST-D6-C07",
+    "grounding": [
+      "tools/semantics/multilingual.py",
+      "docs/semantics/FINALIS_MULTILINGUAL_LABELS.json"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "monetary-invariance"
+  },
+  "D6-C08-deadline-invariance": {
+    "achieved_maturity": "M1",
+    "claim_id": "D6-C08-deadline-invariance",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D6",
+    "domain_title": "MULTILINGUAL AND MULTI-INDUSTRY INVARIANCE",
+    "estimand_ref": "EST-D6-C08",
+    "grounding": [
+      "tools/semantics/multilingual.py",
+      "docs/semantics/FINALIS_MULTILINGUAL_LABELS.json"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "deadline-invariance"
+  },
+  "D6-C09-consent-invariance": {
+    "achieved_maturity": "M1",
+    "claim_id": "D6-C09-consent-invariance",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D6",
+    "domain_title": "MULTILINGUAL AND MULTI-INDUSTRY INVARIANCE",
+    "estimand_ref": "EST-D6-C09",
+    "grounding": [
+      "tools/semantics/multilingual.py",
+      "docs/semantics/FINALIS_MULTILINGUAL_LABELS.json"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "consent-invariance"
+  },
+  "D6-C10-completion-invariance": {
+    "achieved_maturity": "M1",
+    "claim_id": "D6-C10-completion-invariance",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D6",
+    "domain_title": "MULTILINGUAL AND MULTI-INDUSTRY INVARIANCE",
+    "estimand_ref": "EST-D6-C10",
+    "grounding": [
+      "tools/semantics/multilingual.py",
+      "docs/semantics/FINALIS_MULTILINGUAL_LABELS.json"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "completion-invariance"
+  },
+  "D6-C11-role-pack-boundary": {
+    "achieved_maturity": "M1",
+    "claim_id": "D6-C11-role-pack-boundary",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D6",
+    "domain_title": "MULTILINGUAL AND MULTI-INDUSTRY INVARIANCE",
+    "estimand_ref": "EST-D6-C11",
+    "grounding": [
+      "tools/semantics/multilingual.py",
+      "docs/semantics/FINALIS_MULTILINGUAL_LABELS.json"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "role-pack-boundary"
+  },
+  "D6-C12-vertical-pack-boundary": {
+    "achieved_maturity": "M1",
+    "claim_id": "D6-C12-vertical-pack-boundary",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D6",
+    "domain_title": "MULTILINGUAL AND MULTI-INDUSTRY INVARIANCE",
+    "estimand_ref": "EST-D6-C12",
+    "grounding": [
+      "tools/semantics/multilingual.py",
+      "docs/semantics/FINALIS_MULTILINGUAL_LABELS.json"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "vertical-pack-boundary"
+  },
+  "D6-C13-country-pack-boundary": {
+    "achieved_maturity": "M1",
+    "claim_id": "D6-C13-country-pack-boundary",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D6",
+    "domain_title": "MULTILINGUAL AND MULTI-INDUSTRY INVARIANCE",
+    "estimand_ref": "EST-D6-C13",
+    "grounding": [
+      "tools/semantics/multilingual.py",
+      "docs/semantics/FINALIS_MULTILINGUAL_LABELS.json"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "country-pack-boundary"
+  },
+  "D6-C14-language-pack-boundary": {
+    "achieved_maturity": "M1",
+    "claim_id": "D6-C14-language-pack-boundary",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D6",
+    "domain_title": "MULTILINGUAL AND MULTI-INDUSTRY INVARIANCE",
+    "estimand_ref": "EST-D6-C14",
+    "grounding": [
+      "tools/semantics/multilingual.py",
+      "docs/semantics/FINALIS_MULTILINGUAL_LABELS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "language-pack-boundary"
+  },
+  "D6-C15-company-pack-boundary": {
+    "achieved_maturity": "M1",
+    "claim_id": "D6-C15-company-pack-boundary",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D6",
+    "domain_title": "MULTILINGUAL AND MULTI-INDUSTRY INVARIANCE",
+    "estimand_ref": "EST-D6-C15",
+    "grounding": [
+      "tools/semantics/multilingual.py",
+      "docs/semantics/FINALIS_MULTILINGUAL_LABELS.json"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "company-pack-boundary"
+  },
+  "D6-C16-small-stratum-uncertainty": {
+    "achieved_maturity": "M1",
+    "claim_id": "D6-C16-small-stratum-uncertainty",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D6",
+    "domain_title": "MULTILINGUAL AND MULTI-INDUSTRY INVARIANCE",
+    "estimand_ref": "EST-D6-C16",
+    "grounding": [
+      "tools/semantics/multilingual.py",
+      "docs/semantics/FINALIS_MULTILINGUAL_LABELS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "small-stratum-uncertainty"
+  },
+  "D6-C17-terminology-consistency": {
+    "achieved_maturity": "M1",
+    "claim_id": "D6-C17-terminology-consistency",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D6",
+    "domain_title": "MULTILINGUAL AND MULTI-INDUSTRY INVARIANCE",
+    "estimand_ref": "EST-D6-C17",
+    "grounding": [
+      "tools/semantics/multilingual.py",
+      "docs/semantics/FINALIS_MULTILINGUAL_LABELS.json"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "terminology-consistency"
+  },
+  "D6-C18-locale-formatting": {
+    "achieved_maturity": "M1",
+    "claim_id": "D6-C18-locale-formatting",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D6",
+    "domain_title": "MULTILINGUAL AND MULTI-INDUSTRY INVARIANCE",
+    "estimand_ref": "EST-D6-C18",
+    "grounding": [
+      "tools/semantics/multilingual.py",
+      "docs/semantics/FINALIS_MULTILINGUAL_LABELS.json"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "locale-formatting"
+  },
+  "D6-C19-judge-calibration-by-language": {
+    "achieved_maturity": "M1",
+    "claim_id": "D6-C19-judge-calibration-by-language",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D6",
+    "domain_title": "MULTILINGUAL AND MULTI-INDUSTRY INVARIANCE",
+    "estimand_ref": "EST-D6-C19",
+    "grounding": [
+      "tools/semantics/multilingual.py",
+      "docs/semantics/FINALIS_MULTILINGUAL_LABELS.json"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "judge-calibration-by-language"
+  },
+  "D6-C20-cross-industry-core-integrity": {
+    "achieved_maturity": "M1",
+    "claim_id": "D6-C20-cross-industry-core-integrity",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D6",
+    "domain_title": "MULTILINGUAL AND MULTI-INDUSTRY INVARIANCE",
+    "estimand_ref": "EST-D6-C20",
+    "grounding": [
+      "tools/semantics/multilingual.py",
+      "docs/semantics/FINALIS_MULTILINGUAL_LABELS.json"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "cross-industry-core-integrity"
+  },
+  "D7-C01-prompt-injection": {
+    "achieved_maturity": "M1",
+    "claim_id": "D7-C01-prompt-injection",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D7",
+    "domain_title": "SECURITY, ADVERSARIAL ROBUSTNESS AND EVALUATION INTEGRITY",
+    "estimand_ref": "EST-D7-C01",
+    "grounding": [
+      "tools/safety/oracle.py",
+      "tools/architecture_closure/noninterference.py",
+      "finalis/ai_employee/tool_guardrails.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "prompt-injection"
+  },
+  "D7-C02-context-poisoning": {
+    "achieved_maturity": "M1",
+    "claim_id": "D7-C02-context-poisoning",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D7",
+    "domain_title": "SECURITY, ADVERSARIAL ROBUSTNESS AND EVALUATION INTEGRITY",
+    "estimand_ref": "EST-D7-C02",
+    "grounding": [
+      "tools/safety/oracle.py",
+      "tools/architecture_closure/noninterference.py",
+      "finalis/ai_employee/tool_guardrails.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "context-poisoning"
+  },
+  "D7-C03-tool-output-poisoning": {
+    "achieved_maturity": "M1",
+    "claim_id": "D7-C03-tool-output-poisoning",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D7",
+    "domain_title": "SECURITY, ADVERSARIAL ROBUSTNESS AND EVALUATION INTEGRITY",
+    "estimand_ref": "EST-D7-C03",
+    "grounding": [
+      "tools/safety/oracle.py",
+      "tools/architecture_closure/noninterference.py",
+      "finalis/ai_employee/tool_guardrails.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "tool-output-poisoning"
+  },
+  "D7-C04-memory-poisoning": {
+    "achieved_maturity": "M1",
+    "claim_id": "D7-C04-memory-poisoning",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D7",
+    "domain_title": "SECURITY, ADVERSARIAL ROBUSTNESS AND EVALUATION INTEGRITY",
+    "estimand_ref": "EST-D7-C04",
+    "grounding": [
+      "tools/safety/oracle.py",
+      "tools/architecture_closure/noninterference.py",
+      "finalis/ai_employee/tool_guardrails.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "memory-poisoning"
+  },
+  "D7-C05-secret-protection": {
+    "achieved_maturity": "M1",
+    "claim_id": "D7-C05-secret-protection",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D7",
+    "domain_title": "SECURITY, ADVERSARIAL ROBUSTNESS AND EVALUATION INTEGRITY",
+    "estimand_ref": "EST-D7-C05",
+    "grounding": [
+      "tools/safety/oracle.py",
+      "tools/architecture_closure/noninterference.py",
+      "finalis/ai_employee/tool_guardrails.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "secret-protection"
+  },
+  "D7-C06-cross-tenant-attack": {
+    "achieved_maturity": "M1",
+    "claim_id": "D7-C06-cross-tenant-attack",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D7",
+    "domain_title": "SECURITY, ADVERSARIAL ROBUSTNESS AND EVALUATION INTEGRITY",
+    "estimand_ref": "EST-D7-C06",
+    "grounding": [
+      "tools/safety/oracle.py",
+      "tools/architecture_closure/noninterference.py",
+      "finalis/ai_employee/tool_guardrails.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "cross-tenant-attack"
+  },
+  "D7-C07-authority-amplification": {
+    "achieved_maturity": "M1",
+    "claim_id": "D7-C07-authority-amplification",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D7",
+    "domain_title": "SECURITY, ADVERSARIAL ROBUSTNESS AND EVALUATION INTEGRITY",
+    "estimand_ref": "EST-D7-C07",
+    "grounding": [
+      "tools/safety/oracle.py",
+      "tools/architecture_closure/noninterference.py",
+      "finalis/ai_employee/tool_guardrails.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "authority-amplification"
+  },
+  "D7-C08-approval-replay": {
+    "achieved_maturity": "M1",
+    "claim_id": "D7-C08-approval-replay",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D7",
+    "domain_title": "SECURITY, ADVERSARIAL ROBUSTNESS AND EVALUATION INTEGRITY",
+    "estimand_ref": "EST-D7-C08",
+    "grounding": [
+      "tools/safety/oracle.py",
+      "tools/architecture_closure/noninterference.py",
+      "finalis/ai_employee/tool_guardrails.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "approval-replay"
+  },
+  "D7-C09-evaluator-tampering": {
+    "achieved_maturity": "M1",
+    "claim_id": "D7-C09-evaluator-tampering",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D7",
+    "domain_title": "SECURITY, ADVERSARIAL ROBUSTNESS AND EVALUATION INTEGRITY",
+    "estimand_ref": "EST-D7-C09",
+    "grounding": [
+      "tools/safety/oracle.py",
+      "tools/architecture_closure/noninterference.py",
+      "finalis/ai_employee/tool_guardrails.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "evaluator-tampering"
+  },
+  "D7-C10-metric-tampering": {
+    "achieved_maturity": "M1",
+    "claim_id": "D7-C10-metric-tampering",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D7",
+    "domain_title": "SECURITY, ADVERSARIAL ROBUSTNESS AND EVALUATION INTEGRITY",
+    "estimand_ref": "EST-D7-C10",
+    "grounding": [
+      "tools/safety/oracle.py",
+      "tools/architecture_closure/noninterference.py",
+      "finalis/ai_employee/tool_guardrails.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "metric-tampering"
+  },
+  "D7-C11-held-out-leakage": {
+    "achieved_maturity": "M1",
+    "claim_id": "D7-C11-held-out-leakage",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D7",
+    "domain_title": "SECURITY, ADVERSARIAL ROBUSTNESS AND EVALUATION INTEGRITY",
+    "estimand_ref": "EST-D7-C11",
+    "grounding": [
+      "tools/safety/oracle.py",
+      "tools/architecture_closure/noninterference.py",
+      "finalis/ai_employee/tool_guardrails.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "held-out-leakage"
+  },
+  "D7-C12-search-time-contamination": {
+    "achieved_maturity": "M1",
+    "claim_id": "D7-C12-search-time-contamination",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D7",
+    "domain_title": "SECURITY, ADVERSARIAL ROBUSTNESS AND EVALUATION INTEGRITY",
+    "estimand_ref": "EST-D7-C12",
+    "grounding": [
+      "tools/safety/oracle.py",
+      "tools/architecture_closure/noninterference.py",
+      "finalis/ai_employee/tool_guardrails.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "search-time-contamination"
+  },
+  "D7-C13-reward-hacking": {
+    "achieved_maturity": "M1",
+    "claim_id": "D7-C13-reward-hacking",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D7",
+    "domain_title": "SECURITY, ADVERSARIAL ROBUSTNESS AND EVALUATION INTEGRITY",
+    "estimand_ref": "EST-D7-C13",
+    "grounding": [
+      "tools/safety/oracle.py",
+      "tools/architecture_closure/noninterference.py",
+      "finalis/ai_employee/tool_guardrails.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "reward-hacking"
+  },
+  "D7-C14-evaluation-awareness": {
+    "achieved_maturity": "M1",
+    "claim_id": "D7-C14-evaluation-awareness",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D7",
+    "domain_title": "SECURITY, ADVERSARIAL ROBUSTNESS AND EVALUATION INTEGRITY",
+    "estimand_ref": "EST-D7-C14",
+    "grounding": [
+      "tools/safety/oracle.py",
+      "tools/architecture_closure/noninterference.py",
+      "finalis/ai_employee/tool_guardrails.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "evaluation-awareness"
+  },
+  "D7-C15-hidden-test-access": {
+    "achieved_maturity": "M1",
+    "claim_id": "D7-C15-hidden-test-access",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D7",
+    "domain_title": "SECURITY, ADVERSARIAL ROBUSTNESS AND EVALUATION INTEGRITY",
+    "estimand_ref": "EST-D7-C15",
+    "grounding": [
+      "tools/safety/oracle.py",
+      "tools/architecture_closure/noninterference.py",
+      "finalis/ai_employee/tool_guardrails.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "hidden-test-access"
+  },
+  "D7-C16-malicious-provider-response": {
+    "achieved_maturity": "M1",
+    "claim_id": "D7-C16-malicious-provider-response",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D7",
+    "domain_title": "SECURITY, ADVERSARIAL ROBUSTNESS AND EVALUATION INTEGRITY",
+    "estimand_ref": "EST-D7-C16",
+    "grounding": [
+      "tools/safety/oracle.py",
+      "tools/architecture_closure/noninterference.py",
+      "finalis/ai_employee/tool_guardrails.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "malicious-provider-response"
+  },
+  "D7-C17-challenge-generator-integrity": {
+    "achieved_maturity": "M1",
+    "claim_id": "D7-C17-challenge-generator-integrity",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D7",
+    "domain_title": "SECURITY, ADVERSARIAL ROBUSTNESS AND EVALUATION INTEGRITY",
+    "estimand_ref": "EST-D7-C17",
+    "grounding": [
+      "tools/safety/oracle.py",
+      "tools/architecture_closure/noninterference.py",
+      "finalis/ai_employee/tool_guardrails.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "challenge-generator-integrity"
+  },
+  "D7-C18-resource-exhaustion": {
+    "achieved_maturity": "M1",
+    "claim_id": "D7-C18-resource-exhaustion",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D7",
+    "domain_title": "SECURITY, ADVERSARIAL ROBUSTNESS AND EVALUATION INTEGRITY",
+    "estimand_ref": "EST-D7-C18",
+    "grounding": [
+      "tools/safety/oracle.py",
+      "tools/architecture_closure/noninterference.py",
+      "finalis/ai_employee/tool_guardrails.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "resource-exhaustion"
+  },
+  "D7-C19-red-team-repair-durability": {
+    "achieved_maturity": "M1",
+    "claim_id": "D7-C19-red-team-repair-durability",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D7",
+    "domain_title": "SECURITY, ADVERSARIAL ROBUSTNESS AND EVALUATION INTEGRITY",
+    "estimand_ref": "EST-D7-C19",
+    "grounding": [
+      "tools/safety/oracle.py",
+      "tools/architecture_closure/noninterference.py",
+      "finalis/ai_employee/tool_guardrails.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "red-team-repair-durability"
+  },
+  "D7-C20-independent-adversarial-verification": {
+    "achieved_maturity": "M1",
+    "claim_id": "D7-C20-independent-adversarial-verification",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D7",
+    "domain_title": "SECURITY, ADVERSARIAL ROBUSTNESS AND EVALUATION INTEGRITY",
+    "estimand_ref": "EST-D7-C20",
+    "grounding": [
+      "tools/safety/oracle.py",
+      "tools/architecture_closure/noninterference.py",
+      "finalis/ai_employee/tool_guardrails.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "independent-adversarial-verification"
+  },
+  "D8-C01-outcome-confidence": {
+    "achieved_maturity": "M1",
+    "claim_id": "D8-C01-outcome-confidence",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D8",
+    "domain_title": "CALIBRATION, UNCERTAINTY AND SAFE ABSTENTION",
+    "estimand_ref": "EST-D8-C01",
+    "grounding": [
+      "finalis/certainty_core.py",
+      "tools/program_graph/voi.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "outcome-confidence"
+  },
+  "D8-C02-trajectory-confidence": {
+    "achieved_maturity": "M1",
+    "claim_id": "D8-C02-trajectory-confidence",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D8",
+    "domain_title": "CALIBRATION, UNCERTAINTY AND SAFE ABSTENTION",
+    "estimand_ref": "EST-D8-C02",
+    "grounding": [
+      "finalis/certainty_core.py",
+      "tools/program_graph/voi.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "trajectory-confidence"
+  },
+  "D8-C03-overconfidence": {
+    "achieved_maturity": "M1",
+    "claim_id": "D8-C03-overconfidence",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D8",
+    "domain_title": "CALIBRATION, UNCERTAINTY AND SAFE ABSTENTION",
+    "estimand_ref": "EST-D8-C03",
+    "grounding": [
+      "finalis/certainty_core.py",
+      "tools/program_graph/voi.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "overconfidence"
+  },
+  "D8-C04-underconfidence": {
+    "achieved_maturity": "M1",
+    "claim_id": "D8-C04-underconfidence",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D8",
+    "domain_title": "CALIBRATION, UNCERTAINTY AND SAFE ABSTENTION",
+    "estimand_ref": "EST-D8-C04",
+    "grounding": [
+      "finalis/certainty_core.py",
+      "tools/program_graph/voi.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "underconfidence"
+  },
+  "D8-C05-brier-score": {
+    "achieved_maturity": "M1",
+    "claim_id": "D8-C05-brier-score",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D8",
+    "domain_title": "CALIBRATION, UNCERTAINTY AND SAFE ABSTENTION",
+    "estimand_ref": "EST-D8-C05",
+    "grounding": [
+      "finalis/certainty_core.py",
+      "tools/program_graph/voi.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "brier-score"
+  },
+  "D8-C06-calibration-curve": {
+    "achieved_maturity": "M1",
+    "claim_id": "D8-C06-calibration-curve",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D8",
+    "domain_title": "CALIBRATION, UNCERTAINTY AND SAFE ABSTENTION",
+    "estimand_ref": "EST-D8-C06",
+    "grounding": [
+      "finalis/certainty_core.py",
+      "tools/program_graph/voi.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "calibration-curve"
+  },
+  "D8-C07-selective-risk": {
+    "achieved_maturity": "M1",
+    "claim_id": "D8-C07-selective-risk",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D8",
+    "domain_title": "CALIBRATION, UNCERTAINTY AND SAFE ABSTENTION",
+    "estimand_ref": "EST-D8-C07",
+    "grounding": [
+      "finalis/certainty_core.py",
+      "tools/program_graph/voi.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "selective-risk"
+  },
+  "D8-C08-coverage": {
+    "achieved_maturity": "M1",
+    "claim_id": "D8-C08-coverage",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D8",
+    "domain_title": "CALIBRATION, UNCERTAINTY AND SAFE ABSTENTION",
+    "estimand_ref": "EST-D8-C08",
+    "grounding": [
+      "finalis/certainty_core.py",
+      "tools/program_graph/voi.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "coverage"
+  },
+  "D8-C09-abstention-correctness": {
+    "achieved_maturity": "M1",
+    "claim_id": "D8-C09-abstention-correctness",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D8",
+    "domain_title": "CALIBRATION, UNCERTAINTY AND SAFE ABSTENTION",
+    "estimand_ref": "EST-D8-C09",
+    "grounding": [
+      "finalis/certainty_core.py",
+      "tools/program_graph/voi.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "abstention-correctness"
+  },
+  "D8-C10-abstention-usefulness": {
+    "achieved_maturity": "M1",
+    "claim_id": "D8-C10-abstention-usefulness",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D8",
+    "domain_title": "CALIBRATION, UNCERTAINTY AND SAFE ABSTENTION",
+    "estimand_ref": "EST-D8-C10",
+    "grounding": [
+      "finalis/certainty_core.py",
+      "tools/program_graph/voi.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "abstention-usefulness"
+  },
+  "D8-C11-conformal-coverage": {
+    "achieved_maturity": "M1",
+    "claim_id": "D8-C11-conformal-coverage",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D8",
+    "domain_title": "CALIBRATION, UNCERTAINTY AND SAFE ABSTENTION",
+    "estimand_ref": "EST-D8-C11",
+    "grounding": [
+      "finalis/certainty_core.py",
+      "tools/program_graph/voi.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "conformal-coverage"
+  },
+  "D8-C12-conformal-risk-control": {
+    "achieved_maturity": "M1",
+    "claim_id": "D8-C12-conformal-risk-control",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D8",
+    "domain_title": "CALIBRATION, UNCERTAINTY AND SAFE ABSTENTION",
+    "estimand_ref": "EST-D8-C12",
+    "grounding": [
+      "finalis/certainty_core.py",
+      "tools/program_graph/voi.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "conformal-risk-control"
+  },
+  "D8-C13-anytime-valid-selective-risk": {
+    "achieved_maturity": "M1",
+    "claim_id": "D8-C13-anytime-valid-selective-risk",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D8",
+    "domain_title": "CALIBRATION, UNCERTAINTY AND SAFE ABSTENTION",
+    "estimand_ref": "EST-D8-C13",
+    "grounding": [
+      "finalis/certainty_core.py",
+      "tools/program_graph/voi.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "anytime-valid-selective-risk"
+  },
+  "D8-C14-safe-action-threshold": {
+    "achieved_maturity": "M1",
+    "claim_id": "D8-C14-safe-action-threshold",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D8",
+    "domain_title": "CALIBRATION, UNCERTAINTY AND SAFE ABSTENTION",
+    "estimand_ref": "EST-D8-C14",
+    "grounding": [
+      "finalis/certainty_core.py",
+      "tools/program_graph/voi.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "safe-action-threshold"
+  },
+  "D8-C15-deployment-error-budget": {
+    "achieved_maturity": "M1",
+    "claim_id": "D8-C15-deployment-error-budget",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D8",
+    "domain_title": "CALIBRATION, UNCERTAINTY AND SAFE ABSTENTION",
+    "estimand_ref": "EST-D8-C15",
+    "grounding": [
+      "finalis/certainty_core.py",
+      "tools/program_graph/voi.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M4",
+    "slug": "deployment-error-budget"
+  },
+  "D8-C16-provider-calibration": {
+    "achieved_maturity": "M1",
+    "claim_id": "D8-C16-provider-calibration",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D8",
+    "domain_title": "CALIBRATION, UNCERTAINTY AND SAFE ABSTENTION",
+    "estimand_ref": "EST-D8-C16",
+    "grounding": [
+      "finalis/certainty_core.py",
+      "tools/program_graph/voi.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "provider-calibration"
+  },
+  "D8-C17-language-calibration": {
+    "achieved_maturity": "M1",
+    "claim_id": "D8-C17-language-calibration",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D8",
+    "domain_title": "CALIBRATION, UNCERTAINTY AND SAFE ABSTENTION",
+    "estimand_ref": "EST-D8-C17",
+    "grounding": [
+      "finalis/certainty_core.py",
+      "tools/program_graph/voi.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "language-calibration"
+  },
+  "D8-C18-rare-event-confidence": {
+    "achieved_maturity": "M1",
+    "claim_id": "D8-C18-rare-event-confidence",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D8",
+    "domain_title": "CALIBRATION, UNCERTAINTY AND SAFE ABSTENTION",
+    "estimand_ref": "EST-D8-C18",
+    "grounding": [
+      "finalis/certainty_core.py",
+      "tools/program_graph/voi.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "rare-event-confidence"
+  },
+  "D8-C19-confidence-to-authority-firewall": {
+    "achieved_maturity": "M1",
+    "claim_id": "D8-C19-confidence-to-authority-firewall",
+    "credit_value": 5,
+    "critical": true,
+    "domain_id": "D8",
+    "domain_title": "CALIBRATION, UNCERTAINTY AND SAFE ABSTENTION",
+    "estimand_ref": "EST-D8-C19",
+    "grounding": [
+      "finalis/certainty_core.py",
+      "tools/program_graph/voi.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "confidence-to-authority-firewall"
+  },
+  "D8-C20-calibration-requalification": {
+    "achieved_maturity": "M1",
+    "claim_id": "D8-C20-calibration-requalification",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D8",
+    "domain_title": "CALIBRATION, UNCERTAINTY AND SAFE ABSTENTION",
+    "estimand_ref": "EST-D8-C20",
+    "grounding": [
+      "finalis/certainty_core.py",
+      "tools/program_graph/voi.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "calibration-requalification"
+  },
+  "D9-C01-latency": {
+    "achieved_maturity": "M1",
+    "claim_id": "D9-C01-latency",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D9",
+    "domain_title": "PERFORMANCE, COST, SCALABILITY AND RESOURCE EFFICIENCY",
+    "estimand_ref": "EST-D9-C01",
+    "grounding": [
+      "tools/governed_work/budget.py",
+      "finalis/ai_employee/tool_runtime.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "latency"
+  },
+  "D9-C02-tail-latency": {
+    "achieved_maturity": "M1",
+    "claim_id": "D9-C02-tail-latency",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D9",
+    "domain_title": "PERFORMANCE, COST, SCALABILITY AND RESOURCE EFFICIENCY",
+    "estimand_ref": "EST-D9-C02",
+    "grounding": [
+      "tools/governed_work/budget.py",
+      "finalis/ai_employee/tool_runtime.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "tail-latency"
+  },
+  "D9-C03-throughput": {
+    "achieved_maturity": "M1",
+    "claim_id": "D9-C03-throughput",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D9",
+    "domain_title": "PERFORMANCE, COST, SCALABILITY AND RESOURCE EFFICIENCY",
+    "estimand_ref": "EST-D9-C03",
+    "grounding": [
+      "tools/governed_work/budget.py",
+      "finalis/ai_employee/tool_runtime.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "throughput"
+  },
+  "D9-C04-memory-use": {
+    "achieved_maturity": "M1",
+    "claim_id": "D9-C04-memory-use",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D9",
+    "domain_title": "PERFORMANCE, COST, SCALABILITY AND RESOURCE EFFICIENCY",
+    "estimand_ref": "EST-D9-C04",
+    "grounding": [
+      "tools/governed_work/budget.py",
+      "finalis/ai_employee/tool_runtime.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "memory-use"
+  },
+  "D9-C05-storage-use": {
+    "achieved_maturity": "M1",
+    "claim_id": "D9-C05-storage-use",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D9",
+    "domain_title": "PERFORMANCE, COST, SCALABILITY AND RESOURCE EFFICIENCY",
+    "estimand_ref": "EST-D9-C05",
+    "grounding": [
+      "tools/governed_work/budget.py",
+      "finalis/ai_employee/tool_runtime.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "storage-use"
+  },
+  "D9-C06-tool-call-count": {
+    "achieved_maturity": "M1",
+    "claim_id": "D9-C06-tool-call-count",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D9",
+    "domain_title": "PERFORMANCE, COST, SCALABILITY AND RESOURCE EFFICIENCY",
+    "estimand_ref": "EST-D9-C06",
+    "grounding": [
+      "tools/governed_work/budget.py",
+      "finalis/ai_employee/tool_runtime.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "tool-call-count"
+  },
+  "D9-C07-token-use": {
+    "achieved_maturity": "M1",
+    "claim_id": "D9-C07-token-use",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D9",
+    "domain_title": "PERFORMANCE, COST, SCALABILITY AND RESOURCE EFFICIENCY",
+    "estimand_ref": "EST-D9-C07",
+    "grounding": [
+      "tools/governed_work/budget.py",
+      "finalis/ai_employee/tool_runtime.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "token-use"
+  },
+  "D9-C08-provider-cost": {
+    "achieved_maturity": "M1",
+    "claim_id": "D9-C08-provider-cost",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D9",
+    "domain_title": "PERFORMANCE, COST, SCALABILITY AND RESOURCE EFFICIENCY",
+    "estimand_ref": "EST-D9-C08",
+    "grounding": [
+      "tools/governed_work/budget.py",
+      "finalis/ai_employee/tool_runtime.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M4",
+    "slug": "provider-cost"
+  },
+  "D9-C09-retry-cost": {
+    "achieved_maturity": "M1",
+    "claim_id": "D9-C09-retry-cost",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D9",
+    "domain_title": "PERFORMANCE, COST, SCALABILITY AND RESOURCE EFFICIENCY",
+    "estimand_ref": "EST-D9-C09",
+    "grounding": [
+      "tools/governed_work/budget.py",
+      "finalis/ai_employee/tool_runtime.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "retry-cost"
+  },
+  "D9-C10-recovery-cost": {
+    "achieved_maturity": "M1",
+    "claim_id": "D9-C10-recovery-cost",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D9",
+    "domain_title": "PERFORMANCE, COST, SCALABILITY AND RESOURCE EFFICIENCY",
+    "estimand_ref": "EST-D9-C10",
+    "grounding": [
+      "tools/governed_work/budget.py",
+      "finalis/ai_employee/tool_runtime.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "recovery-cost"
+  },
+  "D9-C11-evaluation-cost": {
+    "achieved_maturity": "M1",
+    "claim_id": "D9-C11-evaluation-cost",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D9",
+    "domain_title": "PERFORMANCE, COST, SCALABILITY AND RESOURCE EFFICIENCY",
+    "estimand_ref": "EST-D9-C11",
+    "grounding": [
+      "tools/governed_work/budget.py",
+      "finalis/ai_employee/tool_runtime.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "evaluation-cost"
+  },
+  "D9-C12-concurrency": {
+    "achieved_maturity": "M1",
+    "claim_id": "D9-C12-concurrency",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D9",
+    "domain_title": "PERFORMANCE, COST, SCALABILITY AND RESOURCE EFFICIENCY",
+    "estimand_ref": "EST-D9-C12",
+    "grounding": [
+      "tools/governed_work/budget.py",
+      "finalis/ai_employee/tool_runtime.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "concurrency"
+  },
+  "D9-C13-queue-behavior": {
+    "achieved_maturity": "M1",
+    "claim_id": "D9-C13-queue-behavior",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D9",
+    "domain_title": "PERFORMANCE, COST, SCALABILITY AND RESOURCE EFFICIENCY",
+    "estimand_ref": "EST-D9-C13",
+    "grounding": [
+      "tools/governed_work/budget.py",
+      "finalis/ai_employee/tool_runtime.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "queue-behavior"
+  },
+  "D9-C14-incremental-computation": {
+    "achieved_maturity": "M1",
+    "claim_id": "D9-C14-incremental-computation",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D9",
+    "domain_title": "PERFORMANCE, COST, SCALABILITY AND RESOURCE EFFICIENCY",
+    "estimand_ref": "EST-D9-C14",
+    "grounding": [
+      "tools/governed_work/budget.py",
+      "finalis/ai_employee/tool_runtime.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "incremental-computation"
+  },
+  "D9-C15-cache-correctness": {
+    "achieved_maturity": "M1",
+    "claim_id": "D9-C15-cache-correctness",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D9",
+    "domain_title": "PERFORMANCE, COST, SCALABILITY AND RESOURCE EFFICIENCY",
+    "estimand_ref": "EST-D9-C15",
+    "grounding": [
+      "tools/governed_work/budget.py",
+      "finalis/ai_employee/tool_runtime.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "cache-correctness"
+  },
+  "D9-C16-cache-invalidation": {
+    "achieved_maturity": "M1",
+    "claim_id": "D9-C16-cache-invalidation",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D9",
+    "domain_title": "PERFORMANCE, COST, SCALABILITY AND RESOURCE EFFICIENCY",
+    "estimand_ref": "EST-D9-C16",
+    "grounding": [
+      "tools/governed_work/budget.py",
+      "finalis/ai_employee/tool_runtime.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "cache-invalidation"
+  },
+  "D9-C17-rate-limit-behavior": {
+    "achieved_maturity": "M1",
+    "claim_id": "D9-C17-rate-limit-behavior",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D9",
+    "domain_title": "PERFORMANCE, COST, SCALABILITY AND RESOURCE EFFICIENCY",
+    "estimand_ref": "EST-D9-C17",
+    "grounding": [
+      "tools/governed_work/budget.py",
+      "finalis/ai_employee/tool_runtime.py"
+    ],
+    "maturity_sufficient": true,
+    "required_maturity": "M1",
+    "slug": "rate-limit-behavior"
+  },
+  "D9-C18-ten-times-load": {
+    "achieved_maturity": "M1",
+    "claim_id": "D9-C18-ten-times-load",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D9",
+    "domain_title": "PERFORMANCE, COST, SCALABILITY AND RESOURCE EFFICIENCY",
+    "estimand_ref": "EST-D9-C18",
+    "grounding": [
+      "tools/governed_work/budget.py",
+      "finalis/ai_employee/tool_runtime.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M4",
+    "slug": "ten-times-load"
+  },
+  "D9-C19-worst-case-limit": {
+    "achieved_maturity": "M1",
+    "claim_id": "D9-C19-worst-case-limit",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D9",
+    "domain_title": "PERFORMANCE, COST, SCALABILITY AND RESOURCE EFFICIENCY",
+    "estimand_ref": "EST-D9-C19",
+    "grounding": [
+      "tools/governed_work/budget.py",
+      "finalis/ai_employee/tool_runtime.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "worst-case-limit"
+  },
+  "D9-C20-pareto-efficiency": {
+    "achieved_maturity": "M1",
+    "claim_id": "D9-C20-pareto-efficiency",
+    "credit_value": 5,
+    "critical": false,
+    "domain_id": "D9",
+    "domain_title": "PERFORMANCE, COST, SCALABILITY AND RESOURCE EFFICIENCY",
+    "estimand_ref": "EST-D9-C20",
+    "grounding": [
+      "tools/governed_work/budget.py",
+      "finalis/ai_employee/tool_runtime.py"
+    ],
+    "maturity_sufficient": false,
+    "required_maturity": "M3",
+    "slug": "pareto-efficiency"
+  }
+}

@@ -1,0 +1,342 @@
+{
+  "families": [
+    [
+      "VIKTOR-REF-01",
+      "one employee across multiple tools"
+    ],
+    [
+      "VIKTOR-REF-02",
+      "real artifact delivery"
+    ],
+    [
+      "VIKTOR-REF-03",
+      "scheduled recurring work"
+    ],
+    [
+      "VIKTOR-REF-04",
+      "proactive automation proposal"
+    ],
+    [
+      "VIKTOR-REF-05",
+      "approval before protected effect"
+    ],
+    [
+      "VIKTOR-REF-06",
+      "multiple provider accounts"
+    ],
+    [
+      "VIKTOR-REF-07",
+      "pause and resume"
+    ],
+    [
+      "VIKTOR-REF-08",
+      "task termination"
+    ],
+    [
+      "VIKTOR-REF-09",
+      "oauth revocation"
+    ],
+    [
+      "VIKTOR-REF-10",
+      "reconnection without scope widening"
+    ],
+    [
+      "VIKTOR-REF-11",
+      "repository-aware engineering"
+    ],
+    [
+      "VIKTOR-REF-12",
+      "team workspace isolation"
+    ],
+    [
+      "VIKTOR-REF-13",
+      "visible work status"
+    ],
+    [
+      "VIKTOR-REF-14",
+      "credentials outside model context"
+    ],
+    [
+      "VIKTOR-REF-15",
+      "read-only connection mode"
+    ],
+    [
+      "VIKTOR-REF-16",
+      "scoped reusable pre-authorization"
+    ]
+  ],
+  "note": "vendor-derived reference scenarios; NOT evidence of Finalis quality",
+  "reusable_approval_binding": [
+    "tenant",
+    "principal",
+    "provider_account",
+    "tool",
+    "action_class",
+    "argument_constraints",
+    "data_sensitivity",
+    "monetary_limit",
+    "effect_class",
+    "purpose",
+    "expiry",
+    "revocation",
+    "policy_epoch"
+  ],
+  "scenarios": [
+    {
+      "claim_refs": [
+        "D4-C16-reusable-approval-scope"
+      ],
+      "contamination_class": "CLEAN",
+      "criticality": "high",
+      "family_id": "VIKTOR-REF-01",
+      "language": "EN",
+      "oracle_ref": "ORA-DET-STATE",
+      "provenance": "VIKTOR_VENDOR_REFERENCE",
+      "risk_class": "low",
+      "scenario_hash": "7ea23d67ad6b759a0ac1e2fd9e0840a9f951156c78ca48bca9d9cfcb57cdb0ed",
+      "scenario_id": "SCN-VIKTOR-REF-01",
+      "state": "ORACLE_VALIDATED",
+      "validation_problems": []
+    },
+    {
+      "claim_refs": [
+        "D4-C16-reusable-approval-scope"
+      ],
+      "contamination_class": "CLEAN",
+      "criticality": "high",
+      "family_id": "VIKTOR-REF-02",
+      "language": "EN",
+      "oracle_ref": "ORA-DET-STATE",
+      "provenance": "VIKTOR_VENDOR_REFERENCE",
+      "risk_class": "low",
+      "scenario_hash": "abdcdb7237794e1917a113019e9042f2e40d413d7a9554e071933a5b78c11aac",
+      "scenario_id": "SCN-VIKTOR-REF-02",
+      "state": "ORACLE_VALIDATED",
+      "validation_problems": []
+    },
+    {
+      "claim_refs": [
+        "D4-C16-reusable-approval-scope"
+      ],
+      "contamination_class": "CLEAN",
+      "criticality": "high",
+      "family_id": "VIKTOR-REF-03",
+      "language": "EN",
+      "oracle_ref": "ORA-DET-STATE",
+      "provenance": "VIKTOR_VENDOR_REFERENCE",
+      "risk_class": "low",
+      "scenario_hash": "1b7612700469d7ea8c3643b398a4a4902d1bd483e94a39202a4207fb1850e47a",
+      "scenario_id": "SCN-VIKTOR-REF-03",
+      "state": "ORACLE_VALIDATED",
+      "validation_problems": []
+    },
+    {
+      "claim_refs": [
+        "D4-C16-reusable-approval-scope"
+      ],
+      "contamination_class": "CLEAN",
+      "criticality": "high",
+      "family_id": "VIKTOR-REF-04",
+      "language": "EN",
+      "oracle_ref": "ORA-DET-STATE",
+      "provenance": "VIKTOR_VENDOR_REFERENCE",
+      "risk_class": "low",
+      "scenario_hash": "de4e9bcafb15add119716d243b67dbd6601b3845fd39c2c3b9f46c4e1c420eb5",
+      "scenario_id": "SCN-VIKTOR-REF-04",
+      "state": "ORACLE_VALIDATED",
+      "validation_problems": []
+    },
+    {
+      "claim_refs": [
+        "D3-C05-approval-binding"
+      ],
+      "contamination_class": "CLEAN",
+      "criticality": "critical",
+      "family_id": "VIKTOR-REF-05",
+      "language": "EN",
+      "oracle_ref": "ORA-DET-STATE",
+      "provenance": "VIKTOR_VENDOR_REFERENCE",
+      "risk_class": "protected",
+      "scenario_hash": "5ced31588276a43088e6fb92df3187c62b5543705214de25ff9b7bb7b761ebdd",
+      "scenario_id": "SCN-VIKTOR-REF-05",
+      "state": "ORACLE_VALIDATED",
+      "validation_problems": []
+    },
+    {
+      "claim_refs": [
+        "D4-C16-reusable-approval-scope"
+      ],
+      "contamination_class": "CLEAN",
+      "criticality": "critical",
+      "family_id": "VIKTOR-REF-06",
+      "language": "EN",
+      "oracle_ref": "ORA-DET-STATE",
+      "provenance": "VIKTOR_VENDOR_REFERENCE",
+      "risk_class": "protected",
+      "scenario_hash": "77e59c34c5531a7dd75a25e93317a05f9d285e092db7063640bfe123ed286674",
+      "scenario_id": "SCN-VIKTOR-REF-06",
+      "state": "ORACLE_VALIDATED",
+      "validation_problems": []
+    },
+    {
+      "claim_refs": [
+        "D4-C16-reusable-approval-scope"
+      ],
+      "contamination_class": "CLEAN",
+      "criticality": "high",
+      "family_id": "VIKTOR-REF-07",
+      "language": "EN",
+      "oracle_ref": "ORA-DET-STATE",
+      "provenance": "VIKTOR_VENDOR_REFERENCE",
+      "risk_class": "low",
+      "scenario_hash": "511bd0f5dac640f154f5551dfc93e66aafb0d1b4a6ab921d1effcf4389328d6c",
+      "scenario_id": "SCN-VIKTOR-REF-07",
+      "state": "ORACLE_VALIDATED",
+      "validation_problems": []
+    },
+    {
+      "claim_refs": [
+        "D4-C16-reusable-approval-scope"
+      ],
+      "contamination_class": "CLEAN",
+      "criticality": "high",
+      "family_id": "VIKTOR-REF-08",
+      "language": "EN",
+      "oracle_ref": "ORA-DET-STATE",
+      "provenance": "VIKTOR_VENDOR_REFERENCE",
+      "risk_class": "low",
+      "scenario_hash": "85a057bb83b9ccbadad2bbca7d3e7c004988272eb2f05f807afecefe3215830a",
+      "scenario_id": "SCN-VIKTOR-REF-08",
+      "state": "ORACLE_VALIDATED",
+      "validation_problems": []
+    },
+    {
+      "claim_refs": [
+        "D4-C16-reusable-approval-scope"
+      ],
+      "contamination_class": "CLEAN",
+      "criticality": "critical",
+      "family_id": "VIKTOR-REF-09",
+      "language": "EN",
+      "oracle_ref": "ORA-DET-STATE",
+      "provenance": "VIKTOR_VENDOR_REFERENCE",
+      "risk_class": "protected",
+      "scenario_hash": "cf81a5e9bf5bb8a59b55d92719989f0a93cde3c29c15d0cbc3d39e52f25741b9",
+      "scenario_id": "SCN-VIKTOR-REF-09",
+      "state": "ORACLE_VALIDATED",
+      "validation_problems": []
+    },
+    {
+      "claim_refs": [
+        "D4-C16-reusable-approval-scope"
+      ],
+      "contamination_class": "CLEAN",
+      "criticality": "critical",
+      "family_id": "VIKTOR-REF-10",
+      "language": "EN",
+      "oracle_ref": "ORA-DET-STATE",
+      "provenance": "VIKTOR_VENDOR_REFERENCE",
+      "risk_class": "protected",
+      "scenario_hash": "a65d0a822f1e55bf6fb90d6b6b36b01b42faf3454a67f5f0d6d0558b435d1fa9",
+      "scenario_id": "SCN-VIKTOR-REF-10",
+      "state": "ORACLE_VALIDATED",
+      "validation_problems": []
+    },
+    {
+      "claim_refs": [
+        "D4-C16-reusable-approval-scope"
+      ],
+      "contamination_class": "CLEAN",
+      "criticality": "high",
+      "family_id": "VIKTOR-REF-11",
+      "language": "EN",
+      "oracle_ref": "ORA-DET-STATE",
+      "provenance": "VIKTOR_VENDOR_REFERENCE",
+      "risk_class": "low",
+      "scenario_hash": "3e03b9905c63837893ddeefac73bc690d9cd7d6285cd84d9c03e33e06d7b326b",
+      "scenario_id": "SCN-VIKTOR-REF-11",
+      "state": "ORACLE_VALIDATED",
+      "validation_problems": []
+    },
+    {
+      "claim_refs": [
+        "D4-C16-reusable-approval-scope"
+      ],
+      "contamination_class": "CLEAN",
+      "criticality": "high",
+      "family_id": "VIKTOR-REF-12",
+      "language": "EN",
+      "oracle_ref": "ORA-DET-STATE",
+      "provenance": "VIKTOR_VENDOR_REFERENCE",
+      "risk_class": "low",
+      "scenario_hash": "58d7d9951fc9b58fc5da22f3f79cd990ed8c541879578160ad69b5fde367dbbd",
+      "scenario_id": "SCN-VIKTOR-REF-12",
+      "state": "ORACLE_VALIDATED",
+      "validation_problems": []
+    },
+    {
+      "claim_refs": [
+        "D4-C16-reusable-approval-scope"
+      ],
+      "contamination_class": "CLEAN",
+      "criticality": "high",
+      "family_id": "VIKTOR-REF-13",
+      "language": "EN",
+      "oracle_ref": "ORA-DET-STATE",
+      "provenance": "VIKTOR_VENDOR_REFERENCE",
+      "risk_class": "low",
+      "scenario_hash": "8715bff1fd1dd5453323489a3166eb1b04ad5800b952679d365fe34730480003",
+      "scenario_id": "SCN-VIKTOR-REF-13",
+      "state": "ORACLE_VALIDATED",
+      "validation_problems": []
+    },
+    {
+      "claim_refs": [
+        "D4-C16-reusable-approval-scope"
+      ],
+      "contamination_class": "CLEAN",
+      "criticality": "critical",
+      "family_id": "VIKTOR-REF-14",
+      "language": "EN",
+      "oracle_ref": "ORA-DET-STATE",
+      "provenance": "VIKTOR_VENDOR_REFERENCE",
+      "risk_class": "protected",
+      "scenario_hash": "161231f7cf813a6c9fb9360d1c87c61c8e7d5fc45163cb6934a406bb7bd67e45",
+      "scenario_id": "SCN-VIKTOR-REF-14",
+      "state": "ORACLE_VALIDATED",
+      "validation_problems": []
+    },
+    {
+      "claim_refs": [
+        "D4-C16-reusable-approval-scope"
+      ],
+      "contamination_class": "CLEAN",
+      "criticality": "high",
+      "family_id": "VIKTOR-REF-15",
+      "language": "EN",
+      "oracle_ref": "ORA-DET-STATE",
+      "provenance": "VIKTOR_VENDOR_REFERENCE",
+      "risk_class": "low",
+      "scenario_hash": "b4468c85c9439f6e14516a9291f4392bf0604d9c2926815c98f25b67cb1885d0",
+      "scenario_id": "SCN-VIKTOR-REF-15",
+      "state": "ORACLE_VALIDATED",
+      "validation_problems": []
+    },
+    {
+      "claim_refs": [
+        "D4-C16-reusable-approval-scope"
+      ],
+      "contamination_class": "CLEAN",
+      "criticality": "critical",
+      "family_id": "VIKTOR-REF-16",
+      "language": "EN",
+      "oracle_ref": "ORA-DET-STATE",
+      "provenance": "VIKTOR_VENDOR_REFERENCE",
+      "risk_class": "protected",
+      "scenario_hash": "447430cedd22e3c98a32e6a65ff83ff67292ca70bc9738386927fa1048cad094",
+      "scenario_id": "SCN-VIKTOR-REF-16",
+      "state": "ORACLE_VALIDATED",
+      "validation_problems": []
+    }
+  ]
+}

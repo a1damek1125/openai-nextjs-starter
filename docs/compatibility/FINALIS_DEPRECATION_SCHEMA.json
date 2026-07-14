@@ -1,0 +1,47 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "active_consumer_refs": {
+      "type": "array"
+    },
+    "announced_in": {
+      "type": "string"
+    },
+    "contract_id": {
+      "type": "string"
+    },
+    "deprecation_id": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "replacement": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "sunset_conditions": {
+      "type": "array"
+    },
+    "support_until": {
+      "type": "string"
+    },
+    "surface": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "deprecation_id",
+    "contract_id",
+    "version",
+    "surface",
+    "status"
+  ],
+  "schema_id": "DeprecationNotice",
+  "type": "object"
+}

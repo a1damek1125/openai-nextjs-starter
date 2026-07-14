@@ -1,0 +1,4 @@
+{"schema_id":"FINALIS-SAFETY-MEASUREMENT-PROBE","sp":"SP0005",
+ "boundaries":["goal_admission","context_assembly","candidate_claim_admission","plan_change","tool_proposal","authority_decision","safety_decision","human_review","effect_preparation","effect_execution","provider_response","outcome_observation","memory_write","learning_promotion"],
+ "distinctions":["model_proposal vs policy_decision","authority_decision vs effect","effect vs outcome"],
+ "note":"Observable evidence only; private chain-of-thought is NOT required (D-0005-59, AC-0005-140)."}

@@ -1,0 +1,7 @@
+{"schema_id":"FINALIS-TDR","sp":"SP0004","required":["decision_id","status","criticality","scope"],
+ "status":["PROPOSED","RESEARCHING","TRIAL","ACCEPTED","ACTIVE","REVIEW_DUE","SUPERSEDED","RETIRED","REJECTED","DEFERRED","INVALIDATED"],
+ "fitness_status":["NOT_EVALUATED","ACTIVE_AND_FIT","REVIEW_DUE","ACTIVE_DEGRADED","INVALIDATED"],
+ "criticality":["T0","T1","T2","T3","T4"],"reversibility_class":["R0","R1","R2","R3","R4"],
+ "append_only":"An ACCEPTED+ decision's core is immutable; a change creates a superseding record (INV-0004-08/09). Decision status and fitness status are DISTINCT (D-0004-75).",
+ "accepted_active_requires":["evidence_refs","review policy for T3/T4"],
+ "deferred_requires":["decision_trigger / review_triggers"]}

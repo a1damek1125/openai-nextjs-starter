@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://finalis.local/schemas/FINALIS_SEMANTIC_EPOCH.json",
+  "title": "Finalis Semantic Epoch (bitemporal)",
+  "type": "object",
+  "required": ["semantic_epoch_id", "registry_hash", "valid_from", "recorded_at", "status"],
+  "properties": {
+    "semantic_epoch_id": {"type": "string"},
+    "parent_epoch_id": {"type": ["string", "null"]},
+    "registry_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "valid_from": {"type": "string", "description": "VALID time (RFC3339/RFC9557)"},
+    "valid_until": {"type": ["string", "null"]},
+    "recorded_at": {"type": "string", "description": "TRANSACTION time"},
+    "status": {"enum": ["DRAFT", "VALIDATING", "SHADOW", "REPLAYED", "APPROVED", "ACTIVE", "SUPERSEDED", "REJECTED"]}
+  }
+}

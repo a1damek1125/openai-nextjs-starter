@@ -1,0 +1,56 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "action_fingerprint": {
+      "type": "string"
+    },
+    "approval_token_id": {
+      "type": "string"
+    },
+    "approver_class": {
+      "type": "string"
+    },
+    "approver_id": {
+      "type": "string"
+    },
+    "effect_class": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "material_parameters_hash": {
+      "type": "string"
+    },
+    "maximum_uses": {
+      "type": "integer"
+    },
+    "required_class": {
+      "type": "string"
+    },
+    "risk_snapshot_hash": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "target_fingerprint": {
+      "type": "string"
+    },
+    "work_instance_hash": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "approval_token_id",
+    "work_instance_hash",
+    "action_fingerprint",
+    "required_class",
+    "approver_id",
+    "approver_class",
+    "expires_at",
+    "maximum_uses"
+  ],
+  "schema_id": "ApprovalToken",
+  "type": "object"
+}

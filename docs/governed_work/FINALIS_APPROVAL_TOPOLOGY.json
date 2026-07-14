@@ -1,0 +1,26 @@
+{
+  "approval_topologies": [
+    {
+      "approval_topology_id": "AT-0001",
+      "classes": [
+        "A0",
+        "A1",
+        "A2",
+        "A3",
+        "A4",
+        "A5"
+      ],
+      "independence_constraints": {
+        "no_self_approval": true
+      },
+      "quorum": {
+        "A4": {
+          "distinct_identities": true,
+          "number_of_approvers": 2
+        }
+      },
+      "required_floor": "A2",
+      "work_order_id": "WO-0001"
+    }
+  ]
+}

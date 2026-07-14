@@ -1,0 +1,16 @@
+[project]
+name = "finalis-scaffold"
+version = "0.1.0"
+description = "Finalis AI - minimal executable scaffold proving the blueprint's core logic"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.setuptools]
+packages = ["finalis"]

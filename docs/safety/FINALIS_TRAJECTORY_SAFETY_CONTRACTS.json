@@ -1,0 +1,41 @@
+{
+  "trajectory_contracts": [
+    {
+      "allowed_transitions": [
+        {
+          "from": "START",
+          "to": "SENSITIVE_READ"
+        },
+        {
+          "from": "SENSITIVE_READ",
+          "to": "RECIPIENT_REVALIDATED"
+        },
+        {
+          "from": "RECIPIENT_REVALIDATED",
+          "to": "SENT"
+        }
+      ],
+      "forbidden_sequences": [
+        [
+          "SENSITIVE_READ",
+          "SENT"
+        ]
+      ],
+      "maximum_authority_conditions": [],
+      "required_checkpoints": [
+        "RECIPIENT_REVALIDATED"
+      ],
+      "required_postconditions": [
+        "outbox_verified"
+      ],
+      "scope": "disclosure",
+      "state_variables": [
+        "START",
+        "SENSITIVE_READ",
+        "RECIPIENT_REVALIDATED",
+        "SENT"
+      ],
+      "trajectory_contract_id": "TC-READ-THEN-SEND"
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+{"schema_id":"FINALIS-REGULATORY-TEMPORAL-TRUTH","sp":"SP0005",
+ "date_types":["proposal_date","political_agreement_date","adoption_date","publication_date","entry_into_force_date","general_application_date","special_application_dates","consultation_close_date","transition_deadlines"],
+ "note":"Never one effective_date (D-0005-46). Each date has date_type/source/legal_status/confidence/verified_at. Legal state (source_status) is SEPARATE from timeline state (D-0005-47)."}

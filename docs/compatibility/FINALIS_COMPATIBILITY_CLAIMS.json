@@ -1,0 +1,202 @@
+{
+  "claims": [
+    {
+      "claim_hash": "85f4db2ed3b33293d99ec61bf3a1d1d0b44949946dcd5abda03110e369c8f4dc",
+      "claim_id": "CLM-0001",
+      "compatibility_vector": {
+        "behavioral": "COMPATIBLE",
+        "operational": "COMPATIBLE",
+        "proof_hash": "COMPATIBLE",
+        "replay": "COMPATIBLE",
+        "security": "COMPATIBLE",
+        "semantic": "COMPATIBLE",
+        "state": "COMPATIBLE",
+        "structural": "COMPATIBLE",
+        "syntactic": "COMPATIBLE",
+        "temporal": "COMPATIBLE"
+      },
+      "consumer_id": "portal-ui::ct-http-cases",
+      "consumer_version": "1.0.0",
+      "contract_id": "CT-HTTP-CASES",
+      "direction": "NEW_PRODUCER_TO_OLD_CONSUMER",
+      "environment_hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "evidence_refs": [
+        "FX-CT-HTTP-CASES-COMMON"
+      ],
+      "expires_at": null,
+      "hard_gate_result": "COMPATIBLE",
+      "producer_version": "1.0.0",
+      "scenario_scope": [
+        "declared-supported-behavior"
+      ],
+      "status": "VERIFIED",
+      "tested_at": "2026-07-12",
+      "validator_version": "sp0007-compat-validator-1"
+    },
+    {
+      "claim_hash": "5de62ded378b35e951fc93bc5bc978d8ba7415212017372d6bcf894925d79306",
+      "claim_id": "CLM-0002",
+      "compatibility_vector": {
+        "behavioral": "COMPATIBLE",
+        "operational": "COMPATIBLE",
+        "proof_hash": "COMPATIBLE",
+        "replay": "COMPATIBLE",
+        "security": "COMPATIBLE",
+        "semantic": "COMPATIBLE",
+        "state": "COMPATIBLE",
+        "structural": "COMPATIBLE",
+        "syntactic": "COMPATIBLE",
+        "temporal": "COMPATIBLE"
+      },
+      "consumer_id": "portal-ui::ct-event-run-ledger",
+      "consumer_version": "1.0.0",
+      "contract_id": "CT-EVENT-RUN-LEDGER",
+      "direction": "NEW_PRODUCER_TO_OLD_CONSUMER",
+      "environment_hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "evidence_refs": [
+        "FX-CT-EVENT-RUN-LEDGER-COMMON"
+      ],
+      "expires_at": null,
+      "hard_gate_result": "COMPATIBLE",
+      "producer_version": "1.0.0",
+      "scenario_scope": [
+        "declared-supported-behavior"
+      ],
+      "status": "VERIFIED",
+      "tested_at": "2026-07-12",
+      "validator_version": "sp0007-compat-validator-1"
+    },
+    {
+      "claim_hash": "c447a9f34ff5742e53cd87527a77499345298df7345d9a726fbebe7a6ac3f098",
+      "claim_id": "CLM-0003",
+      "compatibility_vector": {
+        "behavioral": "COMPATIBLE",
+        "operational": "COMPATIBLE",
+        "proof_hash": "COMPATIBLE",
+        "replay": "COMPATIBLE",
+        "security": "COMPATIBLE",
+        "semantic": "COMPATIBLE",
+        "state": "COMPATIBLE",
+        "structural": "COMPATIBLE",
+        "syntactic": "COMPATIBLE",
+        "temporal": "COMPATIBLE"
+      },
+      "consumer_id": "portal-ui::ct-db-schema",
+      "consumer_version": "1.0.0",
+      "contract_id": "CT-DB-SCHEMA",
+      "direction": "NEW_PRODUCER_TO_OLD_CONSUMER",
+      "environment_hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "evidence_refs": [
+        "FX-CT-DB-SCHEMA-COMMON"
+      ],
+      "expires_at": null,
+      "hard_gate_result": "COMPATIBLE",
+      "producer_version": "1.0.0",
+      "scenario_scope": [
+        "declared-supported-behavior"
+      ],
+      "status": "VERIFIED",
+      "tested_at": "2026-07-12",
+      "validator_version": "sp0007-compat-validator-1"
+    },
+    {
+      "claim_hash": "37772a91619a562378e41d7916ebe98b98fcbd9e7f2e19264945ac68c57f5732",
+      "claim_id": "CLM-0004",
+      "compatibility_vector": {
+        "behavioral": "COMPATIBLE",
+        "operational": "COMPATIBLE",
+        "proof_hash": "COMPATIBLE",
+        "replay": "COMPATIBLE",
+        "security": "COMPATIBLE",
+        "semantic": "COMPATIBLE",
+        "state": "COMPATIBLE",
+        "structural": "COMPATIBLE",
+        "syntactic": "COMPATIBLE",
+        "temporal": "COMPATIBLE"
+      },
+      "consumer_id": "portal-ui::ct-wf-case-fsm",
+      "consumer_version": "1.0.0",
+      "contract_id": "CT-WF-CASE-FSM",
+      "direction": "NEW_PRODUCER_TO_OLD_CONSUMER",
+      "environment_hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "evidence_refs": [
+        "FX-CT-WF-CASE-FSM-COMMON"
+      ],
+      "expires_at": null,
+      "hard_gate_result": "COMPATIBLE",
+      "producer_version": "1.0.0",
+      "scenario_scope": [
+        "declared-supported-behavior"
+      ],
+      "status": "VERIFIED",
+      "tested_at": "2026-07-12",
+      "validator_version": "sp0007-compat-validator-1"
+    },
+    {
+      "claim_hash": "a996215cfb93b605e04fd14b5a489be8c7e47c78ed1de81c2ceb64d381527232",
+      "claim_id": "CLM-0005",
+      "compatibility_vector": {
+        "behavioral": "COMPATIBLE",
+        "operational": "COMPATIBLE",
+        "proof_hash": "COMPATIBLE",
+        "replay": "COMPATIBLE",
+        "security": "COMPATIBLE",
+        "semantic": "COMPATIBLE",
+        "state": "COMPATIBLE",
+        "structural": "COMPATIBLE",
+        "syntactic": "COMPATIBLE",
+        "temporal": "COMPATIBLE"
+      },
+      "consumer_id": "portal-ui::ct-proof-run-event",
+      "consumer_version": "1.0.0",
+      "contract_id": "CT-PROOF-RUN-EVENT",
+      "direction": "NEW_PRODUCER_TO_OLD_CONSUMER",
+      "environment_hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "evidence_refs": [
+        "FX-CT-PROOF-RUN-EVENT-COMMON"
+      ],
+      "expires_at": null,
+      "hard_gate_result": "COMPATIBLE",
+      "producer_version": "1.0.0",
+      "scenario_scope": [
+        "declared-supported-behavior"
+      ],
+      "status": "VERIFIED",
+      "tested_at": "2026-07-12",
+      "validator_version": "sp0007-compat-validator-1"
+    },
+    {
+      "claim_hash": "6a0e7ad8200d7b6e1dc1fd6964b2bd3a939d2810b41f2d360fbc03a738b1218b",
+      "claim_id": "CLM-0006",
+      "compatibility_vector": {
+        "behavioral": "COMPATIBLE",
+        "operational": "COMPATIBLE",
+        "proof_hash": "COMPATIBLE",
+        "replay": "COMPATIBLE",
+        "security": "COMPATIBLE",
+        "semantic": "COMPATIBLE",
+        "state": "COMPATIBLE",
+        "structural": "COMPATIBLE",
+        "syntactic": "COMPATIBLE",
+        "temporal": "COMPATIBLE"
+      },
+      "consumer_id": "portal-ui::ct-semantic-case",
+      "consumer_version": "1.0.0",
+      "contract_id": "CT-SEMANTIC-CASE",
+      "direction": "NEW_PRODUCER_TO_OLD_CONSUMER",
+      "environment_hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "evidence_refs": [
+        "FX-CT-SEMANTIC-CASE-COMMON"
+      ],
+      "expires_at": null,
+      "hard_gate_result": "COMPATIBLE",
+      "producer_version": "1.0.0",
+      "scenario_scope": [
+        "declared-supported-behavior"
+      ],
+      "status": "VERIFIED",
+      "tested_at": "2026-07-12",
+      "validator_version": "sp0007-compat-validator-1"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "profiles": [
+    {
+      "adapter_version": "1.0",
+      "certification_status": "REGISTERED",
+      "contract_id": "CT-MODEL",
+      "contract_version": "1.0",
+      "core_capabilities": {
+        "streaming": true,
+        "structured_output": true,
+        "tool_request": true
+      },
+      "extensions": {
+        "provider_x.native_computer_use": false
+      },
+      "failure_domain_refs": [],
+      "limitations": [],
+      "provider_id": "reference::model",
+      "technology_id": "model_provider_seam"
+    },
+    {
+      "adapter_version": "1.0",
+      "certification_status": "REGISTERED",
+      "contract_id": "CT-TELEPHONY",
+      "contract_version": "1.0",
+      "core_capabilities": {
+        "call_status": true,
+        "place_call": true
+      },
+      "extensions": {},
+      "provider_id": "reference::telephony",
+      "technology_id": "telephony_seam"
+    }
+  ]
+}

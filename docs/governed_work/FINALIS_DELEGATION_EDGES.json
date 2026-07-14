@@ -1,0 +1,46 @@
+{
+  "delegation_edges": [
+    {
+      "accountable_owner_id": "owner-finance-lead",
+      "attenuation_proof_hash": "",
+      "budget_reservation_refs": [
+        "RES-1"
+      ],
+      "child_identity": "EI-drafter",
+      "child_lease_refs": [
+        "LEASE-drafter"
+      ],
+      "delegation_id": "DEL-1",
+      "parent_identity": "EI-root",
+      "parent_lease_refs": [
+        "LEASE-root"
+      ],
+      "status": "ACTIVE",
+      "subtask_scope": {
+        "draft_invoice": true
+      },
+      "work_order_id": "WO-0001"
+    },
+    {
+      "accountable_owner_id": "owner-finance-lead",
+      "attenuation_proof_hash": "",
+      "budget_reservation_refs": [
+        "RES-2"
+      ],
+      "child_identity": "EI-verifier",
+      "child_lease_refs": [
+        "LEASE-verifier"
+      ],
+      "delegation_id": "DEL-2",
+      "parent_identity": "EI-root",
+      "parent_lease_refs": [
+        "LEASE-root"
+      ],
+      "status": "ACTIVE",
+      "subtask_scope": {
+        "verify_outcome": true
+      },
+      "work_order_id": "WO-0001"
+    }
+  ]
+}

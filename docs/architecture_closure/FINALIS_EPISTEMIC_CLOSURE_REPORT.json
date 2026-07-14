@@ -1,0 +1,265 @@
+{
+  "states": {
+    "CL-SP0000-architecture-baseline-fixed": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0000-evidence-present": {
+      "closure_admissible": true,
+      "critical": false,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0001-architecture-conformance-checked": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0001-evidence-present": {
+      "closure_admissible": true,
+      "critical": false,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0002-evidence-present": {
+      "closure_admissible": true,
+      "critical": false,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0002-historical-epoch-interpretable": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0002-semantics-versioned": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0003-evidence-present": {
+      "closure_admissible": true,
+      "critical": false,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0003-program-admission-verified": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0004-evidence-present": {
+      "closure_admissible": true,
+      "critical": false,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0004-provider-replaceable": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0005-evidence-present": {
+      "closure_admissible": true,
+      "critical": false,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0005-safety-dominates-protected-effects": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0006-approval-context-bound": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0006-authority-conserved": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0006-evidence-present": {
+      "closure_admissible": true,
+      "critical": false,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0006-zero-lost-work": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0007-contract-evolution-directional": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0007-evidence-present": {
+      "closure_admissible": true,
+      "critical": false,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0007-historical-envelope-epoch-bound": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0008-contract-genome-sealed": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0008-contract-surfaces-inventoried": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0008-evidence-present": {
+      "closure_admissible": true,
+      "critical": false,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0009-evidence-present": {
+      "closure_admissible": true,
+      "critical": false,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0009-non-compensatory-gates": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CL-SP0009-release-proof-not-runtime-authority": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CT-architecture-identity": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CT-compatibility-identity": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CT-contract_inventory-identity": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CT-governed_work-identity": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CT-program-identity": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CT-release-genome-crosslink": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CT-release_assurance-identity": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CT-safety-identity": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CT-semantic-identity": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "CT-technology-identity": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-APPROVAL-CONTEXT-BOUND": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-AUTHORITY-CONSERVATION": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-CONTROL-LANGUAGE-INVARIANCE": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-DELEGATION-ATTENUATION": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-HISTORICAL-INTERPRETABILITY": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-LEARNING-PROMOTION-GATED": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-OUTCOME-EVIDENCE": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-PROOF-NOT-AUTHORITY": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-PROVIDER-ACCOUNT-SEPARATION": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-RELEASE-RUNTIME-SEPARATION": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-SAFETY-DOMINATOR": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-TENANT-ISOLATION": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    },
+    "INV-ZERO-LOST-WORK": {
+      "closure_admissible": true,
+      "critical": true,
+      "state": "SUPPORTED_ONLY"
+    }
+  },
+  "summary": {
+    "all": {
+      "BOTH": 0,
+      "NEITHER": 0,
+      "REFUTED_ONLY": 0,
+      "SUPPORTED_ONLY": 49
+    },
+    "critical": {
+      "BOTH": 0,
+      "NEITHER": 0,
+      "REFUTED_ONLY": 0,
+      "SUPPORTED_ONLY": 39
+    },
+    "critical_both": 0,
+    "critical_neither": 0
+  }
+}

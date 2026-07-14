@@ -1,0 +1,54 @@
+{
+  "scenarios": [
+    {
+      "parent_scenario": null,
+      "scenario_id": "BASELINE",
+      "status": "ACTIVE",
+      "variables": {
+        "deployment": "SINGLE_REGION",
+        "durable_runtime_strategy": "UNDECIDED",
+        "jurisdiction": "GLOBAL"
+      }
+    },
+    {
+      "parent_scenario": "BASELINE",
+      "scenario_id": "TEMPORAL_RUNTIME_OPTION",
+      "status": "VALIDATED",
+      "variables": {
+        "deployment": "SINGLE_REGION",
+        "durable_runtime_strategy": "TEMPORAL",
+        "jurisdiction": "GLOBAL"
+      }
+    },
+    {
+      "parent_scenario": "BASELINE",
+      "scenario_id": "CUSTOM_RUNTIME_OPTION",
+      "status": "VALIDATED",
+      "variables": {
+        "deployment": "SINGLE_REGION",
+        "durable_runtime_strategy": "CUSTOM",
+        "jurisdiction": "GLOBAL"
+      }
+    },
+    {
+      "parent_scenario": "BASELINE",
+      "scenario_id": "EU_ONLY_DEPLOYMENT",
+      "status": "VALIDATED",
+      "variables": {
+        "deployment": "SINGLE_REGION",
+        "durable_runtime_strategy": "UNDECIDED",
+        "jurisdiction": "EU"
+      }
+    },
+    {
+      "parent_scenario": "BASELINE",
+      "scenario_id": "MULTI_REGION_DEPLOYMENT",
+      "status": "VALIDATED",
+      "variables": {
+        "deployment": "MULTI_REGION",
+        "durable_runtime_strategy": "UNDECIDED",
+        "jurisdiction": "GLOBAL"
+      }
+    }
+  ]
+}

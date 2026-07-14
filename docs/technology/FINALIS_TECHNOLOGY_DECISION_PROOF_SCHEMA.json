@@ -1,0 +1,3 @@
+{"schema_id":"FINALIS-TECH-DECISION-PROOF","sp":"SP0004","envelope_version":"2.0.0","classification":"EVIDENCE_NOT_AUTHORITY",
+ "fields":["decision_id","candidate_set_hash","evidence_set_hash","hard_constraint_hash","pareto_analysis_hash","sensitivity_hash","scenario_analysis_hash","reversibility_hash","switching_cost_hash","lock_in_hash","exit_plan_hash","fitness_policy_hash","provider_contract_hash","review_policy_hash","validator_version","envelope_hash","classification"],
+ "note":"Deterministic over stable inputs; candidate/evidence/exit-plan/fitness-policy change changes the hash (AC-0004-142..145). Evidence, not authority (INV-0004-24)."}

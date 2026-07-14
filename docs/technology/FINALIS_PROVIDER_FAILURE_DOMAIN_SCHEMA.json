@@ -1,0 +1,3 @@
+{"schema_id":"FINALIS-FAILURE-DOMAIN","sp":"SP0004","required":["failure_domain_id","provider_id"],
+ "fields":["cloud","region","identity_dependency","gateway_dependency","upstream_model","upstream_service","control_plane","critical_oss_dependencies"],
+ "note":"Unknown attributes remain UNKNOWN; two providers are NOT independent when they share a critical upstream (INV-0004-11). Multiple providers != failure-domain diversity (§12.4)."}

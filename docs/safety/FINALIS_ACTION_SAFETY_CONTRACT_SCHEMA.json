@@ -1,0 +1,4 @@
+{"schema_id":"FINALIS-ACTION-SAFETY-CONTRACT","sp":"SP0005","required":["contract_id","action_type","irreversibility_class"],
+ "irreversibility_class":["REVERSIBLE","PARTIALLY_REVERSIBLE","IRREVERSIBLE","UNKNOWN"],
+ "fields":["preconditions","authority_requirements","safety_invariants","proof_obligations","target_constraints","data_constraints","trajectory_constraints","required_control_class","revalidation_triggers","post_effect_verification"],
+ "note":"An irreversible action must declare revalidation_triggers (AC-0005-025). Proof obligations must close before ordinary ALLOW (D-0005-11)."}

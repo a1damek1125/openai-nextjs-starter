@@ -1,0 +1,209 @@
+{
+  "labels": {
+    "action.action": {
+      "de": "Aktion",
+      "en": "Action",
+      "es": "Acción",
+      "pl": "Akcja"
+    },
+    "approval.approval": {
+      "de": "Genehmigung",
+      "en": "Approval",
+      "es": "Aprobación",
+      "pl": "Zatwierdzenie"
+    },
+    "artifact.artifact": {
+      "de": "Artefakt",
+      "en": "Artifact",
+      "es": "Artefacto",
+      "pl": "Artefakt"
+    },
+    "authority.authority": {
+      "de": "Autorität",
+      "en": "Authority",
+      "es": "Autoridad",
+      "pl": "Uprawnienie władcze"
+    },
+    "authority.permission": {
+      "de": "Berechtigung",
+      "en": "Permission",
+      "es": "Permiso",
+      "pl": "Pozwolenie"
+    },
+    "capability.architecture_capability": {
+      "de": "Architektur-Fähigkeit",
+      "en": "Architecture Capability",
+      "es": "Capacidad de arquitectura",
+      "pl": "Zdolność architektury"
+    },
+    "case.case": {
+      "de": "Fall",
+      "en": "Case",
+      "es": "Caso",
+      "pl": "Sprawa"
+    },
+    "effect.effect": {
+      "de": "Effekt",
+      "en": "Effect",
+      "es": "Efecto",
+      "pl": "Efekt"
+    },
+    "employee.agent": {
+      "de": "Agent",
+      "en": "Agent",
+      "es": "Agente",
+      "pl": "Agent"
+    },
+    "employee.employee": {
+      "de": "Mitarbeiter",
+      "en": "Employee",
+      "es": "Empleado",
+      "pl": "Pracownik"
+    },
+    "employee.worker": {
+      "de": "Fachkraft",
+      "en": "Worker",
+      "es": "Especialista",
+      "pl": "Specjalista"
+    },
+    "event.event": {
+      "de": "Ereignis",
+      "en": "Event",
+      "es": "Evento",
+      "pl": "Zdarzenie"
+    },
+    "evidence.claim": {
+      "de": "Behauptung",
+      "en": "Claim",
+      "es": "Afirmación",
+      "pl": "Twierdzenie"
+    },
+    "evidence.evidence": {
+      "de": "Nachweis",
+      "en": "Evidence",
+      "es": "Evidencia",
+      "pl": "Dowód"
+    },
+    "evidence.fact": {
+      "de": "Fakt",
+      "en": "Fact",
+      "es": "Hecho",
+      "pl": "Fakt"
+    },
+    "language.control_language": {
+      "de": "Steuersprache",
+      "en": "Control Language",
+      "es": "Idioma de control",
+      "pl": "Język sterowania"
+    },
+    "language.work_language": {
+      "de": "Arbeitssprache",
+      "en": "Work Language",
+      "es": "Idioma de trabajo",
+      "pl": "Język pracy"
+    },
+    "lifecycle.completion": {
+      "de": "Abschluss",
+      "en": "Completion",
+      "es": "Finalización",
+      "pl": "Ukończenie"
+    },
+    "memory.experience": {
+      "de": "Erfahrung",
+      "en": "Experience",
+      "es": "Experiencia",
+      "pl": "Doświadczenie"
+    },
+    "memory.memory": {
+      "de": "Gedächtnis",
+      "en": "Memory",
+      "es": "Memoria",
+      "pl": "Pamięć"
+    },
+    "outcome.business_outcome": {
+      "de": "Geschäftsergebnis",
+      "en": "Business Outcome",
+      "es": "Resultado de negocio",
+      "pl": "Wynik biznesowy"
+    },
+    "party.customer": {
+      "de": "Kunde",
+      "en": "Customer",
+      "es": "Cliente",
+      "pl": "Klient"
+    },
+    "party.party": {
+      "de": "Partei",
+      "en": "Party",
+      "es": "Parte",
+      "pl": "Strona"
+    },
+    "provider.provider": {
+      "de": "Anbieter",
+      "en": "Provider",
+      "es": "Proveedor",
+      "pl": "Dostawca"
+    },
+    "relationship.commitment": {
+      "de": "Verpflichtung",
+      "en": "Commitment",
+      "es": "Compromiso",
+      "pl": "Zobowiązanie"
+    },
+    "relationship.promise": {
+      "de": "Versprechen",
+      "en": "Promise",
+      "es": "Promesa",
+      "pl": "Obietnica"
+    },
+    "run.run": {
+      "de": "Lauf",
+      "en": "Run",
+      "es": "Ejecución",
+      "pl": "Przebieg"
+    },
+    "skill.skill": {
+      "de": "Fähigkeit",
+      "en": "Skill",
+      "es": "Habilidad",
+      "pl": "Umiejętność"
+    },
+    "tool.tool": {
+      "de": "Werkzeug",
+      "en": "Tool",
+      "es": "Herramienta",
+      "pl": "Narzędzie"
+    },
+    "work.blocker": {
+      "de": "Blocker",
+      "en": "Blocker",
+      "es": "Bloqueo",
+      "pl": "Blokada"
+    },
+    "work.owned_work": {
+      "de": "Eigene Arbeit",
+      "en": "Owned Work",
+      "es": "Trabajo propio",
+      "pl": "Praca własna"
+    },
+    "work.task": {
+      "de": "Aufgabe",
+      "en": "Task",
+      "es": "Tarea",
+      "pl": "Zadanie"
+    },
+    "work.wait_condition": {
+      "de": "Wartebedingung",
+      "en": "Wait Condition",
+      "es": "Condición de espera",
+      "pl": "Warunek oczekiwania"
+    }
+  },
+  "languages": [
+    "en",
+    "pl",
+    "de",
+    "es"
+  ],
+  "schema_version": "1.0.0"
+}

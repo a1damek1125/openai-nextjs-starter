@@ -1,0 +1,156 @@
+{
+  "work_orders": [
+    {
+      "accountable_owner_id": "owner-finance-lead",
+      "admitted_evidence_refs": [],
+      "allowed_scope": {
+        "channel": [
+          "email"
+        ],
+        "target": [
+          "invoice:INV-2026-03"
+        ]
+      },
+      "approval_topology": {
+        "required_class": "A2",
+        "topology_id": "AT-0001"
+      },
+      "budget_vector": {
+        "budget_id": "BV-0001",
+        "data_access_quota": {
+          "total": 100,
+          "unit": "records"
+        },
+        "deadline": "2026-03-31T23:59:59Z",
+        "external_effect_quota": {
+          "total": 1,
+          "unit": "sends"
+        },
+        "financial_cost": {
+          "total": 0,
+          "unit": "USD"
+        },
+        "model_cost": {
+          "total": 200000,
+          "unit": "tokens"
+        },
+        "resource_capacity": {
+          "total": 4,
+          "unit": "workers"
+        },
+        "risk_vector": {
+          "financial": "LOW",
+          "irreversibility": "MEDIUM",
+          "legal": "LOW",
+          "operational": "LOW",
+          "privacy": "MEDIUM",
+          "reputation": "LOW",
+          "rights": "LOW",
+          "security": "LOW"
+        },
+        "tool_call_quota": {
+          "total": 50,
+          "unit": "calls"
+        },
+        "work_order_id": "WO-0001"
+      },
+      "cancellation_policy": {},
+      "canonical_goal": {
+        "statement": "prepare and send the March invoice to ACME billing"
+      },
+      "capability_ceiling": {
+        "effect_classes": [
+          "READ",
+          "DRAFT",
+          "COMMUNICATION"
+        ],
+        "max_delegation_depth": 4,
+        "max_descendant_count": 64,
+        "max_direct_fanout": 8
+      },
+      "constraints": [
+        {
+          "constraint_id": "K-approval",
+          "rule": "requires owner approval before send"
+        }
+      ],
+      "dependency_envelope_ref": "docs/program/FINALIS_1000_PROGRAM_HYPERGRAPH.json",
+      "expires_at": "2026-03-31T23:59:59Z",
+      "forbidden_scope": {
+        "channel": [
+          "sms"
+        ],
+        "target": [
+          "ledger:general"
+        ]
+      },
+      "issued_at": "2026-03-01T09:00:00Z",
+      "outcome_contract": {
+        "acceptance_predicates": [
+          {
+            "artifact_ref": "invoice:INV-2026-03",
+            "predicate_id": "P1",
+            "predicate_type": "ARTIFACT_EXISTS"
+          },
+          {
+            "predicate_id": "P2",
+            "predicate_type": "EXTERNAL_ACKNOWLEDGMENT",
+            "source": "billing@acme.example"
+          },
+          {
+            "predicate_id": "P3",
+            "predicate_type": "NO_FORBIDDEN_EFFECT"
+          }
+        ],
+        "completion_rule": "ALL",
+        "defeater_policy": {
+          "reopen_on_new_evidence": true
+        },
+        "dispute_policy": {
+          "window_days": 30
+        },
+        "expected_outcomes": [
+          "invoice INV-2026-03 delivered and acknowledged"
+        ],
+        "forbidden_outcomes": [
+          "duplicate payment",
+          "cross-tenant disclosure"
+        ],
+        "outcome_contract_id": "OC-0001",
+        "required_artifacts": [
+          "invoice:INV-2026-03"
+        ],
+        "required_evidence": [
+          "delivery_receipt",
+          "ack_event"
+        ],
+        "verification_mode": "INDEPENDENT_QUALIFIED",
+        "verifier_requirements": {
+          "independent": true,
+          "not_the_acting_agent": true
+        },
+        "work_order_id": "WO-0001"
+      },
+      "privacy_purpose": "billing_operations",
+      "recurrence_contract_ref": null,
+      "recurrence_instance": null,
+      "requester_id": "user-ana",
+      "required_inputs": [],
+      "retention_rule": "retain_7y",
+      "risk_requirements": {
+        "non_compensatory": true
+      },
+      "safety_envelope_ref": "docs/safety/FINALIS_HAZARD_REGISTRY.json",
+      "semantic_epoch": "gw-epoch-1",
+      "semantic_work_hash": "bbb0d5eaca7118dd372b4ca6572a22e6305284bd925bff17d3fc7dfdc9a7e62f",
+      "source_reference": "slack://C123/T456",
+      "source_surface": "SLACK",
+      "status": "ADMITTED",
+      "technology_envelope_ref": "docs/technology/FINALIS_TECHNOLOGY_REGISTRY.json",
+      "tenant_id": "tenant-acme",
+      "work_instance_hash": "8192b373421abb53e15493542bf9bf8f180da96cd390f66aeb36df30c197f1c0",
+      "work_order_id": "WO-0001",
+      "work_version": 1
+    }
+  ]
+}

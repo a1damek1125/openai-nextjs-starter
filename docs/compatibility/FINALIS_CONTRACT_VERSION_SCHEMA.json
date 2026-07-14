@@ -1,0 +1,48 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "behavior_contract": {
+      "type": "object"
+    },
+    "content_hash": {
+      "type": "string"
+    },
+    "contract_id": {
+      "type": "string"
+    },
+    "immutable": {
+      "type": "boolean"
+    },
+    "proof_contract": {
+      "type": "object"
+    },
+    "released_at": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "object"
+    },
+    "security_contract": {
+      "type": "object"
+    },
+    "semantic_epoch": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "supersedes": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "contract_id",
+    "version",
+    "status"
+  ],
+  "schema_id": "ContractVersion",
+  "type": "object"
+}

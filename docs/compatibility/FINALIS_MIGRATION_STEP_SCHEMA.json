@@ -1,0 +1,41 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "checkpoint_policy": {
+      "type": "object"
+    },
+    "failure_policy": {
+      "type": "object"
+    },
+    "idempotency_key": {
+      "type": "string"
+    },
+    "operation": {
+      "type": "object"
+    },
+    "phase": {
+      "type": "string"
+    },
+    "postconditions": {
+      "type": "array"
+    },
+    "preconditions": {
+      "type": "array"
+    },
+    "rollback_boundary_effect": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "step_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "step_id",
+    "phase"
+  ],
+  "schema_id": "MigrationStep",
+  "type": "object"
+}

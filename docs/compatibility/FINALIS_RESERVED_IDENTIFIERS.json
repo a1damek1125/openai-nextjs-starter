@@ -1,0 +1,24 @@
+{
+  "reserved_identifiers": {
+    "reserved_enum_codes": {
+      "CT-HTTP-CASES": [
+        "LEGACY_HOLD"
+      ]
+    },
+    "reserved_event_ids": [
+      "run.cancelled.v0"
+    ],
+    "reserved_field_names": {
+      "CT-EVENT-RUN-LEDGER": [
+        "legacy_run_key"
+      ]
+    },
+    "reserved_field_numbers": {
+      "CT-EVENT-RUN-LEDGER": [
+        90,
+        91,
+        92
+      ]
+    }
+  }
+}

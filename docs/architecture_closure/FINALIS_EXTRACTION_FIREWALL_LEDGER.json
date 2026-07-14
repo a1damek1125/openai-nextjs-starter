@@ -1,0 +1,1316 @@
+{
+  "firewall_root": "0e102d687c7b5d7473705b908727b1e1978119f8158a00e7fe8f36b0be36428c",
+  "hard_truth_nodes": [
+    "CTL:CTL-APPROVAL-BINDING",
+    "CTL:CTL-AUTH-GATE",
+    "CTL:CTL-RBAC",
+    "CTL:CTL-RELEASE-PROOF-BOUNDARY",
+    "CTL:CTL-SAFETY-ADMISSION",
+    "CTL:CTL-TENANT-SCOPE",
+    "IFACE:SP0000",
+    "IFACE:SP0001",
+    "IFACE:SP0002",
+    "IFACE:SP0003",
+    "IFACE:SP0004",
+    "IFACE:SP0005",
+    "IFACE:SP0006",
+    "IFACE:SP0007",
+    "IFACE:SP0008",
+    "IFACE:SP0009",
+    "INV:INV-APPROVAL-CONTEXT-BOUND",
+    "INV:INV-AUTHORITY-CONSERVATION",
+    "INV:INV-CONTROL-LANGUAGE-INVARIANCE",
+    "INV:INV-DELEGATION-ATTENUATION",
+    "INV:INV-HISTORICAL-INTERPRETABILITY",
+    "INV:INV-LEARNING-PROMOTION-GATED",
+    "INV:INV-OUTCOME-EVIDENCE",
+    "INV:INV-PROOF-NOT-AUTHORITY",
+    "INV:INV-PROVIDER-ACCOUNT-SEPARATION",
+    "INV:INV-RELEASE-RUNTIME-SEPARATION",
+    "INV:INV-SAFETY-DOMINATOR",
+    "INV:INV-TENANT-ISOLATION",
+    "INV:INV-ZERO-LOST-WORK",
+    "SCALAR:migration_frontier",
+    "SCALAR:twin_root:contract_genome",
+    "SCALAR:twin_root:contract_inventory",
+    "SCALAR:twin_root:release_assurance",
+    "VIEW:AD-01",
+    "VIEW:AD-02",
+    "VIEW:AD-03",
+    "VIEW:AD-04",
+    "VIEW:AD-05",
+    "VIEW:AD-06",
+    "VIEW:AD-07",
+    "VIEW:AD-08",
+    "VIEW:AD-09",
+    "VIEW:AD-10",
+    "VIEW:AD-11",
+    "VIEW:AD-12",
+    "VIEW:AD-13",
+    "VIEW:AD-14",
+    "VIEW:AD-15",
+    "VIEW:AD-16",
+    "VIEW:AD-17",
+    "VIEW:AD-18",
+    "VIEW:AD-19",
+    "VIEW:AD-20",
+    "VIEW:AD-21",
+    "VIEW:AD-22",
+    "VIEW:AD-23",
+    "VIEW:AD-24"
+  ],
+  "nodes": [
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "IFACE:SP0000",
+      "resolved_count": 2,
+      "span_count": 2,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "docs/roadmap/ROADMAP_LOCK_1_FINALIS_AI_EMPLOYEE_OS.md",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-c8d911b9409c",
+          "symbol": null
+        },
+        {
+          "kind": "file",
+          "path": "docs/architecture",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-de91cdef51e4",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "IFACE:SP0001",
+      "resolved_count": 2,
+      "span_count": 2,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/architecture",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-9d11eb2efb8c",
+          "symbol": null
+        },
+        {
+          "kind": "file",
+          "path": "docs/architecture",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-de91cdef51e4",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "IFACE:SP0002",
+      "resolved_count": 2,
+      "span_count": 2,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/semantics",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-0b15a52ac062",
+          "symbol": null
+        },
+        {
+          "kind": "file",
+          "path": "docs/semantics",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-537d829ec97d",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "IFACE:SP0003",
+      "resolved_count": 2,
+      "span_count": 2,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/program_graph",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-93274c59aa71",
+          "symbol": null
+        },
+        {
+          "kind": "file",
+          "path": "docs/program/FINALIS_1000_PROGRAM_REGISTRY.json",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-b15695ac39a6",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "IFACE:SP0004",
+      "resolved_count": 2,
+      "span_count": 2,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/technology",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-fd030f16f48b",
+          "symbol": null
+        },
+        {
+          "kind": "file",
+          "path": "docs/technology",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-fef1283cfca6",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "IFACE:SP0005",
+      "resolved_count": 2,
+      "span_count": 2,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/safety",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-bd9449bf2af8",
+          "symbol": null
+        },
+        {
+          "kind": "file",
+          "path": "docs/safety",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-e7e5002cc9a2",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "IFACE:SP0006",
+      "resolved_count": 2,
+      "span_count": 2,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/governed_work",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-57a3f1acccd4",
+          "symbol": null
+        },
+        {
+          "kind": "file",
+          "path": "docs/governed_work",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-b3e97cda7d43",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "IFACE:SP0007",
+      "resolved_count": 2,
+      "span_count": 2,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/compatibility",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-537b5442aa45",
+          "symbol": null
+        },
+        {
+          "kind": "file",
+          "path": "docs/compatibility",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-8c0da173d686",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "IFACE:SP0008",
+      "resolved_count": 2,
+      "span_count": 2,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/contracts_inventory",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-9ec2d9e8f207",
+          "symbol": null
+        },
+        {
+          "kind": "file",
+          "path": "docs/contracts_inventory/FINALIS_CONTRACT_GENOME.json",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-463273fb0483",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "IFACE:SP0009",
+      "resolved_count": 2,
+      "span_count": 2,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/release",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-ba1053129213",
+          "symbol": null
+        },
+        {
+          "kind": "file",
+          "path": "docs/release/FINALIS_RELEASE_TWIN.json",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-91a70c950c41",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-01",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "docs/roadmap/ROADMAP_LOCK_1_FINALIS_AI_EMPLOYEE_OS.md",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-c8d911b9409c",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-02",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "docs/architecture",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-de91cdef51e4",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-03",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "docs/architecture/FINALIS_1000_MASTER_ARCHITECTURE_LOCK.md",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-298fb9bf1454",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-04",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "docs/architecture",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-de91cdef51e4",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-05",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "finalis/portal/app.py",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-242d06388544",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-06",
+      "resolved_count": 2,
+      "span_count": 2,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/semantics",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-0b15a52ac062",
+          "symbol": null
+        },
+        {
+          "kind": "file",
+          "path": "docs/semantics",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-537d829ec97d",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-07",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "finalis/portal/db.py",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-ba9438ccbf6e",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-08",
+      "resolved_count": 2,
+      "span_count": 2,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/program_graph",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-93274c59aa71",
+          "symbol": null
+        },
+        {
+          "kind": "file",
+          "path": "docs/program/FINALIS_1000_PROGRAM_REGISTRY.json",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-b15695ac39a6",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-09",
+      "resolved_count": 2,
+      "span_count": 2,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/technology",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-fd030f16f48b",
+          "symbol": null
+        },
+        {
+          "kind": "file",
+          "path": "docs/technology",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-fef1283cfca6",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-10",
+      "resolved_count": 2,
+      "span_count": 2,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/governed_work",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-57a3f1acccd4",
+          "symbol": null
+        },
+        {
+          "kind": "file",
+          "path": "finalis/portal/app.py",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-242d06388544",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-11",
+      "resolved_count": 2,
+      "span_count": 2,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "finalis/portal/app.py",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-242d06388544",
+          "symbol": null
+        },
+        {
+          "kind": "file",
+          "path": "finalis/portal/db.py",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-ba9438ccbf6e",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-12",
+      "resolved_count": 2,
+      "span_count": 2,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/safety",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-bd9449bf2af8",
+          "symbol": null
+        },
+        {
+          "kind": "file",
+          "path": "docs/safety",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-e7e5002cc9a2",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-13",
+      "resolved_count": 2,
+      "span_count": 2,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/governed_work",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-57a3f1acccd4",
+          "symbol": null
+        },
+        {
+          "kind": "file",
+          "path": "docs/governed_work",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-b3e97cda7d43",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-14",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/governed_work",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-57a3f1acccd4",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-15",
+      "resolved_count": 2,
+      "span_count": 2,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/compatibility",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-537b5442aa45",
+          "symbol": null
+        },
+        {
+          "kind": "file",
+          "path": "docs/compatibility",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-8c0da173d686",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-16",
+      "resolved_count": 2,
+      "span_count": 2,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/contracts_inventory",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-9ec2d9e8f207",
+          "symbol": null
+        },
+        {
+          "kind": "file",
+          "path": "docs/contracts_inventory",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-974ab7d62bac",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-17",
+      "resolved_count": 2,
+      "span_count": 2,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/release",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-ba1053129213",
+          "symbol": null
+        },
+        {
+          "kind": "file",
+          "path": "docs/release",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-44447cedca2e",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-18",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "finalis",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-469f3ef04f84",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-19",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/governed_work",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-57a3f1acccd4",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-20",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/semantics",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-0b15a52ac062",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-21",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "finalis",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-469f3ef04f84",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-22",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "finalis/audit.py",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-a592bf90da8f",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-23",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "docs/architecture",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-de91cdef51e4",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": false,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "VIEW:AD-24",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "docs/audits",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-4e9a0551c455",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "INV:INV-APPROVAL-CONTEXT-BOUND",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/governed_work",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-57a3f1acccd4",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "INV:INV-AUTHORITY-CONSERVATION",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "finalis/portal/app.py",
+          "reason": "SYMBOL_PRESENT",
+          "resolved": true,
+          "span_id": "SPAN-c2ed6ee5753a",
+          "symbol": "require_role"
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "INV:INV-CONTROL-LANGUAGE-INVARIANCE",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/semantics",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-0b15a52ac062",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "INV:INV-DELEGATION-ATTENUATION",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/governed_work",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-57a3f1acccd4",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "INV:INV-HISTORICAL-INTERPRETABILITY",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/compatibility",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-537b5442aa45",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "INV:INV-LEARNING-PROMOTION-GATED",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/governed_work",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-57a3f1acccd4",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "INV:INV-OUTCOME-EVIDENCE",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/governed_work",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-57a3f1acccd4",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "INV:INV-PROOF-NOT-AUTHORITY",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/release/envelope.py",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-fa4238fcbedb",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "INV:INV-PROVIDER-ACCOUNT-SEPARATION",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/technology",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-fd030f16f48b",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "INV:INV-RELEASE-RUNTIME-SEPARATION",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/release",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-ba1053129213",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "INV:INV-SAFETY-DOMINATOR",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/safety",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-bd9449bf2af8",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "INV:INV-TENANT-ISOLATION",
+      "resolved_count": 2,
+      "span_count": 2,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "finalis/portal/app.py",
+          "reason": "SYMBOL_PRESENT",
+          "resolved": true,
+          "span_id": "SPAN-14336a4cf2d9",
+          "symbol": "require_permission"
+        },
+        {
+          "kind": "file",
+          "path": "finalis/portal/db.py",
+          "reason": "SYMBOL_PRESENT",
+          "resolved": true,
+          "span_id": "SPAN-029a6f7efe81",
+          "symbol": "tenant_id"
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "INV:INV-ZERO-LOST-WORK",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/governed_work",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-57a3f1acccd4",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "CTL:CTL-APPROVAL-BINDING",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/governed_work/approval.py",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-d7798a2aa43b",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "CTL:CTL-AUTH-GATE",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "finalis/portal/app.py",
+          "reason": "SYMBOL_PRESENT",
+          "resolved": true,
+          "span_id": "SPAN-1e583d0841bc",
+          "symbol": "current_user"
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "CTL:CTL-RBAC",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "finalis/portal/app.py",
+          "reason": "SYMBOL_PRESENT",
+          "resolved": true,
+          "span_id": "SPAN-14336a4cf2d9",
+          "symbol": "require_permission"
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "CTL:CTL-RELEASE-PROOF-BOUNDARY",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/release/envelope.py",
+          "reason": "SYMBOL_PRESENT",
+          "resolved": true,
+          "span_id": "SPAN-378472bf3110",
+          "symbol": "non_authoritative"
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "CTL:CTL-SAFETY-ADMISSION",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "tools/safety/admission.py",
+          "reason": "SYMBOL_PRESENT",
+          "resolved": true,
+          "span_id": "SPAN-0696909a1082",
+          "symbol": "evaluate_action"
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "CTL:CTL-TENANT-SCOPE",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "finalis/portal/db.py",
+          "reason": "SYMBOL_PRESENT",
+          "resolved": true,
+          "span_id": "SPAN-029a6f7efe81",
+          "symbol": "tenant_id"
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "SCALAR:migration_frontier",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "finalis/portal/db.py",
+          "reason": "SYMBOL_PRESENT",
+          "resolved": true,
+          "span_id": "SPAN-37aaca61044c",
+          "symbol": "MIGRATIONS"
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "SCALAR:twin_root:contract_genome",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "docs/contracts_inventory/FINALIS_CONTRACT_GENOME.json",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-463273fb0483",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "SCALAR:twin_root:contract_inventory",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "docs/contracts_inventory/FINALIS_CONTRACT_INVENTORY.json",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-f11a2054755c",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "critical": true,
+      "extracted": false,
+      "grounding": "GROUNDED",
+      "hard_truth": true,
+      "node_id": "SCALAR:twin_root:release_assurance",
+      "resolved_count": 1,
+      "span_count": 1,
+      "spans": [
+        {
+          "kind": "file",
+          "path": "docs/release/FINALIS_RELEASE_TWIN.json",
+          "reason": "EXISTS",
+          "resolved": true,
+          "span_id": "SPAN-91a70c950c41",
+          "symbol": null
+        }
+      ]
+    }
+  ],
+  "quarantined_nodes": []
+}

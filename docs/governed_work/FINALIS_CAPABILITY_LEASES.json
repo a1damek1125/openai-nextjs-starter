@@ -1,0 +1,175 @@
+{
+  "leases": [
+    {
+      "allowed_operations": [
+        "read",
+        "draft",
+        "send"
+      ],
+      "approval_floor": "A2",
+      "attenuation_delta": {},
+      "cost_ceiling": {
+        "external_effect_quota": 1,
+        "financial_cost": 0
+      },
+      "current_uses": 0,
+      "data_classes": [
+        "invoice",
+        "contact"
+      ],
+      "effect_classes": [
+        "READ",
+        "DRAFT",
+        "COMMUNICATION"
+      ],
+      "expires_at": "2026-03-31T23:59:59Z",
+      "forbidden_operations": [
+        "delete",
+        "pay"
+      ],
+      "integrity_hash": "",
+      "issued_at": "2026-03-01T09:00:00Z",
+      "issuer_identity": "owner-finance-lead",
+      "lease_id": "LEASE-root",
+      "maximum_uses": 10,
+      "not_before": "2026-03-01T09:00:00Z",
+      "parent_lease_id": null,
+      "purpose": "billing_operations",
+      "revocation_state": "ACTIVE",
+      "risk_ceiling": {
+        "financial": "LOW",
+        "irreversibility": "MEDIUM"
+      },
+      "root_authority_ref": "WO-0001-authority",
+      "subject_identity": "EI-root",
+      "targets": [
+        "invoice:INV-2026-03",
+        "email:billing@acme.example"
+      ],
+      "tenant_id": "tenant-acme",
+      "work_order_id": "WO-0001"
+    },
+    {
+      "allowed_operations": [
+        "read",
+        "draft"
+      ],
+      "approval_floor": "A2",
+      "attenuation_delta": {
+        "narrowed_ceilings": [],
+        "narrowed_data": [
+          "contact"
+        ],
+        "narrowed_effects": [
+          "COMMUNICATION"
+        ],
+        "narrowed_expiry": null,
+        "narrowed_targets": [
+          "email:billing@acme.example"
+        ],
+        "narrowed_uses": 4,
+        "removed_operations": [
+          "send"
+        ]
+      },
+      "cost_ceiling": {
+        "external_effect_quota": 0,
+        "financial_cost": 0
+      },
+      "current_uses": 0,
+      "data_classes": [
+        "invoice"
+      ],
+      "effect_classes": [
+        "READ",
+        "DRAFT"
+      ],
+      "expires_at": "2026-03-31T23:59:59Z",
+      "forbidden_operations": [
+        "delete",
+        "pay"
+      ],
+      "integrity_hash": "2a5b5c031fc46ba48bd9a41d96537520ef7b9dd9b5407503adbbf383fadd109f",
+      "issued_at": "2026-03-01T09:00:00Z",
+      "issuer_identity": "EI-root",
+      "lease_id": "LEASE-drafter",
+      "maximum_uses": 4,
+      "not_before": "2026-03-01T09:00:00Z",
+      "parent_lease_id": "LEASE-root",
+      "purpose": "billing_operations",
+      "revocation_state": "ACTIVE",
+      "risk_ceiling": {
+        "financial": "LOW",
+        "irreversibility": "LOW"
+      },
+      "root_authority_ref": "WO-0001-authority",
+      "subject_identity": "EI-drafter",
+      "targets": [
+        "invoice:INV-2026-03"
+      ],
+      "tenant_id": "tenant-acme",
+      "work_order_id": "WO-0001"
+    },
+    {
+      "allowed_operations": [
+        "read"
+      ],
+      "approval_floor": "A0",
+      "attenuation_delta": {
+        "narrowed_ceilings": [],
+        "narrowed_data": [
+          "contact"
+        ],
+        "narrowed_effects": [
+          "COMMUNICATION",
+          "DRAFT"
+        ],
+        "narrowed_expiry": null,
+        "narrowed_targets": [
+          "email:billing@acme.example"
+        ],
+        "narrowed_uses": 3,
+        "removed_operations": [
+          "draft",
+          "send"
+        ]
+      },
+      "cost_ceiling": {
+        "external_effect_quota": 0,
+        "financial_cost": 0
+      },
+      "current_uses": 0,
+      "data_classes": [
+        "invoice"
+      ],
+      "effect_classes": [
+        "READ"
+      ],
+      "expires_at": "2026-03-31T23:59:59Z",
+      "forbidden_operations": [
+        "delete",
+        "pay"
+      ],
+      "integrity_hash": "89c02cdba8f01fedee44d10395f7a76ccde2158b903a6dd1f7bcd817eda5b77f",
+      "issued_at": "2026-03-01T09:00:00Z",
+      "issuer_identity": "EI-root",
+      "lease_id": "LEASE-verifier",
+      "maximum_uses": 3,
+      "not_before": "2026-03-01T09:00:00Z",
+      "parent_lease_id": "LEASE-root",
+      "purpose": "billing_operations",
+      "revocation_state": "ACTIVE",
+      "risk_ceiling": {
+        "financial": "NONE",
+        "irreversibility": "NONE"
+      },
+      "root_authority_ref": "WO-0001-authority",
+      "subject_identity": "EI-verifier",
+      "targets": [
+        "invoice:INV-2026-03"
+      ],
+      "tenant_id": "tenant-acme",
+      "work_order_id": "WO-0001"
+    }
+  ]
+}

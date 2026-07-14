@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://finalis.local/schemas/FINALIS_1000_ARCHITECTURE_TWIN.json",
+  "title": "Finalis 1000 Architecture Digital Twin (declared)",
+  "type": "object",
+  "required": ["schema_version", "program", "capabilities", "dependency_rules",
+    "migration_integrity", "effect_gates", "waiver_policy", "scanner_adapters"],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": {"type": "string", "const": "2.0.0"},
+    "program": {"type": "string", "const": "FINALIS_1000"},
+    "sp": {"type": "string"},
+    "twin_kind": {"type": "string", "enum": ["DECLARED", "OBSERVED"]},
+    "baseline_head": {"type": "string"},
+    "capabilities": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/capability"}
+    },
+    "dependency_rules": {"type": "array", "items": {"type": "object"}},
+    "protected_contracts": {"type": "array"},
+    "spec_nodes": {"type": "array"},
+    "acyclic_required": {"type": "array"},
+    "dependency_baseline": {
+      "type": "object",
+      "properties": {
+        "edges": {"type": "array", "items": {"type": "array", "items": {"type": "string"}, "minItems": 2, "maxItems": 2}},
+        "cyclic_sccs": {"type": "array", "items": {"type": "array", "items": {"type": "string"}}}
+      }
+    },
+    "route_baseline": {"type": "array", "items": {"type": "string"}},
+    "table_baseline": {"type": "array", "items": {"type": "string"}},
+    "effect_gates": {
+      "type": "object",
+      "required": ["real_external_effects_allowed"],
+      "properties": {
+        "real_external_effects_allowed": {"type": "boolean"},
+        "baseline_effect_observations": {"type": "array"}
+      }
+    },
+    "migration_integrity": {
+      "type": "object",
+      "required": ["policy", "baseline_max_version", "baseline_digests"],
+      "properties": {
+        "policy": {"type": "string", "const": "APPEND_ONLY"},
+        "baseline_max_version": {"type": "integer", "minimum": 1},
+        "baseline_digests": {
+          "type": "array",
+          "items": {"type": "array", "items": {"type": "string"}, "minItems": 2, "maxItems": 2}
+        }
+      }
+    },
+    "waiver_policy": {
+      "type": "object",
+      "required": ["waivers_file", "max_lifetime_days"],
+      "properties": {
+        "waivers_file": {"type": "string"},
+        "max_lifetime_days": {"type": "integer", "minimum": 1, "maximum": 365}
+      }
+    },
+    "scanner_adapters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["language", "adapter", "status"],
+        "properties": {
+          "language": {"type": "string"},
+          "adapter": {"type": "string"},
+          "status": {"type": "string", "enum": ["ACTIVE", "FUTURE_BOUNDARY"]}
+        }
+      }
+    },
+    "shared_module_owners": {"type": "object"}
+  },
+  "$defs": {
+    "capability": {
+      "type": "object",
+      "required": ["capability_id", "canonical_owner", "canonical_paths",
+        "classification", "replacement_policy"],
+      "additionalProperties": true,
+      "properties": {
+        "capability_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "display_name": {"type": "string"},
+        "canonical_owner": {"type": "string"},
+        "classification": {"type": "string"},
+        "purpose": {"type": "string"},
+        "canonical_paths": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "extension_points": {"type": "array", "items": {"type": "string"}},
+        "route_namespaces": {"type": "array", "items": {"type": "string"}},
+        "table_namespaces": {"type": "array", "items": {"type": "string"}},
+        "permission_namespaces": {"type": "array", "items": {"type": "string"}},
+        "spec_anchors": {"type": "array", "items": {"type": "string"}},
+        "test_anchors": {"type": "array", "items": {"type": "string"}},
+        "allowed_dependencies": {"type": "array", "items": {"type": "string"}},
+        "forbidden_dependencies": {"type": "array", "items": {"type": "string"}},
+        "replacement_policy": {"type": "string", "enum": ["DO_NOT_REBUILD", "DECLARED_REPLACEMENT_ONLY", "EXTENSIBLE"]}
+      }
+    }
+  }
+}

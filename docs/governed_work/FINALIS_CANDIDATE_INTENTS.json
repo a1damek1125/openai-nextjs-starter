@@ -1,0 +1,31 @@
+{
+  "candidate_intents": [
+    {
+      "candidate_intent_id": "CI-0001",
+      "interpretation_source": "LLM",
+      "proposed_constraints": [
+        {
+          "constraint_id": "K-approval",
+          "rule": "requires owner approval before send"
+        }
+      ],
+      "proposed_goal": "prepare and send the March invoice to ACME billing",
+      "proposed_outcomes": [
+        "invoice sent and acknowledged"
+      ],
+      "proposed_scope": {
+        "channel": [
+          "email"
+        ],
+        "target": [
+          "invoice:INV-2026-03"
+        ]
+      },
+      "requester_id": "user-ana",
+      "source_reference": "slack://C123/T456",
+      "source_surface": "SLACK",
+      "status": "UNTRUSTED_PROPOSAL",
+      "tenant_id": "tenant-acme"
+    }
+  ]
+}

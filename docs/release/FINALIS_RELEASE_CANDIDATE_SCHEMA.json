@@ -1,0 +1,33 @@
+{
+  "genome_fields": [
+    "source_commit",
+    "release_slice_ref",
+    "contract_genome_root",
+    "dependency_lock_hash",
+    "ci_workflow_hash",
+    "toolchain_hash",
+    "release_policy_epoch",
+    "build_input_hash",
+    "ai_release_closure_hash"
+  ],
+  "note": "a material change to any genome field creates a NEW candidate (D-0009-02)",
+  "schema_id": "ReleaseCandidate",
+  "states": [
+    "DRAFT",
+    "CLASSIFIED",
+    "IMPACT_ANALYZED",
+    "SLICE_CLOSED",
+    "GATES_PLANNED",
+    "VERIFYING",
+    "QUALIFIED",
+    "ARTIFACT_CLOSURE_SEALED",
+    "READY_FOR_LATER_PROMOTION",
+    "BLOCKED",
+    "PAUSED",
+    "CANCELLED",
+    "SUPERSEDED",
+    "INVALIDATED",
+    "SUSPENDED_BY_DEFEATER",
+    "REQUALIFICATION_REQUIRED"
+  ]
+}

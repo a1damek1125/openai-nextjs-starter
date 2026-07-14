@@ -1,0 +1,48 @@
+# Finalis Voice Engine — Production Readiness Matrix
+
+> Snapshot of branch `claude/finalis-voice-engine-open-core`. Evidence base: `finalis/voice/`
+> scaffold, 26 passing voice tests in `tests/test_voice_engine.py` (128 repo-wide), fixtures
+> in `tests/voice_fixtures.py`. Reading rules: "Implemented and tested" always means **at
+> transcript level with mocked audio/ASR/TTS** unless stated otherwise; "E2E covered?" means
+> covered by the transcript E2E suite — **no audio-path E2E exists anywhere**. "Metrics
+> defined?" means defined in the harness doc, not measured. VS-numbers reference
+> `implementation-backlog.md`; controls reference `enterprise-controls.md`.
+
+| Feature | Status | Code exists? | Tests exist? | E2E covered? | Metrics defined? | Enterprise ready? | Risks | Missing work | Priority | Acceptance criteria |
+|---|---|---|---|---|---|---|---|---|---|---|
+| WebRTC session | Designed (SmallWebRTC → LiveKit chosen) | No | No | No | Yes (harness §2 latency rows) | No | Turn-detection quality; async refactor of `run_call` | VS1 entire | P0 | Browser call completes S1 live; `VoiceMetric.measured=True` with real latencies; barge-in physically stops audio |
+| SIP/PBX readiness | Designed (livekit/sip) | No | No | No | Yes (telephone-band cohort) | No | Trunk provisioning lead time; dual-transport drift | VS5 entire | P1 | Inbound PSTN call completes S1; tenant-number routing proven; 8 kHz cohort passes gates |
+| ASR router | Implemented and tested — **mock engines** | Yes (`routers.py` `ASRRouter`) | Yes (failover on crash + low confidence, language normalization) | Yes (drives all 12 scenarios) | Yes (WER, ASR latency — unmeasured) | Partial (fallback policy is the tested part of cost control) | Real-engine confidence/`uncertain_terms` availability | VS2: real Parakeet-v3 + faster-whisper behind same interface | P0 | PL WER gate on BIGOS; failover reproduced with fault injection on real engines |
+| TTS router | Implemented and tested — **mock engines** | Yes (`routers.py` `TTSRouter`) | Yes (language-aware pick, fallback, interruption stop) | Yes | Yes (TTS latency, MOS — unmeasured) | Partial (same fallback caveat) | ZONOS2 license (hard gate); mid-chunk stop granularity | VS3: real ZONOS2/Piper, MOS bake-off, license check | P0 | First frame ≤200 ms P50; physical stop ≤200 ms; license confirmed |
+| Dialogue Manager | Implemented and tested — **scripted policy**; LLM = designed | Yes (`engine.py` `run_call`, QUESTION_ORDER policy) | Yes (one-question-at-a-time, no-price-without-data, hard stops) | Yes | Yes (intent acc, recovery) | No | LLM replacement is the largest behavioral risk in the program | VS4: vLLM + Qwen3-30B-A3B, playbook prompting, rule extractor kept as validator | P1 | All 12 scenarios pass with LLM policy under same assertions; first token in 800 ms budget |
+| Understanding Extractor | Implemented and tested — **rule-based**; LLM upgrade designed | Yes (`extractor.py`) | Yes (never-invent, uncertainty ceiling, last-correction-wins) | Yes | Yes (slot F1 ≥0.85) | No | Rules overfit the 12 authored fixtures — accuracy numbers not yet meaningful | Fixture growth (harness §5); VS4 LLM + validator layer | P1 | Slot F1 ≥0.85 on held-out expanded set; S11 uncertain-contract holds on real ASR |
+| Promise detection | Implemented and tested | Yes (`extractor.py` PROMISE/DUE patterns → `Promise` rows + follow-up task) | Yes (S4: promise + task + case wiring + audit) | Yes | Yes (promise F1 ≥0.85) | No | Pattern coverage beyond "photos/call back/confirm" is thin | Pattern table → playbook data; LLM extraction with rule validation | P2 | F1 ≥0.85 held-out; every promise carries `source_utterance_ids` |
+| Missing info detection | Implemented and tested | Yes (`extractor.py` `missing_items()`; uncertain ≠ known) | Yes (S1, S5, S11, S12) | Yes | Yes (recall ≥0.9) | No | REQUIRED_FIELDS is HVAC-hard-coded | Playbook-driven required-fields per case type | P2 | Recall ≥0.9; `blocks_quote` weighting drives NBA correctly |
+| Human handoff | Implemented and tested — **4 trigger classes**; low-ASR-confidence-on-critical-data = partial (uncertain-status exists, handoff rule doesn't) | Yes (`extractor.py` HANDOFF_PATTERNS; `engine.py` `_handoff`) | Yes (S6 explicit, S7 anger; legal/medical patterns present) | Yes | Yes (precision ≥0.9 / recall ≥0.95) | No | Keyword anger detection is brittle; 3 designed classes absent (θ_escalate, safety, low-ASR-conf) | Sentiment/escalation scoring; safety scripts; low-confidence handoff rule | P1 | 7-class protocol (harness §8) green; explicit-request recall 100% |
+| Case Graph update | Implemented and tested | Yes (`engine.py` `_end_session`: case create, missing items, promises, NBA + due) | Yes (S1 case wiring, S10 returning-client link — no duplicate case) | Yes | Yes (task creation acc) | No | In-memory only — no persistence/transactions | VS7 persistence + RLS | P1 | Voice-created case survives restart; no duplicate cases for returning callers |
+| Audit events | Implemented and tested — **hash chain** | Yes (`finalis/audit.py`; every scenario asserts `verify_chain()`) | Yes (event presence per scenario + chain integrity every run) | Yes | Yes | Partial (strongest control in the scaffold; needs durable store) | Chain is per-process, not persisted | Durable append-only store; `GET /audit-events/verify` | P1 | Chain verifiable across restarts; every voice decision event present |
+| Evaluation Harness | Stage 1 implemented (**= the test suite**); Stages 2–4 designed | Yes (tests + fixtures ARE the harness v0) | Yes (26 voice tests) | Yes (Stage 1 by definition) | Yes (full table, harness §2) | No | Stage-1 accuracy is 100%-by-construction on authored fixtures | VS6: Stage 2 (synthetic audio), Stage 3 (consented recordings), fixture growth | P0 | Stage-2 nightly green; first honest accuracy stats from held-out set |
+| Consent handling | Scaffolded + tested **flag**; full flow designed | Yes (`recording_allowed`, `consent_asked`; audit-logged) | Yes (no consent → `recording_allowed=False`, `audio_uri=None`) | Yes (flag path) | n/a | No (flow, revocation, jurisdiction scripts absent) | Jurisdiction variance; revocation purge unbuilt | VS6 consent flows (controls §1) | P0 (blocks any recording) | Controls §1 criteria: fail-closed, revocation ≤1 utterance, evidence-linked consent state |
+| PII redaction | Designed | No | No | No | n/a | No | Long false-negative tail; log sinks multiply | VS6 redaction filter + canary tests (controls §2) | P0 (blocks production logging) | Zero transcript/PII strings in captured logs of a full call; canary fixture proves filter |
+| Tenant isolation | Scaffolded (mandatory `tenant_id`); RLS designed | Yes (required field on `VoiceSession`; stamped through outputs) | Yes (asserted in lifecycle + output tests) | Yes (in-process only) | n/a | No (no datastore, so no enforced boundary) | In-process isolation proves the model, not the boundary | VS7 Postgres RLS + tenant-scoped keys/URLs (controls §3) | P0 | RLS suite: cross-tenant requests return nothing, incl. list endpoints and audio URLs |
+| Observability | Designed; **`VoiceMetric` entity implemented** with honest `measured=False` | Partial (`models.py` `VoiceMetric`) | Yes (`test_metrics_marked_not_measured` asserts honesty) | Partial | Yes (defined, none measured) | No | Dashboards could be built on nulls — `measured` flag prevents fabrication | VS1 instrumentation; OTel traces, health checks, alerting (controls §5) | P1 | Per-turn traces; `measured=True` only from real timestamps; P95 alerting live |
+| Cost control | Designed; **router fallback tested** | Partial (fallback policy in routers) | Yes (fallback tests) | Partial | Yes (minutes, GPU budget) | No | Voice minutes are the dominant COGS; no metering exists | VS6 quotas, GPU admission control, kill switch (controls §6) | P1 | Metering reconciles with CDRs ±1%; kill-switch drill ≤60 s; degradation ladder proven |
+| LGGT placeholder | Implemented and tested — **NullAdapter** | Yes (`certainty_core.py`; wired in `engine.py` `_end_session`; `certainty_audit_id` in every output) | Yes (runs in every scenario; chain-verified stamp) | Yes | n/a (Phase-2 metric: certified coverage) | Partial (honest heuristic labeling by design) | None now (that is Option B's point); Phase-2 runtime unproven | Phase 2 per `lggt-voice-integration-plan.md` (5 classes; entry criteria incl. `evidence_ref_id` wiring) | P2 | Doc-32 Phase-1 ACs hold (they do); Phase-2 entry criteria before any runtime call |
+
+## Summary — honest overall verdict
+
+- **Transcript-level logic is verified.** The conversational policy, extraction rules,
+  safety behaviors (no invented values, uncertain-never-confirmed, no price without data,
+  handoff on first request), case-graph effects, autonomy gating, consent flag, tenant
+  stamping, hash-chained audit, and the LGGT seam all execute and pass 26 tests. This is a
+  real, regression-protected foundation — doc 28's "earliest measurable milestone" is done
+  and exceeded.
+- **ZERO audio-path features measured.** No latency, WER, MOS, barge-in timing, VAD or
+  turn-taking number exists; every such figure in these docs is a target from doc 06. The
+  scaffold enforces this honesty in code (`VoiceMetric.measured=False`, asserted by test).
+- **Not production-ready overall.** No real-time loop, no real ASR/TTS/LLM, no telephony, no
+  persistence, no RLS-enforced isolation, no redaction, no quotas, no observability
+  pipeline. Path: VS1→VS3 make it audible, VS4 makes it conversational, VS5 makes it a
+  phone, VS6–VS7 make it enterprise. Nothing client-facing should ship before the P0 rows
+  (WebRTC session, ASR/TTS lanes, Stage-2 harness, consent flow, redaction, tenant RLS)
+  are green.

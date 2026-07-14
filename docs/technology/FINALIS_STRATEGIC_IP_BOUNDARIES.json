@@ -1,0 +1,88 @@
+{
+  "boundaries": [
+    {
+      "domain": "employee_logic",
+      "strategic_class": "OWN"
+    },
+    {
+      "domain": "memory_architecture",
+      "strategic_class": "OWN"
+    },
+    {
+      "domain": "learning_governance",
+      "strategic_class": "OWN"
+    },
+    {
+      "domain": "skills",
+      "strategic_class": "OWN"
+    },
+    {
+      "domain": "authority",
+      "strategic_class": "OWN"
+    },
+    {
+      "domain": "outcome_intelligence",
+      "strategic_class": "OWN"
+    },
+    {
+      "domain": "certified_reasoning_integration",
+      "strategic_class": "OWN"
+    },
+    {
+      "domain": "case_ownership",
+      "strategic_class": "OWN"
+    },
+    {
+      "domain": "governance",
+      "strategic_class": "OWN"
+    },
+    {
+      "domain": "evidence",
+      "strategic_class": "OWN"
+    },
+    {
+      "domain": "database_engine",
+      "strategic_class": "ADAPT"
+    },
+    {
+      "domain": "web_framework",
+      "strategic_class": "ADAPT"
+    },
+    {
+      "domain": "telephony_network",
+      "strategic_class": "BUY"
+    },
+    {
+      "domain": "cloud_platform",
+      "strategic_class": "BUY"
+    },
+    {
+      "domain": "object_store",
+      "strategic_class": "ADAPT"
+    },
+    {
+      "domain": "tracing_backend",
+      "strategic_class": "STANDARDIZE"
+    },
+    {
+      "domain": "interop_protocol",
+      "strategic_class": "STANDARDIZE"
+    },
+    {
+      "decision_trigger": "EMP-A2 durability requirement is finalized",
+      "domain": "durable_runtime",
+      "last_responsible_moment": "before EMP-A2 implementation",
+      "reason": "runtime volatility high; no forcing requirement yet",
+      "safe_default": "in-process deterministic run ledger",
+      "strategic_class": "DEFER"
+    },
+    {
+      "decision_trigger": "a production model capability is required",
+      "domain": "model_router",
+      "last_responsible_moment": "before first real model call",
+      "reason": "model landscape shifts monthly; premature lock-in risk",
+      "safe_default": "deterministic reference/NullAdapter",
+      "strategic_class": "DEFER"
+    }
+  ]
+}

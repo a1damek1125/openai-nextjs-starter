@@ -1,0 +1,705 @@
+{
+  "decisions": [
+    {
+      "candidates": [
+        {
+          "candidate_id": "python",
+          "hard_constraint_results": {
+            "auditable": "PASS",
+            "license_compatible": "PASS"
+          }
+        }
+      ],
+      "context": "",
+      "criticality": "T4",
+      "decision_id": "TDR-0001",
+      "decision_method": [
+        "KEEP_CURRENT"
+      ],
+      "evidence_refs": [
+        "EV-PY"
+      ],
+      "exit_plan_ref": "EXIT-python",
+      "fitness_policy_ref": "FIT-POLICY-1",
+      "fitness_status": "ACTIVE_AND_FIT",
+      "hard_constraints": [
+        "license_compatible",
+        "auditable"
+      ],
+      "lock_in_exposure": {
+        "skills_lock_in": "MEDIUM"
+      },
+      "one_way_migration_ack": true,
+      "problem": "Keep Python 3.11",
+      "rejected_candidates": [],
+      "reversibility_class": "R4",
+      "review_by": "2027-10-31",
+      "review_triggers": [
+        "python EOL"
+      ],
+      "scope": "Keep Python 3.11",
+      "selected_candidate": "python",
+      "status": "ACTIVE",
+      "supersedes": [],
+      "switching_cost": {},
+      "title": "Core runtime language",
+      "volatility_class": "FOUNDATIONAL"
+    },
+    {
+      "candidates": [
+        {
+          "candidate_id": "fastapi",
+          "hard_constraint_results": {
+            "auditable": "PASS",
+            "license_compatible": "PASS"
+          }
+        }
+      ],
+      "context": "",
+      "criticality": "T3",
+      "decision_id": "TDR-0002",
+      "decision_method": [
+        "KEEP_CURRENT"
+      ],
+      "evidence_refs": [
+        "EV-FASTAPI"
+      ],
+      "exit_plan_ref": "EXIT-fastapi",
+      "fitness_policy_ref": "FIT-POLICY-1",
+      "fitness_status": "ACTIVE_AND_FIT",
+      "hard_constraints": [
+        "license_compatible",
+        "auditable"
+      ],
+      "lock_in_exposure": {},
+      "one_way_migration_ack": false,
+      "problem": "Keep FastAPI+uvicorn (ASGI)",
+      "rejected_candidates": [],
+      "reversibility_class": "R1",
+      "review_by": "2027-01-01",
+      "review_triggers": [
+        "ASGI incompat"
+      ],
+      "scope": "Keep FastAPI+uvicorn (ASGI)",
+      "selected_candidate": "fastapi",
+      "status": "ACTIVE",
+      "supersedes": [],
+      "switching_cost": {},
+      "title": "Web/API framework",
+      "volatility_class": "MEDIUM"
+    },
+    {
+      "candidates": [
+        {
+          "candidate_id": "sqlite",
+          "hard_constraint_results": {
+            "auditable": "PASS",
+            "license_compatible": "PASS"
+          }
+        }
+      ],
+      "context": "",
+      "criticality": "T3",
+      "decision_id": "TDR-0003",
+      "decision_method": [
+        "KEEP_CURRENT",
+        "ADOPT_TARGET_LATER"
+      ],
+      "evidence_refs": [
+        "EV-SQLITE"
+      ],
+      "exit_plan_ref": "EXIT-sqlite",
+      "fitness_policy_ref": "FIT-POLICY-1",
+      "fitness_status": "ACTIVE_AND_FIT",
+      "hard_constraints": [
+        "license_compatible",
+        "auditable"
+      ],
+      "lock_in_exposure": {},
+      "one_way_migration_ack": false,
+      "problem": "Keep SQLite; Postgres is the target production strategy",
+      "rejected_candidates": [],
+      "reversibility_class": "R2",
+      "review_by": "2027-01-01",
+      "review_triggers": [
+        "write concurrency need"
+      ],
+      "scope": "Keep SQLite; Postgres is the target production strategy",
+      "selected_candidate": "sqlite",
+      "status": "ACTIVE",
+      "supersedes": [],
+      "switching_cost": {
+        "data": "LOW",
+        "state": "LOW"
+      },
+      "title": "Current database",
+      "volatility_class": "MEDIUM"
+    },
+    {
+      "candidates": [
+        {
+          "candidate_id": "pytest",
+          "hard_constraint_results": {
+            "auditable": "PASS",
+            "license_compatible": "PASS"
+          }
+        }
+      ],
+      "context": "",
+      "criticality": "T1",
+      "decision_id": "TDR-0004",
+      "decision_method": [
+        "KEEP_CURRENT"
+      ],
+      "evidence_refs": [
+        "EV-FITNESS"
+      ],
+      "exit_plan_ref": null,
+      "fitness_policy_ref": "FIT-POLICY-1",
+      "fitness_status": "ACTIVE_AND_FIT",
+      "hard_constraints": [
+        "license_compatible",
+        "auditable"
+      ],
+      "lock_in_exposure": {},
+      "one_way_migration_ack": false,
+      "problem": "Keep pytest",
+      "rejected_candidates": [],
+      "reversibility_class": "R1",
+      "review_by": "2028-01-01",
+      "review_triggers": [
+        "pytest major break"
+      ],
+      "scope": "Keep pytest",
+      "selected_candidate": "pytest",
+      "status": "ACTIVE",
+      "supersedes": [],
+      "switching_cost": {},
+      "title": "Test framework",
+      "volatility_class": "LOW"
+    },
+    {
+      "candidates": [
+        {
+          "candidate_id": "model_provider_seam",
+          "hard_constraint_results": {
+            "auditable": "PASS",
+            "license_compatible": "PASS"
+          }
+        }
+      ],
+      "context": "",
+      "criticality": "T4",
+      "decision_id": "TDR-0005",
+      "decision_method": [
+        "OWN_CONTRACT",
+        "DEFER_PROVIDER"
+      ],
+      "evidence_refs": [
+        "EV-MODEL-SWAP"
+      ],
+      "exit_plan_ref": "EXIT-model",
+      "fitness_policy_ref": "FIT-POLICY-1",
+      "fitness_status": "ACTIVE_AND_FIT",
+      "hard_constraints": [
+        "license_compatible",
+        "auditable"
+      ],
+      "lock_in_exposure": {
+        "model_behavior_lock_in": "HIGH",
+        "semantic_lock_in": "LOW"
+      },
+      "one_way_migration_ack": false,
+      "problem": "OWN capability contract; providers are bounded implementations",
+      "rejected_candidates": [],
+      "reversibility_class": "R1",
+      "review_by": "2026-10-01",
+      "review_triggers": [
+        "real model required"
+      ],
+      "scope": "OWN capability contract; providers are bounded implementations",
+      "selected_candidate": "model_provider_seam",
+      "status": "ACTIVE",
+      "supersedes": [],
+      "switching_cost": {},
+      "title": "Model provider strategy",
+      "volatility_class": "VERY_HIGH"
+    },
+    {
+      "candidates": [
+        {
+          "candidate_id": "asr_seam",
+          "hard_constraint_results": {
+            "auditable": "PASS",
+            "license_compatible": "PASS"
+          }
+        }
+      ],
+      "context": "",
+      "criticality": "T2",
+      "decision_id": "TDR-0006",
+      "decision_method": [
+        "DEFER"
+      ],
+      "evidence_refs": [
+        "EV-FITNESS"
+      ],
+      "exit_plan_ref": null,
+      "fitness_policy_ref": "FIT-POLICY-1",
+      "fitness_status": "ACTIVE_AND_FIT",
+      "hard_constraints": [
+        "license_compatible",
+        "auditable"
+      ],
+      "lock_in_exposure": {},
+      "one_way_migration_ack": false,
+      "problem": "BUY behind capability contract",
+      "rejected_candidates": [],
+      "reversibility_class": "R1",
+      "review_by": null,
+      "review_triggers": [
+        "real voice pilot"
+      ],
+      "scope": "BUY behind capability contract",
+      "selected_candidate": "asr_seam",
+      "status": "DEFERRED",
+      "supersedes": [],
+      "switching_cost": {},
+      "title": "Voice ASR strategy",
+      "volatility_class": "HIGH"
+    },
+    {
+      "candidates": [
+        {
+          "candidate_id": "tts_seam",
+          "hard_constraint_results": {
+            "auditable": "PASS",
+            "license_compatible": "PASS"
+          }
+        }
+      ],
+      "context": "",
+      "criticality": "T2",
+      "decision_id": "TDR-0007",
+      "decision_method": [
+        "DEFER"
+      ],
+      "evidence_refs": [
+        "EV-FITNESS"
+      ],
+      "exit_plan_ref": null,
+      "fitness_policy_ref": "FIT-POLICY-1",
+      "fitness_status": "ACTIVE_AND_FIT",
+      "hard_constraints": [
+        "license_compatible",
+        "auditable"
+      ],
+      "lock_in_exposure": {},
+      "one_way_migration_ack": false,
+      "problem": "BUY behind capability contract",
+      "rejected_candidates": [],
+      "reversibility_class": "R1",
+      "review_by": null,
+      "review_triggers": [
+        "real voice pilot"
+      ],
+      "scope": "BUY behind capability contract",
+      "selected_candidate": "tts_seam",
+      "status": "DEFERRED",
+      "supersedes": [],
+      "switching_cost": {},
+      "title": "Voice TTS strategy",
+      "volatility_class": "HIGH"
+    },
+    {
+      "candidates": [
+        {
+          "candidate_id": "telephony_seam",
+          "hard_constraint_results": {
+            "auditable": "PASS",
+            "license_compatible": "PASS"
+          }
+        }
+      ],
+      "context": "",
+      "criticality": "T3",
+      "decision_id": "TDR-0008",
+      "decision_method": [
+        "DEFER"
+      ],
+      "evidence_refs": [
+        "EV-FITNESS"
+      ],
+      "exit_plan_ref": "EXIT-telephony",
+      "fitness_policy_ref": "FIT-POLICY-1",
+      "fitness_status": "ACTIVE_AND_FIT",
+      "hard_constraints": [
+        "license_compatible",
+        "auditable"
+      ],
+      "lock_in_exposure": {},
+      "one_way_migration_ack": false,
+      "problem": "BUY behind capability contract",
+      "rejected_candidates": [],
+      "reversibility_class": "R2",
+      "review_by": null,
+      "review_triggers": [
+        "real telephony pilot"
+      ],
+      "scope": "BUY behind capability contract",
+      "selected_candidate": "telephony_seam",
+      "status": "DEFERRED",
+      "supersedes": [],
+      "switching_cost": {},
+      "title": "Telephony strategy",
+      "volatility_class": "HIGH"
+    },
+    {
+      "candidates": [
+        {
+          "candidate_id": "email_seam",
+          "hard_constraint_results": {
+            "auditable": "PASS",
+            "license_compatible": "PASS"
+          }
+        }
+      ],
+      "context": "",
+      "criticality": "T2",
+      "decision_id": "TDR-0009",
+      "decision_method": [
+        "DEFER"
+      ],
+      "evidence_refs": [
+        "EV-FITNESS"
+      ],
+      "exit_plan_ref": null,
+      "fitness_policy_ref": "FIT-POLICY-1",
+      "fitness_status": "ACTIVE_AND_FIT",
+      "hard_constraints": [
+        "license_compatible",
+        "auditable"
+      ],
+      "lock_in_exposure": {},
+      "one_way_migration_ack": false,
+      "problem": "BUY behind contract",
+      "rejected_candidates": [],
+      "reversibility_class": "R1",
+      "review_by": null,
+      "review_triggers": [
+        "real email pilot"
+      ],
+      "scope": "BUY behind contract",
+      "selected_candidate": "email_seam",
+      "status": "DEFERRED",
+      "supersedes": [],
+      "switching_cost": {},
+      "title": "Email/Calendar strategy",
+      "volatility_class": "HIGH"
+    },
+    {
+      "candidates": [
+        {
+          "candidate_id": "durable_runtime_seam",
+          "hard_constraint_results": {
+            "auditable": "PASS",
+            "license_compatible": "PASS"
+          }
+        }
+      ],
+      "context": "",
+      "criticality": "T3",
+      "decision_id": "TDR-0010",
+      "decision_method": [
+        "DEFER"
+      ],
+      "evidence_refs": [
+        "EV-TEMPORAL"
+      ],
+      "exit_plan_ref": "EXIT-durable",
+      "fitness_policy_ref": "FIT-POLICY-1",
+      "fitness_status": "ACTIVE_AND_FIT",
+      "hard_constraints": [
+        "license_compatible",
+        "auditable"
+      ],
+      "lock_in_exposure": {},
+      "one_way_migration_ack": true,
+      "problem": "DEFER: keep in-process deterministic run ledger; Temporal is a candidate",
+      "rejected_candidates": [],
+      "reversibility_class": "R3",
+      "review_by": null,
+      "review_triggers": [
+        "EMP-A2 durability need"
+      ],
+      "scope": "DEFER: keep in-process deterministic run ledger; Temporal is a candidate",
+      "selected_candidate": "durable_runtime_seam",
+      "status": "DEFERRED",
+      "supersedes": [],
+      "switching_cost": {},
+      "title": "Durable execution strategy",
+      "volatility_class": "VERY_HIGH"
+    },
+    {
+      "candidates": [
+        {
+          "candidate_id": "event_transport_seam",
+          "hard_constraint_results": {
+            "auditable": "PASS",
+            "license_compatible": "PASS"
+          }
+        }
+      ],
+      "context": "",
+      "criticality": "T2",
+      "decision_id": "TDR-0011",
+      "decision_method": [
+        "DEFER"
+      ],
+      "evidence_refs": [
+        "EV-TEMPORAL"
+      ],
+      "exit_plan_ref": null,
+      "fitness_policy_ref": "FIT-POLICY-1",
+      "fitness_status": "ACTIVE_AND_FIT",
+      "hard_constraints": [
+        "license_compatible",
+        "auditable"
+      ],
+      "lock_in_exposure": {},
+      "one_way_migration_ack": false,
+      "problem": "DEFER",
+      "rejected_candidates": [],
+      "reversibility_class": "R1",
+      "review_by": null,
+      "review_triggers": [
+        "event fabric SP"
+      ],
+      "scope": "DEFER",
+      "selected_candidate": "event_transport_seam",
+      "status": "DEFERRED",
+      "supersedes": [],
+      "switching_cost": {},
+      "title": "Event transport strategy",
+      "volatility_class": "HIGH"
+    },
+    {
+      "candidates": [
+        {
+          "candidate_id": "object_storage_seam",
+          "hard_constraint_results": {
+            "auditable": "PASS",
+            "license_compatible": "PASS"
+          }
+        }
+      ],
+      "context": "",
+      "criticality": "T3",
+      "decision_id": "TDR-0012",
+      "decision_method": [
+        "KEEP_CURRENT",
+        "ADOPT_TARGET_LATER"
+      ],
+      "evidence_refs": [
+        "EV-SLSA"
+      ],
+      "exit_plan_ref": "EXIT-storage",
+      "fitness_policy_ref": "FIT-POLICY-1",
+      "fitness_status": "ACTIVE_AND_FIT",
+      "hard_constraints": [
+        "license_compatible",
+        "auditable"
+      ],
+      "lock_in_exposure": {},
+      "one_way_migration_ack": false,
+      "problem": "Local FS now; object store + WORM later",
+      "rejected_candidates": [],
+      "reversibility_class": "R2",
+      "review_by": "2027-01-01",
+      "review_triggers": [
+        "evidence anchoring need"
+      ],
+      "scope": "Local FS now; object store + WORM later",
+      "selected_candidate": "object_storage_seam",
+      "status": "ACTIVE",
+      "supersedes": [],
+      "switching_cost": {},
+      "title": "Object storage strategy",
+      "volatility_class": "MEDIUM"
+    },
+    {
+      "candidates": [
+        {
+          "candidate_id": "observability_seam",
+          "hard_constraint_results": {
+            "auditable": "PASS",
+            "license_compatible": "PASS"
+          }
+        }
+      ],
+      "context": "",
+      "criticality": "T2",
+      "decision_id": "TDR-0013",
+      "decision_method": [
+        "STANDARDIZE"
+      ],
+      "evidence_refs": [
+        "EV-OTEL"
+      ],
+      "exit_plan_ref": null,
+      "fitness_policy_ref": "FIT-POLICY-1",
+      "fitness_status": "ACTIVE_AND_FIT",
+      "hard_constraints": [
+        "license_compatible",
+        "auditable"
+      ],
+      "lock_in_exposure": {},
+      "one_way_migration_ack": false,
+      "problem": "STANDARDIZE on OpenTelemetry; backend replaceable",
+      "rejected_candidates": [],
+      "reversibility_class": "R1",
+      "review_by": "2027-01-01",
+      "review_triggers": [
+        "OTel breaking change"
+      ],
+      "scope": "STANDARDIZE on OpenTelemetry; backend replaceable",
+      "selected_candidate": "observability_seam",
+      "status": "ACTIVE",
+      "supersedes": [],
+      "switching_cost": {},
+      "title": "Observability standard",
+      "volatility_class": "MEDIUM"
+    },
+    {
+      "candidates": [
+        {
+          "candidate_id": "mcp",
+          "hard_constraint_results": {
+            "auditable": "PASS",
+            "license_compatible": "PASS"
+          }
+        }
+      ],
+      "context": "",
+      "criticality": "T2",
+      "decision_id": "TDR-0014",
+      "decision_method": [
+        "STANDARDIZE"
+      ],
+      "evidence_refs": [
+        "EV-MCP"
+      ],
+      "exit_plan_ref": null,
+      "fitness_policy_ref": "FIT-POLICY-1",
+      "fitness_status": "ACTIVE_AND_FIT",
+      "hard_constraints": [
+        "license_compatible",
+        "auditable"
+      ],
+      "lock_in_exposure": {},
+      "one_way_migration_ack": false,
+      "problem": "Interop boundary; pin 2025-11-25; do not bind authority",
+      "rejected_candidates": [],
+      "reversibility_class": "R1",
+      "review_by": "2026-10-01",
+      "review_triggers": [
+        "new finalized MCP spec"
+      ],
+      "scope": "Interop boundary; pin 2025-11-25; do not bind authority",
+      "selected_candidate": "mcp",
+      "status": "ACTIVE",
+      "supersedes": [],
+      "switching_cost": {},
+      "title": "MCP strategy",
+      "volatility_class": "VERY_HIGH"
+    },
+    {
+      "candidates": [
+        {
+          "candidate_id": "a2a",
+          "hard_constraint_results": {
+            "auditable": "PASS",
+            "license_compatible": "PASS"
+          }
+        }
+      ],
+      "context": "",
+      "criticality": "T2",
+      "decision_id": "TDR-0015",
+      "decision_method": [
+        "STANDARDIZE"
+      ],
+      "evidence_refs": [
+        "EV-A2A"
+      ],
+      "exit_plan_ref": null,
+      "fitness_policy_ref": "FIT-POLICY-1",
+      "fitness_status": "ACTIVE_AND_FIT",
+      "hard_constraints": [
+        "license_compatible",
+        "auditable"
+      ],
+      "lock_in_exposure": {},
+      "one_way_migration_ack": false,
+      "problem": "Interop boundary; A2A 1.0; not authority",
+      "rejected_candidates": [],
+      "reversibility_class": "R1",
+      "review_by": "2027-01-01",
+      "review_triggers": [
+        "A2A 2.0"
+      ],
+      "scope": "Interop boundary; A2A 1.0; not authority",
+      "selected_candidate": "a2a",
+      "status": "ACTIVE",
+      "supersedes": [],
+      "switching_cost": {},
+      "title": "A2A strategy",
+      "volatility_class": "HIGH"
+    },
+    {
+      "candidates": [
+        {
+          "candidate_id": "sbom_strategy",
+          "hard_constraint_results": {
+            "auditable": "PASS",
+            "license_compatible": "PASS"
+          }
+        }
+      ],
+      "context": "",
+      "criticality": "T2",
+      "decision_id": "TDR-0016",
+      "decision_method": [
+        "ADOPT_TARGET"
+      ],
+      "evidence_refs": [
+        "EV-SLSA",
+        "EV-CYCLONEDX",
+        "EV-SPDX"
+      ],
+      "exit_plan_ref": null,
+      "fitness_policy_ref": "FIT-POLICY-1",
+      "fitness_status": "ACTIVE_AND_FIT",
+      "hard_constraints": [
+        "license_compatible",
+        "auditable"
+      ],
+      "lock_in_exposure": {},
+      "one_way_migration_ack": false,
+      "problem": "Target SLSA v1.2 + CycloneDX AI/ML-BOM; evaluate SPDX",
+      "rejected_candidates": [],
+      "reversibility_class": "R1",
+      "review_by": "2027-01-01",
+      "review_triggers": [
+        "release engineering SP"
+      ],
+      "scope": "Target SLSA v1.2 + CycloneDX AI/ML-BOM; evaluate SPDX",
+      "selected_candidate": "sbom_strategy",
+      "status": "ACTIVE",
+      "supersedes": [],
+      "switching_cost": {},
+      "title": "Supply-chain/BOM strategy",
+      "volatility_class": "MEDIUM"
+    }
+  ]
+}

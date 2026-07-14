@@ -1,0 +1,52 @@
+{
+  "execution_identities": [
+    {
+      "created_at": "2026-03-01T09:00:00Z",
+      "delegation_depth": 0,
+      "execution_identity_id": "EI-root",
+      "expires_at": "2026-03-31T23:59:59Z",
+      "lease_refs": [
+        "LEASE-root"
+      ],
+      "parent_identity_id": null,
+      "responsibility_scope": {
+        "whole": true
+      },
+      "role": "ROOT_AGENT",
+      "status": "ACTIVE",
+      "work_order_id": "WO-0001"
+    },
+    {
+      "created_at": "2026-03-01T09:05:00Z",
+      "delegation_depth": 1,
+      "execution_identity_id": "EI-drafter",
+      "expires_at": "2026-03-31T23:59:59Z",
+      "lease_refs": [
+        "LEASE-drafter"
+      ],
+      "parent_identity_id": "EI-root",
+      "responsibility_scope": {
+        "draft": true
+      },
+      "role": "SUBAGENT_DRAFTER",
+      "status": "ACTIVE",
+      "work_order_id": "WO-0001"
+    },
+    {
+      "created_at": "2026-03-01T09:05:00Z",
+      "delegation_depth": 1,
+      "execution_identity_id": "EI-verifier",
+      "expires_at": "2026-03-31T23:59:59Z",
+      "lease_refs": [
+        "LEASE-verifier"
+      ],
+      "parent_identity_id": "EI-root",
+      "responsibility_scope": {
+        "verify": true
+      },
+      "role": "INDEPENDENT_VERIFIER",
+      "status": "ACTIVE",
+      "work_order_id": "WO-0001"
+    }
+  ]
+}

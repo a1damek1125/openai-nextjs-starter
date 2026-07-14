@@ -1,0 +1,119 @@
+{
+  "INV-APPROVAL-CONTEXT-BOUND": {
+    "claims_supported": true,
+    "controls_present": true,
+    "critical": true,
+    "hyperproperty": "HP-APPROVAL-ISOLATION",
+    "hyperproperty_ok": true,
+    "owner": "SP0006",
+    "status": "HOLD"
+  },
+  "INV-AUTHORITY-CONSERVATION": {
+    "claims_supported": true,
+    "controls_present": true,
+    "critical": true,
+    "hyperproperty": null,
+    "hyperproperty_ok": true,
+    "owner": "SP0006",
+    "status": "HOLD"
+  },
+  "INV-CONTROL-LANGUAGE-INVARIANCE": {
+    "claims_supported": true,
+    "controls_present": true,
+    "critical": true,
+    "hyperproperty": "HP-CONTROL-LANGUAGE-INVARIANCE",
+    "hyperproperty_ok": true,
+    "owner": "SP0002",
+    "status": "HOLD"
+  },
+  "INV-DELEGATION-ATTENUATION": {
+    "claims_supported": true,
+    "controls_present": true,
+    "critical": true,
+    "hyperproperty": null,
+    "hyperproperty_ok": true,
+    "owner": "SP0006",
+    "status": "HOLD"
+  },
+  "INV-HISTORICAL-INTERPRETABILITY": {
+    "claims_supported": true,
+    "controls_present": true,
+    "critical": true,
+    "hyperproperty": null,
+    "hyperproperty_ok": true,
+    "owner": "SP0002",
+    "status": "HOLD"
+  },
+  "INV-LEARNING-PROMOTION-GATED": {
+    "claims_supported": true,
+    "controls_present": true,
+    "critical": true,
+    "hyperproperty": null,
+    "hyperproperty_ok": true,
+    "owner": "SP0006",
+    "status": "HOLD"
+  },
+  "INV-OUTCOME-EVIDENCE": {
+    "claims_supported": true,
+    "controls_present": true,
+    "critical": true,
+    "hyperproperty": null,
+    "hyperproperty_ok": true,
+    "owner": "SP0006",
+    "status": "HOLD"
+  },
+  "INV-PROOF-NOT-AUTHORITY": {
+    "claims_supported": true,
+    "controls_present": true,
+    "critical": true,
+    "hyperproperty": null,
+    "hyperproperty_ok": true,
+    "owner": "SP0009",
+    "status": "HOLD"
+  },
+  "INV-PROVIDER-ACCOUNT-SEPARATION": {
+    "claims_supported": true,
+    "controls_present": true,
+    "critical": true,
+    "hyperproperty": "HP-PROVIDER-ACCOUNT-SEPARATION",
+    "hyperproperty_ok": true,
+    "owner": "SP0004",
+    "status": "HOLD"
+  },
+  "INV-RELEASE-RUNTIME-SEPARATION": {
+    "claims_supported": true,
+    "controls_present": true,
+    "critical": true,
+    "hyperproperty": null,
+    "hyperproperty_ok": true,
+    "owner": "SP0009",
+    "status": "HOLD"
+  },
+  "INV-SAFETY-DOMINATOR": {
+    "claims_supported": true,
+    "controls_present": true,
+    "critical": true,
+    "hyperproperty": null,
+    "hyperproperty_ok": true,
+    "owner": "SP0005",
+    "status": "HOLD"
+  },
+  "INV-TENANT-ISOLATION": {
+    "claims_supported": true,
+    "controls_present": true,
+    "critical": true,
+    "hyperproperty": "HP-TENANT-NONINTERFERENCE",
+    "hyperproperty_ok": true,
+    "owner": "SP0006",
+    "status": "HOLD"
+  },
+  "INV-ZERO-LOST-WORK": {
+    "claims_supported": true,
+    "controls_present": true,
+    "critical": true,
+    "hyperproperty": null,
+    "hyperproperty_ok": true,
+    "owner": "SP0006",
+    "status": "HOLD"
+  }
+}

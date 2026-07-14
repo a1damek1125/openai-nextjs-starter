@@ -1,0 +1,66 @@
+{
+  "budget_ledgers": [
+    {
+      "budget_id": "BL-0001",
+      "dimensions": {
+        "data_access_quota": {
+          "available": 0.0,
+          "consumed": 0.0,
+          "expired": 0.0,
+          "reconciled": 0.0,
+          "released": 0.0,
+          "reserved": 0.0,
+          "total": 0.0
+        },
+        "external_effect_quota": {
+          "available": 0.0,
+          "consumed": 0.0,
+          "expired": 0.0,
+          "reconciled": 0.0,
+          "released": 0.0,
+          "reserved": 0.0,
+          "total": 0.0
+        },
+        "financial_cost": {
+          "available": 0.0,
+          "consumed": 0.0,
+          "expired": 0.0,
+          "reconciled": 0.0,
+          "released": 0.0,
+          "reserved": 0.0,
+          "total": 0.0
+        },
+        "model_cost": {
+          "available": 0.0,
+          "consumed": 0.0,
+          "expired": 0.0,
+          "reconciled": 0.0,
+          "released": 0.0,
+          "reserved": 0.0,
+          "total": 0.0
+        },
+        "resource_capacity": {
+          "available": 0.0,
+          "consumed": 0.0,
+          "expired": 0.0,
+          "reconciled": 0.0,
+          "released": 0.0,
+          "reserved": 0.0,
+          "total": 0.0
+        },
+        "tool_call_quota": {
+          "available": 0.0,
+          "consumed": 0.0,
+          "expired": 0.0,
+          "reconciled": 0.0,
+          "released": 0.0,
+          "reserved": 0.0,
+          "total": 0.0
+        }
+      },
+      "idempotency": {},
+      "reservations": {},
+      "work_order_id": "WO-0001"
+    }
+  ]
+}

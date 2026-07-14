@@ -1,0 +1,226 @@
+{
+  "anchored": [
+    "CL-SP0000-evidence-present",
+    "CL-SP0001-evidence-present",
+    "CL-SP0002-evidence-present",
+    "CL-SP0003-evidence-present",
+    "CL-SP0004-evidence-present",
+    "CL-SP0005-evidence-present",
+    "CL-SP0006-evidence-present",
+    "CL-SP0007-evidence-present",
+    "CL-SP0008-evidence-present",
+    "CL-SP0009-evidence-present"
+  ],
+  "edges": [
+    {
+      "conclusion_claim_ref": "CL-SP0000-architecture-baseline-fixed",
+      "conjunctive": true,
+      "edge_hash": "ad01dc9ae94212156a85918b240128ed887790ac1df5e3d68a37ef76a126d666",
+      "hyperedge_id": "HE-d25f36cf281b92cc",
+      "premise_claim_refs": [
+        "CL-SP0000-evidence-present"
+      ],
+      "source_refs": [
+        "SP0000"
+      ]
+    },
+    {
+      "conclusion_claim_ref": "CL-SP0001-architecture-conformance-checked",
+      "conjunctive": true,
+      "edge_hash": "7e2bfcb66d8da918f82a47e33ee8a96610cc9dcca0b01b559ec35b01561fc38d",
+      "hyperedge_id": "HE-9245731efb87e302",
+      "premise_claim_refs": [
+        "CL-SP0000-architecture-baseline-fixed",
+        "CL-SP0001-evidence-present"
+      ],
+      "source_refs": [
+        "SP0001"
+      ]
+    },
+    {
+      "conclusion_claim_ref": "CL-SP0002-semantics-versioned",
+      "conjunctive": true,
+      "edge_hash": "aae29c22b41c1540cfe498b211f959d7c39747e99bc28ca836aec479be23526b",
+      "hyperedge_id": "HE-8119dffcf29f9f08",
+      "premise_claim_refs": [
+        "CL-SP0000-architecture-baseline-fixed",
+        "CL-SP0002-evidence-present"
+      ],
+      "source_refs": [
+        "SP0002"
+      ]
+    },
+    {
+      "conclusion_claim_ref": "CL-SP0002-historical-epoch-interpretable",
+      "conjunctive": true,
+      "edge_hash": "087f2786418e9459b55cc3ff437c6b77ba47eae8bf824ddd535a657c9407afb9",
+      "hyperedge_id": "HE-319b5e97db46a4eb",
+      "premise_claim_refs": [
+        "CL-SP0000-architecture-baseline-fixed",
+        "CL-SP0002-evidence-present"
+      ],
+      "source_refs": [
+        "SP0002"
+      ]
+    },
+    {
+      "conclusion_claim_ref": "CL-SP0003-program-admission-verified",
+      "conjunctive": true,
+      "edge_hash": "ab214af96e2a3b8a52d2bdd378811ce3dac49b82296cc75733f8cea50379b5af",
+      "hyperedge_id": "HE-e843c2fa87218e23",
+      "premise_claim_refs": [
+        "CL-SP0000-architecture-baseline-fixed",
+        "CL-SP0003-evidence-present"
+      ],
+      "source_refs": [
+        "SP0003"
+      ]
+    },
+    {
+      "conclusion_claim_ref": "CL-SP0004-provider-replaceable",
+      "conjunctive": true,
+      "edge_hash": "c53b2545c40d0c01cfb0f4e72a160201361518e0f15e4e6019a223b52988e458",
+      "hyperedge_id": "HE-7390b3ccf8dc08c0",
+      "premise_claim_refs": [
+        "CL-SP0000-architecture-baseline-fixed",
+        "CL-SP0004-evidence-present"
+      ],
+      "source_refs": [
+        "SP0004"
+      ]
+    },
+    {
+      "conclusion_claim_ref": "CL-SP0005-safety-dominates-protected-effects",
+      "conjunctive": true,
+      "edge_hash": "43331a84a02f7471299efd1259244d26a6ec4008dd484a4971e13f5e18394541",
+      "hyperedge_id": "HE-b2f6b6041ae20256",
+      "premise_claim_refs": [
+        "CL-SP0000-architecture-baseline-fixed",
+        "CL-SP0002-semantics-versioned",
+        "CL-SP0005-evidence-present"
+      ],
+      "source_refs": [
+        "SP0005"
+      ]
+    },
+    {
+      "conclusion_claim_ref": "CL-SP0006-authority-conserved",
+      "conjunctive": true,
+      "edge_hash": "a3c739daeb8a97cb139d544f4f60030589e2032f088f7f389a3219db7c11c3f0",
+      "hyperedge_id": "HE-0e5a219eeb93365e",
+      "premise_claim_refs": [
+        "CL-SP0005-safety-dominates-protected-effects",
+        "CL-SP0006-evidence-present"
+      ],
+      "source_refs": [
+        "SP0006"
+      ]
+    },
+    {
+      "conclusion_claim_ref": "CL-SP0006-zero-lost-work",
+      "conjunctive": true,
+      "edge_hash": "40b3ce74318e3472f1a189f7998c323723bbb15ad2e5e0a7d8d23d08ae52a9a9",
+      "hyperedge_id": "HE-4f439b58ee6b91e1",
+      "premise_claim_refs": [
+        "CL-SP0005-safety-dominates-protected-effects",
+        "CL-SP0006-evidence-present"
+      ],
+      "source_refs": [
+        "SP0006"
+      ]
+    },
+    {
+      "conclusion_claim_ref": "CL-SP0006-approval-context-bound",
+      "conjunctive": true,
+      "edge_hash": "3c0e7eec9a5270714e4e501c7fdd25b5421992d5dbac22499d6a43932a6c0b18",
+      "hyperedge_id": "HE-6e4bf1895416f1c3",
+      "premise_claim_refs": [
+        "CL-SP0005-safety-dominates-protected-effects",
+        "CL-SP0006-evidence-present"
+      ],
+      "source_refs": [
+        "SP0006"
+      ]
+    },
+    {
+      "conclusion_claim_ref": "CL-SP0007-contract-evolution-directional",
+      "conjunctive": true,
+      "edge_hash": "1d92cca5ace46de29cc4b37f9c712c36af5ce17d065210ec3d8a6614d2c60470",
+      "hyperedge_id": "HE-fd8bacde369a5f39",
+      "premise_claim_refs": [
+        "CL-SP0002-historical-epoch-interpretable",
+        "CL-SP0007-evidence-present"
+      ],
+      "source_refs": [
+        "SP0007"
+      ]
+    },
+    {
+      "conclusion_claim_ref": "CL-SP0007-historical-envelope-epoch-bound",
+      "conjunctive": true,
+      "edge_hash": "c9bfaed978c7330366302d44641820b9e0ef52b31f99d376c73ae680efad1c80",
+      "hyperedge_id": "HE-d48114322505f605",
+      "premise_claim_refs": [
+        "CL-SP0002-historical-epoch-interpretable",
+        "CL-SP0007-evidence-present"
+      ],
+      "source_refs": [
+        "SP0007"
+      ]
+    },
+    {
+      "conclusion_claim_ref": "CL-SP0008-contract-surfaces-inventoried",
+      "conjunctive": true,
+      "edge_hash": "7ec945ef970c924f20303ca1c600337a9785a1e0a4a3e700ab2c5c3be33e54be",
+      "hyperedge_id": "HE-e54bcc9cab2d417d",
+      "premise_claim_refs": [
+        "CL-SP0007-contract-evolution-directional",
+        "CL-SP0008-evidence-present"
+      ],
+      "source_refs": [
+        "SP0008"
+      ]
+    },
+    {
+      "conclusion_claim_ref": "CL-SP0008-contract-genome-sealed",
+      "conjunctive": true,
+      "edge_hash": "ecd10382122bac2e00a0c8bbadbf7230a3dcedf968fc66e2ff076f6e1d55c128",
+      "hyperedge_id": "HE-688b0e31111a89ce",
+      "premise_claim_refs": [
+        "CL-SP0007-contract-evolution-directional",
+        "CL-SP0008-evidence-present"
+      ],
+      "source_refs": [
+        "SP0008"
+      ]
+    },
+    {
+      "conclusion_claim_ref": "CL-SP0009-release-proof-not-runtime-authority",
+      "conjunctive": true,
+      "edge_hash": "19514dffd712ff8bb6a726b5b5c64c3e7e02562b65e9f6b63687dcaa6a901d6a",
+      "hyperedge_id": "HE-32a3b9eed1d02613",
+      "premise_claim_refs": [
+        "CL-SP0006-approval-context-bound",
+        "CL-SP0008-contract-genome-sealed",
+        "CL-SP0009-evidence-present"
+      ],
+      "source_refs": [
+        "SP0009"
+      ]
+    },
+    {
+      "conclusion_claim_ref": "CL-SP0009-non-compensatory-gates",
+      "conjunctive": true,
+      "edge_hash": "4668bec6beb7a247f475f706c6f7d00b50cd701dc06a1f34ddf2876717a98346",
+      "hyperedge_id": "HE-4eec97375e2fe61a",
+      "premise_claim_refs": [
+        "CL-SP0006-approval-context-bound",
+        "CL-SP0008-contract-genome-sealed",
+        "CL-SP0009-evidence-present"
+      ],
+      "source_refs": [
+        "SP0009"
+      ]
+    }
+  ]
+}

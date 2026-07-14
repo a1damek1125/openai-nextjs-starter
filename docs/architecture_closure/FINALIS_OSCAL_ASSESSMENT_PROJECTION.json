@@ -1,0 +1,12 @@
+{
+  "controls": {
+    "CTL-APPROVAL-BINDING": "NECESSARY_NOT_SUFFICIENT",
+    "CTL-AUTH-GATE": "NECESSARY_NOT_SUFFICIENT",
+    "CTL-RBAC": "NECESSARY_NOT_SUFFICIENT",
+    "CTL-RELEASE-PROOF-BOUNDARY": "NECESSARY_NOT_SUFFICIENT",
+    "CTL-SAFETY-ADMISSION": "NECESSARY_NOT_SUFFICIENT",
+    "CTL-TENANT-SCOPE": "NECESSARY_NOT_SUFFICIENT"
+  },
+  "note": "NIST OSCAL assessment-results projection; control presence != effectiveness (D-0010-39)",
+  "schema_id": "OSCALProjection"
+}

@@ -1,0 +1,13 @@
+{
+  "epochs": [
+    {
+      "parent_epoch_id": null,
+      "recorded_at": "2026-07-11T00:00:00Z",
+      "registry_hash": "d91f97a602660fff430c3e7ac265eecfc518411229cc67ede37dff469e714074",
+      "semantic_epoch_id": "epoch-0001-genesis",
+      "status": "ACTIVE",
+      "valid_from": "2026-07-11T00:00:00Z",
+      "valid_until": null
+    }
+  ]
+}

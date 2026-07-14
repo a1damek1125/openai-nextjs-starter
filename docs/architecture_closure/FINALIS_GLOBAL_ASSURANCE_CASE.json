@@ -1,0 +1,38 @@
+{
+  "epistemic_summary": {
+    "all": {
+      "BOTH": 0,
+      "NEITHER": 0,
+      "REFUTED_ONLY": 0,
+      "SUPPORTED_ONLY": 49
+    },
+    "critical": {
+      "BOTH": 0,
+      "NEITHER": 0,
+      "REFUTED_ONLY": 0,
+      "SUPPORTED_ONLY": 39
+    },
+    "critical_both": 0,
+    "critical_neither": 0
+  },
+  "hypergraph_root": "d9465cffef53814c243b10a55344c2bca95d9dd3d07e4fdbb8634a717481b15a",
+  "schema_id": "GlobalAssuranceCase",
+  "top_level_claims": [
+    "CL-SP0000-architecture-baseline-fixed",
+    "CL-SP0001-architecture-conformance-checked",
+    "CL-SP0002-historical-epoch-interpretable",
+    "CL-SP0002-semantics-versioned",
+    "CL-SP0003-program-admission-verified",
+    "CL-SP0004-provider-replaceable",
+    "CL-SP0005-safety-dominates-protected-effects",
+    "CL-SP0006-approval-context-bound",
+    "CL-SP0006-authority-conserved",
+    "CL-SP0006-zero-lost-work",
+    "CL-SP0007-contract-evolution-directional",
+    "CL-SP0007-historical-envelope-epoch-bound",
+    "CL-SP0008-contract-genome-sealed",
+    "CL-SP0008-contract-surfaces-inventoried",
+    "CL-SP0009-non-compensatory-gates",
+    "CL-SP0009-release-proof-not-runtime-authority"
+  ]
+}

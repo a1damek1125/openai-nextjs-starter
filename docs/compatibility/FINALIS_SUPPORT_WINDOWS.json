@@ -1,0 +1,12 @@
+{
+  "support_windows": [
+    {
+      "contract_id": "CT-HTTP-CASES",
+      "expires_at": "2027-07-12",
+      "review_due": "2027-01-12",
+      "status": "ACTIVE",
+      "support_window_id": "SW-HTTP-V1",
+      "version": "1.0.0"
+    }
+  ]
+}

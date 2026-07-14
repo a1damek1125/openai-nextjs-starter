@@ -1,0 +1,74 @@
+{
+  "migration_edges": [
+    {
+      "contract_id": "CT-HTTP-CASES",
+      "downtime_class": "NONE",
+      "evidence_refs": [
+        "RT-HTTP-1to2"
+      ],
+      "from_version": "1.0.0",
+      "inverse_transformer_ref": "TR-HTTP-2to1",
+      "inverse_verified": true,
+      "last_safe_rollback_point": "ME-HTTP-1to2:contract",
+      "lock_profile": {},
+      "loss_vector": {
+        "authority_loss": "NONE",
+        "evidence_loss": "NONE",
+        "field_loss": "NONE",
+        "history_loss": "NONE",
+        "ordering_loss": "NONE",
+        "precision_loss": "NONE",
+        "provenance_loss": "NONE",
+        "referential_loss": "NONE",
+        "semantic_loss": "NONE"
+      },
+      "migration_edge_id": "ME-HTTP-1to2",
+      "operational_risk": 1,
+      "postconditions": [
+        "old requests still accepted"
+      ],
+      "preconditions": [
+        "expand: to_state enum widened only"
+      ],
+      "reversibility": "REVERSIBLE",
+      "to_version": "2.0.0",
+      "transformer_ref": "TR-HTTP-1to2"
+    },
+    {
+      "contract_id": "CT-DB-SCHEMA",
+      "downtime_class": "NONE",
+      "evidence_refs": [],
+      "forward_fix_plan_ref": "FF-DB-add-column",
+      "from_version": "1.0.0",
+      "inverse_transformer_ref": null,
+      "irreversible_declared": true,
+      "last_safe_rollback_point": "ME-DB-add-column:pre-backfill",
+      "lock_profile": {
+        "brief": true,
+        "lock": "ACCESS_EXCLUSIVE"
+      },
+      "loss_vector": {
+        "authority_loss": "NONE",
+        "evidence_loss": "NONE",
+        "field_loss": "NONE",
+        "history_loss": "NONE",
+        "ordering_loss": "NONE",
+        "precision_loss": "NONE",
+        "provenance_loss": "NONE",
+        "referential_loss": "NONE",
+        "semantic_loss": "NONE"
+      },
+      "migration_edge_id": "ME-DB-add-column",
+      "operational_risk": 2,
+      "postconditions": [
+        "v27 readers unaffected"
+      ],
+      "preconditions": [
+        "ADD COLUMN with default (online-safe)"
+      ],
+      "reversibility": "ONE_WAY",
+      "to_version": "1.1.0",
+      "transformer_ref": "TR-DB-add-column"
+    }
+  ]
+}

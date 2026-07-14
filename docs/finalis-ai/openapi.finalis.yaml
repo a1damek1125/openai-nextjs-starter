@@ -1,0 +1,1149 @@
+openapi: 3.1.0
+info:
+  title: Finalis AI API
+  version: 0.1.0-draft
+  description: >-
+    DESIGN ARTIFACT — no server implements this yet. OpenAPI skeleton derived from
+    docs/finalis-ai/22-api-and-event-model.md and 04-data-model.md. Autonomy gating:
+    below-autonomy-level requests return 202 with a new human_approval_id; hard blocks
+    (opt-out, quiet hours, HUMAN_REVIEW_REQUIRED freeze) return 403 autonomy_blocked and
+    mint no new approval. All mutations write an append-only AuditEvent. Errors use
+    RFC 9457 application/problem+json.
+servers:
+  - url: /v1
+security:
+  - sessionAuth: []
+  - apiKeyAuth: []
+tags:
+  - name: cases
+  - name: parties
+  - name: messaging
+  - name: calls
+  - name: documents
+  - name: offers
+  - name: promises
+  - name: work
+  - name: approvals
+  - name: config
+  - name: audit
+  - name: webhooks
+
+paths:
+  /cases:
+    get:
+      tags: [cases]
+      summary: List/filter cases
+      parameters:
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/CaseState' } }
+        - { name: owner_id, in: query, schema: { type: string, format: uuid } }
+        - { name: min_lead_score, in: query, schema: { type: number } }
+        - { name: due_before, in: query, schema: { type: string, format: date-time } }
+        - { name: q, in: query, description: Semantic search (pgvector), schema: { type: string } }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Paginated case projections.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Case' } }
+                  next_cursor: { type: [string, 'null'] }
+                  has_more: { type: boolean }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+    post:
+      tags: [cases]
+      summary: Manually create a case (enters NEW_CONTACT)
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [goal, industry_type]
+              properties:
+                goal: { type: string }
+                industry_type: { type: string }
+                playbook_id: { type: string, format: uuid }
+                primary_party_id: { type: string, format: uuid }
+                party: { $ref: '#/components/schemas/Party' }
+                source_channel: { type: string, default: manual }
+                value_estimate: { type: number }
+                owner_id: { type: string, format: uuid }
+      responses:
+        '201':
+          description: Case created; emits case.created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Case' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /cases/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [cases]
+      summary: Full case file
+      parameters:
+        - { name: include, in: query, description: e.g. graph for graph_edges adjacency, schema: { type: string } }
+      responses:
+        '200':
+          description: Case with embedded counts, primary_party, latest brief, open items.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Case' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [cases]
+      summary: Update mutable fields (status NOT patchable — use /state)
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                owner_id: { type: string, format: uuid }
+                goal: { type: string }
+                value_estimate: { type: number }
+                autonomy_level: { type: integer, minimum: 1, maximum: 5 }
+                wake_at: { type: string, format: date-time, description: RECOVERY_LATER only }
+                closed_reason: { type: string }
+      responses:
+        '200':
+          description: Updated case.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Case' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /cases/{id}/state:
+    post:
+      tags: [cases]
+      summary: Request a state transition (doc 22 names this /cases/{id}/transitions)
+      description: >-
+        Validated against the transition table of doc 03 §4; illegal transitions return
+        409 invalid_transition. Writes AuditEvent{from_state, to_state, actor}. Transitions
+        out of HUMAN_REVIEW_REQUIRED require manager+.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [to_state]
+              properties:
+                to_state: { $ref: '#/components/schemas/CaseState' }
+                reason: { type: string }
+                evidence_ref_ids:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Transition applied; case.state_changed emitted.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Case' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /cases/{id}/next-action:
+    get:
+      tags: [cases]
+      summary: Current next-best-action for the case
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: NBA selection output (doc 05 §3).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  next_best_action: { type: object, additionalProperties: true }
+                  next_action_due_at: { type: string, format: date-time }
+                  utility_score: { type: number }
+                  chosen_over: { type: array, items: { type: object, additionalProperties: true } }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /parties:
+    get:
+      tags: [parties]
+      summary: List/lookup parties (PII — access audit-logged)
+      parameters:
+        - { name: phone, in: query, schema: { type: string } }
+        - { name: email, in: query, schema: { type: string } }
+        - { name: whatsapp_id, in: query, schema: { type: string } }
+        - { name: type, in: query, schema: { type: string } }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Paginated parties.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Party' } }
+                  next_cursor: { type: [string, 'null'] }
+                  has_more: { type: boolean }
+    post:
+      tags: [parties]
+      summary: Create a party (dedup on phone/email — 409 with existing id on match)
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Party' }
+      responses:
+        '201':
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Party' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /conversations/{id}/messages:
+    post:
+      tags: [messaging]
+      summary: Send an outbound message (AUTONOMY-GATED)
+      description: >-
+        sent_by=human executes directly (still audited). sent_by=ai requires effective
+        autonomy Level >=3 for non-committal content, >=4 for commitments. Below level:
+        202 Accepted with a NEW human_approval_id (not an error). Hard blocks regardless of
+        level — client opt-out, quiet hours, AnnoyanceRisk cool-down, HUMAN_REVIEW_REQUIRED
+        freeze — return 403 autonomy_blocked and mint NO new approval; for the freeze case
+        the problem document carries existing_human_approval_id pointing at the approval the
+        escalation already created. Emits message.sent on execution.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { type: string }
+                channel: { type: string }
+                template_id: { type: string }
+                attachments:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Executed — message sent.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
+        '202':
+          description: Below autonomy level — a HumanApproval was enqueued; nothing sent yet.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [human_approval_id]
+                properties:
+                  human_approval_id: { type: string, format: uuid }
+        '403':
+          description: Hard block (autonomy_blocked / opt_out_suppressed / quiet_hours). No new approval minted; existing_human_approval_id may reference the freeze escalation's approval.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /calls:
+    post:
+      tags: [calls]
+      summary: Initiate an outbound call (autonomy >=3 info / >=4 commitment; else 202 approval). Inbound call events arrive via POST /webhooks/telephony.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [case_id, party_id, objective]
+              properties:
+                case_id: { type: string, format: uuid }
+                party_id: { type: string, format: uuid }
+                objective: { type: string }
+                script_hints: { type: object, additionalProperties: true }
+      responses:
+        '201': { description: Call initiated. }
+        '202':
+          description: Below autonomy level — approval enqueued.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  human_approval_id: { type: string, format: uuid }
+        '403': { $ref: '#/components/responses/AutonomyBlocked' }
+
+  /calls/{id}:
+    get:
+      tags: [calls]
+      summary: Call detail (sentiment timeline, detected promises/missing, next actions)
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200': { description: Call record. }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /documents:
+    post:
+      tags: [documents]
+      summary: Upload a document (multipart or storage_url after presigned flow; kind=photo creates a Photo)
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                case_id: { type: string, format: uuid }
+                kind: { type: string, enum: [document, photo] }
+                file: { type: string, format: binary }
+          application/json:
+            schema:
+              type: object
+              required: [case_id, storage_url]
+              properties:
+                case_id: { type: string, format: uuid }
+                kind: { type: string, enum: [document, photo] }
+                storage_url: { type: string, format: uri }
+      responses:
+        '201':
+          description: Document created (status received); emits document.received; pipeline runs async.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Document' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /documents/{id}/analysis:
+    get:
+      tags: [documents]
+      summary: Full analysis (404 until status=analyzed)
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Extracted fields, risk flags, evidence refs, summary.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  extracted_fields: { type: array, items: { $ref: '#/components/schemas/ExtractedField' } }
+                  risk_flags: { type: array, items: { type: object, additionalProperties: true } }
+                  evidence_refs: { type: array, items: { $ref: '#/components/schemas/EvidenceReference' } }
+                  summary: { type: string }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /documents/{id}/rescan-request:
+    post:
+      tags: [documents]
+      summary: Request a re-scan (doc 22 names this /documents/{id}/rescan)
+      description: Marks needs_rescan, emits document.needs_rescan; the resulting outbound client message is itself autonomy-gated.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '202': { description: Rescan requested. }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /offers:
+    get:
+      tags: [offers]
+      summary: List offers (filter by case_id, status, origin)
+      parameters:
+        - { name: case_id, in: query, schema: { type: string, format: uuid } }
+        - { name: status, in: query, schema: { type: string } }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Paginated offers.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Offer' } }
+                  next_cursor: { type: [string, 'null'] }
+                  has_more: { type: boolean }
+    post:
+      tags: [offers]
+      summary: Create an offer draft (sending is a separate high-gated operation)
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Offer' }
+      responses:
+        '201':
+          description: Draft created; emits offer.created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Offer' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /comparisons:
+    post:
+      tags: [offers]
+      summary: Run an offer comparison (async — Offer Comparator worker)
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [case_id, offer_ids]
+              properties:
+                case_id: { type: string, format: uuid }
+                offer_ids:
+                  type: array
+                  items: { type: string, format: uuid }
+                weights_version: { type: string }
+      responses:
+        '202':
+          description: Comparison queued; emits comparison.completed when done.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  comparison_id: { type: string, format: uuid }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /promises:
+    get:
+      tags: [promises]
+      summary: List promises (filter case_id, status, due_before)
+      parameters:
+        - { name: case_id, in: query, schema: { type: string, format: uuid } }
+        - { name: status, in: query, schema: { type: string, enum: [open, fulfilled, broken, waived] } }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Paginated promises.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Promise' } }
+                  next_cursor: { type: [string, 'null'] }
+                  has_more: { type: boolean }
+    post:
+      tags: [promises]
+      summary: Create a promise (human entry or applied worker proposal)
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Promise' }
+      responses:
+        '201':
+          description: Created; emits promise.created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Promise' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /missing-items:
+    get:
+      tags: [promises]
+      summary: List missing items (creation is Orchestrator-only; humans waive/satisfy via PATCH in doc 22)
+      parameters:
+        - { name: case_id, in: query, schema: { type: string, format: uuid } }
+        - { name: status, in: query, schema: { type: string, enum: [missing, requested, received, waived] } }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Paginated missing items.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/MissingItem' } }
+                  next_cursor: { type: [string, 'null'] }
+                  has_more: { type: boolean }
+
+  /actions:
+    get:
+      tags: [work]
+      summary: Scheduled + executed actions (read-only audit surface — created by the Orchestrator, never via this API)
+      parameters:
+        - { name: case_id, in: query, schema: { type: string, format: uuid } }
+        - { name: status, in: query, schema: { type: string } }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': { description: Paginated actions. }
+
+  /tasks:
+    get:
+      tags: [work]
+      summary: Human work queue (filter assignee_id, status, due_before, priority)
+      parameters:
+        - { name: assignee_id, in: query, schema: { type: string, format: uuid } }
+        - { name: status, in: query, schema: { type: string, enum: [open, in_progress, done, snoozed] } }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': { description: Paginated tasks. }
+    post:
+      tags: [work]
+      summary: Create a task
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, case_id]
+              properties:
+                title: { type: string }
+                case_id: { type: string, format: uuid }
+                assignee_id: { type: string, format: uuid }
+                priority: { type: string }
+                due_at: { type: string, format: date-time }
+      responses:
+        '201': { description: Task created. }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /approvals:
+    get:
+      tags: [approvals]
+      summary: Approvals queue (pending=true → sorted by deadline asc; powers the Command Center inbox)
+      parameters:
+        - { name: pending, in: query, schema: { type: boolean } }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Paginated approvals with action payload, options, recommendation, deadline, sla_breached.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/HumanApproval' } }
+                  next_cursor: { type: [string, 'null'] }
+                  has_more: { type: boolean }
+
+  /approvals/{id}/decision:
+    post:
+      tags: [approvals]
+      summary: Decide a gated action (the critical HITL endpoint; manager+)
+      description: >-
+        Records decided_by/decided_at, emits approval.decided; on approve the Orchestrator
+        executes the gated Action and applies any queued transition. Idempotent — a second
+        decision returns 409 already_decided.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision: { type: string, enum: [approve, reject, edit_and_approve] }
+                chosen_option: { type: string }
+                edited_payload: { type: object, additionalProperties: true }
+                note: { type: string }
+      responses:
+        '200':
+          description: Decision recorded.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HumanApproval' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /decision-briefs:
+    get:
+      tags: [work]
+      summary: Decision briefs (filter case_id; latest first, superseded flagged)
+      parameters:
+        - { name: case_id, in: query, schema: { type: string, format: uuid } }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': { description: Paginated briefs with summary, value_range, recommended_step, rationale, confidence, evidence_ref_ids. }
+
+  /followup-sequences/{id}/pause:
+    post:
+      tags: [work]
+      summary: Pause the follow-up cadence (cancels scheduled follow-up Actions)
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200': { description: Sequence paused. }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /followup-sequences/{id}/resume:
+    post:
+      tags: [work]
+      summary: Resume the cadence (re-evaluates FollowUpPriority before scheduling)
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200': { description: Sequence resumed. }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /business-profile:
+    get:
+      tags: [config]
+      summary: Tenant config (thresholds, autonomy defaults, quiet hours, price rules, data_region)
+      responses:
+        '200': { description: BusinessProfile. }
+    patch:
+      tags: [config]
+      summary: Update tenant config (owner/manager; threshold + autonomy changes audited with before/after)
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        '200': { description: Updated. }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /playbooks:
+    get:
+      tags: [config]
+      summary: Industry playbooks (intake schema, required fields, scoring/offer weights, templates, version)
+      responses:
+        '200': { description: Playbook list. }
+
+  /integration-accounts:
+    get:
+      tags: [config]
+      summary: Connected providers + status (doc 22 names this /integrations; never returns secrets — credentials_ref handle only)
+      responses:
+        '200': { description: IntegrationAccount list. }
+
+  /audit-events:
+    get:
+      tags: [audit]
+      summary: Query the append-only audit log (no mutation routes exist by design)
+      parameters:
+        - { name: case_id, in: query, schema: { type: string, format: uuid } }
+        - { name: event_type, in: query, schema: { type: string } }
+        - { name: actor, in: query, schema: { type: string } }
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Paginated audit events (hash-chained).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/AuditEvent' } }
+                  next_cursor: { type: [string, 'null'] }
+                  has_more: { type: boolean }
+
+  /metrics:
+    get:
+      tags: [audit]
+      summary: Evaluation Lab metrics (voice latency P50/P95, OCR F1 + ECE, follow-up success, hallucination rate, approval/reversal rate)
+      parameters:
+        - { name: period, in: query, schema: { type: string } }
+        - { name: vertical, in: query, schema: { type: string } }
+      responses:
+        '200': { description: Per-tenant metrics. }
+
+  /voice-profile:
+    get:
+      tags: [config]
+      summary: Voice/telephony config (numbers, TTS/STT, greeting, barge-in, handoff, recording consent)
+      responses:
+        '200': { description: VoiceProfile. }
+    patch:
+      tags: [config]
+      summary: Update voice settings (owner/manager; recording/consent changes audited)
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        '200': { description: Updated. }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /users:
+    get:
+      tags: [config]
+      summary: List tenant users (role, permissions, assignable, notify_channels)
+      responses:
+        '200': { description: UserRole list. }
+    post:
+      tags: [config]
+      summary: Invite/create a user (owner/manager; audited)
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, role]
+              properties:
+                email: { type: string, format: email }
+                role: { type: string, enum: [owner, manager, agent, technician, read_only] }
+                permissions: { type: object, additionalProperties: true }
+                notify_channels: { type: array, items: { type: string } }
+      responses:
+        '201': { description: UserRole created. }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /risk-flags/{id}:
+    patch:
+      tags: [documents]
+      summary: Acknowledge/resolve a risk flag (resolving recomputes Case.risk_score; audited)
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [acknowledged, resolved] }
+                note: { type: string }
+      responses:
+        '200': { description: Updated flag. }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /evidence-refs/{id}:
+    get:
+      tags: [audit]
+      summary: Resolve an EvidenceReference to its source location (powers UI evidence chips)
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Evidence reference.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EvidenceReference' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /photos/{id}:
+    get:
+      tags: [documents]
+      summary: Photo metadata (short-lived signed storage link, vision tags, linked missing item)
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200': { description: Photo metadata. }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /sources/{id}:
+    get:
+      tags: [audit]
+      summary: WebScout Source record (url, trust_score, extracted_facts)
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Source.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Source' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /webhooks/telephony:
+    post:
+      tags: [webhooks]
+      summary: 'Provider call events: initiated/answered/completed/recording-ready/DTMF/SIP failure'
+      description: Signature-verified (HMAC/JWT per provider), replay-protected, 2xx-fast (enqueue then process). Maps to call.started / call.ended / async call.transcribed.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        '200': { description: Accepted for processing. }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /webhooks/whatsapp:
+    post:
+      tags: [webhooks]
+      summary: Inbound WhatsApp message/media, delivery receipts, template status, STOP/opt-out
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        '200': { description: Accepted for processing. }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /webhooks/sms:
+    post:
+      tags: [webhooks]
+      summary: Inbound SMS, DLRs, STOP (hard opt-out)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        '200': { description: Accepted for processing. }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /webhooks/email:
+    post:
+      tags: [webhooks]
+      summary: Inbound email parse, bounce, spam report (attachments become document.received)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        '200': { description: Accepted for processing. }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /webhooks/calendar:
+    post:
+      tags: [webhooks]
+      summary: Calendar event created/updated/cancelled/RSVP (drives SCHEDULED handling)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        '200': { description: Accepted for processing. }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: session
+      description: Dashboard auth — NextAuth session (OAuth2/OIDC) mapped to UserRole permissions.
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: >-
+        Server-to-server API key (doc 22 uses an Authorization Bearer fnls_sk_... token;
+        modeled as a header key here to coexist with sessionAuth). Scoped per tenant + capability.
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: UUID, retained >=24h; replays return the original response with Idempotent-Replay true.
+      schema: { type: string, format: uuid }
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, default: 25, maximum: 100 }
+
+  responses:
+    ValidationError:
+      description: Bad fields (type validation_error, with errors[] per field).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Unauthenticated:
+      description: Missing/invalid credentials or webhook signature.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    AutonomyBlocked:
+      description: Hard safety gate (autonomy_blocked, opt_out_suppressed, quiet_hours) — no new approval minted.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Not found (cross-tenant ids are indistinguishable — always 404, never 403).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Conflict:
+      description: State conflict (invalid_transition, already_decided, duplicate_party, idempotency_conflict).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+
+  schemas:
+    CaseState:
+      type: string
+      description: The 17-state case lifecycle enum (doc 03 §1).
+      enum:
+        - NEW_CONTACT
+        - INTAKE_IN_PROGRESS
+        - QUALIFIED
+        - WAITING_FOR_CLIENT_INFO
+        - WAITING_FOR_DOCUMENTS
+        - DOCUMENT_ANALYSIS
+        - QUOTE_PREPARATION
+        - OFFER_SENT
+        - FOLLOW_UP_ACTIVE
+        - NEGOTIATION
+        - HUMAN_REVIEW_REQUIRED
+        - SCHEDULED
+        - WON
+        - LOST
+        - COMPLETED
+        - ABANDONED
+        - RECOVERY_LATER
+
+    Case:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        status: { $ref: '#/components/schemas/CaseState' }
+        industry_type: { type: string }
+        playbook_id: { type: string, format: uuid }
+        owner_id: { type: string, format: uuid }
+        goal: { type: string }
+        primary_party_id: { type: string, format: uuid }
+        value_estimate: { type: number }
+        lead_score: { type: number, minimum: 0, maximum: 1 }
+        autonomy_level: { type: integer, minimum: 1, maximum: 5 }
+        next_best_action: { type: object, additionalProperties: true }
+        next_action_due_at: { type: string, format: date-time }
+
+    Party:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        type: { type: string, enum: [client, company, technician, supplier, notary, lawyer, insurer, other] }
+        display_name: { type: string }
+        phones: { type: array, items: { type: string, description: E.164 } }
+        emails: { type: array, items: { type: string, format: email } }
+        whatsapp_id: { type: string }
+        preferred_channel: { type: string }
+        preferred_language: { type: string }
+        quiet_hours: { type: object, additionalProperties: true }
+        contact_opt_outs: { type: array, items: { type: string } }
+
+    Message:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        conversation_id: { type: string, format: uuid }
+        direction: { type: string, enum: [in, out] }
+        channel: { type: string }
+        body: { type: string }
+        sent_by: { type: string, enum: [ai, human, client] }
+        attachments: { type: array, items: { type: string, format: uuid } }
+        delivery_status: { type: string }
+        detected_promises: { type: array, items: { type: object, additionalProperties: true } }
+        sentiment: { type: string }
+
+    Document:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        case_id: { type: string, format: uuid }
+        type: { type: string }
+        source: { type: string, enum: [client, company, web, email] }
+        storage_url: { type: string, format: uri }
+        mime: { type: string }
+        status: { type: string, enum: [received, processing, analyzed, needs_rescan] }
+        ocr_quality: { type: number, minimum: 0, maximum: 1 }
+        overall_confidence: { type: number, minimum: 0, maximum: 1 }
+        doc_risk_score: { type: number }
+
+    ExtractedField:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        document_id: { type: string, format: uuid }
+        field_key: { type: string }
+        field_value: {}
+        data_type: { type: string }
+        page: { type: integer }
+        bbox: { type: object, additionalProperties: true }
+        confidence: { type: number, minimum: 0, maximum: 1, description: Product of ocr_q * extraction_q * source_q * consistency_q }
+        verified_by_human: { type: boolean }
+
+    EvidenceReference:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        claim_id: { type: string, format: uuid }
+        source_type: { type: string, enum: [message, call_segment, document_region, web_source] }
+        source_id: { type: string, format: uuid }
+        locator: { type: object, additionalProperties: true, description: page+bbox | call ts range | url+snippet }
+        snippet: { type: string }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+
+    Source:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        case_id: { type: [string, 'null'], format: uuid }
+        url: { type: string, format: uri }
+        source_type: { type: string, enum: [manufacturer, registry, gov, retailer, marketplace, forum, blog, pdf, other] }
+        date_checked: { type: string, format: date }
+        title: { type: string }
+        snippet: { type: string }
+        trust_score: { type: integer, minimum: 0, maximum: 100 }
+        relevance: { type: number, minimum: 0, maximum: 1 }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+        extracted_facts: { type: object, additionalProperties: true }
+
+    Promise:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        case_id: { type: string, format: uuid }
+        promisor_party_id: { type: string, format: uuid }
+        promisee_party_id: { type: [string, 'null'], format: uuid }
+        what: { type: string }
+        due_at: { type: string, format: date-time }
+        importance: { type: number, minimum: 0, maximum: 1 }
+        status: { type: string, enum: [open, fulfilled, broken, waived] }
+        breach_score: { type: number }
+        evidence_ref_id: { type: string, format: uuid }
+
+    MissingItem:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        case_id: { type: string, format: uuid }
+        field_key: { type: string }
+        label: { type: string }
+        weight: { type: number }
+        blocks_quote: { type: boolean }
+        status: { type: string, enum: [missing, requested, received, waived] }
+        requested_at: { type: string, format: date-time }
+        channel_used: { type: string }
+        satisfied_by: { type: object, additionalProperties: true, description: '{type: document|photo|message, id}' }
+
+    Offer:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        case_id: { type: string, format: uuid }
+        origin: { type: string, enum: [ours, competitor, client_provided] }
+        document_id: { type: [string, 'null'], format: uuid }
+        price: { type: number }
+        currency: { type: string }
+        scope: { type: object, additionalProperties: true }
+        deadline: { type: string, format: date }
+        status: { type: string, enum: [draft, sent, accepted, rejected, expired] }
+        version: { type: integer }
+        offer_score: { type: number }
+
+    HumanApproval:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        case_id: { type: string, format: uuid }
+        action_id: { type: string, format: uuid }
+        requested_at: { type: string, format: date-time }
+        context: { type: object, additionalProperties: true }
+        options: { type: array, items: {} }
+        recommended_option: { type: string }
+        decided_by: { type: [string, 'null'], format: uuid }
+        decision: { type: [string, 'null'], enum: [approve, reject, edit_and_approve, null] }
+        decided_at: { type: [string, 'null'], format: date-time }
+        deadline: { type: string, format: date-time }
+        sla_breached: { type: boolean }
+
+    AuditEvent:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        event_type: { type: string }
+        case_id: { type: [string, 'null'], format: uuid }
+        actor: { type: string, enum: [ai_worker, human, system] }
+        actor_id: { type: string }
+        from_state: { type: [string, 'null'] }
+        to_state: { type: [string, 'null'] }
+        payload: { type: object, additionalProperties: true }
+        evidence_ref_ids: { type: array, items: { type: string, format: uuid } }
+        hash_prev: { type: string, description: Tamper-evidence chain link }
+        created_at: { type: string, format: date-time }
+
+    Problem:
+      type: object
+      description: RFC 9457 problem details (application/problem+json).
+      properties:
+        type: { type: string, format: uri, description: e.g. https://api.finalis.ai/errors/autonomy_blocked }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        case_id: { type: string, format: uuid }
+        existing_human_approval_id: { type: string, format: uuid, description: Present on HUMAN_REVIEW_REQUIRED freeze blocks — points at the approval the escalation already created; no new approval is minted. }
+        trace_id: { type: string }
+      additionalProperties: true

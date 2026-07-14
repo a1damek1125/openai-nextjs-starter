@@ -1,0 +1,56 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "active_from": {
+      "type": "string"
+    },
+    "approval_policy": {
+      "type": "object"
+    },
+    "cadence": {
+      "type": "string"
+    },
+    "capability_ceiling": {
+      "type": "object"
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "per_run_budget": {
+      "type": "object"
+    },
+    "purpose": {
+      "type": "string"
+    },
+    "reauthorization_requirements": {
+      "type": "array"
+    },
+    "recurrence_contract_id": {
+      "type": "string"
+    },
+    "scope_ceiling": {
+      "type": "object"
+    },
+    "semantic_work_hash": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "termination_policy": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "recurrence_contract_id",
+    "cadence",
+    "purpose",
+    "scope_ceiling",
+    "capability_ceiling",
+    "per_run_budget",
+    "expiry",
+    "termination_policy"
+  ],
+  "schema_id": "RecurringWorkContract",
+  "type": "object"
+}

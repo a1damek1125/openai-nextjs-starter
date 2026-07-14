@@ -1,0 +1,294 @@
+{
+  "gates": {
+    "GATE_AGENTIC_INJECTION": {
+      "dependencies": [],
+      "evidence_ttl": null,
+      "gate_version": "1",
+      "meaning": "no untrusted-content path into prompts/scripts/authority",
+      "owner": "release",
+      "severity": "HARD",
+      "triggers": [
+        "CI_WORKFLOW_CHANGE",
+        "AI_CLOSURE_CHANGE"
+      ],
+      "waivable": false
+    },
+    "GATE_AI_CLOSURE": {
+      "dependencies": [],
+      "evidence_ttl": null,
+      "gate_version": "1",
+      "meaning": "AI release closure complete for AI-affecting changes",
+      "owner": "ai-release",
+      "severity": "HARD",
+      "triggers": [
+        "AI_CLOSURE_CHANGE"
+      ],
+      "waivable": true
+    },
+    "GATE_ARTIFACT_INTEGRITY": {
+      "dependencies": [],
+      "evidence_ttl": null,
+      "gate_version": "1",
+      "meaning": "verified digest equals promotable digest (build once)",
+      "owner": "release",
+      "severity": "HARD",
+      "triggers": [
+        "*"
+      ],
+      "waivable": false
+    },
+    "GATE_BROWSER_E2E": {
+      "dependencies": [
+        "GATE_UNIT_TESTS"
+      ],
+      "evidence_ttl": null,
+      "gate_version": "1",
+      "meaning": "browser E2E suite result recorded honestly incl. flakes",
+      "owner": "release",
+      "severity": "HARD",
+      "triggers": [
+        "SEMANTIC_CHANGE",
+        "CONTRACT_CHANGE"
+      ],
+      "waivable": true
+    },
+    "GATE_BUILD_HERMETICITY": {
+      "dependencies": [],
+      "evidence_ttl": null,
+      "gate_version": "1",
+      "meaning": "all build inputs declared; no undeclared network/env/time",
+      "owner": "release",
+      "severity": "HARD",
+      "triggers": [
+        "*"
+      ],
+      "waivable": true
+    },
+    "GATE_CI_WORKFLOW_SECURITY": {
+      "dependencies": [],
+      "evidence_ttl": null,
+      "gate_version": "1",
+      "meaning": "workflow permissions least-privilege; pinning; no privileged untrusted checkout; no injection path",
+      "owner": "release",
+      "severity": "HARD",
+      "triggers": [
+        "CI_WORKFLOW_CHANGE"
+      ],
+      "waivable": true
+    },
+    "GATE_COMPATIBILITY": {
+      "dependencies": [],
+      "evidence_ttl": null,
+      "gate_version": "1",
+      "meaning": "SP0007 compatibility vector admits the contract delta",
+      "owner": "compatibility",
+      "severity": "HARD",
+      "triggers": [
+        "CONTRACT_CHANGE"
+      ],
+      "waivable": true
+    },
+    "GATE_CONTRACT_INVENTORY": {
+      "dependencies": [
+        "GATE_COMPATIBILITY"
+      ],
+      "evidence_ttl": null,
+      "gate_version": "1",
+      "meaning": "SP0008 inventory reconciles the changed surfaces",
+      "owner": "contracts-inventory",
+      "severity": "HARD",
+      "triggers": [
+        "CONTRACT_CHANGE",
+        "SEMANTIC_CHANGE"
+      ],
+      "waivable": true
+    },
+    "GATE_DOCUMENTATION": {
+      "dependencies": [],
+      "evidence_ttl": null,
+      "gate_version": "1",
+      "meaning": "documentation obligations closed",
+      "owner": "release",
+      "severity": "ADVISORY",
+      "triggers": [
+        "*"
+      ],
+      "waivable": true
+    },
+    "GATE_FEATURE_FLAGS": {
+      "dependencies": [],
+      "evidence_ttl": null,
+      "gate_version": "1",
+      "meaning": "flags owned, safe-default, expiring, no authority widening",
+      "owner": "release",
+      "severity": "HARD",
+      "triggers": [
+        "SEMANTIC_CHANGE"
+      ],
+      "waivable": true
+    },
+    "GATE_MIGRATION": {
+      "dependencies": [],
+      "evidence_ttl": null,
+      "gate_version": "1",
+      "meaning": "migration is forward-only, numbered, with rollback or declared forward-fix",
+      "owner": "release",
+      "severity": "HARD",
+      "triggers": [
+        "MIGRATION_CHANGE"
+      ],
+      "waivable": false
+    },
+    "GATE_MUTATION_ADEQUACY": {
+      "dependencies": [],
+      "evidence_ttl": null,
+      "gate_version": "1",
+      "meaning": "non-equivalent mutants killed for changed kernels",
+      "owner": "release",
+      "severity": "ADVISORY",
+      "triggers": [
+        "GOVERNANCE_TOOLING_CHANGE"
+      ],
+      "waivable": true
+    },
+    "GATE_PROOF_INTEGRITY": {
+      "dependencies": [],
+      "evidence_ttl": null,
+      "gate_version": "1",
+      "meaning": "proof envelopes and evidence ledgers verify",
+      "owner": "release",
+      "severity": "HARD",
+      "triggers": [
+        "*"
+      ],
+      "waivable": false
+    },
+    "GATE_RBAC_AUTHORITY": {
+      "dependencies": [],
+      "evidence_ttl": null,
+      "gate_version": "1",
+      "meaning": "no authority widening; RBAC checks intact",
+      "owner": "safety-kernel",
+      "severity": "HARD",
+      "triggers": [
+        "AUTHORITY_CHANGE"
+      ],
+      "waivable": false
+    },
+    "GATE_REPRODUCIBILITY": {
+      "dependencies": [
+        "GATE_BUILD_HERMETICITY"
+      ],
+      "evidence_ttl": null,
+      "gate_version": "1",
+      "meaning": "independent rebuild equivalence where declared",
+      "owner": "release",
+      "severity": "ADVISORY",
+      "triggers": [
+        "*"
+      ],
+      "waivable": true
+    },
+    "GATE_ROLLBACK_OR_FORWARD_FIX": {
+      "dependencies": [],
+      "evidence_ttl": null,
+      "gate_version": "1",
+      "meaning": "rollback proven or forward-fix declared for irreversibles",
+      "owner": "release",
+      "severity": "HARD",
+      "triggers": [
+        "MIGRATION_CHANGE",
+        "CONTRACT_CHANGE"
+      ],
+      "waivable": true
+    },
+    "GATE_SAFETY": {
+      "dependencies": [],
+      "evidence_ttl": null,
+      "gate_version": "1",
+      "meaning": "SP0005 safety kernel invariants unaffected or re-proven",
+      "owner": "safety-kernel",
+      "severity": "HARD",
+      "triggers": [
+        "SAFETY_CHANGE"
+      ],
+      "waivable": false
+    },
+    "GATE_SECRET_EXPOSURE": {
+      "dependencies": [],
+      "evidence_ttl": null,
+      "gate_version": "1",
+      "meaning": "no secret value in diff, artifact or evidence",
+      "owner": "release",
+      "severity": "HARD",
+      "triggers": [
+        "*"
+      ],
+      "waivable": false
+    },
+    "GATE_SUPPLY_CHAIN": {
+      "dependencies": [],
+      "evidence_ttl": "P30D",
+      "gate_version": "1",
+      "meaning": "dependency locks pinned; SBOM bound; provenance verifies",
+      "owner": "release",
+      "severity": "HARD",
+      "triggers": [
+        "DEPENDENCY_CHANGE",
+        "CI_WORKFLOW_CHANGE"
+      ],
+      "waivable": true
+    },
+    "GATE_TENANT_ISOLATION": {
+      "dependencies": [],
+      "evidence_ttl": null,
+      "gate_version": "1",
+      "meaning": "tenant isolation invariants hold for changed surfaces",
+      "owner": "safety-kernel",
+      "severity": "HARD",
+      "triggers": [
+        "AUTHORITY_CHANGE",
+        "SEMANTIC_CHANGE",
+        "CONTRACT_CHANGE"
+      ],
+      "waivable": false
+    },
+    "GATE_UNIT_TESTS": {
+      "dependencies": [],
+      "evidence_ttl": null,
+      "gate_version": "1",
+      "meaning": "selected unit/integration tests pass for this candidate",
+      "owner": "release",
+      "severity": "HARD",
+      "triggers": [
+        "*"
+      ],
+      "waivable": false
+    },
+    "GATE_UNKNOWN_OUTCOME": {
+      "dependencies": [],
+      "evidence_ttl": null,
+      "gate_version": "1",
+      "meaning": "hard-scope unknown budget is zero (D-0009-06)",
+      "owner": "release",
+      "severity": "HARD",
+      "triggers": [
+        "*"
+      ],
+      "waivable": false
+    }
+  },
+  "non_waivable": [
+    "GATE_AGENTIC_INJECTION",
+    "GATE_ARTIFACT_INTEGRITY",
+    "GATE_MIGRATION",
+    "GATE_PROOF_INTEGRITY",
+    "GATE_RBAC_AUTHORITY",
+    "GATE_SAFETY",
+    "GATE_SECRET_EXPOSURE",
+    "GATE_TENANT_ISOLATION",
+    "GATE_UNIT_TESTS",
+    "GATE_UNKNOWN_OUTCOME"
+  ],
+  "schema_id": "GateRegistry"
+}

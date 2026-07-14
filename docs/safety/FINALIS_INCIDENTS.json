@@ -1,0 +1,14 @@
+{
+  "incidents": [
+    {
+      "direct_policy_mutation": false,
+      "hazard_refs": [
+        "HZ-DUP-EFFECT"
+      ],
+      "incident_id": "INC-EXAMPLE",
+      "internal_severity": "LOW",
+      "legal_reportability_status": "NOT_REPORTABLE",
+      "status": "CLOSED"
+    }
+  ]
+}

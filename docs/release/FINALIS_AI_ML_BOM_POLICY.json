@@ -1,0 +1,4 @@
+{
+  "rule": "AI/ML-BOM is DISTINCT from software SBOM; models/datasets/prompts/policies/configs (D-0009-36)",
+  "schema_id": "AIMLBOMPolicy"
+}

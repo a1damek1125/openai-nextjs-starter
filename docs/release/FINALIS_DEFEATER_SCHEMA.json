@@ -1,0 +1,24 @@
+{
+  "rule": "a validated blocking defeater reopens qualification (D-0009-63)",
+  "schema_id": "Defeater",
+  "states": [
+    "OPEN",
+    "VALIDATED",
+    "BLOCKING",
+    "REQUALIFICATION_TRIGGERED",
+    "RESOLVED",
+    "REJECTED"
+  ],
+  "types": [
+    "NEW_VULNERABILITY",
+    "TRUST_ROOT_REVOKED",
+    "STALE_ATTESTATION",
+    "NEW_INCOMPATIBILITY",
+    "PROVIDER_DRIFT",
+    "HIDDEN_TEST_FAILURE",
+    "INVALID_VEX",
+    "FALSE_SBOM_COMPLETENESS",
+    "BROKEN_ROLLBACK",
+    "NEW_SAFETY_HAZARD"
+  ]
+}

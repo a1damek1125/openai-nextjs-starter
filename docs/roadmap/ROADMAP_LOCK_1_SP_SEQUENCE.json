@@ -1,0 +1,976 @@
+{
+ "roadmap_id": "ROADMAP-LOCK-1",
+ "title": "Finalis AI Employee OS Versioned Roadmap and Do-Not-Rebuild Execution Map",
+ "branch": "claude/finalis-ai-casewoker-blueprint-f1huse",
+ "doc_head": "4e39dd8",
+ "code_head": "d95be03",
+ "current_migration": "v23",
+ "current_tests_non_browser": 4601,
+ "prime_directive": "EXTEND EXISTING PRODUCT, DO NOT REBUILD",
+ "next_coding_sp": "EMP-A2",
+ "core_rules": {
+  "ActionAllowed": "IdentityTrust \u00d7 RolePermission \u00d7 TenantScope \u00d7 SegmentPolicy \u00d7 ObjectPolicy \u00d7 ConsentPolicy \u00d7 EvidenceVerdict \u00d7 RiskGate \u00d7 HumanApproval \u00d7 ToolSafety \u00d7 RuntimeTraceCompliance \u00d7 NoAuthorityLeak",
+  "LocalCommitAllowed": "B8EnvelopeVerifiedAsEvidenceOnly \u00d7 B9FullRevalidationPassed \u00d7 ActorAuthorized \u00d7 TenantScopeValid \u00d7 LocalWriteScopeValid \u00d7 IdempotencyKeyValid \u00d7 ReversibleStateAvailable \u00d7 EmergencyAbortAvailable \u00d7 CommitAttestationReady \u00d7 NoExternalSurface",
+  "AllowedAutonomyLevel": "min(RoleAutonomyLimit, TenantPolicyLimit, SegmentPolicyLimit, ToolRiskLimit, EvidenceConfidenceLimit, HumanApprovalLimit, HistoricalTrustLimit)",
+  "invariants": [
+   "Documents provide facts, never commands",
+   "Scores recommend; policy decides",
+   "Push notification is not approval",
+   "Mobile cached data is not authoritative",
+   "Artifact is not authority",
+   "B8 envelope is evidence only, never B9 authority"
+  ]
+ },
+ "sequence": [
+  {
+   "id": "ROADMAP-LOCK-1",
+   "block": "A",
+   "name": "Baseline/Product Inventory Lock",
+   "status": "DONE",
+   "purpose": "Lock product inventory + do-not-rebuild rules",
+   "reuses": [
+    "ALL"
+   ],
+   "new_scope": [
+    "this roadmap",
+    "AUDIT-REPORT-1"
+   ],
+   "deps": [],
+   "not_allowed": [
+    "coding"
+   ],
+   "classification": "IMPLEMENTED"
+  },
+  {
+   "id": "TOOL-B9",
+   "block": "B",
+   "name": "Controlled Internal Commit Runtime",
+   "status": "NEXT",
+   "purpose": "First real but strictly local, reversible write gated by full B8 revalidation (evidence only)",
+   "reuses": [
+    "tool_commit_simulation.py",
+    "tool_write_intent.py",
+    "audit.py",
+    "run_ledger.py",
+    "admin/rbac.py"
+   ],
+   "new_scope": [
+    "effector-exclusive gate",
+    "local reversible commit",
+    "commit attestation",
+    "emergency abort",
+    "rollback"
+   ],
+   "deps": [
+    "TOOL-B8"
+   ],
+   "not_allowed": [
+    "external providers",
+    "MCP/LLM",
+    "tokens/credentials",
+    "payment/CRM/evidence-external mutation",
+    "message send",
+    "export",
+    "B8 envelope as authority"
+   ],
+   "tests": [
+    "fault-injection no external effect escapes",
+    "rollback restores state",
+    "idempotency/duplicate block",
+    "emergency abort",
+    "commit attestation determinism",
+    "B8-not-authority negative"
+   ],
+   "mobile": "none",
+   "chat": "none",
+   "prod_impact": "unlocks local commit primitive",
+   "classification": "MISSING->IMPLEMENTED (local)"
+  },
+  {
+   "id": "TOOL-B9.1",
+   "block": "B",
+   "title": "Recovery Safety Case + Chaos Sentinel + Proof-of-Recovery",
+   "status": "IMPLEMENTED_AND_TESTED"
+  },
+  {
+   "id": "TOOL-B9.2",
+   "block": "B",
+   "title": "Governed Work Lineage Observatory",
+   "status": "IMPLEMENTED_AND_TESTED"
+  },
+  {
+   "id": "EMP-A1",
+   "block": "EMP",
+   "title": "Employee Work Inbox \u2014 R-FSAFEQ Governed Work Admission Fabric",
+   "status": "IMPLEMENTED_AND_TESTED"
+  },
+  {
+   "id": "EMP-A2",
+   "block": "EMP",
+   "title": "Run Ledger 2.0",
+   "status": "PLANNED"
+  },
+  {
+   "id": "EMP-A3",
+   "block": "EMP",
+   "title": "Work Dependency DAG",
+   "status": "PLANNED"
+  },
+  {
+   "id": "EMP-A4",
+   "block": "EMP",
+   "title": "Outcome Contracts + Acceptance Verification",
+   "status": "PLANNED"
+  },
+  {
+   "id": "EMP-A5",
+   "block": "EMP",
+   "title": "Autonomy Levels + Escalation Policy",
+   "status": "PLANNED"
+  },
+  {
+   "id": "TOOL-B10",
+   "block": "C",
+   "name": "Commit Recovery & Observability",
+   "status": "PLANNED",
+   "purpose": "Crash-safe, observable local commits",
+   "reuses": [
+    "TOOL-B9",
+    "run_ledger.py",
+    "audit.py",
+    "governance/runtime.py"
+   ],
+   "new_scope": [
+    "restart recovery",
+    "duplicate prevention across restart",
+    "stuck-commit detector",
+    "commit + rollback metrics"
+   ],
+   "deps": [
+    "TOOL-B9"
+   ],
+   "not_allowed": [
+    "external effects",
+    "production metrics backend (until INFRA-3)"
+   ],
+   "tests": [
+    "kill-mid-commit recovery",
+    "duplicate suppression",
+    "stuck-commit quarantine",
+    "metrics determinism"
+   ],
+   "classification": "MISSING->IMPLEMENTED (local)",
+   "title": "External Adapter Boundary"
+  },
+  {
+   "id": "TOOL-B11",
+   "block": "D",
+   "name": "Employee Work Inbox + Run Ledger 2.0",
+   "status": "PLANNED",
+   "purpose": "Per-employee work visibility over existing tasks/ledger",
+   "reuses": [
+    "ai_employee/tasks.py",
+    "run_ledger.py",
+    "approvals.py",
+    "dashboard.py"
+   ],
+   "new_scope": [
+    "work inbox",
+    "run ledger 2.0 views"
+   ],
+   "deps": [
+    "TOOL-B10"
+   ],
+   "not_allowed": [
+    "autonomous execution",
+    "second task store"
+   ],
+   "tests": [
+    "inbox derivation",
+    "RBAC/tenant",
+    "no-execution"
+   ],
+   "classification": "MISSING->IMPLEMENTED"
+  },
+  {
+   "id": "TOOL-B12",
+   "block": "D",
+   "name": "Employee Work Graph + Outcome Contract Engine",
+   "status": "PLANNED",
+   "purpose": "Link employee->task->case->artifact->commit; declare+verify outcomes",
+   "reuses": [
+    "case_services.py",
+    "lifecycle/*",
+    "artifacts.py"
+   ],
+   "new_scope": [
+    "work graph",
+    "outcome contract engine"
+   ],
+   "deps": [
+    "TOOL-B11",
+    "Case Graph"
+   ],
+   "not_allowed": [
+    "rebuilding Case Graph"
+   ],
+   "tests": [
+    "graph integrity",
+    "outcome accepted only on evidence",
+    "cross-tenant"
+   ],
+   "classification": "MISSING->IMPLEMENTED"
+  },
+  {
+   "id": "TOOL-B13",
+   "block": "D",
+   "name": "Autonomy Level Engine",
+   "status": "PLANNED",
+   "purpose": "Single authoritative min-of-limits autonomy engine",
+   "reuses": [
+    "autonomy.py",
+    "governance/runtime.py",
+    "admin/rbac.py"
+   ],
+   "new_scope": [
+    "AllowedAutonomyLevel engine consumed by B4-B12"
+   ],
+   "deps": [
+    "TOOL-B12"
+   ],
+   "not_allowed": [
+    "autonomy above human-approval limit",
+    "second autonomy gate"
+   ],
+   "tests": [
+    "min-of-limits proof",
+    "approval-limit dominance",
+    "downgrade-on-low-trust"
+   ],
+   "classification": "MISSING->IMPLEMENTED"
+  },
+  {
+   "id": "EVAL-1",
+   "block": "E",
+   "name": "Finalis Evaluation Lab",
+   "status": "PLANNED",
+   "purpose": "Golden tasks + safety/injection/artifact-as-authority/cross-tenant benchmark",
+   "reuses": [
+    "tests/",
+    "_bN_kernel.py",
+    "existing fault harnesses/red-team corpora"
+   ],
+   "new_scope": [
+    "golden task suite",
+    "business benchmark",
+    "unsafe/injection/artifact-authority/cross-tenant suites",
+    "CI regression gate"
+   ],
+   "deps": [
+    "TOOL-B9"
+   ],
+   "not_allowed": [
+    "weakening/deleting existing tests"
+   ],
+   "tests": [
+    "is tests; deterministic; no network"
+   ],
+   "classification": "MISSING->IMPLEMENTED"
+  },
+  {
+   "id": "WORKBENCH-1",
+   "block": "F",
+   "name": "Governed Cloud Workbench",
+   "status": "PLANNED",
+   "purpose": "Sandbox with action recorder + reviewable output + browser/web sandbox",
+   "reuses": [
+    "governance/runtime.py",
+    "tool_runtime.py (B6)",
+    "TOOL-B9/B10",
+    "webscout.py seam"
+   ],
+   "new_scope": [
+    "sandbox",
+    "action recorder",
+    "reviewable output",
+    "browser/web sandbox (read-only)"
+   ],
+   "deps": [
+    "TOOL-B10",
+    "EVAL-1"
+   ],
+   "not_allowed": [
+    "credentials in sandbox",
+    "external effect from sandbox",
+    "real browser automation with creds"
+   ],
+   "tests": [
+    "recorder completeness",
+    "no-secret-in-sandbox",
+    "effect-must-pass-gates",
+    "shadow-only default"
+   ],
+   "mobile": "reviewable output via mobile API",
+   "classification": "MISSING->SCAFFOLDED->MOCKED (browser mock)"
+  },
+  {
+   "id": "MOBILE-1",
+   "block": "G",
+   "name": "Mobile API contracts + PWA shell",
+   "status": "PLANNED",
+   "purpose": "Stable mobile API + PWA over existing endpoints",
+   "reuses": [
+    "existing REST endpoints",
+    "auth.py"
+   ],
+   "new_scope": [
+    "versioned mobile API contract",
+    "PWA/mobile-web shell"
+   ],
+   "deps": [
+    "TOOL-B11"
+   ],
+   "not_allowed": [
+    "mobile cache authoritative",
+    "push as approval"
+   ],
+   "tests": [
+    "contract stability",
+    "RBAC/tenant on mobile routes",
+    "cache-not-authoritative"
+   ],
+   "mobile": "offline-read allowed, offline-write forbidden",
+   "classification": "MISSING->SCAFFOLDED"
+  },
+  {
+   "id": "MOBILE-2",
+   "block": "G",
+   "name": "Native iOS/Android + push approval + evidence capture + offline draft",
+   "status": "PLANNED",
+   "purpose": "Native shells + server-authoritative push approval + capture + offline draft",
+   "reuses": [
+    "MOBILE-1",
+    "evidence upload gateway",
+    "approvals.py"
+   ],
+   "new_scope": [
+    "native scaffolds",
+    "push-approval flow",
+    "mobile evidence capture",
+    "offline draft mode"
+   ],
+   "deps": [
+    "MOBILE-1",
+    "EVID-PROD-1"
+   ],
+   "not_allowed": [
+    "approve from push payload",
+    "offline commit"
+   ],
+   "tests": [
+    "push-is-not-approval",
+    "offline-draft-never-commits",
+    "capture chain-of-custody"
+   ],
+   "mobile": "all mobile requirements",
+   "classification": "MISSING->SCAFFOLDED"
+  },
+  {
+   "id": "CASE-2",
+   "block": "H",
+   "name": "Case Completion Engine 2.0 (EXTEND)",
+   "status": "PLANNED",
+   "purpose": "Consolidate + upgrade case graph/completion/promise/NBA/owner command center",
+   "reuses": [
+    "case_services.py",
+    "completion_loop.py",
+    "dashboard.py",
+    "scoring.py"
+   ],
+   "new_scope": [
+    "completion loop 2.0 (durable)",
+    "promise tracker 2.0",
+    "missing-info hunter upgrade",
+    "NBA + autonomy input",
+    "owner command center 2.0"
+   ],
+   "deps": [
+    "TOOL-B12",
+    "TOOL-B13",
+    "TOOL-B10"
+   ],
+   "not_allowed": [
+    "second Case Graph/Completion Loop/Dashboard"
+   ],
+   "tests": [
+    "extend existing suites",
+    "completion invariants preserved",
+    "no-duplication"
+   ],
+   "classification": "IMPLEMENTED->extended IMPLEMENTED"
+  },
+  {
+   "id": "EVID-PROD-1",
+   "block": "I",
+   "name": "Evidence Production Lifecycle (EXTEND)",
+   "status": "PLANNED",
+   "purpose": "Production evidence lifecycle + secure upload + AI-safe access + KMS/anchor prep",
+   "reuses": [
+    "evidence/*",
+    "evidence_store.py",
+    "ocr_router.py"
+   ],
+   "new_scope": [
+    "production lifecycle",
+    "secure upload gateway",
+    "AI-safe access",
+    "KMS/signing/anchoring prep (interfaces + local signer)",
+    "doc-intelligence router upgrade"
+   ],
+   "deps": [
+    "ADAPTER-1",
+    "INFRA-2"
+   ],
+   "not_allowed": [
+    "claim external anchoring before wired",
+    "second evidence store"
+   ],
+   "tests": [
+    "upload-gateway hardening",
+    "signing-prep determinism",
+    "access-gate",
+    "retention/legal-hold preserved"
+   ],
+   "classification": "IMPLEMENTED + SCAFFOLDED (KMS=BLOCKED_PROVIDER)"
+  },
+  {
+   "id": "ADAPTER-1",
+   "block": "J",
+   "name": "Provider Boundary + Credential Capability Model",
+   "status": "PLANNED",
+   "purpose": "Single gated boundary for all external calls + least-privilege credential model + provider simulation",
+   "reuses": [
+    "all *Provider/Protocol seams",
+    "governance/runtime.py"
+   ],
+   "new_scope": [
+    "provider boundary",
+    "credential capability model",
+    "MCP/LLM/provider simulation",
+    "per-provider prod-readiness checklist"
+   ],
+   "deps": [
+    "TOOL-B9",
+    "TOOL-B10",
+    "TOOL-B13"
+   ],
+   "not_allowed": [
+    "any real external call yet",
+    "credentials in traces/artifacts/prompts",
+    "provider bypass of B4-B9 gates"
+   ],
+   "tests": [
+    "all calls route through boundary",
+    "credential never leaks to agent/artifact/trace",
+    "simulation parity"
+   ],
+   "classification": "MISSING->MOCKED (simulation)",
+   "is_hard_gate": true,
+   "gate_note": "No real provider may be built before this SP is DONE"
+  },
+  {
+   "id": "CHAT-1",
+   "block": "K",
+   "name": "Conversation Contract + Slack scaffold + approval cards",
+   "status": "PLANNED",
+   "purpose": "Channel-agnostic conversation contract + Slack app + server-authoritative approval cards",
+   "reuses": [
+    "actions/*",
+    "approvals.py",
+    "control plane"
+   ],
+   "new_scope": [
+    "conversation contract",
+    "Slack app scaffold",
+    "Slack approval cards"
+   ],
+   "deps": [
+    "ADAPTER-1",
+    "TOOL-B11"
+   ],
+   "not_allowed": [
+    "Slack action as implicit approval",
+    "Slack executing effects directly"
+   ],
+   "tests": [
+    "conversation-contract",
+    "card-click-not-approval",
+    "tenant mapping",
+    "injection over Slack text"
+   ],
+   "chat": "Slack scaffold + cards",
+   "classification": "MISSING->SCAFFOLDED"
+  },
+  {
+   "id": "CHAT-2",
+   "block": "K",
+   "name": "Teams scaffold + adaptive approval cards",
+   "status": "PLANNED",
+   "purpose": "Teams surface mirroring CHAT-1",
+   "reuses": [
+    "CHAT-1",
+    "actions/*"
+   ],
+   "new_scope": [
+    "Teams app scaffold",
+    "adaptive approval cards"
+   ],
+   "deps": [
+    "CHAT-1"
+   ],
+   "not_allowed": [
+    "Teams action as implicit approval"
+   ],
+   "tests": [
+    "same as CHAT-1 for Teams"
+   ],
+   "chat": "Teams scaffold + adaptive cards",
+   "classification": "MISSING->SCAFFOLDED"
+  },
+  {
+   "id": "PILOT-1",
+   "block": "L",
+   "name": "Real Slack pilot",
+   "status": "BLOCKED_CREDENTIALS",
+   "purpose": "First real Slack effects, gated + shadow-first + kill-switch",
+   "reuses": [
+    "ADAPTER-1",
+    "CHAT-1",
+    "actions/*"
+   ],
+   "new_scope": [
+    "real Slack provider behind boundary"
+   ],
+   "deps": [
+    "ADAPTER-1",
+    "CHAT-1",
+    "SAAS-1",
+    "EVAL-1"
+   ],
+   "not_allowed": [
+    "bypass approval/consent gates",
+    "before ADAPTER-1"
+   ],
+   "tests": [
+    "shadow parity",
+    "kill-switch",
+    "abuse tests"
+   ],
+   "classification": "MOCKED->BLOCKED->pilot IMPLEMENTED"
+  },
+  {
+   "id": "PILOT-2",
+   "block": "L",
+   "name": "Real Teams pilot",
+   "status": "BLOCKED_CREDENTIALS",
+   "reuses": [
+    "ADAPTER-1",
+    "CHAT-2"
+   ],
+   "deps": [
+    "ADAPTER-1",
+    "CHAT-2",
+    "SAAS-1"
+   ],
+   "not_allowed": [
+    "before ADAPTER-1"
+   ],
+   "classification": "MOCKED->pilot IMPLEMENTED"
+  },
+  {
+   "id": "PILOT-3",
+   "block": "L",
+   "name": "Real Email/Calendar pilot",
+   "status": "BLOCKED_CREDENTIALS",
+   "reuses": [
+    "ADAPTER-1",
+    "actions/*",
+    "scheduling/*"
+   ],
+   "deps": [
+    "ADAPTER-1",
+    "SAAS-1"
+   ],
+   "not_allowed": [
+    "before ADAPTER-1"
+   ],
+   "classification": "MOCKED->pilot IMPLEMENTED"
+  },
+  {
+   "id": "PILOT-4",
+   "block": "L",
+   "name": "Real Telephony/SMS/WhatsApp pilot",
+   "status": "BLOCKED_CREDENTIALS",
+   "reuses": [
+    "ADAPTER-1",
+    "telephony/*",
+    "actions/*"
+   ],
+   "deps": [
+    "ADAPTER-1",
+    "SAAS-1",
+    "VOICE-PROD-1"
+   ],
+   "not_allowed": [
+    "bypass anti-harassment/consent",
+    "before ADAPTER-1"
+   ],
+   "classification": "MOCKED->pilot IMPLEMENTED"
+  },
+  {
+   "id": "VOICE-PROD-1",
+   "block": "M",
+   "name": "Voice Production Boundary (EXTEND)",
+   "status": "BLOCKED_PROVIDER",
+   "purpose": "Real ASR/TTS/telephony + voice quality + conversation-to-case commit",
+   "reuses": [
+    "voice/*",
+    "telephony/*"
+   ],
+   "new_scope": [
+    "ASR/TTS/telephony boundary",
+    "voice quality engine",
+    "conversation-to-case commit via B9"
+   ],
+   "deps": [
+    "ADAPTER-1",
+    "TOOL-B9",
+    "EVID-PROD-1"
+   ],
+   "not_allowed": [
+    "commit uncertain facts",
+    "second voice engine"
+   ],
+   "tests": [
+    "boundary parity",
+    "conversation-to-case reversible + evidence-gated",
+    "low-confidence->human review"
+   ],
+   "classification": "IMPLEMENTED logic + BLOCKED_PROVIDER->pilot"
+  },
+  {
+   "id": "PACK-1",
+   "block": "N",
+   "name": "Home Services/HVAC worker pack (EXTEND)",
+   "status": "PLANNED",
+   "reuses": [
+    "lifecycle/playbooks.py",
+    "quotes/*",
+    "crm/*",
+    "case_services.py",
+    "autonomy engine"
+   ],
+   "new_scope": [
+    "HVAC task templates + outcome contracts + autonomy caps + Quote extension + Offer Comparator"
+   ],
+   "deps": [
+    "TOOL-B13",
+    "CASE-2"
+   ],
+   "not_allowed": [
+    "second CPQ/CRM/playbook engine",
+    "hard-code vertical into core"
+   ],
+   "tests": [
+    "pack golden tasks in EVAL-1",
+    "autonomy caps",
+    "no-duplication"
+   ],
+   "classification": "IMPLEMENTED + extension"
+  },
+  {
+   "id": "PACK-2",
+   "block": "N",
+   "name": "Sales Worker pack",
+   "status": "PLANNED",
+   "deps": [
+    "TOOL-B13",
+    "CASE-2"
+   ],
+   "classification": "extension"
+  },
+  {
+   "id": "PACK-3",
+   "block": "N",
+   "name": "Support Worker pack",
+   "status": "PLANNED",
+   "deps": [
+    "TOOL-B13",
+    "CASE-2"
+   ],
+   "classification": "extension"
+  },
+  {
+   "id": "PACK-4",
+   "block": "N",
+   "name": "Operations Worker pack",
+   "status": "PLANNED",
+   "deps": [
+    "TOOL-B13",
+    "CASE-2"
+   ],
+   "classification": "extension"
+  },
+  {
+   "id": "PACK-5",
+   "block": "N",
+   "name": "Finance Worker pack",
+   "status": "PLANNED",
+   "deps": [
+    "TOOL-B13",
+    "CASE-2"
+   ],
+   "classification": "extension"
+  },
+  {
+   "id": "PACK-6",
+   "block": "N",
+   "name": "Evidence/Compliance Worker pack",
+   "status": "PLANNED",
+   "deps": [
+    "TOOL-B13",
+    "EVID-PROD-1"
+   ],
+   "classification": "extension"
+  },
+  {
+   "id": "PACK-7",
+   "block": "N",
+   "name": "WebScout Worker pack",
+   "status": "PLANNED",
+   "reuses": [
+    "webscout.py"
+   ],
+   "deps": [
+    "TOOL-B13",
+    "WORKBENCH-1"
+   ],
+   "classification": "extension"
+  },
+  {
+   "id": "SAAS-1",
+   "block": "O",
+   "name": "Production Auth/IAM + Tenancy + Billing + Onboarding + Compliance",
+   "status": "BLOCKED_PROVIDER",
+   "purpose": "Production SaaS control plane",
+   "reuses": [
+    "admin/rbac.py",
+    "portal/auth.py",
+    "tenants/users tables",
+    "governance observability"
+   ],
+   "new_scope": [
+    "JWT/OIDC/SSO/MFA + secret manager + rate-limit + revocation",
+    "seats/roles/plans",
+    "billing/usage",
+    "onboarding wizard",
+    "compliance center"
+   ],
+   "deps": [
+    "INFRA-1",
+    "ADAPTER-1"
+   ],
+   "not_allowed": [
+    "second RBAC engine",
+    "secrets in app config"
+   ],
+   "tests": [
+    "SSO/MFA",
+    "seat limits",
+    "billing metering",
+    "compliance export",
+    "unify auth(5)/rbac(9) role vocab"
+   ],
+   "classification": "IMPLEMENTED (dev)->IMPLEMENTED (prod)"
+  },
+  {
+   "id": "REFACTOR-1",
+   "block": "P",
+   "name": "app.py modularization",
+   "status": "PLANNED",
+   "purpose": "Split 10083-LOC app.py into per-domain routers (behavior-preserving)",
+   "reuses": [
+    "ALL"
+   ],
+   "deps": [
+    "TOOL-B13"
+   ],
+   "not_allowed": [
+    "behavior change",
+    "test weakening",
+    "mid-B-line"
+   ],
+   "tests": [
+    "full suite green",
+    "route-topology diff clean"
+   ],
+   "classification": "refactor (no functional change)"
+  },
+  {
+   "id": "REFACTOR-2",
+   "block": "P",
+   "name": "ui.py modularization",
+   "status": "PLANNED",
+   "deps": [
+    "TOOL-B13"
+   ],
+   "not_allowed": [
+    "behavior change"
+   ],
+   "classification": "refactor"
+  },
+  {
+   "id": "REFACTOR-3",
+   "block": "P",
+   "name": "Domain-boundary + common kernel/test-helper cleanup",
+   "status": "PLANNED",
+   "new_scope": [
+    "shared TOOL-B kernel base",
+    "shared test helpers",
+    "unify role vocab"
+   ],
+   "deps": [
+    "TOOL-B13"
+   ],
+   "classification": "refactor"
+  },
+  {
+   "id": "INFRA-1",
+   "block": "Q",
+   "name": "PostgreSQL migration",
+   "status": "PLANNED",
+   "purpose": "SQLite->Postgres (portable SQL already written)",
+   "reuses": [
+    "portal/db.py + all stores"
+   ],
+   "deps": [
+    "ADAPTER-1"
+   ],
+   "not_allowed": [
+    "premature before schema/tests stable",
+    "two storage layers"
+   ],
+   "tests": [
+    "same suite green on Postgres",
+    "migration parity"
+   ],
+   "classification": "MOCKED/local->IMPLEMENTED (prod)"
+  },
+  {
+   "id": "INFRA-2",
+   "block": "Q",
+   "name": "Object storage / WORM provider",
+   "status": "BLOCKED_PROVIDER",
+   "purpose": "local-FS->object store + S3 Object-Lock WORM (unblocks evidence anchoring)",
+   "reuses": [
+    "evidence/storage.py seam"
+   ],
+   "deps": [
+    "ADAPTER-1"
+   ],
+   "tests": [
+    "WORM enforcement"
+   ],
+   "classification": "SCAFFOLDED->IMPLEMENTED"
+  },
+  {
+   "id": "INFRA-3",
+   "block": "Q",
+   "name": "Observability stack",
+   "status": "PLANNED",
+   "purpose": "metrics/tracing/alerting",
+   "reuses": [
+    "governance metrics seam",
+    "TOOL-B10 metrics"
+   ],
+   "deps": [
+    "INFRA-1"
+   ],
+   "classification": "MISSING->IMPLEMENTED"
+  },
+  {
+   "id": "INFRA-4",
+   "block": "Q",
+   "name": "Deployment runbook",
+   "status": "PLANNED",
+   "purpose": "deploy/rollback/secrets runbook",
+   "deps": [
+    "INFRA-1",
+    "INFRA-2",
+    "INFRA-3"
+   ],
+   "classification": "MISSING->IMPLEMENTED"
+  },
+  {
+   "id": "GATE-1",
+   "block": "R",
+   "name": "Production Readiness Audit",
+   "status": "PLANNED",
+   "purpose": "Full readiness audit vs this roadmap",
+   "deps": [
+    "all in-scope surfaces"
+   ],
+   "classification": "gate"
+  },
+  {
+   "id": "GATE-2",
+   "block": "R",
+   "name": "Red-Team / Abuse",
+   "status": "PLANNED",
+   "deps": [
+    "EVAL-1",
+    "PILOT-*"
+   ],
+   "classification": "gate"
+  },
+  {
+   "id": "GATE-3",
+   "block": "R",
+   "name": "Limited Beta Gate",
+   "status": "PLANNED",
+   "deps": [
+    "GATE-1",
+    "GATE-2"
+   ],
+   "classification": "gate"
+  },
+  {
+   "id": "GATE-4",
+   "block": "R",
+   "name": "Production Candidate Gate",
+   "status": "PLANNED",
+   "deps": [
+    "GATE-3"
+   ],
+   "not_allowed": [
+    "declare production-ready without this gate"
+   ],
+   "classification": "gate"
+  }
+ ],
+ "hard_gates": [
+  "No real provider before ADAPTER-1 + TOOL-B9 + TOOL-B13 (autonomy) + SAAS-1 (auth)",
+  "No production deploy before INFRA-1..4 + REFACTOR + GATE-4",
+  "No external evidence anchoring claim before INFRA-2 + KMS credential",
+  "No second copy of any Block-A module, ever"
+ ],
+ "do_not_build_yet": [
+  "real providers (pre ADAPTER-1)",
+  "real payment/CRM/evidence-external/message/export (pre pilots)",
+  "MCP/LLM runtime (pre ADAPTER-1 simulation)",
+  "production infra/deploy (pre refactor + gates)",
+  "any duplicate of an existing module"
+ ],
+ "production_ready": false,
+ "revision_8_correction": "Locked chain after TOOL-B9 is TOOL-B9.1 -> TOOL-B9.2 -> EMP-A1 -> EMP-A2 -> EMP-A3 -> EMP-A4 -> EMP-A5. TOOL-B10 is re-scoped to External Adapter Boundary and comes later; it does not follow TOOL-B9.2."
+}

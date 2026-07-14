@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "program": "FINALIS_1000",
+  "sp": "SP0002",
+  "note": "A STATUS lattice, not a numeric truth ladder (D-0002-07). Epistemic status is orthogonal to confidence/source_reliability/evidence_strength/truth_degree and must never be collapsed into one score (D-0002-08). CERTIFIED_CONCLUSION means 'formally certified relative to premises', NOT 'more true than a directly observed fact'.",
+  "epistemic_types": [
+    {"type": "SIGNAL", "definition": "A raw sensed input with no interpretation."},
+    {"type": "OBSERVATION", "definition": "An interpreted signal attributed to a source."},
+    {"type": "CLAIM", "definition": "An asserted statement. LLM/model/external output enters ONLY here (INV-0002-13)."},
+    {"type": "CORROBORATED_CLAIM", "definition": "A claim supported by additional independent evidence."},
+    {"type": "ADMITTED_FACT", "definition": "A claim that passed a defined admission process (evidence-bound). Not an external-world truth, not authority."},
+    {"type": "DERIVED_CONCLUSION", "definition": "A conclusion derived from admitted facts by defined inference."},
+    {"type": "CERTIFIED_CONCLUSION", "definition": "A conclusion formally certified relative to explicit premises (LGGT). NOT execution authority (INV-0002-07), NOT external-world truth (INV-0002-06)."}
+  ],
+  "allowed_transitions": {
+    "SIGNAL": ["OBSERVATION"],
+    "OBSERVATION": ["CLAIM"],
+    "CLAIM": ["CORROBORATED_CLAIM"],
+    "CORROBORATED_CLAIM": ["ADMITTED_FACT"],
+    "ADMITTED_FACT": ["DERIVED_CONCLUSION"],
+    "DERIVED_CONCLUSION": ["CERTIFIED_CONCLUSION"],
+    "CERTIFIED_CONCLUSION": []
+  },
+  "forbidden_transitions_examples": [
+    "LLM_OUTPUT -> ADMITTED_FACT (without admission process)",
+    "CLAIM -> ADMITTED_FACT (skipping corroboration/admission)",
+    "any untrusted source (LLM/MODEL/EXTERNAL_CONTENT/PROVIDER/MCP/A2A) landing above CLAIM by itself"
+  ],
+  "separate_quantities": ["confidence", "source_reliability", "evidence_strength", "truth_degree"],
+  "quantity_note": "These are distinct mathematical quantities (D-0002-08 / SP0002 §12.2). None equals epistemic_status; none equals another. A high confidence does not change a CLAIM into a FACT."
+}

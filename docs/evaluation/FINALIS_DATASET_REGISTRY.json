@@ -1,0 +1,10 @@
+{
+  "datasets": [
+    {
+      "contamination_class": "CLEAN",
+      "dataset_id": "REPO-REFERENCE-FIXTURES",
+      "public": false,
+      "source": "repository"
+    }
+  ]
+}

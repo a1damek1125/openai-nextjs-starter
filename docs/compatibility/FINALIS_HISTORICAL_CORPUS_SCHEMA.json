@@ -1,0 +1,51 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "contract_id": {
+      "type": "string"
+    },
+    "contract_version": {
+      "type": "string"
+    },
+    "corpus_class": {
+      "type": "string"
+    },
+    "expected_behavior": {
+      "type": "object"
+    },
+    "fixture_hash": {
+      "type": "string"
+    },
+    "fixture_id": {
+      "type": "string"
+    },
+    "fixture_kind": {
+      "type": "string"
+    },
+    "payload": {
+      "type": "object"
+    },
+    "provenance": {
+      "type": "object"
+    },
+    "semantic_epoch": {
+      "type": "string"
+    },
+    "sensitivity": {
+      "type": "string"
+    },
+    "tenant_class": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "fixture_id",
+    "contract_id",
+    "contract_version",
+    "fixture_kind",
+    "semantic_epoch",
+    "corpus_class"
+  ],
+  "schema_id": "HistoricalFixture",
+  "type": "object"
+}

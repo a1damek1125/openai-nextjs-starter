@@ -1,0 +1,4 @@
+{"schema_id":"FINALIS-EXIT-PLAN","sp":"SP0004","required":["technology_id"],
+ "migration_stages":["DISCOVER","EXPORT","TRANSFORM","VALIDATE","CONFORMANCE","SHADOW","CANARY","CUTOVER","VERIFY","RETIRE"],
+ "last_safe_rollback_point":"required for R2+ migrations (D-0004-72).",
+ "one_way_migration_risk":"R3/R4 must acknowledge (D-0004-70)."}

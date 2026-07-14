@@ -1,0 +1,4 @@
+{
+  "rule": "mandatory coverage before optimization; every hard obligation maps to >=1 test (D-0009-15/17)",
+  "schema_id": "TestCoverage"
+}

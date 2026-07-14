@@ -1,0 +1,38 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "behavioral": {
+      "type": "string"
+    },
+    "operational": {
+      "type": "string"
+    },
+    "proof_hash": {
+      "type": "string"
+    },
+    "replay": {
+      "type": "string"
+    },
+    "security": {
+      "type": "string"
+    },
+    "semantic": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
+    "structural": {
+      "type": "string"
+    },
+    "syntactic": {
+      "type": "string"
+    },
+    "temporal": {
+      "type": "string"
+    }
+  },
+  "required": [],
+  "schema_id": "CompatibilityVector",
+  "type": "object"
+}

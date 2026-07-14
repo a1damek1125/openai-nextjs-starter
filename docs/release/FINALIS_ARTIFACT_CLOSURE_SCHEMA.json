@@ -1,0 +1,10 @@
+{
+  "required_relationships": [
+    "sbom_refs",
+    "attestation_refs",
+    "trust_root_refs",
+    "verification_summary_refs"
+  ],
+  "rule": "protected artifact incomplete until full evidence graph present (D-0009-28)",
+  "schema_id": "ArtifactClosure"
+}

@@ -1,0 +1,229 @@
+{
+  "controls": [
+    {
+      "barrier_path": "authority",
+      "control_id": "CTRL-AUTHORITY",
+      "control_type": "PREVENTIVE",
+      "failure_domains": {
+        "code_path": "authority",
+        "data": "NONE",
+        "human": "NONE",
+        "model": "NONE",
+        "policy_engine": "finalis_authority",
+        "prompt": "NONE",
+        "provider": "NONE"
+      },
+      "hazard_refs": [
+        "HZ-CROSS-TENANT",
+        "HZ-STALE-APPROVAL"
+      ],
+      "owner": "ai_employee/authority.py",
+      "status": "EVIDENCED"
+    },
+    {
+      "barrier_path": "rbac",
+      "control_id": "CTRL-RBAC-TENANT",
+      "control_type": "PREVENTIVE",
+      "failure_domains": {
+        "code_path": "rbac",
+        "data": "NONE",
+        "human": "NONE",
+        "model": "NONE",
+        "policy_engine": "finalis_rbac",
+        "prompt": "NONE",
+        "provider": "NONE"
+      },
+      "hazard_refs": [
+        "HZ-CROSS-TENANT"
+      ],
+      "owner": "admin/rbac.py",
+      "status": "EVIDENCED"
+    },
+    {
+      "barrier_path": "human_review",
+      "control_id": "CTRL-APPROVAL",
+      "control_type": "PREVENTIVE",
+      "failure_domains": {
+        "code_path": "approval",
+        "data": "NONE",
+        "human": "reviewer",
+        "model": "NONE",
+        "policy_engine": "NONE",
+        "prompt": "NONE",
+        "provider": "NONE"
+      },
+      "hazard_refs": [
+        "HZ-UNFAIR-DECISION",
+        "HZ-STALE-APPROVAL"
+      ],
+      "owner": "ai_employee/approval_store.py",
+      "status": "EVIDENCED"
+    },
+    {
+      "barrier_path": "guardrails",
+      "control_id": "CTRL-GUARDRAILS",
+      "control_type": "PREVENTIVE",
+      "failure_domains": {
+        "code_path": "guardrails",
+        "data": "NONE",
+        "human": "NONE",
+        "model": "NONE",
+        "policy_engine": "finalis_guardrails",
+        "prompt": "NONE",
+        "provider": "NONE"
+      },
+      "hazard_refs": [
+        "HZ-INJECTION-DOWNGRADE",
+        "HZ-WRONG-RECIPIENT"
+      ],
+      "owner": "ai_employee/tool_guardrails.py",
+      "status": "EVIDENCED"
+    },
+    {
+      "barrier_path": "write_intent",
+      "control_id": "CTRL-WRITE-INTENT",
+      "control_type": "DETECTIVE",
+      "failure_domains": {
+        "code_path": "write_intent",
+        "data": "NONE",
+        "human": "NONE",
+        "model": "NONE",
+        "policy_engine": "NONE",
+        "prompt": "NONE",
+        "provider": "NONE"
+      },
+      "hazard_refs": [
+        "HZ-DUP-EFFECT",
+        "HZ-STALE-APPROVAL"
+      ],
+      "owner": "ai_employee/tool_write_intent.py",
+      "status": "EVIDENCED"
+    },
+    {
+      "barrier_path": "commit_sim",
+      "control_id": "CTRL-COMMIT-SIM",
+      "control_type": "VERIFICATION",
+      "failure_domains": {
+        "code_path": "commit_sim",
+        "data": "NONE",
+        "human": "NONE",
+        "model": "NONE",
+        "policy_engine": "NONE",
+        "prompt": "NONE",
+        "provider": "NONE"
+      },
+      "hazard_refs": [
+        "HZ-DUP-EFFECT"
+      ],
+      "owner": "ai_employee/tool_commit_simulation.py",
+      "status": "EVIDENCED"
+    },
+    {
+      "barrier_path": "local_txn",
+      "control_id": "CTRL-LOCAL-TXN",
+      "control_type": "CONTAINMENT",
+      "failure_domains": {
+        "code_path": "local_txn",
+        "data": "NONE",
+        "human": "NONE",
+        "model": "NONE",
+        "policy_engine": "NONE",
+        "prompt": "NONE",
+        "provider": "NONE"
+      },
+      "hazard_refs": [
+        "HZ-DUP-EFFECT",
+        "HZ-WRONG-RECIPIENT"
+      ],
+      "owner": "ai_employee/tool_local_transaction.py",
+      "status": "EVIDENCED"
+    },
+    {
+      "barrier_path": "recovery",
+      "control_id": "CTRL-RECOVERY",
+      "control_type": "RECOVERY",
+      "failure_domains": {
+        "code_path": "recovery",
+        "data": "NONE",
+        "human": "NONE",
+        "model": "NONE",
+        "policy_engine": "NONE",
+        "prompt": "NONE",
+        "provider": "NONE"
+      },
+      "hazard_refs": [
+        "HZ-DUP-EFFECT"
+      ],
+      "owner": "ai_employee/tool_local_recovery.py",
+      "status": "EVIDENCED"
+    },
+    {
+      "barrier_path": "evidence",
+      "control_id": "CTRL-EVIDENCE",
+      "control_type": "VERIFICATION",
+      "failure_domains": {
+        "code_path": "evidence",
+        "data": "NONE",
+        "human": "NONE",
+        "model": "NONE",
+        "policy_engine": "NONE",
+        "prompt": "NONE",
+        "provider": "NONE"
+      },
+      "hazard_refs": [
+        "HZ-TRAJECTORY-AGGREGATION",
+        "HZ-WRONG-RECIPIENT"
+      ],
+      "owner": "evidence trust fabric",
+      "status": "EVIDENCED"
+    },
+    {
+      "barrier_path": "consent",
+      "control_id": "CTRL-CONSENT",
+      "control_type": "PREVENTIVE",
+      "failure_domains": {
+        "code_path": "consent",
+        "data": "NONE",
+        "human": "NONE",
+        "model": "NONE",
+        "policy_engine": "finalis_consent",
+        "prompt": "NONE",
+        "provider": "NONE"
+      },
+      "hazard_refs": [
+        "HZ-UNCONSENTED-CONTACT"
+      ],
+      "owner": "crm consent",
+      "status": "EVIDENCED"
+    },
+    {
+      "barrier_path": "observability",
+      "control_id": "CTRL-OBSERVABILITY",
+      "control_type": "DETECTIVE",
+      "failure_domains": {
+        "code_path": "observability",
+        "data": "NONE",
+        "human": "NONE",
+        "model": "NONE",
+        "policy_engine": "NONE",
+        "prompt": "NONE",
+        "provider": "NONE"
+      },
+      "hazard_refs": [
+        "HZ-INJECTION-DOWNGRADE"
+      ],
+      "owner": "ai_employee/tool_work_observability.py",
+      "status": "EVIDENCED"
+    }
+  ],
+  "independence_claims": [
+    {
+      "control_a": "CTRL-GUARDRAILS",
+      "control_b": "CTRL-APPROVAL"
+    },
+    {
+      "control_a": "CTRL-AUTHORITY",
+      "control_b": "CTRL-RECOVERY"
+    }
+  ]
+}

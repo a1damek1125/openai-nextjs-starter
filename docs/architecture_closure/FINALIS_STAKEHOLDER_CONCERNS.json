@@ -1,0 +1,61 @@
+{
+  "concerns": [
+    "authority_conservation",
+    "compositional_coherence",
+    "evidence_provenance",
+    "hazard_control",
+    "no_circular_assurance",
+    "observability",
+    "production_gaps",
+    "proof_not_authority",
+    "release_runtime_separation",
+    "reliability_admission",
+    "safety_dominance",
+    "tenant_isolation"
+  ],
+  "schema_id": "StakeholderConcerns",
+  "stakeholders": [
+    {
+      "concerns": [
+        "compositional_coherence",
+        "no_circular_assurance"
+      ],
+      "id": "architect"
+    },
+    {
+      "concerns": [
+        "safety_dominance",
+        "hazard_control"
+      ],
+      "id": "safety_owner"
+    },
+    {
+      "concerns": [
+        "tenant_isolation",
+        "authority_conservation"
+      ],
+      "id": "security_owner"
+    },
+    {
+      "concerns": [
+        "proof_not_authority",
+        "release_runtime_separation"
+      ],
+      "id": "release_owner"
+    },
+    {
+      "concerns": [
+        "reliability_admission",
+        "evidence_provenance"
+      ],
+      "id": "evaluator_sp0011"
+    },
+    {
+      "concerns": [
+        "production_gaps",
+        "observability"
+      ],
+      "id": "operator"
+    }
+  ]
+}

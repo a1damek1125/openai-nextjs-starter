@@ -1,0 +1,11 @@
+{
+  "epochs": [
+    {
+      "effective_date": "2026-07-12",
+      "epoch_id": "RPE-2026-07",
+      "gate_registry_version": "1",
+      "note": "initial SP0009 release policy epoch"
+    }
+  ],
+  "schema_id": "ReleasePolicyEpochs"
+}

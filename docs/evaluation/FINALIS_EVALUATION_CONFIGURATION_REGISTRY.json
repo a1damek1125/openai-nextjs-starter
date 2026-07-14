@@ -1,0 +1,49 @@
+{
+  "architecture_genome_root": "9d0c5c83399d0b7f12db287a4699984aeff46b9e1c54d1d33ea9dd1773242263",
+  "company_pack": null,
+  "configuration_id": "CFG-FINALIS-REPO-REFERENCE",
+  "configuration_root": "9dbadab0fa149c5c8d047a52dba2c097a65182c3faf25b1812bd1e08687949c0",
+  "control_language": "PL",
+  "country_pack": null,
+  "harness_identity": {
+    "harness": "finalis-evaluation-reference-runner",
+    "version": "1.0"
+  },
+  "languages": [
+    "PL",
+    "EN",
+    "DE",
+    "ES"
+  ],
+  "memory_snapshot": "repo-frozen",
+  "model_identity": {
+    "note": "no live model provider bound (std-lib only)",
+    "provider": "NONE_LIVE",
+    "role": "deterministic-reference"
+  },
+  "policy_epoch": "repo-frozen",
+  "program_seal": "f81b1b44c8c6c4453dbef3c38ccacb0359c92a29034823995095a7c2d47f2194",
+  "prompt_epoch": "repo-frozen",
+  "provider_account_classes": {
+    "default": "SANDBOX_MOCK"
+  },
+  "provider_adapters": {
+    "calendar": "MOCK",
+    "email": "MOCK",
+    "esignature": "MOCK",
+    "payment": "MOCK",
+    "telephony": "MOCK"
+  },
+  "repository_commit": "3a5ee8b",
+  "role_pack": null,
+  "sandbox_identity": "repository-local",
+  "tool_versions": {
+    "finalis_portal": "repo-frozen"
+  },
+  "vertical_pack": null,
+  "work_languages": [
+    "EN",
+    "DE",
+    "ES"
+  ]
+}

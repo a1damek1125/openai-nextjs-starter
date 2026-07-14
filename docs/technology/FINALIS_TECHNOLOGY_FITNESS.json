@@ -1,0 +1,70 @@
+{
+  "fitness_functions": [
+    {
+      "condition": "no raw secret in model-facing schema",
+      "evidence_source": "technology_model",
+      "failure_code": "RAW_SECRET_EXPOSURE",
+      "fitness_id": "FIT-NO-RAW-SECRET",
+      "mode": "DETERMINISTIC",
+      "owner": "architecture",
+      "review_by": "2027-01-01",
+      "scope": "contracts",
+      "severity": "P0"
+    },
+    {
+      "condition": "provider id never canonical identity",
+      "evidence_source": "technology_model",
+      "failure_code": "PROVIDER_IDENTITY_LEAKAGE",
+      "fitness_id": "FIT-NO-PROVIDER-IDENTITY",
+      "mode": "DETERMINISTIC",
+      "owner": "architecture",
+      "review_by": "2027-01-01",
+      "scope": "contracts",
+      "severity": "P0"
+    },
+    {
+      "condition": "T3/T4 dependency has an exit plan",
+      "evidence_source": "technology_model",
+      "failure_code": "CRITICAL_DEPENDENCY_WITHOUT_EXIT_PLAN",
+      "fitness_id": "FIT-CRITICAL-EXIT-PLAN",
+      "mode": "DETERMINISTIC",
+      "owner": "architecture",
+      "review_by": "2027-01-01",
+      "scope": "exit",
+      "severity": "P0"
+    },
+    {
+      "condition": "protected protocol version supported",
+      "evidence_source": "technology_model",
+      "failure_code": "PROTOCOL_VERSION_UNSUPPORTED",
+      "fitness_id": "FIT-PROTOCOL-SUPPORTED",
+      "mode": "DETERMINISTIC",
+      "owner": "architecture",
+      "review_by": "2027-01-01",
+      "scope": "protocols",
+      "severity": "P1"
+    },
+    {
+      "condition": "critical TDR review not overdue",
+      "evidence_source": "technology_model",
+      "failure_code": "TECHNOLOGY_DECISION_STALE",
+      "fitness_id": "FIT-REVIEW-CURRENT",
+      "mode": "DETERMINISTIC",
+      "owner": "architecture",
+      "review_by": "2027-01-01",
+      "scope": "decisions",
+      "severity": "P2"
+    },
+    {
+      "condition": "substitution evidence version-current",
+      "evidence_source": "technology_model",
+      "failure_code": "SUBSTITUTION_EVIDENCE_STALE",
+      "fitness_id": "FIT-SUBSTITUTION-FRESH",
+      "mode": "DETERMINISTIC",
+      "owner": "architecture",
+      "review_by": "2027-01-01",
+      "scope": "substitution",
+      "severity": "P2"
+    }
+  ]
+}

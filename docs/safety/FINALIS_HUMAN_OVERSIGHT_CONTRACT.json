@@ -1,0 +1,3 @@
+{"schema_id":"FINALIS-HUMAN-OVERSIGHT","sp":"SP0005",
+ "dimensions":["sufficient_information","reject_authority","time_to_intervene","relevant_competence","stop_capability","independence","manageable_load"],
+ "note":"Human approval != meaningful human oversight (INV-0005-21). Approval is context-bound and participates in the admission lease (D-0005-56). Automation-bias / alert-fatigue / rubber-stamping are modeled failure modes (D-0005-57)."}

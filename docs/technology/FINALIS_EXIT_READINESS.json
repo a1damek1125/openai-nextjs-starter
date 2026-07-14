@@ -1,0 +1,95 @@
+{
+  "exit_profiles": [
+    {
+      "adapter_portability": "FULL",
+      "data_export": "FULL",
+      "documentation_readiness": "FULL",
+      "last_drill": "2026-07-11",
+      "last_drill_level": "D4",
+      "operational_readiness": "FULL",
+      "replacement_availability": "PARTIAL",
+      "replay_coverage": "UNKNOWN",
+      "rollback_readiness": "FULL",
+      "state_export": "FULL",
+      "technology_id": "python"
+    },
+    {
+      "adapter_portability": "FULL",
+      "data_export": "FULL",
+      "documentation_readiness": "FULL",
+      "last_drill": "2026-07-11",
+      "last_drill_level": "D3",
+      "operational_readiness": "UNKNOWN",
+      "replacement_availability": "FULL",
+      "replay_coverage": "UNKNOWN",
+      "rollback_readiness": "FULL",
+      "state_export": "FULL",
+      "technology_id": "fastapi"
+    },
+    {
+      "adapter_portability": "FULL",
+      "data_export": "FULL",
+      "documentation_readiness": "FULL",
+      "last_drill": "2026-07-11",
+      "last_drill_level": "D3",
+      "operational_readiness": "FULL",
+      "replacement_availability": "FULL",
+      "replay_coverage": "PARTIAL",
+      "rollback_readiness": "FULL",
+      "state_export": "FULL",
+      "technology_id": "sqlite"
+    },
+    {
+      "adapter_portability": "FULL",
+      "data_export": "FULL",
+      "documentation_readiness": "FULL",
+      "last_drill": "2026-07-11",
+      "last_drill_level": "D4",
+      "operational_readiness": "UNKNOWN",
+      "replacement_availability": "PARTIAL",
+      "replay_coverage": "PARTIAL",
+      "rollback_readiness": "FULL",
+      "state_export": "FULL",
+      "technology_id": "model_provider_seam"
+    },
+    {
+      "adapter_portability": "FULL",
+      "data_export": "FULL",
+      "documentation_readiness": "FULL",
+      "last_drill": "2026-07-11",
+      "last_drill_level": "D3",
+      "operational_readiness": "UNKNOWN",
+      "replacement_availability": "PARTIAL",
+      "replay_coverage": "UNKNOWN",
+      "rollback_readiness": "UNKNOWN",
+      "state_export": "FULL",
+      "technology_id": "telephony_seam"
+    },
+    {
+      "adapter_portability": "PARTIAL",
+      "data_export": "FULL",
+      "documentation_readiness": "FULL",
+      "last_drill": "2026-07-11",
+      "last_drill_level": "D3",
+      "operational_readiness": "UNKNOWN",
+      "replacement_availability": "PARTIAL",
+      "replay_coverage": "UNKNOWN",
+      "rollback_readiness": "UNKNOWN",
+      "state_export": "FULL",
+      "technology_id": "durable_runtime_seam"
+    },
+    {
+      "adapter_portability": "FULL",
+      "data_export": "FULL",
+      "documentation_readiness": "FULL",
+      "last_drill": "2026-07-11",
+      "last_drill_level": "D3",
+      "operational_readiness": "UNKNOWN",
+      "replacement_availability": "FULL",
+      "replay_coverage": "UNKNOWN",
+      "rollback_readiness": "UNKNOWN",
+      "state_export": "FULL",
+      "technology_id": "object_storage_seam"
+    }
+  ]
+}

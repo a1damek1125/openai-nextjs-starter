@@ -1,0 +1,35 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "authority_loss": {
+      "type": "string"
+    },
+    "evidence_loss": {
+      "type": "string"
+    },
+    "field_loss": {
+      "type": "string"
+    },
+    "history_loss": {
+      "type": "string"
+    },
+    "ordering_loss": {
+      "type": "string"
+    },
+    "precision_loss": {
+      "type": "string"
+    },
+    "provenance_loss": {
+      "type": "string"
+    },
+    "referential_loss": {
+      "type": "string"
+    },
+    "semantic_loss": {
+      "type": "string"
+    }
+  },
+  "required": [],
+  "schema_id": "LossVector",
+  "type": "object"
+}

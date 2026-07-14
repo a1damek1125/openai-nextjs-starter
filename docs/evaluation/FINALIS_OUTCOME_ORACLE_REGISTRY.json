@@ -1,0 +1,65 @@
+[
+  {
+    "claim_refs": [],
+    "grounding": "META_EVAL_REQUIRED",
+    "independence_domain": "agent-judge",
+    "oracle_hash": "1530022780ba2c0a8c30e633c6b998f65a22e7d59ac11ae969c56f17635e117a",
+    "oracle_id": "ORA-AAJ",
+    "oracle_type": "AGENT_AS_JUDGE",
+    "trusted_sole": false
+  },
+  {
+    "claim_refs": [],
+    "grounding": "tools/contracts_inventory/genome.py",
+    "independence_domain": "contract-surface",
+    "oracle_hash": "47826cabd94db4130d881274a0c8da5929b16f4d60d058a6c8420d075e24c2e9",
+    "oracle_id": "ORA-CONTRACT",
+    "oracle_type": "CONTRACT",
+    "trusted_sole": true
+  },
+  {
+    "claim_refs": [],
+    "grounding": "finalis/ai_employee/run_ledger.py",
+    "independence_domain": "hash-chain",
+    "oracle_hash": "d943a1489c6781f6d895ead90dcdec7c915faa04a1ead9d9d9f7c0db265ce954",
+    "oracle_id": "ORA-CRYPTO",
+    "oracle_type": "CRYPTOGRAPHIC",
+    "trusted_sole": true
+  },
+  {
+    "claim_refs": [],
+    "grounding": "tools/governed_work/outcome.py:verify_outcome",
+    "independence_domain": "repository-state",
+    "oracle_hash": "eb307950b7430bb11c30ecedd24b464c155feb70ed8730a95098efe3e078ff65",
+    "oracle_id": "ORA-DET-STATE",
+    "oracle_type": "DETERMINISTIC",
+    "trusted_sole": true
+  },
+  {
+    "claim_refs": [],
+    "grounding": "MOCK_ONLY",
+    "independence_domain": "external",
+    "oracle_hash": "7e94d3a6ae9f4269bd6ac1db7cbd9c66cf680cb13b2f90eed3912fc6954ebb42",
+    "oracle_id": "ORA-EXTERNAL",
+    "oracle_type": "EXTERNAL_STATE",
+    "trusted_sole": true
+  },
+  {
+    "claim_refs": [],
+    "grounding": "ABSENT_NO_FIELD_REVIEW",
+    "independence_domain": "human-review",
+    "oracle_hash": "d228d151b2e4df8b02425e6d02d1d66bc290b0a3a847d6230f1c82e42cf02132",
+    "oracle_id": "ORA-HUMAN",
+    "oracle_type": "HUMAN",
+    "trusted_sole": true
+  },
+  {
+    "claim_refs": [],
+    "grounding": "META_EVAL_REQUIRED",
+    "independence_domain": "llm-judge",
+    "oracle_hash": "b21f8f84156b70e2d562848693ddd5ff1ead43179c7335040a9d3b52081a18f4",
+    "oracle_id": "ORA-LLM",
+    "oracle_type": "LLM_JUDGE",
+    "trusted_sole": false
+  }
+]

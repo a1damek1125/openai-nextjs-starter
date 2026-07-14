@@ -1,0 +1,84 @@
+{
+  "mappings": [
+    {
+      "argument_types": [
+        "subject_id:string",
+        "tenant_id:string"
+      ],
+      "canonical_key": "lifecycle.completion",
+      "concept_id": "c-0011",
+      "predicate_family": "completed",
+      "rule_pack_version": "lggt-rule-pack-unbound-v0",
+      "semantic_epoch_id": "epoch-0001-genesis",
+      "source_admission": "requires ADMITTED_FACT or CERTIFIED_CONCLUSION",
+      "world_assumption": "CLOSED_WORLD"
+    },
+    {
+      "argument_types": [
+        "subject_id:string",
+        "tenant_id:string"
+      ],
+      "canonical_key": "outcome.business_outcome",
+      "concept_id": "c-0010",
+      "predicate_family": "business_outcome_achieved",
+      "rule_pack_version": "lggt-rule-pack-unbound-v0",
+      "semantic_epoch_id": "epoch-0001-genesis",
+      "source_admission": "requires ADMITTED_FACT or CERTIFIED_CONCLUSION",
+      "world_assumption": "CLOSED_WORLD"
+    },
+    {
+      "argument_types": [
+        "subject_id:string",
+        "tenant_id:string"
+      ],
+      "canonical_key": "evidence.fact",
+      "concept_id": "c-0013",
+      "predicate_family": "admitted_fact",
+      "rule_pack_version": "lggt-rule-pack-unbound-v0",
+      "semantic_epoch_id": "epoch-0001-genesis",
+      "source_admission": "requires ADMITTED_FACT or CERTIFIED_CONCLUSION",
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "argument_types": [
+        "subject_id:string",
+        "tenant_id:string"
+      ],
+      "canonical_key": "evidence.claim",
+      "concept_id": "c-0012",
+      "predicate_family": "asserted_claim",
+      "rule_pack_version": "lggt-rule-pack-unbound-v0",
+      "semantic_epoch_id": "epoch-0001-genesis",
+      "source_admission": "requires ADMITTED_FACT or CERTIFIED_CONCLUSION",
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "argument_types": [
+        "subject_id:string",
+        "tenant_id:string"
+      ],
+      "canonical_key": "work.owned_work",
+      "concept_id": "c-0002",
+      "predicate_family": "owned_work",
+      "rule_pack_version": "lggt-rule-pack-unbound-v0",
+      "semantic_epoch_id": "epoch-0001-genesis",
+      "source_admission": "requires ADMITTED_FACT or CERTIFIED_CONCLUSION",
+      "world_assumption": "PARTIAL_WORLD"
+    },
+    {
+      "argument_types": [
+        "subject_id:string",
+        "tenant_id:string"
+      ],
+      "canonical_key": "approval.approval",
+      "concept_id": "c-0016",
+      "predicate_family": "approval_granted",
+      "rule_pack_version": "lggt-rule-pack-unbound-v0",
+      "semantic_epoch_id": "epoch-0001-genesis",
+      "source_admission": "requires ADMITTED_FACT or CERTIFIED_CONCLUSION",
+      "world_assumption": "PARTIAL_WORLD"
+    }
+  ],
+  "note": "Explicit versioned bridge; does not modify LGGT (INV-0002-15).",
+  "schema_version": "1.0.0"
+}

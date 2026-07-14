@@ -1,0 +1,50 @@
+{
+  "declared": {
+    "DB_MIGRATION": 27,
+    "DB_TABLE": 107,
+    "HTTP_ROUTE": 402,
+    "RUN_LEDGER_EVENT": 35
+  },
+  "observed": {
+    "AUDIT_EVENT": 174,
+    "CONFIG_KEY": 10,
+    "DB_MIGRATION": 27,
+    "DB_TABLE": 107,
+    "HTTP_ROUTE": 423,
+    "PROOF_ARTIFACT": 429,
+    "RUN_LEDGER_EVENT": 35,
+    "STATE_MACHINE": 8,
+    "STATE_TRANSITION": 82
+  },
+  "rows": [
+    {
+      "declared_floor": 27,
+      "gap": 0,
+      "observed": 27,
+      "status": "OK",
+      "surface_kind": "DB_MIGRATION"
+    },
+    {
+      "declared_floor": 107,
+      "gap": 0,
+      "observed": 107,
+      "status": "OK",
+      "surface_kind": "DB_TABLE"
+    },
+    {
+      "declared_floor": 402,
+      "gap": 21,
+      "observed": 423,
+      "status": "OK",
+      "surface_kind": "HTTP_ROUTE"
+    },
+    {
+      "declared_floor": 35,
+      "gap": 0,
+      "observed": 35,
+      "status": "OK",
+      "surface_kind": "RUN_LEDGER_EVENT"
+    }
+  ],
+  "schema_id": "NegativeSpaceReport"
+}

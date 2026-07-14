@@ -1,0 +1,135 @@
+{
+  "common_mode": {
+    "parser_family": {
+      "ast": [
+        "EA-26c7eb925e6ffad2",
+        "EA-5c954940891bf86a",
+        "EA-8036ea70eab35676",
+        "EA-81d5ea5ea70da33f",
+        "EA-8b7b7a0121e6976b",
+        "EA-9e5114464528b12e",
+        "EA-a0423d64bc10ca60",
+        "EA-a23c36ed585733b1",
+        "EA-a76e6c28ccd22daf",
+        "EA-aafe94eb42eb8585",
+        "EA-b16cfd449e4e5230",
+        "EA-b5246d1da4147da5",
+        "EA-c4fdcb3d3680bacc",
+        "EA-d355ba30a239d38f",
+        "EA-d9084a7b1cb68f5b",
+        "EA-dc4cb4b8dc7221cf"
+      ],
+      "canonical-json": [
+        "EA-032bc1461e8e4b5f",
+        "EA-0783aab63c3974b8",
+        "EA-2e6e5863b8f2a588",
+        "EA-316db8c5d0f649ea",
+        "EA-3a5a2a5a885f6a50",
+        "EA-3ee580997f40ee13",
+        "EA-48cc1c635c344ec1",
+        "EA-6287e896ce369331",
+        "EA-660da2dc0205ef4f",
+        "EA-6f830afb3afee82b",
+        "EA-8e805b9bfa5ad9d1",
+        "EA-b6e7f6d30796c18c",
+        "EA-cdbe11af30a1c902",
+        "EA-f41261af721e9106",
+        "EA-fc60b8136ab2447d",
+        "EA-fd3acffd49d3cc30"
+      ]
+    },
+    "producer": {
+      "SP0000": [
+        "EA-5c954940891bf86a",
+        "EA-fd3acffd49d3cc30"
+      ],
+      "SP0001": [
+        "EA-6287e896ce369331",
+        "EA-b16cfd449e4e5230"
+      ],
+      "SP0002": [
+        "EA-660da2dc0205ef4f",
+        "EA-b5246d1da4147da5",
+        "EA-c4fdcb3d3680bacc",
+        "EA-cdbe11af30a1c902"
+      ],
+      "SP0003": [
+        "EA-316db8c5d0f649ea",
+        "EA-a76e6c28ccd22daf"
+      ],
+      "SP0004": [
+        "EA-3a5a2a5a885f6a50",
+        "EA-d9084a7b1cb68f5b"
+      ],
+      "SP0005": [
+        "EA-0783aab63c3974b8",
+        "EA-26c7eb925e6ffad2"
+      ],
+      "SP0006": [
+        "EA-032bc1461e8e4b5f",
+        "EA-8036ea70eab35676",
+        "EA-8e805b9bfa5ad9d1",
+        "EA-b6e7f6d30796c18c",
+        "EA-d355ba30a239d38f",
+        "EA-dc4cb4b8dc7221cf"
+      ],
+      "SP0007": [
+        "EA-2e6e5863b8f2a588",
+        "EA-6f830afb3afee82b",
+        "EA-a23c36ed585733b1",
+        "EA-aafe94eb42eb8585"
+      ],
+      "SP0008": [
+        "EA-48cc1c635c344ec1",
+        "EA-8b7b7a0121e6976b",
+        "EA-a0423d64bc10ca60",
+        "EA-f41261af721e9106"
+      ],
+      "SP0009": [
+        "EA-3ee580997f40ee13",
+        "EA-81d5ea5ea70da33f",
+        "EA-9e5114464528b12e",
+        "EA-fc60b8136ab2447d"
+      ]
+    },
+    "tool": {
+      "kernel": [
+        "EA-26c7eb925e6ffad2",
+        "EA-5c954940891bf86a",
+        "EA-8036ea70eab35676",
+        "EA-81d5ea5ea70da33f",
+        "EA-8b7b7a0121e6976b",
+        "EA-9e5114464528b12e",
+        "EA-a0423d64bc10ca60",
+        "EA-a23c36ed585733b1",
+        "EA-a76e6c28ccd22daf",
+        "EA-aafe94eb42eb8585",
+        "EA-b16cfd449e4e5230",
+        "EA-b5246d1da4147da5",
+        "EA-c4fdcb3d3680bacc",
+        "EA-d355ba30a239d38f",
+        "EA-d9084a7b1cb68f5b",
+        "EA-dc4cb4b8dc7221cf"
+      ],
+      "proof-artifact": [
+        "EA-032bc1461e8e4b5f",
+        "EA-0783aab63c3974b8",
+        "EA-2e6e5863b8f2a588",
+        "EA-316db8c5d0f649ea",
+        "EA-3a5a2a5a885f6a50",
+        "EA-3ee580997f40ee13",
+        "EA-48cc1c635c344ec1",
+        "EA-6287e896ce369331",
+        "EA-660da2dc0205ef4f",
+        "EA-6f830afb3afee82b",
+        "EA-8e805b9bfa5ad9d1",
+        "EA-b6e7f6d30796c18c",
+        "EA-cdbe11af30a1c902",
+        "EA-f41261af721e9106",
+        "EA-fc60b8136ab2447d",
+        "EA-fd3acffd49d3cc30"
+      ]
+    }
+  },
+  "schema_id": "EvidenceCommonMode"
+}

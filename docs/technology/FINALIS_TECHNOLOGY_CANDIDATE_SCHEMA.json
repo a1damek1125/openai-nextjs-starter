@@ -1,0 +1,4 @@
+{"schema_id":"FINALIS-TECH-CANDIDATE","sp":"SP0004","required":["candidate_id"],
+ "fields":["candidate_id","identity","version","license","primary_source","hard_constraint_results","scores"],
+ "hard_constraint_results":"map requirement -> PASS|FAIL|UNKNOWN (UNKNOWN != PASS, D-0004-06)",
+ "admission":"A candidate enters analysis only when identity/version/license/primary-source known, else CANDIDATE_INCOMPLETE (§11.1)."}

@@ -1,0 +1,19 @@
+{
+  "material_members": [
+    "model_identity",
+    "provider_identity",
+    "provider_account_ref",
+    "fallback_chain",
+    "prompt_hashes",
+    "skill_hashes",
+    "tool_contract_hashes",
+    "retrieval_configuration_hash",
+    "policy_pack_hash",
+    "router_hash",
+    "safety_configuration_hash",
+    "generation_parameters",
+    "evaluation_set_hash"
+  ],
+  "rule": "model name alone is not identity; fallback ORDER is material (D-0009-58/59)",
+  "schema_id": "AIReleaseClosure"
+}

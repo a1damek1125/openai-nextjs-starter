@@ -1,0 +1,274 @@
+[
+  {
+    "claim_id": "CL-SP0000-architecture-baseline-fixed",
+    "current": true,
+    "independence_class": "COMMON_MODE",
+    "limit_reached": false,
+    "sets": [
+      [
+        "EA-5c954940891bf86a",
+        "EA-fd3acffd49d3cc30"
+      ]
+    ],
+    "support_set_id": "SS-cb53c00919e9f629",
+    "trust_domains": [
+      "kernel-SP0000",
+      "proof-SP0000"
+    ]
+  },
+  {
+    "claim_id": "CL-SP0001-architecture-conformance-checked",
+    "current": true,
+    "independence_class": "COMMON_MODE",
+    "limit_reached": false,
+    "sets": [
+      [
+        "EA-6287e896ce369331",
+        "EA-b16cfd449e4e5230"
+      ]
+    ],
+    "support_set_id": "SS-88fe798be34a2855",
+    "trust_domains": [
+      "kernel-SP0001",
+      "proof-SP0001"
+    ]
+  },
+  {
+    "claim_id": "CL-SP0002-historical-epoch-interpretable",
+    "current": true,
+    "independence_class": "COMMON_MODE",
+    "limit_reached": false,
+    "sets": [
+      [
+        "EA-660da2dc0205ef4f",
+        "EA-c4fdcb3d3680bacc"
+      ]
+    ],
+    "support_set_id": "SS-841e7fa7219f39c3",
+    "trust_domains": [
+      "kernel-SP0002",
+      "proof-SP0002"
+    ]
+  },
+  {
+    "claim_id": "CL-SP0002-semantics-versioned",
+    "current": true,
+    "independence_class": "COMMON_MODE",
+    "limit_reached": false,
+    "sets": [
+      [
+        "EA-b5246d1da4147da5",
+        "EA-cdbe11af30a1c902"
+      ]
+    ],
+    "support_set_id": "SS-b07841fc4b158b86",
+    "trust_domains": [
+      "kernel-SP0002",
+      "proof-SP0002"
+    ]
+  },
+  {
+    "claim_id": "CL-SP0003-program-admission-verified",
+    "current": true,
+    "independence_class": "COMMON_MODE",
+    "limit_reached": false,
+    "sets": [
+      [
+        "EA-316db8c5d0f649ea",
+        "EA-a76e6c28ccd22daf"
+      ]
+    ],
+    "support_set_id": "SS-19dfa1ac98c3731b",
+    "trust_domains": [
+      "kernel-SP0003",
+      "proof-SP0003"
+    ]
+  },
+  {
+    "claim_id": "CL-SP0004-provider-replaceable",
+    "current": true,
+    "independence_class": "COMMON_MODE",
+    "limit_reached": false,
+    "sets": [
+      [
+        "EA-3a5a2a5a885f6a50",
+        "EA-d9084a7b1cb68f5b"
+      ]
+    ],
+    "support_set_id": "SS-9f4427dbdf8054f7",
+    "trust_domains": [
+      "kernel-SP0004",
+      "proof-SP0004"
+    ]
+  },
+  {
+    "claim_id": "CL-SP0005-safety-dominates-protected-effects",
+    "current": true,
+    "independence_class": "COMMON_MODE",
+    "limit_reached": false,
+    "sets": [
+      [
+        "EA-0783aab63c3974b8",
+        "EA-26c7eb925e6ffad2"
+      ]
+    ],
+    "support_set_id": "SS-c98977cef5b2b13c",
+    "trust_domains": [
+      "kernel-SP0005",
+      "proof-SP0005"
+    ]
+  },
+  {
+    "claim_id": "CL-SP0006-approval-context-bound",
+    "current": true,
+    "independence_class": "COMMON_MODE",
+    "limit_reached": false,
+    "sets": [
+      [
+        "EA-8036ea70eab35676",
+        "EA-b6e7f6d30796c18c"
+      ]
+    ],
+    "support_set_id": "SS-426c7300367a4fca",
+    "trust_domains": [
+      "kernel-SP0006",
+      "proof-SP0006"
+    ]
+  },
+  {
+    "claim_id": "CL-SP0006-authority-conserved",
+    "current": true,
+    "independence_class": "COMMON_MODE",
+    "limit_reached": false,
+    "sets": [
+      [
+        "EA-8e805b9bfa5ad9d1",
+        "EA-d355ba30a239d38f"
+      ]
+    ],
+    "support_set_id": "SS-4a29f309d56e7a7e",
+    "trust_domains": [
+      "kernel-SP0006",
+      "proof-SP0006"
+    ]
+  },
+  {
+    "claim_id": "CL-SP0006-zero-lost-work",
+    "current": true,
+    "independence_class": "COMMON_MODE",
+    "limit_reached": false,
+    "sets": [
+      [
+        "EA-032bc1461e8e4b5f",
+        "EA-dc4cb4b8dc7221cf"
+      ]
+    ],
+    "support_set_id": "SS-7af13d57ab6fec3d",
+    "trust_domains": [
+      "kernel-SP0006",
+      "proof-SP0006"
+    ]
+  },
+  {
+    "claim_id": "CL-SP0007-contract-evolution-directional",
+    "current": true,
+    "independence_class": "COMMON_MODE",
+    "limit_reached": false,
+    "sets": [
+      [
+        "EA-2e6e5863b8f2a588",
+        "EA-aafe94eb42eb8585"
+      ]
+    ],
+    "support_set_id": "SS-43e0cb0ded06a4e1",
+    "trust_domains": [
+      "kernel-SP0007",
+      "proof-SP0007"
+    ]
+  },
+  {
+    "claim_id": "CL-SP0007-historical-envelope-epoch-bound",
+    "current": true,
+    "independence_class": "COMMON_MODE",
+    "limit_reached": false,
+    "sets": [
+      [
+        "EA-6f830afb3afee82b",
+        "EA-a23c36ed585733b1"
+      ]
+    ],
+    "support_set_id": "SS-7ca5a28b54b968ca",
+    "trust_domains": [
+      "kernel-SP0007",
+      "proof-SP0007"
+    ]
+  },
+  {
+    "claim_id": "CL-SP0008-contract-genome-sealed",
+    "current": true,
+    "independence_class": "COMMON_MODE",
+    "limit_reached": false,
+    "sets": [
+      [
+        "EA-48cc1c635c344ec1",
+        "EA-8b7b7a0121e6976b"
+      ]
+    ],
+    "support_set_id": "SS-a9c9502a635f3032",
+    "trust_domains": [
+      "kernel-SP0008",
+      "proof-SP0008"
+    ]
+  },
+  {
+    "claim_id": "CL-SP0008-contract-surfaces-inventoried",
+    "current": true,
+    "independence_class": "COMMON_MODE",
+    "limit_reached": false,
+    "sets": [
+      [
+        "EA-a0423d64bc10ca60",
+        "EA-f41261af721e9106"
+      ]
+    ],
+    "support_set_id": "SS-636d316d21b0b21a",
+    "trust_domains": [
+      "kernel-SP0008",
+      "proof-SP0008"
+    ]
+  },
+  {
+    "claim_id": "CL-SP0009-non-compensatory-gates",
+    "current": true,
+    "independence_class": "COMMON_MODE",
+    "limit_reached": false,
+    "sets": [
+      [
+        "EA-81d5ea5ea70da33f",
+        "EA-fc60b8136ab2447d"
+      ]
+    ],
+    "support_set_id": "SS-5009a53c1c647448",
+    "trust_domains": [
+      "kernel-SP0009",
+      "proof-SP0009"
+    ]
+  },
+  {
+    "claim_id": "CL-SP0009-release-proof-not-runtime-authority",
+    "current": true,
+    "independence_class": "COMMON_MODE",
+    "limit_reached": false,
+    "sets": [
+      [
+        "EA-3ee580997f40ee13",
+        "EA-9e5114464528b12e"
+      ]
+    ],
+    "support_set_id": "SS-b596b954be592d43",
+    "trust_domains": [
+      "kernel-SP0009",
+      "proof-SP0009"
+    ]
+  }
+]

@@ -1,0 +1,98 @@
+{
+  "CTL-APPROVAL-BINDING": {
+    "classification": "NECESSARY_NOT_SUFFICIENT",
+    "control_id": "CTL-APPROVAL-BINDING",
+    "critical": true,
+    "exercised": true,
+    "exercised_by": "approval binding",
+    "grounding": "tools/governed_work/approval.py",
+    "necessity_witness": {
+      "reachable_violation_on_removal": true
+    },
+    "present_model_result": "PROPERTY_HOLDS",
+    "protected_property": "no protected effect without bound approval",
+    "removed_model_result": "VIOLATION_REACHABLE",
+    "sufficiency_witness": null,
+    "symbol": ""
+  },
+  "CTL-AUTH-GATE": {
+    "classification": "NECESSARY_NOT_SUFFICIENT",
+    "control_id": "CTL-AUTH-GATE",
+    "critical": true,
+    "exercised": true,
+    "exercised_by": "Depends(current_user) (~400x)",
+    "grounding": "finalis/portal/app.py",
+    "necessity_witness": {
+      "reachable_violation_on_removal": true
+    },
+    "present_model_result": "PROPERTY_HOLDS",
+    "protected_property": "no unauthenticated protected effect",
+    "removed_model_result": "VIOLATION_REACHABLE",
+    "sufficiency_witness": null,
+    "symbol": "current_user"
+  },
+  "CTL-RBAC": {
+    "classification": "NECESSARY_NOT_SUFFICIENT",
+    "control_id": "CTL-RBAC",
+    "critical": true,
+    "exercised": true,
+    "exercised_by": "require_permission (~375x)",
+    "grounding": "finalis/portal/app.py",
+    "necessity_witness": {
+      "reachable_violation_on_removal": true
+    },
+    "present_model_result": "PROPERTY_HOLDS",
+    "protected_property": "no over-authority action",
+    "removed_model_result": "VIOLATION_REACHABLE",
+    "sufficiency_witness": null,
+    "symbol": "require_permission"
+  },
+  "CTL-RELEASE-PROOF-BOUNDARY": {
+    "classification": "NECESSARY_NOT_SUFFICIENT",
+    "control_id": "CTL-RELEASE-PROOF-BOUNDARY",
+    "critical": true,
+    "exercised": true,
+    "exercised_by": "envelope non_authoritative",
+    "grounding": "tools/release/envelope.py",
+    "necessity_witness": {
+      "reachable_violation_on_removal": true
+    },
+    "present_model_result": "PROPERTY_HOLDS",
+    "protected_property": "release proof grants no runtime authority",
+    "removed_model_result": "VIOLATION_REACHABLE",
+    "sufficiency_witness": null,
+    "symbol": "non_authoritative"
+  },
+  "CTL-SAFETY-ADMISSION": {
+    "classification": "NECESSARY_NOT_SUFFICIENT",
+    "control_id": "CTL-SAFETY-ADMISSION",
+    "critical": true,
+    "exercised": true,
+    "exercised_by": "safety admission gate",
+    "grounding": "tools/safety/admission.py",
+    "necessity_witness": {
+      "reachable_violation_on_removal": true
+    },
+    "present_model_result": "PROPERTY_HOLDS",
+    "protected_property": "no unsafe protected effect admitted",
+    "removed_model_result": "VIOLATION_REACHABLE",
+    "sufficiency_witness": null,
+    "symbol": "evaluate_action"
+  },
+  "CTL-TENANT-SCOPE": {
+    "classification": "NECESSARY_NOT_SUFFICIENT",
+    "control_id": "CTL-TENANT-SCOPE",
+    "critical": true,
+    "exercised": true,
+    "exercised_by": "tenant_id WHERE scoping (~279x)",
+    "grounding": "finalis/portal/db.py",
+    "necessity_witness": {
+      "reachable_violation_on_removal": true
+    },
+    "present_model_result": "PROPERTY_HOLDS",
+    "protected_property": "no cross-tenant row access",
+    "removed_model_result": "VIOLATION_REACHABLE",
+    "sufficiency_witness": null,
+    "symbol": "tenant_id"
+  }
+}

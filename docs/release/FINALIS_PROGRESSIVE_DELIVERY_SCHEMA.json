@@ -1,0 +1,17 @@
+{
+  "hard_abort_events": [
+    "TENANT_VIOLATION",
+    "AUTHORITY_VIOLATION",
+    "SAFETY_VIOLATION",
+    "PROOF_INTEGRITY_VIOLATION"
+  ],
+  "rule": "defined not executed; sequential rule predeclared; anytime-valid e-process (D-0009-53/54)",
+  "schema_id": "ProgressiveDelivery",
+  "stages": [
+    "SHADOW",
+    "INTERNAL",
+    "LIMITED_CANARY",
+    "EXPANDED_CANARY",
+    "DECLARED_SCOPE"
+  ]
+}

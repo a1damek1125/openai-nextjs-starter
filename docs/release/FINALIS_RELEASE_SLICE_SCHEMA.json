@@ -1,0 +1,4 @@
+{
+  "rule": "dependency-closed: every required dependency in slice or verified baseline (D-0009-04)",
+  "schema_id": "ReleaseSlice"
+}

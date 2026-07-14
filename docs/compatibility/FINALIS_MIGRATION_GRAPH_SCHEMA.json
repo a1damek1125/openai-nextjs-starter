@@ -1,0 +1,58 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "contract_id": {
+      "type": "string"
+    },
+    "downtime_class": {
+      "type": "string"
+    },
+    "evidence_refs": {
+      "type": "array"
+    },
+    "from_version": {
+      "type": "string"
+    },
+    "inverse_transformer_ref": {
+      "type": "string"
+    },
+    "last_safe_rollback_point": {
+      "type": "string"
+    },
+    "lock_profile": {
+      "type": "object"
+    },
+    "loss_vector": {
+      "type": "object"
+    },
+    "migration_edge_id": {
+      "type": "string"
+    },
+    "postconditions": {
+      "type": "array"
+    },
+    "preconditions": {
+      "type": "array"
+    },
+    "reversibility": {
+      "type": "string"
+    },
+    "to_version": {
+      "type": "string"
+    },
+    "transformer_ref": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "migration_edge_id",
+    "contract_id",
+    "from_version",
+    "to_version",
+    "transformer_ref",
+    "loss_vector",
+    "reversibility"
+  ],
+  "schema_id": "MigrationEdge",
+  "type": "object"
+}

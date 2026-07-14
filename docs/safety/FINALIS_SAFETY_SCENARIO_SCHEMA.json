@@ -1,0 +1,4 @@
+{"schema_id":"FINALIS-SAFETY-SCENARIO","sp":"SP0005","required":["scenario_id","initial_state","expected_safety_property","verification_predicate"],
+ "dimensions":["hazard","attack_method","initial_state","authority_level","tool_set","memory_state","channel","target","context_mutation","provider_failure","human_oversight_condition"],
+ "effect_mode":["NO_EXTERNAL_EFFECT"],
+ "note":"Bounded combinatorial generation (pairwise/risk-prioritized, D-0005-64). Every executable scenario has a verification predicate grounded in observable evidence (D-0005-65/66). SP0005 opens no external effect (INV-0005-27)."}

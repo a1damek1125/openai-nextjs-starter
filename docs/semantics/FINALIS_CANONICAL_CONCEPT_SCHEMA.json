@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://finalis.local/schemas/FINALIS_CANONICAL_CONCEPT.json",
+  "title": "Finalis Canonical Concept + Registry",
+  "type": "object",
+  "required": ["schema_version", "program", "active_epoch", "concepts"],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "program": {"type": "string", "const": "FINALIS_1000"},
+    "twin_kind": {"type": "string", "const": "SEMANTIC_DOMAIN_TWIN"},
+    "active_epoch": {"type": "string"},
+    "concepts": {"type": "array", "items": {"$ref": "#/$defs/concept"}}
+  },
+  "$defs": {
+    "concept": {
+      "type": "object",
+      "required": ["concept_id", "canonical_key", "concept_kind",
+        "owner_capability", "semantic_revision", "normative_definition",
+        "world_assumption", "meaning_hash"],
+      "additionalProperties": true,
+      "properties": {
+        "concept_id": {"type": "string", "pattern": "^c-[0-9]{4}$",
+          "description": "Immutable, opaque, brand-independent, never reused (INV-0002-01)."},
+        "canonical_key": {"type": "string", "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$"},
+        "concept_kind": {"enum": ["ENTITY", "EVENT", "STATE", "RELATION",
+          "PREDICATE", "QUANTITY", "ROLE", "ARTIFACT", "STATUS"]},
+        "owner_capability": {"type": "string",
+          "description": "An SP0001 architecture capability id."},
+        "semantic_revision": {"type": "integer", "minimum": 1},
+        "status": {"enum": ["PROPOSED", "REVIEWED", "ACTIVE", "DEPRECATED",
+          "RETIRED", "REJECTED"]},
+        "normative_definition": {"type": "string", "minLength": 1},
+        "world_assumption": {"enum": ["OPEN_WORLD", "CLOSED_WORLD", "PARTIAL_WORLD"]},
+        "epistemic_rules": {"type": "array"},
+        "semantic_invariants": {"type": "array"},
+        "authority_semantics": {"type": "array"},
+        "temporal_semantics": {"type": "object"},
+        "state_semantics": {"type": "object"},
+        "relationships": {"type": "array", "items": {
+          "type": "object", "required": ["type", "target"],
+          "properties": {"type": {"enum": ["IS_A", "PART_OF", "SPECIALIZES",
+            "SUPERSEDES", "CONTRADICTS", "REQUIRES", "PRODUCES", "SATISFIES",
+            "PRECEDES", "PROJECTS_TO"]}, "target": {"type": "string"}}}},
+        "labels": {"type": "object"},
+        "aliases": {"type": "array", "items": {"type": "string"}},
+        "deprecated_aliases": {"type": "array", "items": {"type": "string"}},
+        "forbidden_aliases": {"type": "array", "items": {"type": "string"}},
+        "projection_refs": {"type": "object"},
+        "meaning_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  }
+}

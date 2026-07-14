@@ -1,0 +1,23 @@
+{
+  "accountability_chains": [
+    {
+      "accountable_owner_id": "owner-finance-lead",
+      "chain_id": "AC-0001",
+      "links": [
+        {
+          "accountable_owner_id": "owner-finance-lead",
+          "child_identity": "EI-drafter",
+          "parent_identity": "EI-root",
+          "responsible": "EI-drafter"
+        },
+        {
+          "accountable_owner_id": "owner-finance-lead",
+          "child_identity": "EI-verifier",
+          "parent_identity": "EI-root",
+          "responsible": "EI-verifier"
+        }
+      ],
+      "work_order_id": "WO-0001"
+    }
+  ]
+}

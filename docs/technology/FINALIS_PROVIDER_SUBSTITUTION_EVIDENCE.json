@@ -1,0 +1,18 @@
+{
+  "substitution_evidence": [
+    {
+      "candidate_provider": "reference::model_alt",
+      "conformance_result": "PASS",
+      "contract_version": "1.0",
+      "corpus_version": "1.0",
+      "differential_result": "AGREE",
+      "environment": "deterministic-reference",
+      "failure_injection_result": "PASS",
+      "portability_result": "FULL",
+      "provider_version": "1.0",
+      "source_provider": "reference::model",
+      "substitution_id": "SUB-MODEL-REF",
+      "tested_at": "2026-07-11"
+    }
+  ]
+}

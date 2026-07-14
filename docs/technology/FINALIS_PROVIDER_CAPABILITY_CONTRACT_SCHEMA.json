@@ -1,0 +1,8 @@
+{"schema_id":"FINALIS-PROVIDER-CONTRACT","sp":"SP0004","required":["contract_id","contract_version","provider_class","core_capabilities"],
+ "rule_capability_specific":"No universal Provider.execute(anything) core (AC-0004-047).",
+ "core_vs_extension":"CORE capabilities are stable; extensions are NAMESPACED and cannot redefine core (D-0004-22, INV-0004-14).",
+ "error_taxonomy":["TIMEOUT","RATE_LIMIT","QUOTA_EXHAUSTED","AUTHENTICATION_FAILURE","AUTHORIZATION_FAILURE","PROVIDER_OUTAGE","DATA_REJECTED","PARTIAL_SUCCESS","UNKNOWN_OUTCOME"],
+ "effectful_requires":"UNKNOWN_OUTCOME (D-0004-26).",
+ "credential_contract":"by_reference + tenant_scope + read_write_separation + personal_shared_separation; raw secret must NOT appear in request_schema (INV-0004-06).",
+ "provider_id":"external_reference only, never canonical identity (INV-0004-04).",
+ "provider_error":"mapped into Finalis failure taxonomy, never business state (INV-0004-05)."}
